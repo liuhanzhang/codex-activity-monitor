@@ -1,0 +1,122 @@
+{
+  "timestamp": "2026-10-10T14:01:36.200554+00:00",
+  "before": {
+    "files": 15233,
+    "bytes": 1278089680
+  },
+  "moved": [
+    {
+      "from": "analysis/file-edit-progress/26.1002.52244",
+      "to": ".local/research/file-edit-progress/26.1002.52244",
+      "compatibility_symlink": true,
+      "files": 80,
+      "bytes": 75789003
+    },
+    {
+      "from": "analysis/file-edit-progress/26.1007.21159",
+      "to": ".local/research/file-edit-progress/26.1007.21159",
+      "compatibility_symlink": true,
+      "files": 82,
+      "bytes": 94056091
+    },
+    {
+      "from": "analysis/upstream-stream/desktop-source",
+      "to": ".local/research/upstream-stream/desktop-source",
+      "compatibility_symlink": true,
+      "files": 12,
+      "bytes": 15736771
+    },
+    {
+      "from": "experiments/desktop-isolation/source",
+      "to": ".local/research/desktop-isolation/source",
+      "compatibility_symlink": true,
+      "files": 44,
+      "bytes": 16600068
+    },
+    {
+      "from": "experiments/desktop-isolation/protocol-schema",
+      "to": ".local/research/desktop-isolation/protocol-schema",
+      "compatibility_symlink": true,
+      "files": 447,
+      "bytes": 4350596
+    }
+  ],
+  "deleted": [
+    {
+      "path": "experiments/desktop-isolation/runs/20261010-145714-1f2115/codex-home",
+      "reason": "stopped obsolete profile; no auth or session files",
+      "files": 68,
+      "bytes": 2926759
+    },
+    {
+      "path": "experiments/desktop-isolation/runs/20261010-145714-1f2115/user-data",
+      "reason": "stopped obsolete profile; no auth or session files",
+      "files": 0,
+      "bytes": 0
+    },
+    {
+      "path": "experiments/desktop-isolation/runs/20261010-145742-4b6bb1/codex-home",
+      "reason": "stopped obsolete profile; no auth or session files",
+      "files": 5676,
+      "bytes": 167311284
+    },
+    {
+      "path": "experiments/desktop-isolation/runs/20261010-145742-4b6bb1/user-data",
+      "reason": "stopped obsolete profile; no auth or session files",
+      "files": 186,
+      "bytes": 8688931
+    },
+    {
+      "path": "experiments/desktop-isolation/__pycache__",
+      "reason": "regenerable Python bytecode",
+      "files": 3,
+      "bytes": 65964
+    },
+    {
+      "path": "experiments/desktop-isolation/protocol-home",
+      "reason": "empty schema-generation temporary home",
+      "files": 0,
+      "bytes": 0
+    }
+  ],
+  "compressed": [
+    {
+      "from": "experiments/desktop-isolation/runs/20261010-150337-2b232b/backend-tool-mode-20261010-170016.log",
+      "to": "experiments/desktop-isolation/runs/20261010-150337-2b232b/backend-tool-mode-20261010-170016.log.gz",
+      "raw_bytes": 898858,
+      "compressed_bytes": 57196,
+      "raw_sha256": "5974ce212b28a5b622954437512526942f42b94b6bfd5d45bf20f7b1dffeb55e"
+    },
+    {
+      "from": "experiments/desktop-isolation/runs/20261010-150337-2b232b/backend-tool-mode-20261010-170131.log",
+      "to": "experiments/desktop-isolation/runs/20261010-150337-2b232b/backend-tool-mode-20261010-170131.log.gz",
+      "raw_bytes": 538485,
+      "compressed_bytes": 32534,
+      "raw_sha256": "594b7dc724b5d6624db9a99d1e71650c2d555bcee368d8f510a27407b5435d2c"
+    },
+    {
+      "from": "experiments/desktop-isolation/runs/20261010-150337-2b232b/backend-transport-20261010-171554.log",
+      "to": "experiments/desktop-isolation/runs/20261010-150337-2b232b/backend-transport-20261010-171554.log.gz",
+      "raw_bytes": 48505364,
+      "compressed_bytes": 7739733,
+      "raw_sha256": "84cbfe1adf07793c96596cd7d6f2fc178bd4200d53c5a099d1e628aabbe54cff"
+    },
+    {
+      "from": "experiments/desktop-isolation/runs/20261010-150337-2b232b/backend.log",
+      "to": "experiments/desktop-isolation/runs/20261010-150337-2b232b/backend.log.gz",
+      "raw_bytes": 1724865,
+      "compressed_bytes": 95224,
+      "raw_sha256": "03fe3a1663ac34e1579f797f0354952956ec2c47f5cb81a25bc4acc13190a655"
+    }
+  ],
+  "preserved_active_run": "experiments/desktop-isolation/runs/20261010-150337-2b232b",
+  "observed_active_pids": {
+    "desktop": 70084,
+    "backend": 6498
+  },
+  "after": {
+    "files": 9301,
+    "bytes": 1055358123
+  },
+  "reclaimed_logical_bytes": 222735823
+}

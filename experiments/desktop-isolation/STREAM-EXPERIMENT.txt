@@ -1,0 +1,142 @@
+Validated on 2026-10-10 Asia/Shanghai with Desktop 26.1007.21159 and bundled CLI 0.162.0-alpha.17.2.
+
+Use the existing signed app, a distinct Electron profile, a distinct Codex home,
+and a localhost WebSocket app-server. No repackaging or Computer Use is involved.
+
+stream_probe.py connects to the latest isolated backend and runs one dedicated
+persisted test chat with a second client subscribing through thread/resume.
+The text mode records exact received text increments and JSON payload bytes.
+The command mode runs a three-second, stdout-only Python command, observing its
+start, output increments, and completion. Test prompts are sent over RPC;
+Desktop UI-initiated tasks have not yet been checked.
+
+The prototype prints one-second status samples and saves raw event evidence,
+text, samples and a summary under the corresponding run directory. It is an
+experiment driver, not yet a passive monitor or graphical progress display.
+
+Successful verification: runs/20261010-150337-2b232b/stream-verification.json
+Text: 770 increments, 1202 characters, about 36.2 characters/second during receipt.
+Final reported output usage: 778 tokens; one usage notification near completion.
+Command: 3011 ms, exit status 0, two output increments, both expected markers.
+Both clients received identical text, matching completed item text in both tests.
+
+Boundaries:
+- Counts measure observer receipt, not model-side generation speed.
+- JSON payload bytes include event metadata and are not upstream reasoning bytes.
+- No verified tokenizer is present, so live token/second is not reported.
+- Hidden reasoning progress is unverified. A quiet interval must be displayed
+  as time since the last event, rather than interpreted as a hang or reasoning.
+- Usage also includes tool-call output; it is not always visible body text only.
+- Multiple clients cannot resume the tested ephemeral chat; persisted test chats
+  were used to validate subscriptions.
+- Desktop connection environment variables are undocumented and may change.
+
+Existing-instance commands (from this repository):
+python3 experiments/desktop-isolation/stream_probe.py
+python3 experiments/desktop-isolation/stream_probe.py --mode command
+python3 experiments/desktop-isolation/stop_experiment.py
+
+The first two commands each start a real model turn. stop_experiment.py stops only
+the experiment PIDs recorded in its report and keeps the data for inspection.
+launch_isolated_desktop.py creates another fresh profile, not the logged-in one.
+
+Extra High follow-up:
+The signed-in profile configured gpt-6-luna with xhigh. The follow-up request
+explicitly used that model and effort; thread/settings/updated confirmed both.
+Evidence: runs/20261010-150337-2b232b/stream-20261010-153102-reasoning/reasoning-verification.json
+Reasoning item began at 3.519 s. Two summaryTextDelta notifications arrived at
+7.261 s and 7.604 s, with 47 and 34 characters. Reasoning completed at 7.609 s.
+No reasoning textDelta notifications were received. A gap of about 3.74 s
+contained no new reasoning events; summary deltas are not a continuous heartbeat.
+At 7.761 s, the single usage update reported 452 output tokens, including 443
+reasoning output tokens. These token counters were not updated throughout thought.
+The final eight-character number arrived in three body deltas (3, 3, 2 characters).
+Body deltas only carried delta/itemId/threadId/turnId, with no token counts.
+The script now reads the profile's configured model and accepts --effort xhigh.
+
+Auto summary follow-up:
+The experiment driver now defaults to --summary auto. The server confirmed
+summary=auto with the same gpt-6-luna model, xhigh effort and counting prompt.
+Evidence: runs/20261010-150337-2b232b/stream-20261010-154138-reasoning-auto/summary-comparison.json
+This sample produced three short summary headings, 81 characters total, compared
+with two headings and 81 characters for concise. There is no demonstrated
+increase in detail from this single comparison. Reasoning usage was only reported
+near completion, as in the earlier probe. Original Desktop global settings were
+not changed; this is a per-turn experimental override.
+
+File editing follow-up:
+--mode coding runs two apply_patch calls in a dedicated workspace-write directory,
+with network access disabled: create demo.py, then modify whitespace/blank-name
+handling, and verify the resulting functions. The final 35-line file passed the
+agent's command checks and independent function checks.
+Evidence: runs/20261010-150337-2b232b/stream-20261010-154702-coding-auto/coding-verification.json
+The independent observer received fileChange started/completed events for both
+edits, including paths, add/update kinds, and complete per-edit diffs.
+Seven turn/diff/updated notifications contained two distinct complete diff
+snapshots: 955 characters after creation, 1022 after modification. Repeated
+snapshots must not be counted as additional edits or appended text.
+No item/fileChange/outputDelta or item/fileChange/patchUpdated notifications
+were received. The installed protocol schema includes patchUpdated, but this
+run does not establish a per-character patch-generation stream.
+Both command items completed successfully; their stdout was provided in
+completed items in this run, with no command outputDelta notifications.
+Current progress sample labels return to waiting_for_model after reasoning,
+agent-message or tool item completion, and record the current complete diff size.
+
+Long tool input follow-up (gpt-6-luna, xhigh, auto):
+Evidence: runs/20261010-150337-2b232b/long-tool-stream-comparison.json
+Default path created a 291-line, 11547-byte file in one full edit item, after a
+23.027-second gap with no target-thread notification. The overall turn timed out
+at 240 seconds while repairing its self-check, so that turn is not a success.
+An experimental per-thread patch-preview override and model-catalog-direct
+request still produced model-level exec wrappers, not direct apply_patch calls.
+That complete case initially created 320 lines/12658 bytes, later replaced it
+with 238 lines/9837 bytes, and printed LONG_FILE_OK. Ten diff notifications were
+complete snapshots, not tool-input increments. Zero patchUpdated events.
+The first long heredoc test could not execute under the read-only sandbox because
+shell temporary-file creation was blocked. It was interrupted at the timeout.
+The successful retry sent an exact, prevalidated Python -c command. Its inline
+source had 244 lines/9942 characters and its command argument 9958 characters.
+The independent observer received the complete command at 21.069 seconds, after
+10.427 seconds with no target-thread notifications. It ran for 2986 ms, exit 0,
+and produced INLINE_PROBE_BEGIN, LONG_FILE_OK, INLINE_PROBE_OK. One execution
+outputDelta was observed; no incremental command-argument messages were exposed.
+Both complete cases passed independent driver/observer lifecycle and text checks.
+The attempted --direct-tools option was removed: a per-thread catalog request
+had not actually changed the observed tool mode. --prompt-file is available for
+reproducible long-input tests, and --patch-streaming requests the experimental
+flag only for its test chat. It does not make exec-wrapped patch input stream.
+
+Source distinction:
+Local public Codex source at 325cf16194 (2026-07-14, older than installed CLI)
+parses response.custom_tool_call_input.delta and passes it only to a registered
+tool argument diff consumer. Its test explicitly skips function arguments delta.
+Direct apply_patch has a consumer gated by apply_patch_streaming_events, default
+false and under development; the installed backend lists the same flag as false.
+Tool execution is scheduled after OutputItemDone. The official Responses API
+itself supports argument deltas, so execution waiting for complete arguments
+must not be confused with inability to stream argument generation upstream.
+We did not capture this backend's raw upstream model transport.
+
+Mixed Code Mode follow-up (2026-10-10 17:01-17:03):
+The user selected the isolated Desktop, not the primary profile.
+configure_tool_mode.py writes a custom model catalog and config.toml reference,
+backs up the configuration, verifies the recorded backend process and idle chats,
+and restarts only that backend. Hidden model metadata is preserved.
+The catalog changes seven selectable models from code_mode_only to code_mode.
+The backend confirms code_mode=true, code_mode_only=false, and
+apply_patch_streaming_events=true. Desktop logs confirm automatic reconnection.
+Evidence: runs/20261010-150337-2b232b/tool-mode-verification.json
+Direct-tool case: gpt-6-luna, low, auto; one model-level apply_patch call, no exec.
+Both clients received the same 14 cumulative patch previews, growing from zero
+to 1937 characters/133 lines, before the fileChange execution started.
+The final preview exactly matched the saved file and expected text; AST and
+independent execution passed with DIRECT_PATCH_OK. Turn completed in 15.24 s.
+Exec case: same model/settings; exec called tools.exec_command with printf.
+Exit 0 and EXEC_MODE_OK confirmed that exec remains available in mixed mode.
+This turn completed in 6.02 s. All independent checks passed for both cases.
+The primary Desktop was not modified or restarted. UI animation has not been
+visually verified. Existing code_mode config allows either route; future calls
+may still choose exec and therefore not emit patch previews.
+The important correction to the earlier catalog attempt is loading the catalog
+at backend startup, rather than only passing model_catalog_json to thread/start.

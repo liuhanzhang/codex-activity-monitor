@@ -1,0 +1,88 @@
+验证时间：2026-10-10 17:15–17:18，Asia/Shanghai。
+
+可以观察 Codex CLI 与模型服务之间的原始响应流，并且这次已经在隔离 Desktop 的真实后端上验证成功。
+本轮使用 Desktop 26.1007.21159 build 20052 自带 CLI 0.162.0-alpha.17.2。
+没有重编译、注入、修改模型输入、添加网络代理或替换 TLS 证书。
+
+观察方法
+
+在重启隔离后端前恢复其原始 config.toml：删除此前实验引入的 model_catalog_json、code_mode、code_mode_only 和 apply_patch_streaming_events 覆盖。
+原始模型目录中的 gpt-6-luna tool_mode 仍为 code_mode_only。
+后端继续使用此前相同的 features.code_mode_host=true 启动参数。
+仅为本次实验设置接收层日志过滤器：
+RUST_LOG='warn,codex_api::sse=trace,tungstenite::protocol=trace,tungstenite::protocol::frame=off,codex_api::responses_websocket_timing=trace'
+LOG_FORMAT=json
+
+实际模型传输使用 Responses WebSocket。
+tungstenite::protocol 的 Received message 日志包含解密、组装后的上游 JSON 事件。
+它同时记录 Desktop 发给 app-server 的消息，分析时必须按 type/item_id/call_id/turn_id 过滤，不能把整个日志文件大小当作模型生成字节数。
+SSE 路径的本地公开源码也有原始事件日志，但本轮没有实测 SSE。
+
+长工具参数实验
+
+真实顶层调用仍是 exec。其内部通过 exec_command 执行长 Python inline 命令，只打印实验结果。
+上游 response.custom_tool_call_input.delta：2367 条。
+拼接输入：10068 个字符，10068 个 UTF-8 字节。
+首个 delta 到最后一个 delta：12.328634 秒；区间内接收均速约 816.64 字符/秒。
+单条 delta 长度：1 至 40 字符，并非固定字符数，也不能视为固定 token 数。
+delta 没有 token 数量字段。
+序号严格递增且无重复；所有 delta 拼接结果与上游 output_item.done 和该聊天保存的 rollout 输入完全相同。
+同一聊天的 app-server 观察客户端没有工具输入 delta 或 patchUpdated；正文和命令 stdout 仍有各自流式事件。
+Python 自检完成，命令退出码 0，输出 INLINE_PROBE_BEGIN、LONG_FILE_OK、INLINE_PROBE_OK。
+
+Reasoning 实验
+
+gpt-6-luna，effort=xhigh，summary=auto。
+上游 reasoning item 开始与结束、两段摘要增量可见。
+摘要增量共 2 条、60 字符，与 app-server 已暴露的摘要增量相符。
+未观察到持续增长的 reasoning token 数量、完整 reasoning 文本或加密 reasoning 内容增量事件。
+encrypted_content 仅在 item 开始和结束分别看到 1336、5688 字符；这两个快照不能提供实时思考速度。
+reasoning item 开始到首个摘要事件间有 3.881607 秒未收到新的上游事件。
+response.completed 的最终 usage 报告 443 个 reasoning tokens。
+没有新事件只能解释为没有接收到新数据，不能据此证明模型卡住。
+
+实现方向
+
+先使用现有接收层日志，由旁路进程按聊天和调用聚合指标；保持原始 harness、tool mode、请求及认证路径。
+正文与工具参数分别统计累计字符/UTF-8 字节、最近 1–2 秒接收速率、最后一次事件距今时长。
+结合 app-server 的命令执行、工具完成、等待审批等事件，区分生成工具参数和实际执行工具。
+API usage 用于完成后的精确用量；实时 token/s 在缺少准确 tokenizer/逐 token 数据时应标为估算或采用字符/s。
+日志不能覆盖的连接才考虑同时支持 HTTPS/SSE 和 WSS 的本地代理。
+普通网络抓包只能看到 TLS 加密流量；连接保活也不能充当模型生成进度。
+
+边界
+
+RUST_LOG 是官方文档公开的配置；具体接收日志文本并不是稳定监控协议，升级后需要兼容性检查。
+本次 trace 日志约 48 MB，包含重复的协议帧诊断和其他聊天预热事件，不适合原样长期开启。
+正式采集应仅保留需要的事件指标、限制日志量，并测量 I/O 和延迟开销。
+这次没有做性能开销基准；不能宣称开启 trace 完全没有运行时影响。
+
+实验收尾
+
+两轮聊天均已完成。
+已关闭高频 trace 日志并重启空闲的隔离后端，当前使用原有 info 日志过滤器。
+隔离 config.toml 与模型模式实验前的原始备份逐字节一致，model_catalog_json=null，缓存 tool_mode=code_mode_only。
+主 App、主配置和主后端没有修改。
+
+证据
+
+verification.json：版本、原始日志位置、两轮聊天、断言结果、恢复后的状态。
+tool-input-deltas.jsonl：2367 条增量的时间、序号和大小，不包含工具输入内容。
+analyze_trace.py：从原始日志和保存的聊天重新生成统计，并校验拼接结果。
+../../experiments/desktop-isolation/configure_transport_logging.py：仅操作已记录隔离后端的日志开关和原始配置恢复。
+
+源码入口（本地公开源码快照比已安装 CLI 旧，运行结果以本轮实测为准）
+
+/Users/bytedance/playground/codex/codex-rs/codex-api/src/sse/responses.rs:530 原始 SSE event trace。
+/Users/bytedance/playground/codex/codex-rs/codex-api/src/sse/responses.rs:343 自定义工具输入增量解析。
+/Users/bytedance/playground/codex/codex-rs/codex-api/src/endpoint/responses_websocket.rs:710 WebSocket 文本事件解析。
+/Users/bytedance/playground/codex/codex-rs/app-server/src/lib.rs:619 RUST_LOG 与 JSON stderr 日志初始化。
+/Users/bytedance/playground/codex/codex-rs/model-provider-info/src/lib.rs:242 按认证方式选择默认端点。
+/Users/bytedance/playground/codex/codex-rs/responses-api-proxy/README.md 官方仓库中的 HTTP 代理，以 API key 注入为主，仅允许 POST /v1/responses，不是现成的 WSS 监控器。
+/Users/bytedance/playground/codex/codex-rs/responses-api-proxy/src/dump.rs 响应读取时积累，EOF/Drop 才写整份 dump，没有每个增量的实时到达时间。
+
+官方文档
+
+https://learn.chatgpt.com/docs/config-file/environment-variables#diagnostics
+https://developers.openai.com/api/reference/resources/responses/streaming-events#response.custom_tool_call_input.delta
+https://learn.chatgpt.com/docs/auth#custom-ca-bundles

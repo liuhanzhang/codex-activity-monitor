@@ -1,0 +1,17 @@
+# Local generated material and machine state.
+.local/
+.DS_Store
+**/__pycache__/
+*.py[cod]
+
+# Isolated Desktop profiles, credentials, databases, logs and raw transcripts.
+experiments/desktop-isolation/runs/
+experiments/desktop-isolation/latest-run.txt
+experiments/desktop-isolation/baseline-processes.json
+experiments/desktop-isolation/protocol-home/
+
+# Generated source/schema snapshots, including compatibility symlinks.
+experiments/desktop-isolation/source
+experiments/desktop-isolation/protocol-schema
+analysis/file-edit-progress/26.*
+analysis/upstream-stream/desktop-source

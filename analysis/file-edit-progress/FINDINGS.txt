@@ -1,0 +1,163 @@
+当前状态补充（2026-10-10 17:18）：后续上游流式实验已将隔离 App 的模型目录及工具 feature 覆盖恢复为实验前配置。以下 code_mode / patch 流式结果仍是历史实验事实，当前隔离模型已恢复 code_mode_only。最新上游实测见 ../upstream-stream/FINDINGS.txt。
+
+Codex Desktop 写代码时的行数增长显示：源码核查
+核查日期：2026-10-10（Asia/Shanghai）
+
+结论
+没有发现当前 Desktop 删除行数计数或滚动数字动画的证据。
+后续真实实验已确认：在隔离 App 以 code_mode 加载模型目录、开启补丁流开关，
+并让模型直接调用 apply_patch 后，收到了 14 次逐步增长的补丁预览事件。
+此前 code_mode_only 的 exec 包装路径没有这些事件；显示模式也可能隐藏计数。
+这不是已经定位到的历史回归提交，也不能说明 OpenAI 曾主动取消这个功能。
+前端动画尚未直接做视觉验证。
+
+对比范围
+1. 逆向项目唯一的归档版本：26.1002.52244，build 13536。
+   /Users/bytedance/playground/codex-app-reverse/versions/26.1002.52244-13536-arm64/original/ChatGPT.app/Contents/Resources/app.asar
+2. 当前安装版本：26.1007.21159，build 20052。
+   /Applications/ChatGPT.app/Contents/Resources/app.asar
+3. 当前安装的 CLI：0.162.0-alpha.17.2。
+4. 本地公开 Codex Rust 源码：325cf16194，2026-07-14。
+   这份源码比安装的 CLI 旧，只用来解释机制，不能视为当前二进制的逐行源码。
+
+方法
+仅从 ASAR 读取并提取 JS/CSS，没有执行或修改 Desktop 前端。
+格式化文件用于定位代码；event-handlers.source.js 中注明了原始包和字符位置，
+只给原始 switch 分支加上函数外壳以便格式化，并非原始模块的完整函数。
+未修改当前 Desktop 的配置、安装包或用户数据。
+
+已证实：前端保留动画
+当前 webview/assets/app-initial.pretty.js:288823，Waa 组件接收
+animated、linesAdded、linesRemoved。
+animated=true 时使用 Gaa，而不是静态格式化数字。
+Gaa 位于 288942，Kaa 位于 288976，通过 translateY(-数字 lh) 滚动数字列。
+归档版 app-initial 中对应函数为 P2i、F2i、I2i，同样存在。
+两个版本的 DigitColumn/DigitStack CSS 规则逐字相同，比较结果在 comparison.json。
+CSS 为 transform 添加 transition；系统 prefers-reduced-motion:reduce 时取消 transition。
+该设置会关闭滚动效果，不会使统计值停止更新。
+
+已证实：正在进行的任务仍调用动画组件
+当前 sites-end-resource.pretty.js:15899，cD 根据 isInProgress 选择 lD 或 dD。
+当前 sites-end-resource.pretty.js:15965，lD 根据 diffSummary 或 unifiedDiff 统计行数。
+当前 sites-end-resource.pretty.js:16058，实际传入 animated:!0。
+归档 sites-end-resource.pretty.js:15635，同样传入 animated:!0。
+数字表示 diff 的新增/删除行数，不是模型 token 数，也不是文件总行数。
+
+已证实：显示条件在两个版本中相同
+当前 local-conversation-turn.pretty.js:799，Go 负责进行中的固定汇总。
+当前 :841，必须满足 turn 进行中、没有阻塞请求、存在 unifiedDiffItem、
+存在 diff、conversationDetailLevel 不是 STEPS_PROSE。
+当前 :852，汇总 hasChanges 必须为 true。
+当前 :875，把 isInProgress:!0 传给汇总组件。
+归档对应条件在 :833，传入 isInProgress:!0 在 :867。
+app-shared 中 conversationDetailMode 的默认值均为 STEPS_COMMANDS。
+模式映射将 STEPS_PROSE 标为 everyday，其他模式标为 coding。
+未读取当前 UI 的实际显示模式，不能断言用户当前遇到的是模式导致的隐藏。
+
+已证实：文件编辑活动也会根据补丁内容显示
+当前 sites-end-resource.pretty.js:12740，mT 根据成功/失败/审批/取消情况
+选择 streaming、pending、applied、rejected 等状态。
+当前 :12782，changes 为空且没有可视化活动时返回 null。
+当前 :12889，gT 解析文件对应的 diff，并显示 Creating/Editing 或完成状态。
+当前 :13342，只有允许显示 diff、能解析行数、且新增/删除行数非零等条件
+满足时显示文件旁的行数。这里没有给计数传 animated=true；数据变化仍可更新。
+因此“文件旁的数字”和“进行中的汇总滚动数字”是两处不同的显示。
+
+已证实：增量事件处理没有删除
+两个版本的 webview/assets/event-handlers.pretty.js:4 均处理
+item/fileChange/patchUpdated：收到 changes 后更新已有 fileChange，
+或创建 status=inProgress 的 fileChange。
+两个版本的 :35 均处理 turn/diff/updated，把完整 diff 替换到 turn 状态。
+这两种事件不是一个事件：前者可预览正在生成的补丁，后者更新 turn 的 diff。
+
+已证实：当前工具路径与前面的实验
+当前 ~/.codex/config.toml 选用 gpt-6.1-sol，effort=xhigh。
+当前 ~/.codex/models_cache.json 的 gpt-6.1-sol 和隔离实验的 gpt-6-luna
+都标注 tool_mode=code_mode_only。
+隔离实验中模型层工具调用都为 custom_tool_call，name=exec，
+由完整的 JavaScript 工具参数再调用 tools.apply_patch。
+长文件默认实验观察到 291 行补丁一次到达，patchUpdated=0；
+该整个 turn 后来超时，不能记为完整任务成功。
+另一完整实验先生成 320 行，后来替换为 238 行，仍 patchUpdated=0。
+它请求开启实验开关及 direct model catalog，但实际仍是 exec 包装；
+所以它不是已经验证成功的 direct apply_patch 对照组。
+十条 turn/diff/updated 是完整 diff 快照，不是每生成几行就到达的补丁流。
+完整证据：
+../../experiments/desktop-isolation/runs/20261010-150337-2b232b/long-tool-stream-comparison.json
+
+机制解释及边界
+公开源码 core/src/tools/handlers/apply_patch.rs:78 的专用参数增量消费者，
+会解析直接 apply_patch 的输入流并生成 PatchApplyUpdated，缓冲间隔为 500ms。
+它受 ApplyPatchStreamingEvents 开关控制。
+本次用当前安装的 CLI、全新的临时 CODEX_HOME 执行离线 features list，确认
+apply_patch_streaming_events 为 under development，默认 false。
+code_mode_host 默认 true；code_mode、code_mode_only 默认 false。
+features list 的默认值不等于当前 Desktop app-server 的最终有效配置。
+core/src/tools/mod.rs:64 表明模型元数据 tool_mode 优先于上述模式开关。
+core/src/session/turn.rs:2148 只为模型层工具名注册专用增量消费者；
+该源码只有 apply_patch 实现了这个消费者。
+外层 exec 生成 JavaScript 时，内层 apply_patch 的字符串不是该消费者的输入。
+这能解释实验现象，但没有抓取当前安装二进制的原始上游响应来逐段证明。
+
+不能得出的结论
+没有用户最后一次看到动画时对应的安装版本、模型、配置和事件记录，
+所以不能确定具体在哪次更新、模型切换或设置变化后开始不显示。
+归档只有一个版本，不能据此排除更早版本与当前版本之间的所有历史 UI 改动。
+没有证据说明 OpenAI 有意取消功能，也没有验证只开启实验开关即可恢复它。
+
+补充：exec 的来源与调用方式
+exec 是 Codex 内置 Code Mode 的 freeform 工具，不是实验脚本自定义的工具。
+code-mode-protocol/src/lib.rs:45 定义工具名 exec。
+core/src/tools/code_mode/execute_spec.rs:23 注册 ToolSpec::Freeform，
+输入语法是原始 JavaScript，允许首行 // @exec: 控制返回等待时间与输出预算。
+code-mode-protocol/src/description.rs:12 描述工具功能：在新的 V8 isolate 中
+执行 async module，经 tools.* 编排实际工具，经 text/image 返回结果。
+当前安装的 CLI 二进制包含相同的 JavaScript 编排、原始 JS 输入、
+无 Node/直接文件系统/直接网络/console 等描述字符串，和原始 JS 输入错误文案。
+core/src/tools/code_mode/execute_handler.rs:31 解析输入并提交运行时执行。
+core/src/tools/spec_plan.rs:430 根据 CodeModeOnly 隐藏可嵌套工具的直接模型入口；
+:452 把嵌套工具规格传给 exec，并注册 exec/wait 执行器。
+core/src/tools/mod.rs:64 优先采用模型的 tool_mode 元数据。
+因此该模式下，要求“使用 apply_patch”的 prompt 仍可通过 tools.apply_patch 满足，
+并不意味着模型具有直接调用 apply_patch 的顶层入口。
+实验脚本中的 developerInstructions 未要求使用 exec 或 JavaScript。
+实验启动器 :178 确实设置 code_mode_host=true；core/src/thread_manager.rs:346
+表明该选项选择进程级 host 或 in-process session provider，不决定 tool_mode。
+上述 Rust 源码仍是较旧公开快照，不等于安装二进制的完整逐行源码。
+OpenAI Docs 的 Programmatic Tool Calling 文档也介绍了用 JavaScript 编排工具的
+通用设计；API 的托管实现与这里 Codex 的本地运行时不能当作同一接口。
+https://developers.openai.com/api/docs/guides/tools-programmatic-tool-calling
+
+后续真实切换与验证（2026-10-10 17:01-17:03）
+用户选择只修改隔离测试 App；主 App 的安装、配置和后端没有修改或重启。
+已将隔离 home 的 config.toml 中 model_catalog_json 指向本地模型目录快照，
+并将七个 visibility=list 的 code_mode_only 模型改为 tool_mode=code_mode。
+隐藏模型的原有模式保留。缓存 models_cache.json 没有直接编辑。
+设置 features.code_mode=true、features.code_mode_only=false，
+并开启 features.apply_patch_streaming_events=true。
+对已核对身份且没有 active turn 的测试后端重启后，config/read 确认目录路径，
+experimentalFeature/list 确认上述三个开关的有效值，Desktop 日志确认自动重连。
+配置原文备份：
+../../experiments/desktop-isolation/runs/20261010-150337-2b232b/config-before-tool-mode-20261010-170016.toml
+
+第一条真实模型实验：gpt-6-luna，low，auto，15.24 秒完成。
+模型层只有一个 custom_tool_call，工具名为 apply_patch，不再是 exec。
+两个客户端各收到 14 条 item/fileChange/patchUpdated，参数序列完全相同。
+预览行数依次为 0、11、25、35、45、56、67、78、86、95、106、116、125、133。
+首条事件在 7.200 秒，最后一条在 13.984 秒；fileChange 执行开始在 13.996 秒。
+所有预览都早于执行开始；最后预览和实际文件逐字一致。
+最终文件通过 AST 检查、预期文本比较和独立执行，输出 DIRECT_PATCH_OK。
+
+第二条真实模型实验：同一模型和配置，6.02 秒完成。
+模型明确使用 exec，在 JavaScript 中调用 tools.exec_command，输出 EXEC_MODE_OK，
+exitCode=0。因此已验证 code_mode 同时提供直接调用与 exec 编排两种入口。
+以上为事件/工具/文件验证，不是 UI 行数动画的视觉验证。
+补丁事件携带累计内容快照，不能把每条快照的字符数相加当成生成字符数。
+验证报告：
+../../experiments/desktop-isolation/runs/20261010-150337-2b232b/tool-mode-verification.json
+
+与此前失败尝试的区别
+此前 model_catalog_json 是 thread/start 的单聊天覆盖，没有改变已建立的模型目录管理器。
+本次在后端启动时通过 config.toml 加载目录，成功改变模型可见的工具入口。
+因此不能把此前的 per-thread 尝试视为 code_mode 或 direct 模式已经生效的证据。
+这是固定的本地模型目录快照覆盖；后续更新模型目录时应重新生成并核对。

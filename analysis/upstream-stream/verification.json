@@ -1,0 +1,88 @@
+{
+  "desktop_version": "26.1007.21159",
+  "desktop_build": "20052",
+  "cli_version": "0.162.0-alpha.17.2",
+  "transport": "Responses WebSocket",
+  "method": "Built-in RUST_LOG receive logging; no proxy or binary modification",
+  "trace_log": "/Users/bytedance/personal/codex_progress_monitor/experiments/desktop-isolation/runs/20261010-150337-2b232b/backend-transport-20261010-171554.log.gz",
+  "case_summaries": {
+    "tool": "/Users/bytedance/personal/codex_progress_monitor/experiments/desktop-isolation/runs/20261010-150337-2b232b/stream-20261010-171611-long_inline-auto/summary.json",
+    "reasoning": "/Users/bytedance/personal/codex_progress_monitor/experiments/desktop-isolation/runs/20261010-150337-2b232b/stream-20261010-171729-reasoning-auto/summary.json"
+  },
+  "tool_case": {
+    "thread_id": "01a12519-3743-79c1-82ca-78cef0a473e1",
+    "turn_id": "01a12519-3951-7d10-80fa-dad7c732e4c8",
+    "status": "completed",
+    "tool_name": "exec",
+    "item_id": "ctc_0b5b2a952a551a1b016aca0264ce90819a906e06fad31d8d7c",
+    "delta_count": 2367,
+    "delta_chars": 10068,
+    "delta_utf8_bytes": 10068,
+    "first_delta_at": "2026-10-10T09:16:21.088282Z",
+    "last_delta_at": "2026-10-10T09:16:33.416916Z",
+    "stream_span_seconds": 12.328634,
+    "receipt_chars_per_second": 816.635484515154,
+    "delta_char_length_min": 1,
+    "delta_char_length_max": 40,
+    "delta_token_count_fields_present": false,
+    "joined_deltas_equal_upstream_done_and_saved_rollout": true,
+    "sequence_numbers_unique_and_increasing": true,
+    "app_server_notification_counts": {
+      "thread/goal/cleared": 1,
+      "thread/settings/updated": 1,
+      "thread/status/changed": 2,
+      "turn/started": 1,
+      "mcpServer/startupStatus/updated": 2,
+      "item/started": 4,
+      "item/completed": 4,
+      "item/agentMessage/delta": 42,
+      "item/commandExecution/outputDelta": 1,
+      "thread/tokenUsage/updated": 2,
+      "turn/completed": 1
+    },
+    "execution_exit_code": 0,
+    "command_stdout": "INLINE_PROBE_BEGIN\nLONG_FILE_OK\nINLINE_PROBE_OK\n"
+  },
+  "reasoning_case": {
+    "thread_id": "01a1251a-659e-78d1-9d9c-73773dac6040",
+    "turn_id": "01a1251a-6725-7121-a042-f9a062a1298a",
+    "status": "completed",
+    "effort": "xhigh",
+    "reasoning_item_id": "rs_07cb865aed784950016aca02ad3ee4819ba5f008ac18c6f62b",
+    "summary_delta_count": 2,
+    "summary_delta_chars": 60,
+    "reasoning_event_types": {
+      "response.reasoning_summary_part.added": 2,
+      "response.reasoning_summary_text.delta": 2,
+      "response.reasoning_summary_text.done": 2,
+      "response.reasoning_summary_part.done": 2
+    },
+    "encrypted_content_chars_at_start": 1336,
+    "encrypted_content_chars_at_done": 5688,
+    "longest_upstream_event_gap_during_reasoning_seconds": 3.881607,
+    "usage_reported_at_response_completed": {
+      "input_tokens": 18126,
+      "output_tokens": 452,
+      "output_tokens_details": {
+        "reasoning_tokens": 443
+      },
+      "total_tokens": 18578
+    },
+    "continuous_reasoning_token_updates_observed": false
+  },
+  "restored_state": {
+    "backend_pid": 6498,
+    "rust_log": "codex_app_server=info",
+    "model_catalog_json": null,
+    "cached_model_tool_mode": "code_mode_only",
+    "isolated_config_matches_original_backup": true,
+    "primary_app_modified": false
+  },
+  "limits": [
+    "Delta count is not token count",
+    "Receipt rate is not guaranteed backend generation rate",
+    "No events does not prove a hang",
+    "RUST_LOG is documented; raw log text is not a stable monitoring API",
+    "Trace recording adds I/O overhead; no overhead benchmark performed"
+  ]
+}

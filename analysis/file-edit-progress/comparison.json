@@ -1,0 +1,29 @@
+{
+  "versions": [
+    {
+      "version": "26.1002.52244",
+      "css_digit_rules": "._DigitColumn_1rr6w_1{width:1ch;height:1lh;line-height:inherit;contain:layout paint style;display:inline-block;position:relative}._DigitColumn_1rr6w_1:before{content:\"0\";visibility:hidden}._DigitColumn_1rr6w_1[data-variant=inline]{contain:none}._DigitColumn_1rr6w_1[data-variant=inline] ._DigitStack_1rr6w_17{margin-top:var(--rolling-number-y-offset,0);display:block}._DigitColumn_1rr6w_1[data-variant=inline] ._DigitStack_1rr6w_17>span{line-height:inherit;display:block}._DigitStack_1rr6w_17{contain:layout size style;height:1lh;transition:transform var(--transition-duration-relaxed) cubic-bezier(.16, 1, .3, 1);will-change:transform;flex-direction:column;display:flex}._DigitStack_1rr6w_17>span{flex:0 0 1lh;height:1lh}@media (prefers-reduced-motion:reduce){._DigitStack_1rr6w_17{transition:none}}",
+      "css_sha256": "6b57493c5eec80a0e7c5a13e78923da9fe173ddaa03809be23ff8ec648ca4e11",
+      "ui_summary_gate_lines": [
+        833
+      ]
+    },
+    {
+      "version": "26.1007.21159",
+      "css_digit_rules": "._DigitColumn_1rr6w_1{width:1ch;height:1lh;line-height:inherit;contain:layout paint style;display:inline-block;position:relative}._DigitColumn_1rr6w_1:before{content:\"0\";visibility:hidden}._DigitColumn_1rr6w_1[data-variant=inline]{contain:none}._DigitColumn_1rr6w_1[data-variant=inline] ._DigitStack_1rr6w_17{margin-top:var(--rolling-number-y-offset,0);display:block}._DigitColumn_1rr6w_1[data-variant=inline] ._DigitStack_1rr6w_17>span{line-height:inherit;display:block}._DigitStack_1rr6w_17{contain:layout size style;height:1lh;transition:transform var(--transition-duration-relaxed) cubic-bezier(.16, 1, .3, 1);will-change:transform;flex-direction:column;display:flex}._DigitStack_1rr6w_17>span{flex:0 0 1lh;height:1lh}@media (prefers-reduced-motion:reduce){._DigitStack_1rr6w_17{transition:none}}",
+      "css_sha256": "6b57493c5eec80a0e7c5a13e78923da9fe173ddaa03809be23ff8ec648ca4e11",
+      "ui_summary_gate_lines": [
+        841
+      ]
+    }
+  ],
+  "digit_css_identical": true,
+  "installed_binary_feature_defaults": {
+    "apply_patch_streaming_events": false,
+    "code_mode_host": true,
+    "code_mode": false,
+    "code_mode_only": false
+  },
+  "current_user_model": "gpt-6.1-sol",
+  "current_cached_tool_mode": "code_mode_only"
+}
