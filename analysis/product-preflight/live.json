@@ -1,0 +1,467 @@
+{
+  "runs": [
+    {
+      "run": "live-20261011",
+      "model": "gpt-6-luna",
+      "transport": "owned-stdio",
+      "scope": "owned stdio backend; not Desktop-submitted turns",
+      "tool_execution_verified": false,
+      "tool_execution_gap": "nested parent sandbox denied command launch",
+      "interruption_status": "interrupted",
+      "config_unchanged": true,
+      "forwarder": {
+        "pid": 28307,
+        "child_pid": 28308,
+        "dropped_packets": 0,
+        "captured_rows": 3301,
+        "captured_bytes": 2030710,
+        "capture_limit_rows": 0,
+        "writer_errors": 0,
+        "incomplete_lines": 0,
+        "protocol_parse_errors": 0,
+        "raw_bytes": {
+          "stdin": 5332,
+          "stdout": 142706,
+          "stderr": 2745507
+        },
+        "child_returncode": 0,
+        "writer_drained": true
+      },
+      "telemetry": {
+        "event_counts": {
+          "response.created": 5,
+          "response.in_progress": 5,
+          "response.completed": 5,
+          "item/started:userMessage": 3,
+          "item/completed:userMessage": 3,
+          "response.output_item.added": 10,
+          "item/started:reasoning": 4,
+          "response.output_item.done": 10,
+          "item/completed:reasoning": 4,
+          "response.content_part.added": 4,
+          "item/started:agentMessage": 4,
+          "response.output_text.delta": 339,
+          "response.output_text.done": 4,
+          "response.content_part.done": 4,
+          "response.custom_tool_call_input.delta": 2461,
+          "item/completed:agentMessage": 4,
+          "response.custom_tool_call_input.done": 2
+        },
+        "streams": [
+          {
+            "item_id": "msg_0cffef2e6f9f8717016acb3a36eedc8199a22fd0dce3bd8d1d",
+            "kind": "text",
+            "part": 0,
+            "turn_id": "01a129db-423a-7140-bb12-ccf10fa13e4c",
+            "thread_id": "01a129db-4016-71f3-b283-9559475016b8",
+            "delta_count": 78,
+            "delayed_mapping_count": 0,
+            "first_at": 1791703607.018976,
+            "last_at": 1791703607.161989,
+            "chars": 110,
+            "utf8_bytes": 314,
+            "sha256": "8ac5b5e62dda2857fcd225f698c9a5bd351f5f3febb84a8691d694f57e38404b",
+            "matches_completed_item": true,
+            "item_finished_at": 1791703607.165255,
+            "local_tokens": 78,
+            "encoding": "o200k_base",
+            "token_count_status": "estimate_for_unmapped_model",
+            "matches_persisted_item": true
+          },
+          {
+            "item_id": "ctc_0cffef2e6f9f8717016acb3a36fe1c81999bb8390aa4f119eb",
+            "kind": "tool_input",
+            "part": 0,
+            "turn_id": "01a129db-423a-7140-bb12-ccf10fa13e4c",
+            "thread_id": "01a129db-4016-71f3-b283-9559475016b8",
+            "delta_count": 1056,
+            "delayed_mapping_count": 0,
+            "first_at": 1791703607.165306,
+            "last_at": 1791703613.217311,
+            "chars": 3803,
+            "utf8_bytes": 3803,
+            "sha256": "0863e2800d0242f4d2c7f8dba040647a10ed68428612ec3cd640cbc36a0c9bdd",
+            "matches_completed_item": true,
+            "item_finished_at": 1791703613.267037,
+            "local_tokens": 1056,
+            "encoding": "o200k_base",
+            "token_count_status": "estimate_for_unmapped_model",
+            "matches_persisted_item": true
+          },
+          {
+            "item_id": "msg_0e64fc2139f62a12016acb3a37357c87d0b82fa8a022c61279",
+            "kind": "text",
+            "part": 0,
+            "turn_id": "01a129db-43f2-7e21-a4fe-4176a34936c9",
+            "thread_id": "01a129db-4245-7ed3-ab24-01cc155d8f65",
+            "delta_count": 60,
+            "delayed_mapping_count": 0,
+            "first_at": 1791703607.309965,
+            "last_at": 1791703607.458679,
+            "chars": 88,
+            "utf8_bytes": 248,
+            "sha256": "c2be802e39add612dd7397679483a8449f8e2f6665b54c71b124c3f569e76db5",
+            "matches_completed_item": true,
+            "item_finished_at": 1791703607.458758,
+            "local_tokens": 61,
+            "encoding": "o200k_base",
+            "token_count_status": "estimate_for_unmapped_model",
+            "matches_persisted_item": true
+          },
+          {
+            "item_id": "ctc_0e64fc2139f62a12016acb3a375f9087d0a9c50ff56b9118cf",
+            "kind": "tool_input",
+            "part": 0,
+            "turn_id": "01a129db-43f2-7e21-a4fe-4176a34936c9",
+            "thread_id": "01a129db-4245-7ed3-ab24-01cc155d8f65",
+            "delta_count": 1405,
+            "delayed_mapping_count": 0,
+            "first_at": 1791703607.462853,
+            "last_at": 1791703631.745353,
+            "chars": 5171,
+            "utf8_bytes": 5171,
+            "sha256": "d7c3ffb4adecd026f4ba7196287d5e66a90af6094effb78cad0f854103a66ac9",
+            "matches_completed_item": true,
+            "item_finished_at": 1791703631.836701,
+            "local_tokens": 1405,
+            "encoding": "o200k_base",
+            "token_count_status": "estimate_for_unmapped_model",
+            "matches_persisted_item": true
+          },
+          {
+            "item_id": "msg_0cffef2e6f9f8717016acb3a3fcf248199802038fd5a0468d7",
+            "kind": "text",
+            "part": 0,
+            "turn_id": "01a129db-423a-7140-bb12-ccf10fa13e4c",
+            "thread_id": "01a129db-4016-71f3-b283-9559475016b8",
+            "delta_count": 109,
+            "delayed_mapping_count": 0,
+            "first_at": 1791703615.904997,
+            "last_at": 1791703616.270898,
+            "chars": 207,
+            "utf8_bytes": 483,
+            "sha256": "868ae09d217f5363d8333a0a399b75cd9bc380b505db652caa483f19c3e3ab71",
+            "matches_completed_item": true,
+            "item_finished_at": 1791703616.271013,
+            "local_tokens": 109,
+            "encoding": "o200k_base",
+            "token_count_status": "estimate_for_unmapped_model",
+            "matches_persisted_item": true
+          },
+          {
+            "item_id": "msg_0e64fc2139f62a12016acb3a52e63487d0ba90c30da097a825",
+            "kind": "text",
+            "part": 0,
+            "turn_id": "01a129db-43f2-7e21-a4fe-4176a34936c9",
+            "thread_id": "01a129db-4245-7ed3-ab24-01cc155d8f65",
+            "delta_count": 92,
+            "delayed_mapping_count": 0,
+            "first_at": 1791703634.989644,
+            "last_at": 1791703635.347568,
+            "chars": 174,
+            "utf8_bytes": 412,
+            "sha256": "51eb73749641d2b30c45fa3266ad9ab1ac45455d77650723e2caf07200aae302",
+            "matches_completed_item": true,
+            "item_finished_at": 1791703635.448712,
+            "local_tokens": 92,
+            "encoding": "o200k_base",
+            "token_count_status": "estimate_for_unmapped_model",
+            "matches_persisted_item": true
+          }
+        ],
+        "unassociated_delta_count": 0,
+        "inter_thread_delta_switches": 445,
+        "tool_activity": [],
+        "turn_statuses": {
+          "01a129db-423a-7140-bb12-ccf10fa13e4c": "completed",
+          "01a129db-43f2-7e21-a4fe-4176a34936c9": "completed",
+          "01a129db-d86c-7730-9787-d619af549a46": "interrupted"
+        },
+        "reasoning_items": [
+          {
+            "item_id": "rs_0e64fc2139f62a12016acb3a31a16c87d08e4e7d8c13478748",
+            "turn_id": "01a129db-43f2-7e21-a4fe-4176a34936c9",
+            "started_at": 1791703601.737875,
+            "ended_at": 1791703607.30985
+          },
+          {
+            "item_id": "rs_0cffef2e6f9f8717016acb3a3495d48199acc0b5080dfb85d7",
+            "turn_id": "01a129db-423a-7140-bb12-ccf10fa13e4c",
+            "started_at": 1791703604.683947,
+            "ended_at": 1791703607.012135
+          },
+          {
+            "item_id": "rs_0cffef2e6f9f8717016acb3a3e3578819983e1fb604b1f351d",
+            "turn_id": "01a129db-423a-7140-bb12-ccf10fa13e4c",
+            "started_at": 1791703614.321444,
+            "ended_at": 1791703615.892724
+          },
+          {
+            "item_id": "rs_0e64fc2139f62a12016acb3a50bc7c87d09e9eaf4d11f9b95c",
+            "turn_id": "01a129db-43f2-7e21-a4fe-4176a34936c9",
+            "started_at": 1791703632.816434,
+            "ended_at": 1791703634.989474
+          }
+        ]
+      },
+      "source_to_observed_lag_ms": {
+        "p50": 0.18787384033203125,
+        "p95": 0.47397613525390625,
+        "max": 16.088008880615234
+      },
+      "evidence": [
+        {
+          "path": "/Users/bytedance/personal/codex_progress_monitor/.local/product-preflight/live-20261011/capture.jsonl",
+          "sha256": "82ca0868fc2b219dc402b07fb6fd6f103a41a8ffb2bfcadb4018be28e7688582"
+        },
+        {
+          "path": "/Users/bytedance/personal/codex_progress_monitor/experiments/desktop-isolation/runs/20261010-150337-2b232b/codex-home/sessions/2026/10/11/rollout-2026-10-11T15-26-37-01a129db-4016-71f3-b283-9559475016b8.jsonl",
+          "sha256": "67f6f95a3b21399eeae1ac8fe92cfb67fdad5c61f7032e95dbca93af07f549ad"
+        },
+        {
+          "path": "/Users/bytedance/personal/codex_progress_monitor/experiments/desktop-isolation/runs/20261010-150337-2b232b/codex-home/sessions/2026/10/11/rollout-2026-10-11T15-26-37-01a129db-4245-7ed3-ab24-01cc155d8f65.jsonl",
+          "sha256": "66e5a78da63194ebb7880597da69cb398a5515d910f489194350f3991a328b8c"
+        }
+      ]
+    },
+    {
+      "run": "tools-20261011",
+      "model": "gpt-6-luna",
+      "transport": "owned-stdio",
+      "scope": "owned stdio backend; not Desktop-submitted turns",
+      "tool_execution_verified": true,
+      "tool_execution_gap": null,
+      "interruption_status": null,
+      "config_unchanged": true,
+      "forwarder": {
+        "pid": 30957,
+        "child_pid": 30958,
+        "dropped_packets": 0,
+        "captured_rows": 468,
+        "captured_bytes": 1044061,
+        "capture_limit_rows": 0,
+        "writer_errors": 0,
+        "incomplete_lines": 0,
+        "protocol_parse_errors": 0,
+        "raw_bytes": {
+          "stdin": 2672,
+          "stdout": 69741,
+          "stderr": 1406082
+        },
+        "child_returncode": 0,
+        "writer_drained": true
+      },
+      "telemetry": {
+        "event_counts": {
+          "response.created": 6,
+          "response.in_progress": 6,
+          "response.completed": 6,
+          "item/started:userMessage": 2,
+          "item/completed:userMessage": 2,
+          "response.output_item.added": 6,
+          "response.content_part.added": 4,
+          "response.output_text.delta": 94,
+          "item/started:agentMessage": 4,
+          "response.output_text.done": 4,
+          "response.content_part.done": 4,
+          "response.output_item.done": 6,
+          "item/completed:agentMessage": 4,
+          "response.custom_tool_call_input.delta": 152,
+          "response.custom_tool_call_input.done": 2,
+          "item/started:commandExecution": 2,
+          "item/completed:commandExecution": 2
+        },
+        "streams": [
+          {
+            "item_id": "msg_0dde16823b6e0564016acb3adc0ab4819ba34b7af115efb561",
+            "kind": "text",
+            "part": 0,
+            "turn_id": "01a129dd-d7b5-77a2-9280-974a95898a44",
+            "thread_id": "01a129dd-d552-76a0-8aa3-711bfd0789d8",
+            "delta_count": 22,
+            "delayed_mapping_count": 0,
+            "first_at": 1791703772.149966,
+            "last_at": 1791703772.27922,
+            "chars": 40,
+            "utf8_bytes": 86,
+            "sha256": "e5a94d73c9338906f03f302f54afa635f0e912f2e123600de6f6ed1cd75316bd",
+            "matches_completed_item": true,
+            "item_finished_at": 1791703772.303874,
+            "local_tokens": 23,
+            "encoding": "o200k_base",
+            "token_count_status": "estimate_for_unmapped_model",
+            "matches_persisted_item": true
+          },
+          {
+            "item_id": "msg_0530afdb37229c90016acb3adc21a887d08b7cb88df233f525",
+            "kind": "text",
+            "part": 0,
+            "turn_id": "01a129dd-d99a-7312-8841-1c34267cc27c",
+            "thread_id": "01a129dd-d7c1-74b3-bcc0-ee7fc95f65e3",
+            "delta_count": 34,
+            "delayed_mapping_count": 0,
+            "first_at": 1791703772.253281,
+            "last_at": 1791703772.834179,
+            "chars": 56,
+            "utf8_bytes": 128,
+            "sha256": "f0f7bfb3ed969104e42ef811d7017bf19b2221b35a363c87cd9c0b6e39cd8d5c",
+            "matches_completed_item": true,
+            "item_finished_at": 1791703773.11714,
+            "local_tokens": 35,
+            "encoding": "o200k_base",
+            "token_count_status": "estimate_for_unmapped_model",
+            "matches_persisted_item": true
+          },
+          {
+            "item_id": "ctc_0dde16823b6e0564016acb3adc4c54819b90b6fdec8f644564",
+            "kind": "tool_input",
+            "part": 0,
+            "turn_id": "01a129dd-d7b5-77a2-9280-974a95898a44",
+            "thread_id": "01a129dd-d552-76a0-8aa3-711bfd0789d8",
+            "delta_count": 84,
+            "delayed_mapping_count": 0,
+            "first_at": 1791703772.433448,
+            "last_at": 1791703772.917541,
+            "chars": 302,
+            "utf8_bytes": 302,
+            "sha256": "233d04cc962e43a191f32ea7d9c19cd5eb08cc734fa2cf13bb363c8f929b8bb5",
+            "matches_completed_item": true,
+            "item_finished_at": 1791703772.949557,
+            "local_tokens": 84,
+            "encoding": "o200k_base",
+            "token_count_status": "estimate_for_unmapped_model",
+            "matches_persisted_item": true
+          },
+          {
+            "item_id": "ctc_0530afdb37229c90016acb3adcfe7c87d08e80b5e53f012729",
+            "kind": "tool_input",
+            "part": 0,
+            "turn_id": "01a129dd-d99a-7312-8841-1c34267cc27c",
+            "thread_id": "01a129dd-d7c1-74b3-bcc0-ee7fc95f65e3",
+            "delta_count": 68,
+            "delayed_mapping_count": 0,
+            "first_at": 1791703773.117184,
+            "last_at": 1791703774.280764,
+            "chars": 239,
+            "utf8_bytes": 239,
+            "sha256": "7a451809d06add23fdb571a1e7fbc99e1ba64872b0c2726dc317246130df3f77",
+            "matches_completed_item": true,
+            "item_finished_at": 1791703774.350155,
+            "local_tokens": 68,
+            "encoding": "o200k_base",
+            "token_count_status": "estimate_for_unmapped_model",
+            "matches_persisted_item": true
+          },
+          {
+            "item_id": "msg_0dde16823b6e0564016acb3ae12794819bb45c5ae42c8af280",
+            "kind": "text",
+            "part": 0,
+            "turn_id": "01a129dd-d7b5-77a2-9280-974a95898a44",
+            "thread_id": "01a129dd-d552-76a0-8aa3-711bfd0789d8",
+            "delta_count": 19,
+            "delayed_mapping_count": 0,
+            "first_at": 1791703777.691329,
+            "last_at": 1791703778.21973,
+            "chars": 25,
+            "utf8_bytes": 71,
+            "sha256": "90b5f144b0ab4dc170d965e5f32a209b55ae8b73cd4d74f99fee0c6fd795e49c",
+            "matches_completed_item": true,
+            "item_finished_at": 1791703778.263425,
+            "local_tokens": 19,
+            "encoding": "o200k_base",
+            "token_count_status": "estimate_for_unmapped_model",
+            "matches_persisted_item": true
+          },
+          {
+            "item_id": "msg_0530afdb37229c90016acb3ae22efc87d0b34d710340a1981d",
+            "kind": "text",
+            "part": 0,
+            "turn_id": "01a129dd-d99a-7312-8841-1c34267cc27c",
+            "thread_id": "01a129dd-d7c1-74b3-bcc0-ee7fc95f65e3",
+            "delta_count": 19,
+            "delayed_mapping_count": 0,
+            "first_at": 1791703778.272655,
+            "last_at": 1791703778.588476,
+            "chars": 24,
+            "utf8_bytes": 68,
+            "sha256": "0bfef8e53e17a85b88701e80f7fc4658195e789102983859de58296b00c2c088",
+            "matches_completed_item": true,
+            "item_finished_at": 1791703778.67726,
+            "local_tokens": 19,
+            "encoding": "o200k_base",
+            "token_count_status": "estimate_for_unmapped_model",
+            "matches_persisted_item": true
+          }
+        ],
+        "unassociated_delta_count": 0,
+        "inter_thread_delta_switches": 43,
+        "tool_activity": [
+          {
+            "at": 1791703773.168405,
+            "thread_id": "01a129dd-d552-76a0-8aa3-711bfd0789d8",
+            "turn_id": "01a129dd-d7b5-77a2-9280-974a95898a44",
+            "item_id": "exec-c4c29971-9e1e-485c-be01-9f6f579876b8",
+            "event": "item/started",
+            "type": "commandExecution",
+            "status": "inProgress",
+            "exit_code": null
+          },
+          {
+            "at": 1791703774.522421,
+            "thread_id": "01a129dd-d7c1-74b3-bcc0-ee7fc95f65e3",
+            "turn_id": "01a129dd-d99a-7312-8841-1c34267cc27c",
+            "item_id": "exec-285ff30c-84de-4c53-bf4e-bfc5c476b50e",
+            "event": "item/started",
+            "type": "commandExecution",
+            "status": "inProgress",
+            "exit_code": null
+          },
+          {
+            "at": 1791703776.133787,
+            "thread_id": "01a129dd-d552-76a0-8aa3-711bfd0789d8",
+            "turn_id": "01a129dd-d7b5-77a2-9280-974a95898a44",
+            "item_id": "exec-c4c29971-9e1e-485c-be01-9f6f579876b8",
+            "event": "item/completed",
+            "type": "commandExecution",
+            "status": "completed",
+            "exit_code": 0
+          },
+          {
+            "at": 1791703777.48053,
+            "thread_id": "01a129dd-d7c1-74b3-bcc0-ee7fc95f65e3",
+            "turn_id": "01a129dd-d99a-7312-8841-1c34267cc27c",
+            "item_id": "exec-285ff30c-84de-4c53-bf4e-bfc5c476b50e",
+            "event": "item/completed",
+            "type": "commandExecution",
+            "status": "failed",
+            "exit_code": 7
+          }
+        ],
+        "turn_statuses": {
+          "01a129dd-d7b5-77a2-9280-974a95898a44": "completed",
+          "01a129dd-d99a-7312-8841-1c34267cc27c": "completed"
+        },
+        "reasoning_items": []
+      },
+      "source_to_observed_lag_ms": {
+        "p50": 0.11289119720458984,
+        "p95": 0.40721893310546875,
+        "max": 0.9598731994628906
+      },
+      "evidence": [
+        {
+          "path": "/Users/bytedance/personal/codex_progress_monitor/.local/product-preflight/tools-20261011/capture.jsonl",
+          "sha256": "3b7ade5d4ff232d71114ee11a1664c401d674d14668e4ef22180b59b7bdad229"
+        },
+        {
+          "path": "/Users/bytedance/personal/codex_progress_monitor/experiments/desktop-isolation/runs/20261010-150337-2b232b/codex-home/sessions/2026/10/11/rollout-2026-10-11T15-29-26-01a129dd-d552-76a0-8aa3-711bfd0789d8.jsonl",
+          "sha256": "9a71335e031b8b5ff08a44382d4fa66c74352602f874ef0cc56ec194e1c78986"
+        },
+        {
+          "path": "/Users/bytedance/personal/codex_progress_monitor/experiments/desktop-isolation/runs/20261010-150337-2b232b/codex-home/sessions/2026/10/11/rollout-2026-10-11T15-29-27-01a129dd-d7c1-74b3-bcc0-ee7fc95f65e3.jsonl",
+          "sha256": "d66b348a76bd4230f0f76263d710c24d0e73dc42770c60704ef173e734c59276"
+        }
+      ]
+    }
+  ]
+}

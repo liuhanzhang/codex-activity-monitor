@@ -1,0 +1,150 @@
+{
+  "transport_faults": [
+    {
+      "case": "echo",
+      "returncode": 0,
+      "stdout_rows": 1,
+      "stdout_sha256": "1cbfb55c08f2a34710a5eed8f7d1274a99c9e73a485705797d85813fe7485be3",
+      "elapsed_ms_including_diagnostic_drain": 102.4682919960469,
+      "forwarder": {
+        "pid": 32753,
+        "child_pid": 32754,
+        "dropped_packets": 0,
+        "captured_rows": 2,
+        "captured_bytes": 348,
+        "capture_limit_rows": 0,
+        "writer_errors": 0,
+        "incomplete_lines": 0,
+        "protocol_parse_errors": 0,
+        "raw_bytes": {
+          "stdin": 35,
+          "stdout": 35,
+          "stderr": 0
+        },
+        "child_returncode": 0,
+        "writer_drained": true
+      },
+      "passed": true
+    },
+    {
+      "case": "exit7",
+      "returncode": 7,
+      "stdout_rows": 1,
+      "stdout_sha256": "1cbfb55c08f2a34710a5eed8f7d1274a99c9e73a485705797d85813fe7485be3",
+      "elapsed_ms_including_diagnostic_drain": 75.13787501375191,
+      "forwarder": {
+        "pid": 32755,
+        "child_pid": 32756,
+        "dropped_packets": 0,
+        "captured_rows": 2,
+        "captured_bytes": 348,
+        "capture_limit_rows": 0,
+        "writer_errors": 0,
+        "incomplete_lines": 0,
+        "protocol_parse_errors": 0,
+        "raw_bytes": {
+          "stdin": 35,
+          "stdout": 35,
+          "stderr": 0
+        },
+        "child_returncode": 7,
+        "writer_drained": true
+      },
+      "passed": true
+    },
+    {
+      "case": "burst",
+      "returncode": 0,
+      "stdout_rows": 129,
+      "stdout_sha256": "828a747ea0e7af4af9eff7828a7d73fab1687dc34ec835c3b57d43f3ab41e351",
+      "elapsed_ms_including_diagnostic_drain": 365.4794579924783,
+      "forwarder": {
+        "pid": 32757,
+        "child_pid": 32758,
+        "dropped_packets": 126,
+        "captured_rows": 3,
+        "captured_bytes": 33324,
+        "capture_limit_rows": 0,
+        "writer_errors": 0,
+        "incomplete_lines": 0,
+        "protocol_parse_errors": 0,
+        "raw_bytes": {
+          "stdin": 35,
+          "stdout": 2103989,
+          "stderr": 0
+        },
+        "child_returncode": 0,
+        "writer_drained": true
+      },
+      "passed": true
+    },
+    {
+      "case": "writer_failure",
+      "returncode": 0,
+      "stdout_rows": 1,
+      "stdout_sha256": "1cbfb55c08f2a34710a5eed8f7d1274a99c9e73a485705797d85813fe7485be3",
+      "elapsed_ms_including_diagnostic_drain": 93.76904201053549,
+      "forwarder": {
+        "pid": 32759,
+        "child_pid": 32760,
+        "dropped_packets": 0,
+        "captured_rows": 0,
+        "captured_bytes": 0,
+        "capture_limit_rows": 0,
+        "writer_errors": 1,
+        "incomplete_lines": 0,
+        "protocol_parse_errors": 0,
+        "raw_bytes": {
+          "stdin": 35,
+          "stdout": 35,
+          "stderr": 0
+        },
+        "child_returncode": 0,
+        "writer_drained": true
+      },
+      "passed": true
+    },
+    {
+      "case": "capture_limit",
+      "returncode": 0,
+      "stdout_rows": 1,
+      "stdout_sha256": "1cbfb55c08f2a34710a5eed8f7d1274a99c9e73a485705797d85813fe7485be3",
+      "elapsed_ms_including_diagnostic_drain": 93.27408400713466,
+      "forwarder": {
+        "pid": 32761,
+        "child_pid": 32762,
+        "dropped_packets": 0,
+        "captured_rows": 0,
+        "captured_bytes": 0,
+        "capture_limit_rows": 2,
+        "writer_errors": 0,
+        "incomplete_lines": 0,
+        "protocol_parse_errors": 0,
+        "raw_bytes": {
+          "stdin": 35,
+          "stdout": 35,
+          "stderr": 0
+        },
+        "child_returncode": 0,
+        "writer_drained": true
+      },
+      "passed": true
+    },
+    {
+      "case": "SIGTERM",
+      "returncode": -15,
+      "passed": true
+    },
+    {
+      "case": "non_app_server_passthrough",
+      "passed": true
+    }
+  ],
+  "replay": {
+    "duplicate_deltas_ignored": 2800,
+    "duplicate_replay_matches_baseline": true,
+    "unknown_item_quarantined": true,
+    "missing_item_start_not_guessed": true
+  },
+  "scope": "synthetic transport faults plus real capture replay; no Desktop crash test"
+}

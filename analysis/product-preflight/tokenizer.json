@@ -1,0 +1,460 @@
+{
+  "tiktoken_version": "0.14.0",
+  "model_encoding_mapping": {
+    "gpt-6-luna": null,
+    "gpt-6.1-sol": null,
+    "gpt-6-astra": null
+  },
+  "mapping_source_sha256": "600f26902d1cf6a1a5f54e37be988b3e0d911f1ff17ba7060bb361f9b5295521",
+  "selected_encoding": "o200k_base",
+  "encoding_status": "explicit_estimate_for_unmapped_models",
+  "text_count_definition": "encode_ordinary received text; no hidden/format tokens",
+  "source_trace": "/Users/bytedance/personal/codex_progress_monitor/experiments/desktop-isolation/runs/20261010-150337-2b232b/backend-transport-20261010-171554.log.gz",
+  "samples": [
+    {
+      "kind": "response.output_text.delta",
+      "chars": 40,
+      "bytes": 92,
+      "sha256": "5ea5a82884302ab378925a572aa2322411dc87347d33c9f5f4848055d6f4b2bd",
+      "full_text_tokens": 23,
+      "recomputed_counts": {
+        "original": 23,
+        "single_character": 23,
+        "random_0": 23,
+        "random_1": 23,
+        "random_2": 23
+      },
+      "naive_delta_sum_counts": {
+        "original": 23,
+        "single_character": 40,
+        "random_0": 23,
+        "random_1": 24,
+        "random_2": 24
+      },
+      "naive_overcounts": {
+        "original": 0,
+        "single_character": 17,
+        "random_0": 0,
+        "random_1": 1,
+        "random_2": 1
+      }
+    },
+    {
+      "kind": "response.custom_tool_call_input.delta",
+      "chars": 10068,
+      "bytes": 10068,
+      "sha256": "a1f1d590e9a9a088352d19fe334805e034241929a29ca384bf7213abb05ca164",
+      "full_text_tokens": 2367,
+      "recomputed_counts": {
+        "original": 2367,
+        "single_character": 2367,
+        "random_0": 2367,
+        "random_1": 2367,
+        "random_2": 2367
+      },
+      "naive_delta_sum_counts": {
+        "original": 2367,
+        "single_character": 10068,
+        "random_0": 2847,
+        "random_1": 2841,
+        "random_2": 2822
+      },
+      "naive_overcounts": {
+        "original": 0,
+        "single_character": 7701,
+        "random_0": 480,
+        "random_1": 474,
+        "random_2": 455
+      }
+    },
+    {
+      "kind": "response.output_text.delta",
+      "chars": 45,
+      "bytes": 67,
+      "sha256": "a02db1f7e63664d2ca933fcbd9fceba8acea21029f44f574b76a10f13cbb0ff6",
+      "full_text_tokens": 19,
+      "recomputed_counts": {
+        "original": 19,
+        "single_character": 19,
+        "random_0": 19,
+        "random_1": 19,
+        "random_2": 19
+      },
+      "naive_delta_sum_counts": {
+        "original": 19,
+        "single_character": 45,
+        "random_0": 20,
+        "random_1": 19,
+        "random_2": 22
+      },
+      "naive_overcounts": {
+        "original": 0,
+        "single_character": 26,
+        "random_0": 1,
+        "random_1": 0,
+        "random_2": 3
+      }
+    },
+    {
+      "kind": "response.reasoning_summary_text.delta",
+      "chars": 31,
+      "bytes": 31,
+      "sha256": "cc0b8ed4b1f0bdff5e6274dcdda98628ce908df17c6c588fdc60671412971d00",
+      "full_text_tokens": 6,
+      "recomputed_counts": {
+        "original": 6,
+        "single_character": 6,
+        "random_0": 6,
+        "random_1": 6,
+        "random_2": 6
+      },
+      "naive_delta_sum_counts": {
+        "original": 6,
+        "single_character": 31,
+        "random_0": 7,
+        "random_1": 8,
+        "random_2": 9
+      },
+      "naive_overcounts": {
+        "original": 0,
+        "single_character": 25,
+        "random_0": 1,
+        "random_1": 2,
+        "random_2": 3
+      }
+    },
+    {
+      "kind": "response.reasoning_summary_text.delta",
+      "chars": 29,
+      "bytes": 29,
+      "sha256": "d355908591c04675d550241c4569969a564799402fdc831e81c4397e678ad140",
+      "full_text_tokens": 7,
+      "recomputed_counts": {
+        "original": 7,
+        "single_character": 7,
+        "random_0": 7,
+        "random_1": 7,
+        "random_2": 7
+      },
+      "naive_delta_sum_counts": {
+        "original": 7,
+        "single_character": 29,
+        "random_0": 8,
+        "random_1": 8,
+        "random_2": 11
+      },
+      "naive_overcounts": {
+        "original": 0,
+        "single_character": 22,
+        "random_0": 1,
+        "random_1": 1,
+        "random_2": 4
+      }
+    },
+    {
+      "kind": "response.output_text.delta",
+      "chars": 8,
+      "bytes": 8,
+      "sha256": "9fb54d3981c78e986d802f71ede8691dd8226d75a7a16b52d8b3d6abb17b67dc",
+      "full_text_tokens": 3,
+      "recomputed_counts": {
+        "original": 3,
+        "single_character": 3,
+        "random_0": 3,
+        "random_1": 3,
+        "random_2": 3
+      },
+      "naive_delta_sum_counts": {
+        "original": 3,
+        "single_character": 8,
+        "random_0": 3,
+        "random_1": 3,
+        "random_2": 4
+      },
+      "naive_overcounts": {
+        "original": 0,
+        "single_character": 5,
+        "random_0": 0,
+        "random_1": 0,
+        "random_2": 1
+      }
+    },
+    {
+      "kind": "unicode",
+      "chars": 24,
+      "bytes": 66,
+      "sha256": "71d711cafe54b22fa06b4810dff04daf1276bdd3dd5e9cdaf2af0af4a14f7409",
+      "full_text_tokens": 22,
+      "recomputed_counts": {
+        "original": 22,
+        "single_character": 22,
+        "random_0": 22,
+        "random_1": 22,
+        "random_2": 22
+      },
+      "naive_delta_sum_counts": {
+        "original": 22,
+        "single_character": 30,
+        "random_0": 22,
+        "random_1": 22,
+        "random_2": 22
+      },
+      "naive_overcounts": {
+        "original": 0,
+        "single_character": 8,
+        "random_0": 0,
+        "random_1": 0,
+        "random_2": 0
+      }
+    },
+    {
+      "kind": "boundary",
+      "chars": 72,
+      "bytes": 72,
+      "sha256": "683ec2077160bc797f290cc12e94d99290783863e880e62c788d9758e6a6ad44",
+      "full_text_tokens": 15,
+      "recomputed_counts": {
+        "original": 15,
+        "single_character": 15,
+        "random_0": 15,
+        "random_1": 15,
+        "random_2": 15
+      },
+      "naive_delta_sum_counts": {
+        "original": 15,
+        "single_character": 72,
+        "random_0": 17,
+        "random_1": 21,
+        "random_2": 19
+      },
+      "naive_overcounts": {
+        "original": 0,
+        "single_character": 57,
+        "random_0": 2,
+        "random_1": 6,
+        "random_2": 4
+      }
+    },
+    {
+      "kind": "code",
+      "chars": 66,
+      "bytes": 66,
+      "sha256": "4672f842daab728e82abaffa8058cb739c49f36210c9dfab753104eff19df62d",
+      "full_text_tokens": 20,
+      "recomputed_counts": {
+        "original": 20,
+        "single_character": 20,
+        "random_0": 20,
+        "random_1": 20,
+        "random_2": 20
+      },
+      "naive_delta_sum_counts": {
+        "original": 20,
+        "single_character": 66,
+        "random_0": 23,
+        "random_1": 22,
+        "random_2": 26
+      },
+      "naive_overcounts": {
+        "original": 0,
+        "single_character": 46,
+        "random_0": 3,
+        "random_1": 2,
+        "random_2": 6
+      }
+    }
+  ],
+  "all_chunking_final_counts_equal": true,
+  "negative_prefix_corrections": [
+    {
+      "prefix_chars": 16,
+      "before": 5,
+      "after": 4
+    },
+    {
+      "prefix_chars": 20,
+      "before": 5,
+      "after": 4
+    },
+    {
+      "prefix_chars": 36,
+      "before": 8,
+      "after": 7
+    },
+    {
+      "prefix_chars": 45,
+      "before": 10,
+      "after": 9
+    },
+    {
+      "prefix_chars": 51,
+      "before": 11,
+      "after": 10
+    },
+    {
+      "prefix_chars": 58,
+      "before": 12,
+      "after": 11
+    }
+  ],
+  "sampled_count_corrections": [
+    {
+      "sample_kind": "response.output_text.delta",
+      "variant": "single_character",
+      "previous_count": 23,
+      "new_count": 22
+    },
+    {
+      "sample_kind": "response.output_text.delta",
+      "variant": "single_character",
+      "previous_count": 9,
+      "new_count": 8
+    },
+    {
+      "sample_kind": "response.output_text.delta",
+      "variant": "single_character",
+      "previous_count": 10,
+      "new_count": 9
+    },
+    {
+      "sample_kind": "response.output_text.delta",
+      "variant": "single_character",
+      "previous_count": 15,
+      "new_count": 14
+    },
+    {
+      "sample_kind": "response.reasoning_summary_text.delta",
+      "variant": "single_character",
+      "previous_count": 3,
+      "new_count": 2
+    },
+    {
+      "sample_kind": "response.reasoning_summary_text.delta",
+      "variant": "single_character",
+      "previous_count": 6,
+      "new_count": 5
+    },
+    {
+      "sample_kind": "response.reasoning_summary_text.delta",
+      "variant": "single_character",
+      "previous_count": 6,
+      "new_count": 4
+    },
+    {
+      "sample_kind": "response.reasoning_summary_text.delta",
+      "variant": "single_character",
+      "previous_count": 3,
+      "new_count": 2
+    },
+    {
+      "sample_kind": "boundary",
+      "variant": "single_character",
+      "previous_count": 5,
+      "new_count": 4
+    },
+    {
+      "sample_kind": "boundary",
+      "variant": "single_character",
+      "previous_count": 12,
+      "new_count": 11
+    },
+    {
+      "sample_kind": "code",
+      "variant": "single_character",
+      "previous_count": 4,
+      "new_count": 3
+    }
+  ],
+  "benchmarks": [
+    {
+      "bytes_per_stream": 10000,
+      "streams": 1,
+      "batch_median_ms": 0.285041009192355,
+      "batch_max_ms": 0.6747089937562123,
+      "fits_250ms_refresh": true,
+      "process_peak_rss_bytes": 109166592,
+      "workload_scope": "independent text buffers; serial snapshot counts, not a live arrival queue",
+      "memory_scope": "whole benchmark child including tokenizer vocabulary"
+    },
+    {
+      "bytes_per_stream": 10000,
+      "streams": 4,
+      "batch_median_ms": 1.241458987351507,
+      "batch_max_ms": 1.363124989438802,
+      "fits_250ms_refresh": true,
+      "process_peak_rss_bytes": 109101056,
+      "workload_scope": "independent text buffers; serial snapshot counts, not a live arrival queue",
+      "memory_scope": "whole benchmark child including tokenizer vocabulary"
+    },
+    {
+      "bytes_per_stream": 10000,
+      "streams": 8,
+      "batch_median_ms": 2.343166997889057,
+      "batch_max_ms": 2.5851249956758693,
+      "fits_250ms_refresh": true,
+      "process_peak_rss_bytes": 109707264,
+      "workload_scope": "independent text buffers; serial snapshot counts, not a live arrival queue",
+      "memory_scope": "whole benchmark child including tokenizer vocabulary"
+    },
+    {
+      "bytes_per_stream": 100000,
+      "streams": 1,
+      "batch_median_ms": 2.9859170026611537,
+      "batch_max_ms": 3.1640829984098673,
+      "fits_250ms_refresh": true,
+      "process_peak_rss_bytes": 109674496,
+      "workload_scope": "independent text buffers; serial snapshot counts, not a live arrival queue",
+      "memory_scope": "whole benchmark child including tokenizer vocabulary"
+    },
+    {
+      "bytes_per_stream": 100000,
+      "streams": 4,
+      "batch_median_ms": 11.627457992290147,
+      "batch_max_ms": 12.032749989884906,
+      "fits_250ms_refresh": true,
+      "process_peak_rss_bytes": 110051328,
+      "workload_scope": "independent text buffers; serial snapshot counts, not a live arrival queue",
+      "memory_scope": "whole benchmark child including tokenizer vocabulary"
+    },
+    {
+      "bytes_per_stream": 100000,
+      "streams": 8,
+      "batch_median_ms": 22.693625011015683,
+      "batch_max_ms": 23.537749992101453,
+      "fits_250ms_refresh": true,
+      "process_peak_rss_bytes": 110526464,
+      "workload_scope": "independent text buffers; serial snapshot counts, not a live arrival queue",
+      "memory_scope": "whole benchmark child including tokenizer vocabulary"
+    },
+    {
+      "bytes_per_stream": 1000000,
+      "streams": 1,
+      "batch_median_ms": 28.936583999893628,
+      "batch_max_ms": 29.68716699979268,
+      "fits_250ms_refresh": true,
+      "process_peak_rss_bytes": 114278400,
+      "workload_scope": "independent text buffers; serial snapshot counts, not a live arrival queue",
+      "memory_scope": "whole benchmark child including tokenizer vocabulary"
+    },
+    {
+      "bytes_per_stream": 1000000,
+      "streams": 4,
+      "batch_median_ms": 115.89674999413546,
+      "batch_max_ms": 118.23970799741801,
+      "fits_250ms_refresh": true,
+      "process_peak_rss_bytes": 128221184,
+      "workload_scope": "independent text buffers; serial snapshot counts, not a live arrival queue",
+      "memory_scope": "whole benchmark child including tokenizer vocabulary"
+    },
+    {
+      "bytes_per_stream": 1000000,
+      "streams": 8,
+      "batch_median_ms": 232.3919170012232,
+      "batch_max_ms": 241.30487500224262,
+      "fits_250ms_refresh": true,
+      "process_peak_rss_bytes": 145424384,
+      "workload_scope": "independent text buffers; serial snapshot counts, not a live arrival queue",
+      "memory_scope": "whole benchmark child including tokenizer vocabulary"
+    }
+  ]
+}

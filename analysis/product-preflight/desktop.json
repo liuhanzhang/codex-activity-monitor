@@ -1,0 +1,39 @@
+{
+  "scope": "isolated Desktop boot/initialize regression; live turns covered by owned stdio probe",
+  "prior_desktop_pids": [
+    89220
+  ],
+  "isolated_desktop_pids": [
+    33318
+  ],
+  "status": "passed",
+  "source_reextracted": false,
+  "model_requests_started": false,
+  "config_before_sha256": "94d2b56b53e578ccb775cf59aa20f58b4577dcc048838a8c809297b5a76745e4",
+  "initialized": true,
+  "protocol_rows": 8,
+  "client_name": "codex_desktop",
+  "isolated_desktop_stopped": true,
+  "prior_desktops_still_running": true,
+  "desktop_boot_updated_isolated_config": false,
+  "isolated_config_restored": true,
+  "unexpected_turn_started": false,
+  "forwarder": {
+    "pid": 33442,
+    "child_pid": 33458,
+    "dropped_packets": 0,
+    "captured_rows": 8,
+    "captured_bytes": 19350,
+    "capture_limit_rows": 0,
+    "writer_errors": 0,
+    "incomplete_lines": 0,
+    "protocol_parse_errors": 0,
+    "raw_bytes": {
+      "stdin": 371,
+      "stdout": 17084,
+      "stderr": 0
+    },
+    "child_returncode": 0,
+    "writer_drained": true
+  }
+}

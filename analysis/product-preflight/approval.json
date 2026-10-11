@@ -1,0 +1,56 @@
+{
+  "scope": "one isolated approval regression; test requests are declined",
+  "status": "passed",
+  "thread_id": "01a129e1-a446-73c2-a295-92feda332d0f",
+  "turn_id": "01a129e1-a512-7442-b866-84147ce8d108",
+  "approval_requests": [
+    {
+      "method": "item/commandExecution/requestApproval",
+      "thread_id": "01a129e1-a446-73c2-a295-92feda332d0f",
+      "item_id": "exec-f3a36c17-b012-446d-8d17-92273421e563"
+    }
+  ],
+  "terminal_status": "completed",
+  "wrapper_returncode": 0,
+  "config_unchanged": true,
+  "tool_activity": [
+    {
+      "at": 1791704023.009919,
+      "thread_id": "01a129e1-a446-73c2-a295-92feda332d0f",
+      "turn_id": "01a129e1-a512-7442-b866-84147ce8d108",
+      "item_id": "exec-f3a36c17-b012-446d-8d17-92273421e563",
+      "event": "item/started",
+      "type": "commandExecution",
+      "status": "inProgress",
+      "exit_code": null
+    },
+    {
+      "at": 1791704023.0108092,
+      "thread_id": "01a129e1-a446-73c2-a295-92feda332d0f",
+      "turn_id": "01a129e1-a512-7442-b866-84147ce8d108",
+      "item_id": "exec-f3a36c17-b012-446d-8d17-92273421e563",
+      "event": "item/completed",
+      "type": "commandExecution",
+      "status": "declined",
+      "exit_code": null
+    }
+  ],
+  "forwarder": {
+    "pid": 33696,
+    "child_pid": 33697,
+    "dropped_packets": 0,
+    "captured_rows": 191,
+    "captured_bytes": 511757,
+    "capture_limit_rows": 0,
+    "writer_errors": 0,
+    "incomplete_lines": 0,
+    "protocol_parse_errors": 0,
+    "raw_bytes": {
+      "stdin": 1066,
+      "stdout": 40820,
+      "stderr": 674802
+    },
+    "child_returncode": 0,
+    "writer_drained": true
+  }
+}
