@@ -1,0 +1,795 @@
+{
+  "date": "2026-10-11",
+  "scope": "local MVP with third isolated Desktop core UI trial passed; primary default startup and long-term trial pending",
+  "tests": {
+    "passed": 39,
+    "elapsed_seconds": 13.692,
+    "result": "OK",
+    "coverage": "lifecycle, tokenizer, ephemeral filtering, bounded transport, 350ms consumer pause and stalled consumer"
+  },
+  "replay": {
+    "runs": [
+      {
+        "capture": ".local/product-preflight/live-20261011/capture.jsonl",
+        "streams": [
+          {
+            "item_id": "msg_0cffef2e6f9f8717016acb3a36eedc8199a22fd0dce3bd8d1d",
+            "kind": "text",
+            "part": 0,
+            "chars": 110,
+            "tokens": 78,
+            "sha256": "8ac5b5e62dda2857fcd225f698c9a5bd351f5f3febb84a8691d694f57e38404b",
+            "counts_match": true,
+            "buffer_released": true
+          },
+          {
+            "item_id": "msg_0e64fc2139f62a12016acb3a37357c87d0b82fa8a022c61279",
+            "kind": "text",
+            "part": 0,
+            "chars": 88,
+            "tokens": 61,
+            "sha256": "c2be802e39add612dd7397679483a8449f8e2f6665b54c71b124c3f569e76db5",
+            "counts_match": true,
+            "buffer_released": true
+          },
+          {
+            "item_id": "ctc_0cffef2e6f9f8717016acb3a36fe1c81999bb8390aa4f119eb",
+            "kind": "tool_input",
+            "part": 0,
+            "chars": 3803,
+            "tokens": 1056,
+            "sha256": "0863e2800d0242f4d2c7f8dba040647a10ed68428612ec3cd640cbc36a0c9bdd",
+            "counts_match": true,
+            "buffer_released": true
+          },
+          {
+            "item_id": "msg_0cffef2e6f9f8717016acb3a3fcf248199802038fd5a0468d7",
+            "kind": "text",
+            "part": 0,
+            "chars": 207,
+            "tokens": 109,
+            "sha256": "868ae09d217f5363d8333a0a399b75cd9bc380b505db652caa483f19c3e3ab71",
+            "counts_match": true,
+            "buffer_released": true
+          },
+          {
+            "item_id": "ctc_0e64fc2139f62a12016acb3a375f9087d0a9c50ff56b9118cf",
+            "kind": "tool_input",
+            "part": 0,
+            "chars": 5171,
+            "tokens": 1405,
+            "sha256": "d7c3ffb4adecd026f4ba7196287d5e66a90af6094effb78cad0f854103a66ac9",
+            "counts_match": true,
+            "buffer_released": true
+          },
+          {
+            "item_id": "msg_0e64fc2139f62a12016acb3a52e63487d0ba90c30da097a825",
+            "kind": "text",
+            "part": 0,
+            "chars": 174,
+            "tokens": 92,
+            "sha256": "51eb73749641d2b30c45fa3266ad9ab1ac45455d77650723e2caf07200aae302",
+            "counts_match": true,
+            "buffer_released": true
+          }
+        ],
+        "phases_seen": [
+          "completed",
+          "idle",
+          "interrupted",
+          "reasoning",
+          "text",
+          "tool_input",
+          "tool_ready",
+          "waiting"
+        ],
+        "counters": {
+          "duplicates_ignored": 2800,
+          "mirrors_ignored": 339
+        },
+        "unassociated_events": 0,
+        "elapsed_ms": 436.72
+      },
+      {
+        "capture": ".local/product-preflight/tools-20261011/capture.jsonl",
+        "streams": [
+          {
+            "item_id": "msg_0dde16823b6e0564016acb3adc0ab4819ba34b7af115efb561",
+            "kind": "text",
+            "part": 0,
+            "chars": 40,
+            "tokens": 23,
+            "sha256": "e5a94d73c9338906f03f302f54afa635f0e912f2e123600de6f6ed1cd75316bd",
+            "counts_match": true,
+            "buffer_released": true
+          },
+          {
+            "item_id": "ctc_0dde16823b6e0564016acb3adc4c54819b90b6fdec8f644564",
+            "kind": "tool_input",
+            "part": 0,
+            "chars": 302,
+            "tokens": 84,
+            "sha256": "233d04cc962e43a191f32ea7d9c19cd5eb08cc734fa2cf13bb363c8f929b8bb5",
+            "counts_match": true,
+            "buffer_released": true
+          },
+          {
+            "item_id": "msg_0530afdb37229c90016acb3adc21a887d08b7cb88df233f525",
+            "kind": "text",
+            "part": 0,
+            "chars": 56,
+            "tokens": 35,
+            "sha256": "f0f7bfb3ed969104e42ef811d7017bf19b2221b35a363c87cd9c0b6e39cd8d5c",
+            "counts_match": true,
+            "buffer_released": true
+          },
+          {
+            "item_id": "ctc_0530afdb37229c90016acb3adcfe7c87d08e80b5e53f012729",
+            "kind": "tool_input",
+            "part": 0,
+            "chars": 239,
+            "tokens": 68,
+            "sha256": "7a451809d06add23fdb571a1e7fbc99e1ba64872b0c2726dc317246130df3f77",
+            "counts_match": true,
+            "buffer_released": true
+          },
+          {
+            "item_id": "msg_0dde16823b6e0564016acb3ae12794819bb45c5ae42c8af280",
+            "kind": "text",
+            "part": 0,
+            "chars": 25,
+            "tokens": 19,
+            "sha256": "90b5f144b0ab4dc170d965e5f32a209b55ae8b73cd4d74f99fee0c6fd795e49c",
+            "counts_match": true,
+            "buffer_released": true
+          },
+          {
+            "item_id": "msg_0530afdb37229c90016acb3ae22efc87d0b34d710340a1981d",
+            "kind": "text",
+            "part": 0,
+            "chars": 24,
+            "tokens": 19,
+            "sha256": "0bfef8e53e17a85b88701e80f7fc4658195e789102983859de58296b00c2c088",
+            "counts_match": true,
+            "buffer_released": true
+          }
+        ],
+        "phases_seen": [
+          "completed",
+          "idle",
+          "text",
+          "tool",
+          "tool_input",
+          "tool_ready",
+          "waiting"
+        ],
+        "counters": {
+          "duplicates_ignored": 246,
+          "mirrors_ignored": 94
+        },
+        "unassociated_events": 0,
+        "elapsed_ms": 22.32
+      }
+    ]
+  },
+  "live": {
+    "scope": "product collector/bridge on owned stdio backend",
+    "peak_rates": {
+      "text": 132.5,
+      "tool_input": 165.0
+    },
+    "recovery": true,
+    "model": "gpt-6-luna",
+    "consumer_stopped_during_tool": true,
+    "config_unchanged": true,
+    "passed": true
+  },
+  "live_statuses": [
+    "completed",
+    "completed",
+    "completed"
+  ],
+  "live_phase_sets": [
+    [
+      "completed",
+      "idle",
+      "text",
+      "waiting"
+    ],
+    [
+      "idle",
+      "text",
+      "tool_input",
+      "tool_ready",
+      "waiting"
+    ]
+  ],
+  "count_cost_max_ms_including_first_encoding_load": 145.22949999081902,
+  "desktop": {
+    "scope": "isolated Desktop started product bridge and collector; UI input blocked by Computer Use app policy",
+    "owned_desktop_pids": [
+      51677
+    ],
+    "primary_desktop_pids": [
+      89220
+    ],
+    "observed_backends": 4,
+    "connected_backends": 2,
+    "ui_submitted_turns": false,
+    "owned_stopped": true,
+    "boot_changed_isolated_config": true,
+    "config_restored": true,
+    "primary_still_running": true
+  },
+  "installation": {
+    "scope": "product login integration and restore, primary Desktop left running",
+    "initial_environment_matches": true,
+    "restored_environment_matches": true,
+    "agent_removed": true,
+    "collector_stopped": true,
+    "reinstalled_environment_matches": true,
+    "collector_running": true,
+    "original_values_preserved": true,
+    "plist_sha256": "4c9cc6f994a9e90042b5b4490272480ffae033279c94fcf8780ea7cd1791f77a",
+    "primary_desktop_running": true
+  },
+  "transport_burst": {
+    "scope": "synthetic 2.31 MB stdio echo, collector absent; no model calls",
+    "runs": {
+      "original": [
+        {
+          "elapsed_ms": 479.96,
+          "rss_bytes": 15073280,
+          "stdout_bytes": 2310000
+        },
+        {
+          "elapsed_ms": 47.5,
+          "rss_bytes": 15056896,
+          "stdout_bytes": 2310000
+        },
+        {
+          "elapsed_ms": 53.28,
+          "rss_bytes": 15171584,
+          "stdout_bytes": 2310000
+        }
+      ],
+      "bridge": [
+        {
+          "elapsed_ms": 647.03,
+          "rss_bytes": 23085056,
+          "stdout_bytes": 2310000
+        },
+        {
+          "elapsed_ms": 549.82,
+          "rss_bytes": 23478272,
+          "stdout_bytes": 2310000
+        },
+        {
+          "elapsed_ms": 539.43,
+          "rss_bytes": 23248896,
+          "stdout_bytes": 2310000
+        }
+      ]
+    },
+    "median_overhead_ms": 496.54,
+    "stalled_observer": {
+      "offers": 2000,
+      "queued_packets": 4,
+      "queued_bytes": 262144,
+      "dropped_packets": 1996,
+      "offer_total_ms": 3.29
+    }
+  },
+  "warm_roundtrip": {
+    "scope": "warm synthetic line echo, 100 sequential 1 KB requests; collector absent, no model calls",
+    "runs": {
+      "original": {
+        "startup_to_ready_ms": 346.988,
+        "median_roundtrip_ms": 0.012,
+        "p95_roundtrip_ms": 0.022,
+        "max_roundtrip_ms": 0.038
+      },
+      "bridge": {
+        "startup_to_ready_ms": 93.909,
+        "median_roundtrip_ms": 0.03,
+        "p95_roundtrip_ms": 0.043,
+        "max_roundtrip_ms": 0.083
+      }
+    }
+  },
+  "idle_collector_sample": {
+    "rss_kib": 14528,
+    "pcpu_lifetime_average": 0.7,
+    "snapshot_bytes": 179,
+    "collector_log_bytes": 0
+  },
+  "limitations": [
+    "isolated Desktop core UI path passed; primary default startup path remains pending",
+    "Computer Use rejects Codex windows including isolated instance",
+    "Synthetic overhead numbers do not prove model latency parity",
+    "Long-term operation and broad MCP/collab/file tool coverage pending",
+    "Critical bridge process failure can affect its CLI transport"
+  ],
+  "background_lifecycle": {
+    "scope": "owned stdio command lifecycle across turn completion",
+    "model": "gpt-6-luna",
+    "turn_status": "completed",
+    "lifecycle": [
+      {
+        "event": "item/started",
+        "index": 41,
+        "turn_id": "01a12a28-b6af-7ec0-97e8-b4dc0195c33b",
+        "status": "inProgress",
+        "exit_code": null
+      },
+      {
+        "event": "turn/completed",
+        "index": 51,
+        "turn_id": null,
+        "status": null,
+        "exit_code": null
+      },
+      {
+        "event": "item/completed",
+        "index": 53,
+        "turn_id": "01a12a28-b6af-7ec0-97e8-b4dc0195c33b",
+        "status": "completed",
+        "exit_code": 0
+      }
+    ],
+    "command_outlived_turn": true,
+    "active_after_turn_samples": 50,
+    "passed": true,
+    "config_unchanged": true,
+    "command_exit_codes": [
+      0
+    ],
+    "final_active_count": 0
+  },
+  "desktop_manual_trial": {
+    "scope": "user submitted two chats in isolated Desktop UI",
+    "user_chats_completed": 2,
+    "internal_title_helpers_seen": 2,
+    "initial_tcp_quality": [
+      "observation_gap",
+      "reconciled"
+    ],
+    "initial_backend_dropped_packets": 305,
+    "initial_backend_parse_errors": 2,
+    "live_display_user_confirmed": false,
+    "user_observation": "tasks finished too quickly to observe live changes",
+    "post_fix_ui_trial_pending": true,
+    "primary_desktop_restart_pending": true
+  },
+  "diagnostic_burst_regression": {
+    "scope": "simulated CLI with a 4 MiB irrelevant frame dump and 600 received deltas",
+    "expected_deltas": 600,
+    "before_fix_deltas": 129,
+    "after_fix_deltas": 600,
+    "positive_live_rate_checked": true,
+    "passed": true
+  },
+  "feedback_regression": {
+    "scope": "owned real stdio body and ephemeral-helper regression; no UI submission",
+    "model": "gpt-6-luna",
+    "turn_statuses": [
+      "completed",
+      "completed"
+    ],
+    "body_positive_rate_samples": 100,
+    "body_peak_rate": 99.14472578281902,
+    "helper_ephemeral": true,
+    "default_visible_rows": 1,
+    "body_final_tokens": 1145,
+    "body_expected_tokens": 1145,
+    "body_final_sha256": "5cbc60e47952bf69c4b35ebc6ba3e19f4cb4deb66c3f39d5154d5d2d7c3d6c1c",
+    "body_quality": [],
+    "dropped_packets": 0,
+    "parse_errors": 0,
+    "config_unchanged": true,
+    "passed": true
+  },
+  "desktop_second_trial": {
+    "scope": "second human-submitted isolated Desktop trial, after diagnostic batching but before socket fix",
+    "passed": false,
+    "samples": 2278,
+    "bytes": 1379337,
+    "dropped_packets_max": 374,
+    "parse_errors_max": 0,
+    "threads": [
+      {
+        "ephemeral": false,
+        "phases": [
+          "completed",
+          "reasoning",
+          "text",
+          "unknown",
+          "waiting"
+        ],
+        "positive_body_samples": 3,
+        "peak_body_rate": 14.473518661654772,
+        "quality": [
+          "disconnected",
+          "observation_gap",
+          "reconciled"
+        ],
+        "tool_max_seconds": 0
+      },
+      {
+        "ephemeral": true,
+        "phases": [
+          "completed",
+          "text",
+          "unknown",
+          "waiting"
+        ],
+        "positive_body_samples": 3,
+        "peak_body_rate": 5.014001255984532,
+        "quality": [
+          "disconnected"
+        ],
+        "tool_max_seconds": 0
+      },
+      {
+        "ephemeral": true,
+        "phases": [
+          "completed",
+          "text",
+          "unknown",
+          "waiting"
+        ],
+        "positive_body_samples": 0,
+        "peak_body_rate": 0,
+        "quality": [
+          "disconnected",
+          "observation_gap",
+          "reconciled"
+        ],
+        "tool_max_seconds": 0
+      },
+      {
+        "ephemeral": false,
+        "phases": [
+          "completed",
+          "reasoning",
+          "tool",
+          "tool_ready",
+          "unknown",
+          "waiting"
+        ],
+        "positive_body_samples": 0,
+        "peak_body_rate": 0,
+        "quality": [
+          "disconnected",
+          "observation_gap",
+          "reconciled"
+        ],
+        "tool_max_seconds": 0.6928907909896225
+      }
+    ],
+    "ui_disconnection_send_errno": "not captured; failure preceded per-reason instrumentation"
+  },
+  "transient_collector_pause": {
+    "scope": "owned collector SIGSTOP 350ms; 600 observed deltas",
+    "before": {
+      "received_deltas": 18,
+      "dropped_events": 582,
+      "send_errors": 1,
+      "offline_events": 581,
+      "last_send_error": "TimeoutError"
+    },
+    "after": {
+      "received_deltas": 600,
+      "dropped_events": 0,
+      "quality": []
+    },
+    "fix": "nonblocking partial-frame writes; only observation worker waits; original transport and queue remain bounded"
+  },
+  "socket_fix_real_backend": {
+    "scope": "owned real stdio body and ephemeral-helper regression; no UI submission",
+    "model": "gpt-6-luna",
+    "effort": "xhigh",
+    "turn_statuses": [
+      "completed",
+      "completed",
+      "completed",
+      "completed"
+    ],
+    "body_positive_rate_samples": 99,
+    "body_peak_rate": 229.2588912281771,
+    "helper_ephemeral": true,
+    "default_visible_rows": 2,
+    "body_final_tokens": 1077,
+    "body_expected_tokens": 1077,
+    "body_final_sha256": "fc2f4852b6e33ed820c18709ac0cc7738a419e1889ce11d08e3f70ed876f1d25",
+    "body_quality": [],
+    "dropped_packets": 0,
+    "parse_errors": 0,
+    "backend_health": [
+      {
+        "connected": true,
+        "last_seen": 108460.562812416,
+        "home": "/Users/bytedance/personal/codex_progress_monitor/experiments/desktop-isolation/runs/20261010-150337-2b232b/codex-home",
+        "cli": "/Applications/ChatGPT.app/Contents/Resources/codex-cli/CodexCLI.app/Contents/MacOS/codex",
+        "drop_reasons": {},
+        "last_send_error": null,
+        "send_waits": 0,
+        "gaps": 0,
+        "dropped_packets": 0,
+        "parse_errors": 0,
+        "model": "gpt-6-luna"
+      }
+    ],
+    "counters": {
+      "mirrors_ignored": 1116
+    },
+    "all_quality": {
+      "01a12a50-682f-7540-94b2-1fe1d376a534": [],
+      "01a12a50-6566-7d62-b1a6-779f0d9898ac": [],
+      "01a12a50-67df-7dd2-a377-2a13a726bbf4": [],
+      "01a12a50-6a1f-7960-9201-3af3244740e2": []
+    },
+    "config_unchanged": true,
+    "tool_phases": [
+      "completed",
+      "idle",
+      "reasoning",
+      "text",
+      "tool_input",
+      "tool_ready",
+      "waiting"
+    ],
+    "tool_max_seconds": 0,
+    "command_exit_codes": [
+      0
+    ],
+    "passed": false,
+    "evidence_boundary": "stream collection passed with zero loss, but strict tool-phase check failed before confirmed-process phase fix; preserve original false result"
+  },
+  "confirmed_process_tool_replay": {
+    "scope": "original timed protocol from fb-3, replayed after confirmed-process phase fix",
+    "tool_max_seconds": 19.98182416599593,
+    "tool_phase_samples": 416,
+    "phases": [
+      "idle",
+      "reasoning",
+      "text",
+      "tool",
+      "waiting"
+    ],
+    "passed": true
+  },
+  "latest_isolated_restart": {
+    "owned_desktop_pid": 5821,
+    "primary_desktop_pid": 89220,
+    "primary_still_running": true,
+    "connected_backends": 2,
+    "observed_drops": 0,
+    "ui_submission_recheck_passed": true
+  },
+  "desktop_third_trial": {
+    "date": "2026-10-11",
+    "scope": "third human-submitted isolated Desktop trial, after nonblocking socket and confirmed-process phase fixes",
+    "passed": true,
+    "sampling": {
+      "rows": 3079,
+      "unique_snapshots": 1213,
+      "bytes": 8385309,
+      "byte_limit": 8388608,
+      "first_updated_at": 1791711578.664394,
+      "last_updated_at": 1791711901.97429,
+      "sampling_process_exited": true
+    },
+    "threads": [
+      {
+        "thread_id": "01a12a59-1e22-71b1-b4a1-979fed29353b",
+        "role": "body",
+        "ephemeral": false,
+        "status": "completed",
+        "quality": [],
+        "phases_seen": [
+          "completed",
+          "reasoning",
+          "text",
+          "waiting"
+        ],
+        "positive_body_unique_snapshots": 68,
+        "body_positive_span_seconds": 17.509459257125854,
+        "body_peak_received_token_rate": 64.87711404090898,
+        "phase_max_seconds": {
+          "waiting": 2.9766122500004712,
+          "reasoning": 9.112488290993497,
+          "completed": 0,
+          "text": 17.888044332998106
+        },
+        "streams": [
+          {
+            "kind": "text",
+            "chars": 1662,
+            "deltas": 996,
+            "tokens": 1000,
+            "duration_seconds": 18.0318040830025,
+            "mean_received_rate": 55.610165640340554,
+            "encoding": "o200k_base",
+            "estimated": true,
+            "quality": "complete"
+          }
+        ],
+        "commands": [],
+        "final_session_parity": {
+          "assistant_text_parts": 1,
+          "chars": 1662,
+          "o200k_base_tokens": 1000,
+          "final_text_sha256": "2e7e3e1e18584178182dffa67bd0d5cb99916a2b48cc61c65523e7099ca3d35e",
+          "counts_match": true
+        }
+      },
+      {
+        "thread_id": "01a12a59-06ae-7313-aeee-f1915f81cad3",
+        "role": "tool",
+        "ephemeral": false,
+        "status": "completed",
+        "quality": [],
+        "phases_seen": [
+          "completed",
+          "reasoning",
+          "text",
+          "tool",
+          "tool_input",
+          "tool_ready",
+          "waiting"
+        ],
+        "positive_body_unique_snapshots": 0,
+        "body_positive_span_seconds": null,
+        "body_peak_received_token_rate": null,
+        "phase_max_seconds": {
+          "text": 0.8888723330019275,
+          "waiting": 5.69544720799604,
+          "completed": 0,
+          "tool_ready": 21.345290500001283,
+          "tool_input": 1.535885874996893,
+          "reasoning": 0.7909108330059098,
+          "tool": 20.01534666599764
+        },
+        "streams": [
+          {
+            "kind": "text",
+            "chars": 38,
+            "deltas": 23,
+            "tokens": 23,
+            "duration_seconds": 0.1613254169933498,
+            "mean_received_rate": 151.07720478107777,
+            "encoding": "o200k_base",
+            "estimated": true,
+            "quality": "complete"
+          },
+          {
+            "kind": "tool_input",
+            "chars": 331,
+            "deltas": 95,
+            "tokens": 95,
+            "duration_seconds": 0.15050095799961127,
+            "mean_received_rate": 631.4491605996425,
+            "encoding": "o200k_base",
+            "estimated": true,
+            "quality": "complete"
+          },
+          {
+            "kind": "text",
+            "chars": 48,
+            "deltas": 25,
+            "tokens": 26,
+            "duration_seconds": 0.03341183299198747,
+            "mean_received_rate": 778.1674236859466,
+            "encoding": "o200k_base",
+            "estimated": true,
+            "quality": "complete"
+          }
+        ],
+        "commands": [
+          {
+            "duration_seconds": 20.15650154100149,
+            "exit_code": 0,
+            "status": "completed"
+          }
+        ],
+        "final_session_parity": {
+          "assistant_text_parts": 2,
+          "chars": 86,
+          "o200k_base_tokens": 49,
+          "final_text_sha256": "7352157ca1d719d8e8e8831cd244f46fc6d4d648edacea592e78a4d6b93c3928",
+          "counts_match": true
+        }
+      },
+      {
+        "thread_id": "01a12a59-2358-7792-a013-9cbe10f2f823",
+        "role": "ephemeral_title",
+        "ephemeral": true,
+        "status": "completed",
+        "quality": [],
+        "phases_seen": [
+          "completed",
+          "text",
+          "waiting"
+        ],
+        "positive_body_unique_snapshots": 0,
+        "body_positive_span_seconds": null,
+        "body_peak_received_token_rate": null,
+        "phase_max_seconds": {
+          "waiting": 3.3138080000062473,
+          "text": 0.2546460419980576,
+          "completed": 0
+        },
+        "streams": [
+          {
+            "kind": "text",
+            "chars": 79,
+            "deltas": 37,
+            "tokens": 37,
+            "duration_seconds": 0.25324729199928697,
+            "mean_received_rate": 146.10225328728956,
+            "encoding": "o200k_base",
+            "estimated": true,
+            "quality": "complete"
+          }
+        ],
+        "commands": []
+      },
+      {
+        "thread_id": "01a12a59-0b8a-7351-a99e-32d472c8d42e",
+        "role": "ephemeral_title",
+        "ephemeral": true,
+        "status": "completed",
+        "quality": [],
+        "phases_seen": [
+          "completed",
+          "text",
+          "waiting"
+        ],
+        "positive_body_unique_snapshots": 0,
+        "body_positive_span_seconds": null,
+        "body_peak_received_token_rate": null,
+        "phase_max_seconds": {
+          "waiting": 3.4550751660135575,
+          "text": 0.12996145900979172,
+          "completed": 0
+        },
+        "streams": [
+          {
+            "kind": "text",
+            "chars": 78,
+            "deltas": 27,
+            "tokens": 28,
+            "duration_seconds": 0.14043279200268444,
+            "mean_received_rate": 199.38363113555963,
+            "encoding": "o200k_base",
+            "estimated": true,
+            "quality": "complete"
+          }
+        ],
+        "commands": []
+      }
+    ],
+    "dropped_packets_max": 0,
+    "parse_errors_max": 0,
+    "send_waits_max": 43,
+    "active_backend_disconnected_snapshots": 0,
+    "default_visible_latest_rows": 2,
+    "primary_app_left_running": true,
+    "limitations": [
+      "Short tool-input stream lasted about 150 ms; this GUI trial did not capture a positive parameter token-rate snapshot. Prior owned-backend long-parameter coverage remains separate.",
+      "Primary Desktop default startup path has not been restarted or validated.",
+      "Long-term operation and broader tools remain outside this finite trial."
+    ]
+  },
+  "implementation_goal": {
+    "status": "complete",
+    "scope": "first local MVP implementation and finite real Desktop core validation",
+    "all_acceptance_scenarios_fully_verified": false,
+    "follow_up_trial_items": [
+      "primary Desktop default startup confirmation after normal restart",
+      "natural-use short parameter and reasoning-summary feedback",
+      "long-term resource use and broader tool coverage"
+    ]
+  }
+}

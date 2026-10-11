@@ -3,6 +3,7 @@
 .DS_Store
 **/__pycache__/
 *.py[cod]
+src/*.egg-info/
 
 # Isolated Desktop profiles, credentials, databases, logs and raw transcripts.
 experiments/desktop-isolation/runs/

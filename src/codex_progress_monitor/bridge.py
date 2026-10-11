@@ -1,0 +1,353 @@
+"""Original CLI transport plus a bounded, disposable local observation channel."""
+
+from collections import Counter, OrderedDict
+import json
+import os
+from pathlib import Path
+import queue
+import select
+import signal
+import socket
+import subprocess
+import sys
+import threading
+import time
+import uuid
+
+from .events import decode_log, filter_event
+from .runtime import REAL_CLI
+
+TRACE_FILTER='warn,codex_api::sse=trace,tungstenite::protocol=trace,tungstenite::protocol::frame=off'
+
+
+def observes_stdio(args):
+    # Desktop's global -c overrides precede the subcommand. A literal
+    # "app-server" inside an exec prompt must remain a helper invocation.
+    index=0
+    command=None
+    while index<len(args):
+        arg=args[index]
+        if arg in ('-c','--config'):
+            index+=2
+            continue
+        if not arg.startswith('-'):
+            command=arg
+            break
+        index+=1
+    if command!='app-server' or 'daemon' in args:
+        return False
+    if '--listen' in args:
+        index=args.index('--listen')
+        if index+1>=len(args) or args[index+1]!='stdio://':
+            return False
+    return not any(arg.startswith('--listen=') and arg!='--listen=stdio://' for arg in args)
+
+
+class Observer:
+    def __init__(self,runtime,backend,home,cli,queue_size=128):
+        self.runtime,self.backend=runtime,backend
+        self.info={'type':'bridge/started','home':home,'cli':str(cli),'bridge_pid':os.getpid()}
+        self.packets=queue.Queue(maxsize=queue_size)
+        self.cache=OrderedDict()
+        self.dropped=0
+        self.framing_drops=0
+        self.drop_reasons=Counter()
+        self.last_send_error=None
+        self.send_waits=0
+        self.drain_deadline=None
+        self.errors=0
+        self.sock=None
+        self.thread=threading.Thread(target=self.run,daemon=True,name='progress-observer')
+        self.stopping=False
+        self.queued_bytes=0
+        self.queue_lock=threading.Lock()
+
+    def offer(self,source,data,at=None):
+        with self.queue_lock:
+            if self.queued_bytes+len(data)>8*1024*1024:
+                self.dropped+=1
+                self.framing_drops+=1
+                self.drop_reasons['queue_bytes']+=1
+                return
+            try:
+                self.packets.put_nowait((source,at or time.monotonic_ns(),time.time(),data,self.framing_drops))
+                self.queued_bytes+=len(data)
+            except queue.Full:
+                self.dropped+=1
+                self.framing_drops+=1
+                self.drop_reasons['queue_full']+=1
+
+    def lose(self,reason):
+        with self.queue_lock:
+            self.dropped+=1
+            self.drop_reasons[reason]+=1
+
+    def health(self,kind):
+        with self.queue_lock:
+            return {'type':kind,'dropped_packets':self.dropped,'parse_errors':self.errors,
+                    'drop_reasons':dict(self.drop_reasons),'last_send_error':self.last_send_error,
+                    'send_waits':self.send_waits}
+
+    def row(self,direction,event,at=None,wall=None):
+        return {'backend':self.backend,'direction':direction,'observed_ns':at or time.monotonic_ns(),
+                'observed_timestamp':wall or time.time(),'event':event}
+
+    def remember(self,row):
+        event=row['event']
+        method=event.get('method')
+        params=event.get('params',{})
+        item=params.get('item',event.get('item',{}))
+        key=None
+        if method=='thread/started':
+            key=('thread',params.get('thread',{}).get('id'))
+        elif method in ('turn/started','turn/completed'):
+            key=('turn',params.get('threadId'))
+        elif method=='item/started' or event.get('type')=='response.output_item.added':
+            key=('item',item.get('id'))
+        elif method=='item/completed' or event.get('type')=='response.output_item.done':
+            key=('item',item.get('id'))
+            item={k:v for k,v in item.items() if k not in ('text','input','arguments','summary','content')}
+            event={**event}
+            if 'item' in event:
+                event['item']=item
+            else:
+                event['params']={**params,'item':item}
+            row={**row,'event':event}
+        elif method=='thread/name/updated':
+            key=('name',params.get('threadId'))
+        elif method in ('thread/settings/updated','model/rerouted'):
+            key=('model',params.get('threadId'))
+        elif method and (method.endswith('/requestApproval') or method.endswith('/requestUserInput')):
+            key=('approval',event.get('id'))
+        elif method=='serverRequest/resolved':
+            self.cache.pop(('approval',params.get('requestId')),None)
+        elif row['direction']=='protocol_in' and not method:
+            self.cache.pop(('approval',event.get('id')),None)
+        if key:
+            # Keep terminal metadata too, so a missed end cannot become perpetual work.
+            # Reconciliation text is sent once to the live consumer, never cached.
+            self.cache[key]=row
+            self.cache.move_to_end(key)
+            while len(self.cache)>512:
+                self.cache.popitem(last=False)
+
+    def send(self,row):
+        if self.sock is None:
+            return False
+        try:
+            view=memoryview(json.dumps(row,ensure_ascii=False,separators=(',',':')).encode()+b'\n')
+            while view:
+                # A slow observer is disposable, but a brief scheduler/encoding
+                # pause is not a broken connection. Preserve the partial frame;
+                # only this worker waits, while producers retain finite limits.
+                if self.drain_deadline is not None and time.monotonic()>=self.drain_deadline:
+                    self.lose('shutdown_pending')
+                    self.sock.close()
+                    self.sock=None
+                    return False
+                try:
+                    written=self.sock.send(view)
+                    if not written:
+                        raise ConnectionError('Observation socket closed')
+                    view=view[written:]
+                except BlockingIOError:
+                    self.send_waits+=1
+                    select.select([], [self.sock], [], .05)
+            return True
+        except (OSError,ValueError) as error:
+            self.last_send_error={'type':type(error).__name__,'errno':getattr(error,'errno',None)}
+            self.sock.close()
+            self.sock=None
+            self.lose('send_error')
+            return False
+
+    def connect(self):
+        try:
+            sock=socket.socket(socket.AF_UNIX,socket.SOCK_STREAM)
+            sock.settimeout(0.1)
+            sock.connect(str(self.runtime/'events.sock'))
+            sock.setblocking(False)
+            self.sock=sock
+            self.send(self.row('lifecycle',self.info))
+            for row in self.cache.values():
+                if not self.send(row):
+                    return
+            self.send(self.row('lifecycle',self.health('bridge/reconnected')))
+        except OSError:
+            sock.close()
+            self.sock=None
+
+    def run(self):
+        buffers={'stdin':b'','stdout':b'','stderr':b''}
+        observed_drops=self.framing_drops
+        next_connect=next_heartbeat=0
+        while not self.stopping or not self.packets.empty():
+            now=time.monotonic()
+            if self.drain_deadline is not None and now>=self.drain_deadline:
+                break
+            if self.sock is None and now>=next_connect:
+                self.connect()
+                next_connect=now+1
+            if self.sock is not None and now>=next_heartbeat:
+                self.send(self.row('lifecycle',self.health('bridge/heartbeat')))
+                next_heartbeat=now+2
+            try:
+                source,at,wall,data,drops=self.packets.get(timeout=0.1)
+                with self.queue_lock:
+                    self.queued_bytes-=len(data)
+            except queue.Empty:
+                continue
+            if drops!=observed_drops:
+                buffers={k:b'' for k in buffers}
+                observed_drops=drops
+                self.send(self.row('lifecycle',self.health('bridge/gap')))
+            buffers[source]+=data
+            if len(buffers[source])>10*1024*1024:
+                buffers[source]=b''
+                self.lose('oversized_observation')
+                continue
+            lines=buffers[source].split(b'\n')
+            buffers[source]=lines.pop()
+            for line in lines:
+                try:
+                    if source=='stderr':
+                        event,_=decode_log(line)
+                        direction='upstream'
+                        if event is None:
+                            continue
+                    else:
+                        event=json.loads(line)
+                        direction='protocol_in' if source=='stdin' else 'protocol_out'
+                    event=filter_event(direction,event)
+                    if event is None:
+                        continue
+                    row=self.row(direction,event,at,wall)
+                    self.remember(row)
+                    if self.sock is None:
+                        self.lose('offline_event')
+                    else:
+                        self.send(row)
+                except (ValueError,UnicodeError,TypeError,AttributeError):
+                    self.errors+=1
+                    self.send(self.row('lifecycle',{'type':'bridge/gap','parse_errors':self.errors,'dropped_packets':self.dropped}))
+        self.send(self.row('lifecycle',self.health('bridge/stopped')))
+        if self.sock:
+            self.sock.close()
+
+    def start(self):
+        self.thread.start()
+
+    def close(self):
+        self.drain_deadline=time.monotonic()+.75
+        self.stopping=True
+        self.thread.join(timeout=1)
+
+
+def forward(args,runtime,actual=None):
+    actual=Path(actual or os.environ.get('CODEX_PROGRESS_REAL_CLI',REAL_CLI)).resolve()
+    if actual==Path(sys.argv[0]).resolve():
+        raise ValueError('Recursive CLI override')
+    if not observes_stdio(args):
+        os.execv(str(actual),[str(actual),*args])
+    env=dict(os.environ)
+    env.update(CODEX_CLI_PATH=str(actual),LOG_FORMAT='json',RUST_LOG=TRACE_FILTER)
+    child=subprocess.Popen([str(actual),*args],stdin=subprocess.PIPE,stdout=subprocess.PIPE,stderr=subprocess.PIPE,
+                           env=env,start_new_session=True)
+    observer=Observer(runtime,uuid.uuid4().hex,env.get('CODEX_HOME',str(Path.home()/'.codex')),actual)
+    observer.start()
+    def stop(signum,_):
+        try:
+            os.killpg(child.pid,signum)
+        except ProcessLookupError:
+            pass
+    for sig in (signal.SIGTERM,signal.SIGINT,signal.SIGHUP):
+        signal.signal(sig,stop)
+
+    def write(dest,data):
+        view=memoryview(data)
+        while view:
+            view=view[os.write(dest.fileno(),view):]
+
+    def pump(source,src,dest):
+        buffer=b''
+        discarding_line=False
+        diagnostic_open=True
+        def diagnostic(data):
+            nonlocal diagnostic_open
+            if diagnostic_open:
+                try:
+                    write(dest,data)
+                except (BrokenPipeError,OSError):
+                    diagnostic_open=False
+        def is_observation(line):
+            target_trace=(b'"target":"tungstenite::protocol' in line or b'"target":"codex_api::sse' in line or b'"target": "tungstenite::protocol' in line or b'"target": "codex_api::sse' in line)
+            verbose=(b'"level":"TRACE"' in line or b'"level": "TRACE"' in line or b'"level":"DEBUG"' in line or b'"level": "DEBUG"' in line)
+            return target_trace and verbose
+        try:
+            while True:
+                data=os.read(src.fileno(),65536)
+                if not data:
+                    break
+                observed_at=time.monotonic_ns()
+                if source!='stderr':
+                    write(dest,data)
+                    observer.offer(source,data,observed_at)
+                    continue
+                # Suppress only diagnostics enabled for observation, so Desktop never
+                # persists full high-frequency traces. Other stderr remains available.
+                if discarding_line:
+                    if b'\n' not in data:
+                        continue
+                    data=data.split(b'\n',1)[1]
+                    discarding_line=False
+                buffer+=data
+                observed_lines=bytearray()
+                while b'\n' in buffer:
+                    line,buffer=buffer.split(b'\n',1)
+                    if is_observation(line):
+                        # Frame dumps can be large and have no progress event. Do not
+                        # let them compete with received deltas for the finite queue.
+                        if any(marker in line for marker in (
+                            b'"message":"Received message ',b'"message": "Received message ',
+                            b'"message":"SSE event: ',b'"message": "SSE event: ')):
+                            observed_lines.extend(line+b'\n')
+                    else:
+                        diagnostic(line+b'\n')
+                if observed_lines:
+                    # One transport read may contain hundreds of small messages.
+                    # Preserve every line but offer the batch as a single packet.
+                    observer.offer('stderr',bytes(observed_lines),observed_at)
+                if len(buffer)>10*1024*1024:
+                    # Never retain an unbounded diagnostic line.
+                    buffer=b''
+                    discarding_line=True
+                    observer.lose('oversized_diagnostic')
+            if buffer and source=='stderr':
+                if is_observation(buffer):
+                    observer.offer('stderr',buffer+b'\n')
+                else:
+                    diagnostic(buffer)
+        except (BrokenPipeError,OSError):
+            # Loss of the protocol consumer should not leave an orphan backend.
+            if source=='stdout':
+                stop(signal.SIGTERM,None)
+        finally:
+            if source=='stdin':
+                try:
+                    dest.close()
+                except OSError:
+                    pass
+    incoming=threading.Thread(target=pump,args=('stdin',sys.stdin.buffer,child.stdin),daemon=True)
+    outgoing=[threading.Thread(target=pump,args=(name,src,dest),daemon=True) for name,src,dest in
+              [('stdout',child.stdout,sys.stdout.buffer),('stderr',child.stderr,sys.stderr.buffer)]]
+    incoming.start()
+    for thread in outgoing:
+        thread.start()
+    code=child.wait()
+    for thread in outgoing:
+        thread.join(timeout=1)
+    observer.close()
+    if code<0:
+        signal.signal(-code,signal.SIG_DFL)
+        os.kill(os.getpid(),-code)
+    return code

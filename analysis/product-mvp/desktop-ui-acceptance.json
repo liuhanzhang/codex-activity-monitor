@@ -1,0 +1,215 @@
+{
+  "date": "2026-10-11",
+  "scope": "third human-submitted isolated Desktop trial, after nonblocking socket and confirmed-process phase fixes",
+  "passed": true,
+  "sampling": {
+    "rows": 3079,
+    "unique_snapshots": 1213,
+    "bytes": 8385309,
+    "byte_limit": 8388608,
+    "first_updated_at": 1791711578.664394,
+    "last_updated_at": 1791711901.97429,
+    "sampling_process_exited": true
+  },
+  "threads": [
+    {
+      "thread_id": "01a12a59-1e22-71b1-b4a1-979fed29353b",
+      "role": "body",
+      "ephemeral": false,
+      "status": "completed",
+      "quality": [],
+      "phases_seen": [
+        "completed",
+        "reasoning",
+        "text",
+        "waiting"
+      ],
+      "positive_body_unique_snapshots": 68,
+      "body_positive_span_seconds": 17.509459257125854,
+      "body_peak_received_token_rate": 64.87711404090898,
+      "phase_max_seconds": {
+        "waiting": 2.9766122500004712,
+        "reasoning": 9.112488290993497,
+        "completed": 0,
+        "text": 17.888044332998106
+      },
+      "streams": [
+        {
+          "kind": "text",
+          "chars": 1662,
+          "deltas": 996,
+          "tokens": 1000,
+          "duration_seconds": 18.0318040830025,
+          "mean_received_rate": 55.610165640340554,
+          "encoding": "o200k_base",
+          "estimated": true,
+          "quality": "complete"
+        }
+      ],
+      "commands": [],
+      "final_session_parity": {
+        "assistant_text_parts": 1,
+        "chars": 1662,
+        "o200k_base_tokens": 1000,
+        "final_text_sha256": "2e7e3e1e18584178182dffa67bd0d5cb99916a2b48cc61c65523e7099ca3d35e",
+        "counts_match": true
+      }
+    },
+    {
+      "thread_id": "01a12a59-06ae-7313-aeee-f1915f81cad3",
+      "role": "tool",
+      "ephemeral": false,
+      "status": "completed",
+      "quality": [],
+      "phases_seen": [
+        "completed",
+        "reasoning",
+        "text",
+        "tool",
+        "tool_input",
+        "tool_ready",
+        "waiting"
+      ],
+      "positive_body_unique_snapshots": 0,
+      "body_positive_span_seconds": null,
+      "body_peak_received_token_rate": null,
+      "phase_max_seconds": {
+        "text": 0.8888723330019275,
+        "waiting": 5.69544720799604,
+        "completed": 0,
+        "tool_ready": 21.345290500001283,
+        "tool_input": 1.535885874996893,
+        "reasoning": 0.7909108330059098,
+        "tool": 20.01534666599764
+      },
+      "streams": [
+        {
+          "kind": "text",
+          "chars": 38,
+          "deltas": 23,
+          "tokens": 23,
+          "duration_seconds": 0.1613254169933498,
+          "mean_received_rate": 151.07720478107777,
+          "encoding": "o200k_base",
+          "estimated": true,
+          "quality": "complete"
+        },
+        {
+          "kind": "tool_input",
+          "chars": 331,
+          "deltas": 95,
+          "tokens": 95,
+          "duration_seconds": 0.15050095799961127,
+          "mean_received_rate": 631.4491605996425,
+          "encoding": "o200k_base",
+          "estimated": true,
+          "quality": "complete"
+        },
+        {
+          "kind": "text",
+          "chars": 48,
+          "deltas": 25,
+          "tokens": 26,
+          "duration_seconds": 0.03341183299198747,
+          "mean_received_rate": 778.1674236859466,
+          "encoding": "o200k_base",
+          "estimated": true,
+          "quality": "complete"
+        }
+      ],
+      "commands": [
+        {
+          "duration_seconds": 20.15650154100149,
+          "exit_code": 0,
+          "status": "completed"
+        }
+      ],
+      "final_session_parity": {
+        "assistant_text_parts": 2,
+        "chars": 86,
+        "o200k_base_tokens": 49,
+        "final_text_sha256": "7352157ca1d719d8e8e8831cd244f46fc6d4d648edacea592e78a4d6b93c3928",
+        "counts_match": true
+      }
+    },
+    {
+      "thread_id": "01a12a59-2358-7792-a013-9cbe10f2f823",
+      "role": "ephemeral_title",
+      "ephemeral": true,
+      "status": "completed",
+      "quality": [],
+      "phases_seen": [
+        "completed",
+        "text",
+        "waiting"
+      ],
+      "positive_body_unique_snapshots": 0,
+      "body_positive_span_seconds": null,
+      "body_peak_received_token_rate": null,
+      "phase_max_seconds": {
+        "waiting": 3.3138080000062473,
+        "text": 0.2546460419980576,
+        "completed": 0
+      },
+      "streams": [
+        {
+          "kind": "text",
+          "chars": 79,
+          "deltas": 37,
+          "tokens": 37,
+          "duration_seconds": 0.25324729199928697,
+          "mean_received_rate": 146.10225328728956,
+          "encoding": "o200k_base",
+          "estimated": true,
+          "quality": "complete"
+        }
+      ],
+      "commands": []
+    },
+    {
+      "thread_id": "01a12a59-0b8a-7351-a99e-32d472c8d42e",
+      "role": "ephemeral_title",
+      "ephemeral": true,
+      "status": "completed",
+      "quality": [],
+      "phases_seen": [
+        "completed",
+        "text",
+        "waiting"
+      ],
+      "positive_body_unique_snapshots": 0,
+      "body_positive_span_seconds": null,
+      "body_peak_received_token_rate": null,
+      "phase_max_seconds": {
+        "waiting": 3.4550751660135575,
+        "text": 0.12996145900979172,
+        "completed": 0
+      },
+      "streams": [
+        {
+          "kind": "text",
+          "chars": 78,
+          "deltas": 27,
+          "tokens": 28,
+          "duration_seconds": 0.14043279200268444,
+          "mean_received_rate": 199.38363113555963,
+          "encoding": "o200k_base",
+          "estimated": true,
+          "quality": "complete"
+        }
+      ],
+      "commands": []
+    }
+  ],
+  "dropped_packets_max": 0,
+  "parse_errors_max": 0,
+  "send_waits_max": 43,
+  "active_backend_disconnected_snapshots": 0,
+  "default_visible_latest_rows": 2,
+  "primary_app_left_running": true,
+  "limitations": [
+    "Short tool-input stream lasted about 150 ms; this GUI trial did not capture a positive parameter token-rate snapshot. Prior owned-backend long-parameter coverage remains separate.",
+    "Primary Desktop default startup path has not been restarted or validated.",
+    "Long-term operation and broader tools remain outside this finite trial."
+  ]
+}

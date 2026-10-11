@@ -1,0 +1,16 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "codex-progress-monitor"
+version = "0.1.0"
+description = "Local live activity and received-token feedback for Codex Desktop"
+requires-python = ">=3.11"
+dependencies = ["tiktoken==0.14.0", "rich==15.0.0"]
+
+[project.scripts]
+codex-progress = "codex_progress_monitor.cli:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]

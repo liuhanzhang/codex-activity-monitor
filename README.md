@@ -1,8 +1,14 @@
 # Codex Progress Monitor
 
-本项目研究并实现 Codex Desktop 的进度反馈：当前阶段、工具活动、正文与工具参数的接收速度、最近进展、token 用量与账户限额。
+本项目实现 Codex Desktop 本机聊天的实时进度反馈：当前阶段、工具活动、持续时间、Reasoning 摘要增长、正文与工具参数的接收 token/s。
 
-目前已完成部分隔离实验和架构研究，尚未完成监控产品。第一版先覆盖本机，通过简单实时看板验证采集效果，正式 UI 后续再做。产品范围与实施顺序见 [第一版产品需求与实施计划](/Users/bytedance/personal/codex_progress_monitor/docs/02_product_mvp/requirements-and-plan.md)；实验依据见 [初始实验文档](/Users/bytedance/personal/codex_progress_monitor/docs/01_initial_experiment/README.md)。
+第一版采集器、状态聚合和终端看板已经可以运行。当前机器已配置登录启动与原 CLI 包装器，正常重启 Codex 一次后即可试用；隔离 Desktop 的真实 UI 核心采集检查已通过，主 App 默认启动路径与长期运行验收尚待完成。正式 UI 与远程主机后续增加。
+
+```sh
+/Users/bytedance/personal/codex_progress_monitor/bin/codex-progress watch
+```
+
+安装、使用和恢复步骤见 [使用说明](/Users/bytedance/personal/codex_progress_monitor/docs/02_product_mvp/usage.md)。产品范围见 [需求与计划](/Users/bytedance/personal/codex_progress_monitor/docs/02_product_mvp/requirements-and-plan.md)，实测边界见 [产品验证报告](/Users/bytedance/personal/codex_progress_monitor/analysis/product-mvp/README.md)。
 
 ## 目录
 
@@ -14,11 +20,13 @@
 | `experiments/desktop-isolation/` | 隔离环境的启动、实验、配置和停止脚本 | 是，运行数据除外 |
 | `experiments/product-preflight/` | 第一版接入、并发、tokenizer 与故障验证脚本 | 是 |
 | `.local/research/` | 从安装包提取的源码及生成的协议 schema | 否 |
+| `src/codex_progress_monitor/` | 产品桥接、聚合、分词、看板与恢复模块 | 是 |
+| `tests/` | 核心语义、运行可靠性与有限验收脚本 | 是 |
+| `.local/runtime/` | 本机启动配置、socket 与指标快照 | 否 |
+| `.local/venv/` | 产品依赖环境 | 否 |
 | `experiments/desktop-isolation/runs/` | 本机隔离 App 配置、登录状态、数据库、原始日志与聊天记录 | 否 |
 
-未来产品代码与测试可分别放在 `src/` 和 `tests/`；当前不创建空目录或预设技术栈。
-
-第一版核心验证结果见 [实现前验证报告](/Users/bytedance/personal/codex_progress_monitor/analysis/product-preflight/README.md)。已选择原版 CLI 的透明 stdio 转发路线，完整产品和日常 Desktop 看板试用仍待实现。
+入口采用原版 CLI 的透明 stdio 转发，正文与完整参数不默认落盘。实现前路线验证见 [实现前验证报告](/Users/bytedance/personal/codex_progress_monitor/analysis/product-preflight/README.md)。
 
 ## 数据与实验约定
 
