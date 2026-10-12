@@ -2,13 +2,17 @@
 
 本项目实现 Codex Desktop 本机聊天的实时进度反馈：当前阶段、工具活动、持续时间、Reasoning 摘要增长、正文与工具参数的接收 token/s。
 
-第一版采集器、状态聚合和终端看板已经可以运行。当前机器已配置登录启动与原 CLI 包装器，正常重启 Codex 一次后即可试用；隔离 Desktop 的真实 UI 核心采集检查已通过，主 App 默认启动路径与长期运行验收尚待完成。正式 UI 与远程主机后续增加。
+第一版采集器、状态聚合和终端看板已经可以运行。当前机器已配置登录启动与原 CLI 包装器，已观察到主 home 后端接入；隔离 Desktop 的真实 UI 核心采集检查已通过。主 App 普通入口的独立启动验收与长期运行验收尚待完成。正式 UI 与远程主机后续增加。
 
 ```sh
 /Users/bytedance/personal/codex_progress_monitor/bin/codex-progress watch
 ```
 
 安装、使用和恢复步骤见 [使用说明](/Users/bytedance/personal/codex_progress_monitor/docs/02_product_mvp/usage.md)。产品范围见 [需求与计划](/Users/bytedance/personal/codex_progress_monitor/docs/02_product_mvp/requirements-and-plan.md)，实测边界见 [产品验证报告](/Users/bytedance/personal/codex_progress_monitor/analysis/product-mvp/README.md)。
+
+接入 Monitor 后的前后端通信、监听位置和指标计算见 [产品架构与工作方式](/Users/bytedance/personal/codex_progress_monitor/docs/02_product_mvp/architecture.md)。
+
+主 App / 隔离 App 的启动步骤、环境变量保存位置，以及各进程如何启动、停止和通信，见 [启动步骤与进程管理](/Users/bytedance/personal/codex_progress_monitor/docs/02_product_mvp/startup-and-processes.md)。
 
 ## 目录
 
