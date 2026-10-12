@@ -16,30 +16,63 @@
 
 ## 目录
 
-| 目录 | 用途 | 是否应纳入版本控制 |
-| --- | --- | --- |
-| `docs/01_initial_experiment/` | 架构、数据来源、需求和验证计划 | 是 |
-| `docs/02_product_mvp/` | 已确认的第一版产品需求与实施计划 | 是 |
-| `analysis/` | 研究结论、分析脚本、版本清单及精简证据 | 是，生成源码快照除外 |
-| `experiments/desktop-isolation/` | 隔离环境的启动、实验、配置和停止脚本 | 是，运行数据除外 |
-| `experiments/product-preflight/` | 第一版接入、并发、tokenizer 与故障验证脚本 | 是 |
-| `.local/research/` | 从安装包提取的源码及生成的协议 schema | 否 |
-| `src/codex_progress_monitor/` | 产品桥接、聚合、分词、看板与恢复模块 | 是 |
-| `tests/` | 核心语义、运行可靠性与有限验收脚本 | 是 |
-| `.local/runtime/` | 本机启动配置、socket 与指标快照 | 否 |
-| `.local/venv/` | 产品依赖环境 | 否 |
-| `experiments/desktop-isolation/runs/` | 本机隔离 App 配置、登录状态、数据库、原始日志与聊天记录 | 否 |
+**日常开发主要看 `src/`、`tests/`、`bin/`、`pyproject.toml` 和 `docs/02_product_mvp/`。** 其余目录是实验资料或本机运行环境。
 
-入口采用原版 CLI 的透明 stdio 转发，正文与完整参数不默认落盘。实现前路线验证见 [实现前验证报告](/Users/bytedance/personal/codex_progress_monitor/analysis/product-preflight/README.md)。
+```text
+codex_progress_monitor/
+├── src/codex_progress_monitor/      产品代码：包装器、采集器、指标计算、看板
+├── tests/                          产品测试与有限验收脚本
+├── bin/codex-progress              命令入口，使用 .local/venv
+├── pyproject.toml                  Python 包配置和产品依赖
+├── docs/
+│   ├── 01_initial_experiment/       最初可行性研究，解释方案从何而来
+│   └── 02_product_mvp/             当前产品的需求、架构与使用说明
+├── experiments/                    可复用实验脚本
+│   ├── desktop-isolation/          隔离 Desktop / WebSocket 实验
+│   │   └── runs/                   本机隔离 App 数据和原始记录，不提交
+│   └── product-preflight/          实现前的采集、计数、故障验证原型
+├── analysis/                       精简实验结果、验证报告与分析脚本
+│   ├── upstream-stream/            上游流式增量研究
+│   ├── file-edit-progress/         文件编辑与工具参数可观测性研究
+│   ├── product-preflight/          实现前验证结果
+│   ├── product-mvp/                产品验收结果
+│   └── workspace-cleanup/          清理清单
+└── .local/                         本机环境和原始数据，不提交
+    ├── venv/                       产品与实验共用的 Python 环境
+    ├── runtime/                    正在使用的包装器入口、socket、配置与快照
+    ├── research/                   提取的 Codex 源码和协议快照
+    ├── product-preflight/          实现前验证的原始数据
+    └── product-implementation/     产品开发期间的原始数据与隔离界面环境
+```
+
+`experiments/` 保存“如何做实验”，`analysis/` 保存“实验结论”，`.local/` 与 `runs/` 保存“这台机器上的环境和原始数据”。原型代码不属于产品启动链。
+
+### 哪些可以清理
+
+| 路径 / 材料 | 能否删除 | 原因 |
+| --- | --- | --- |
+| `src/`、`tests/`、`bin/`、`docs/`、`analysis/` 中的提交文件 | 保留 | 产品实现、文档与验证依据 |
+| `__pycache__/`、`.DS_Store` | 可以 | 自动生成的缓存 |
+| `src/*.egg-info/` | 通常保留，无需手动编辑 | 可编辑安装产生的包元数据；重新安装可以生成，已被 Git 忽略 |
+| `.local/venv/` | 停用后可重建；运行中保留 | 当前包装器与采集器使用它；产品和实验共用，不再单独维护实验 venv |
+| `.local/runtime/` | 运行中保留 | 含包装器入口、卸载所需的原配置备份、socket 和指标快照，不全是缓存 |
+| `.local/research/` | 本次保留 | 文档与分析引用的特定版本源码；删除会失去本地复查依据 |
+| `.local/product-preflight/` | 原始证据保留，缓存可以重建 | `live-*`、`tools-*` 等目录含协议捕获、配置副本和实验报告 |
+| `.local/product-implementation/` | 原始证据和隔离 profile 保留 | `live-*`、`bg-*`、`fb-*` 是正文、后台命令与反馈实验；`desktop-1/profile/` 是隔离 App 界面数据 |
+| `experiments/desktop-isolation/runs/` | 本次保留 | 含实验登录状态、聊天、数据库及原始日志；删除不会由重新安装产品恢复 |
+
+2026-10-12 清除了未被使用的旧实验 venv、实验 tokenizer 下载缓存和 Python 字节码缓存。实验命令现统一使用 `.local/venv`。精简报告与原始证据均保留；目录没有迁移，已有代码、文档引用和隔离启动路径继续有效。
+
+产品入口转发原版 CLI 的 stdin / stdout，并筛选 stderr。正文与完整参数不默认落盘。实现前路线验证见 [实现前验证报告](/Users/bytedance/personal/codex_progress_monitor/analysis/product-preflight/README.md)。
 
 ## 数据与实验约定
 
 - 可复用脚本、文档和精简验证结果与本机运行状态分开管理。
 - 生成源码已集中到 `.local/research/`；原位置保留兼容软链接，使历史定位和文档链接继续有效。它们都被 `.gitignore` 排除。
-- 正在使用的隔离运行目录保留原位置，避免影响 App、SQLite 和实验脚本。当前入口见 [实验说明](/Users/bytedance/personal/codex_progress_monitor/experiments/desktop-isolation/README.md)。
+- 隔离运行目录保留原位置，避免破坏登录环境、SQLite 和实验脚本的引用。入口见 [实验说明](/Users/bytedance/personal/codex_progress_monitor/experiments/desktop-isolation/README.md)。
 - 原始日志不是可随意删除的缓存；已结束的日志可无损压缩。精简结论的复查仍可能依赖这些本地材料。
 - 不提交实验登录令牌、浏览器配置、数据库、原始对话或下载的运行时依赖。
 
 Git 忽略规则已排除本机运行状态和生成材料；其他开发者仍需按目标安装版本重新准备相应本地材料。
 
-本次整理记录见 [工作区整理说明](/Users/bytedance/personal/codex_progress_monitor/docs/01_initial_experiment/workspace-organization.md)。
+历史整理见 [2026-10-10 说明](/Users/bytedance/personal/codex_progress_monitor/docs/01_initial_experiment/workspace-organization.md)，本次逐项清理见 [2026-10-12 清单](/Users/bytedance/personal/codex_progress_monitor/analysis/workspace-cleanup/2026-10-12.json)。

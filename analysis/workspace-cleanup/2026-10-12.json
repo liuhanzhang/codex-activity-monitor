@@ -1,0 +1,70 @@
+{
+  "date": "2026-10-12T08:14:25.114661+00:00",
+  "scope": "Regenerable caches and unused duplicate environment only",
+  "checks": {
+    "current_runtime_python": "/Users/bytedance/personal/codex_progress_monitor/.local/venv/bin/python",
+    "legacy_open_files": 0,
+    "legacy_open_files_check": "lsof completed successfully; no matching open files",
+    "process_check": "Only project runtime processes observed; no legacy experiment environment invocation"
+  },
+  "removed": [
+    {
+      "path": ".local/product-preflight/venv",
+      "logical_bytes": 32748606,
+      "allocated_bytes": 37543936,
+      "reason": "Unused duplicate experiment dependencies; reinstallable"
+    },
+    {
+      "path": ".local/product-preflight/tokenizer-cache",
+      "logical_bytes": 3613922,
+      "allocated_bytes": 3616768,
+      "reason": "Regenerable cache"
+    },
+    {
+      "path": "src/codex_progress_monitor/__pycache__",
+      "logical_bytes": 151020,
+      "allocated_bytes": 172032,
+      "reason": "Regenerable cache"
+    },
+    {
+      "path": "tests/__pycache__",
+      "logical_bytes": 119622,
+      "allocated_bytes": 135168,
+      "reason": "Regenerable cache"
+    },
+    {
+      "path": "experiments/product-preflight/__pycache__",
+      "logical_bytes": 94206,
+      "allocated_bytes": 110592,
+      "reason": "Regenerable cache"
+    },
+    {
+      "path": "experiments/desktop-isolation/__pycache__",
+      "logical_bytes": 48429,
+      "allocated_bytes": 49152,
+      "reason": "Regenerable cache"
+    }
+  ],
+  "total_logical_bytes": 36775805,
+  "total_allocated_bytes": 41627648,
+  "preserved": [
+    ".local/venv",
+    ".local/runtime",
+    ".local/research",
+    ".local/product-preflight raw evidence and profile",
+    ".local/product-implementation",
+    "experiments/desktop-isolation/runs",
+    "all tracked source, reports and evidence"
+  ],
+  "environment_consolidation": "Product and preflight commands now use .local/venv",
+  "processes_stopped_or_restarted": false,
+  "model_requests": 0,
+  "validation": {
+    "at": "2026-10-12T08:15:21.699158+00:00",
+    "launcher_shell_syntax": "passed",
+    "product_status_command": "passed; collector running, two primary-home backends connected",
+    "preflight_help_with_shared_environment": "passed; no task started",
+    "markdown_format_and_local_links": "passed; nine references",
+    "git_diff_check": "passed"
+  }
+}

@@ -3,8 +3,6 @@ set -eu
 task_root=$(CDPATH= cd -- "$(dirname -- "$0")/.." && pwd)
 if [ -x "$task_root/.local/venv/bin/python" ]; then
   exec "$task_root/.local/venv/bin/python" -m codex_progress_monitor.cli "$@"
-elif [ -x "$task_root/.local/product-preflight/venv/bin/python" ]; then
-  exec "$task_root/.local/product-preflight/venv/bin/python" -m codex_progress_monitor.cli "$@"
 fi
 echo '请先运行 python3 -m venv .local/venv，然后 .local/venv/bin/python -m pip install -e .' >&2
 exit 1
