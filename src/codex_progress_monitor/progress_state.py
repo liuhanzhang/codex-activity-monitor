@@ -4,7 +4,7 @@ from pathlib import Path
 
 from .events import BLOCKING_REQUESTS, SERVER_REQUESTS, brief
 from .i18n import message, phase_message, render_message
-from .tool_labels import command_name, is_code_exec, is_command_tool, tool_display
+from .tool_labels import command_name, is_code_exec, is_command_tool, is_patch_tool, tool_display
 
 
 def finish(engine, activity, at, status='completed'):
@@ -277,18 +277,27 @@ def activity_target(activity):
 
 def activity_message(activity, ended=False):
     kind, item_type = _value(activity, 'kind'), _value(activity, 'item_type')
+    preview = _value(activity, 'file_edit_preview')
+    patch = is_patch_tool(_value(activity, 'tool_name')) or preview is not None
+    if item_type == 'fileChange' or (patch and kind in ('tool_input','tool_ready','tool')):
+        files, count = _value(activity, 'files', []), _value(activity, 'file_count', 0)
+        target = Path(files[0]['path']).name if files else ''
+        if item_type != 'fileChange' and preview is not None:
+            files, count = preview['files'], preview['file_count']
+            target = preview['current_file'] if kind == 'tool_input' else (files[0]['path'] if files else '')
+        if not target:
+            return message('activity.file_edited')
+        if ended:
+            return message('activity.file_edited_more' if target and count > 1 else 'activity.file_edited',
+                           target=target, **({'count': count-1} if target and count > 1 else {}))
+        return message('activity.file_editing_more' if target and count > 1 else 'activity.file_editing',
+                       target=target, **({'count': count-1} if target and count > 1 else {}))
     target = activity_target(activity)
     if kind in ('tool_input', 'tool_ready'):
         if ended:
             return message('activity.named', name=target) if target else message('activity.tool')
         return message('activity.preparing' if kind == 'tool_input' else 'activity.processing', target=target)
     if kind == 'tool':
-        if item_type == 'fileChange':
-            files, count = _value(activity, 'files', []), _value(activity, 'file_count', 0)
-            params = {'target': Path(files[0]['path']).name if files else ''}
-            if count > 1:
-                return message('activity.file_change_more', **params, count=count-1)
-            return message('activity.file_change', **params)
         keys = {'webSearch': 'web', 'imageView': 'image_view', 'imageGeneration': 'image_generation'}
         if item_type in keys:
             return message('activity.' + keys[item_type])
@@ -309,17 +318,30 @@ def activity_label(activity):
 
 def presentation(engine, thread, view, now):
     activities = list(thread.activities.values())
+    # Link direct model input to canonical editing only by an explicit call ID.
+    edits = {a.id for a in activities if a.item_type == 'fileChange'}
+    superseded = {a.id for a in activities if a.item_type != 'fileChange'
+                  and is_patch_tool(a.tool_name) and a.call_id in edits}
+    editing_turns = {a.turn_id for a in activities if a.item_type == 'fileChange'}
+
+    def display_message(activity, ended=False):
+        # A completed script's preview cannot establish whether another inner
+        # edit is still pending after observed editing. Keep the wrapper neutral.
+        if (activity.kind == 'tool_ready' and is_code_exec(activity.tool_name)
+                and activity.file_edit_preview is not None and activity.turn_id in editing_turns):
+            return message('activity.tool' if ended else 'activity.processing')
+        return activity_message(activity, ended)
     blockers = [a for a in activities if a.active and a.kind in ('input','approval')]
     blocked_ids = {a.target_item_id for a in blockers if a.target_item_id}
     actual = [a for a in activities if a.active and a.kind not in ('input','approval','tool_ready')
-              and (a.id not in blocked_ids or not a.turn_bound)]
+              and a.id not in superseded and (a.id not in blocked_ids or not a.turn_bound)]
     actual.sort(key=lambda a: (a.kind in ('review','auth','retry','hook','buffering','sleep'), -a.last_progress_at))
     primary = actual[0] if actual else blockers[0] if blockers else None
     previous = next((a for a in actual if a.id == thread.display_primary),None)
     waits = {'review','auth','retry','hook','buffering','sleep'}
     if previous and primary and (previous.kind in waits) == (primary.kind in waits) and now-thread.display_since < .75:
         primary = previous
-    pending = [a for a in activities if a.active and a.kind == 'tool_ready']
+    pending = [a for a in activities if a.active and a.kind == 'tool_ready' and a.id not in superseded]
     if not primary and pending and not thread.error_status:
         primary = pending[-1]
     connected = view['connected']
@@ -330,7 +352,7 @@ def presentation(engine, thread, view, now):
         label = message('activity.unknown')
         primary = None
     elif primary:
-        label = activity_message(primary)
+        label = display_message(primary)
     elif thread.active_flags:
         label = message('activity.paused')
     elif thread.error_status:
@@ -380,7 +402,8 @@ def presentation(engine, thread, view, now):
                 environment_connected=thread.environment_connected, project_id=thread.project_id,
                 display_seconds=max(0,now-primary.started_at) if primary and primary.started_at and connected else None)
     for detail, activity in zip(view['activities'], reversed(activities)):
-        detail.update(display_message=activity_message(activity, ended=not activity.active),
-                      display_label=activity_label(activity), display_visible=activity.kind not in ('approval','input','hook') and not (activity.kind=='tool_ready' and is_code_exec(activity.tool_name) and actual),
+        descriptor = display_message(activity, ended=not activity.active)
+        detail.update(display_message=descriptor,
+                      display_label=render_message(descriptor), display_visible=activity.id not in superseded and activity.kind not in ('approval','input','hook') and not (activity.kind=='tool_ready' and is_code_exec(activity.tool_name) and actual),
                       files=list(activity.files), file_count=activity.file_count,
                       receiver_thread_ids=list(activity.receiver_thread_ids), agents_states=dict(activity.agents_states))

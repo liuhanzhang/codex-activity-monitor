@@ -8,7 +8,7 @@ from .events import DELTA_KINDS, TOOL_TYPES, Event
 from .progress_state import handle_protocol, resolve_request, presentation
 from .metrics import TextStream, TokenCounter
 from .i18n import PHASE_KEYS, phase_message, render_message, tr
-from .tool_labels import code_tool_names, command_name, command_previews, command_summary, is_code_exec, is_command_tool, tool_display, tool_label, tool_name
+from .tool_labels import code_tool_names, command_name, command_previews, command_summary, file_edit_preview, is_code_exec, is_command_tool, is_patch_tool, tool_display, tool_label, tool_name
 
 
 PHASES = {phase: render_message(phase_message(phase)) for phase in PHASE_KEYS}
@@ -38,6 +38,8 @@ class Activity:
     command_name: str | None = None
     app_context: dict = field(default_factory=dict)
     command_previews: list = field(default_factory=list)
+    file_edit_preview: dict | None = None
+    call_id: str | None = None
     tool_label_revision: int = -1
     item_type: str | None = None
     last_progress_at: float = 0
@@ -165,7 +167,10 @@ class Engine:
         return thread.activities[item_id]
 
     def _tool_metadata(self, activity, item):
-        activity.item_type = item.get('type',activity.item_type)
+        # Model input completion can arrive after canonical patch execution.
+        if not (activity.item_type == 'fileChange' and item.get('type') in ('custom_tool_call','function_call')):
+            activity.item_type = item.get('type',activity.item_type)
+        activity.call_id = item.get('call_id',activity.call_id)
         activity.server = item.get('server',activity.server)
         activity.files = item.get('changes',activity.files)
         activity.file_count = item.get('file_count',activity.file_count or len(activity.files))
@@ -188,6 +193,7 @@ class Engine:
             if is_code_exec(activity.tool_name):
                 activity.tool_names = code_tool_names(code)
             activity.command_previews = command_previews(activity.tool_name, code)
+            activity.file_edit_preview = file_edit_preview(activity.tool_name, code)
         label = tool_label(activity.tool_name, activity.tool_names)
         if activity.command:
             label += ' · ' + activity.command
@@ -427,6 +433,14 @@ class Engine:
             phase='tool_ready' if kind=='commandExecution' and not confirmed_process else 'tool'
             activity=self._activity(thread,item_id,turn_id,phase,label,known.get('started_at'))
             self._tool_metadata(activity, item)
+            if kind == 'fileChange':
+                if method == 'item/started' and 'file_change_started_at' not in known:
+                    known['file_change_started_at'] = at
+                    activity.started_at = activity.last_progress_at = at
+                    thread.last_progress_at = max(thread.last_progress_at, at)
+                elif method == 'item/completed' and 'file_change_started_at' not in known:
+                    activity.started_at = None
+                activity.kind = 'tool'
             if confirmed_process:
                 activity.turn_bound=False
             if confirmed_process and activity.ended_at is None:
@@ -570,7 +584,9 @@ class Engine:
                 return
             known['ended_at']=at
             known['upstream_completed']=True
-            if phase=='tool_input' and terminal is None:
+            if phase=='tool_input' and activity.item_type == 'fileChange':
+                pass  # Input completion must not reopen or end canonical editing.
+            elif phase=='tool_input' and terminal is None:
                 activity.kind='tool_ready'
                 activity.started_at=at
             else:
@@ -729,7 +745,7 @@ class Engine:
                 self.items.pop(key,None)
         for thread in self.threads.values():
             for activity in thread.activities.values():
-                if not (is_code_exec(activity.tool_name) or is_command_tool(activity.tool_name)):
+                if not (is_code_exec(activity.tool_name) or is_command_tool(activity.tool_name) or is_patch_tool(activity.tool_name)):
                     continue
                 for key in activity.stream_keys:
                     stream = self.streams.get(key)
@@ -789,6 +805,7 @@ class Engine:
                                 'command_name':activity.command_name, 'item_type':activity.item_type,
                                 **tool_display(activity.tool_name, activity.app_context),
                                 'command_previews':[dict(p) for p in activity.command_previews],
+                                'file_edit_preview':activity.file_edit_preview, 'call_id':activity.call_id,
                                 'start_known':activity.started_at is not None,'summary_chars':activity.summary_chars,
                                 'summary_parts':len(activity.summary_parts), 'output_chars':activity.output_chars,
                                 'exit_code':activity.exit_code,

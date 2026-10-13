@@ -1,6 +1,6 @@
 # 易用性与多语言准备：实施结果
 
-日期：2026-10-13。状态：本轮实现与相关验收完成。精简证据见 [验证记录](implementation-validation.json)。
+日期：2026-10-13。状态：初次易用性实现与相关验收完成。精简证据见 [验证记录](implementation-validation.json)，其中源码指纹对应当时版本。后续文件编辑展示增量见 [文件编辑补充](file-editing-supplement.md)。
 
 ## 1. 实际实现
 
@@ -35,7 +35,7 @@
 
 ## 3. 日常运行状态
 
-已检查原采集器 PID 与项目 LaunchAgent 所属运行目录，并通过已有控制接口停止采集器，再启动项目 LaunchAgent。新采集器 PID 为 `24954`，加载指纹与当前 collector、engine、名称解析、文案资源等源码一致。
+初次易用性实施时已检查原采集器 PID 与项目 LaunchAgent 所属运行目录，并通过已有控制接口停止采集器，再启动项目 LaunchAgent。该次新采集器 PID 为 `24954`，加载指纹与当时 collector、engine、名称解析、文案资源等源码一致；文件编辑补充的后续运行状态另见补充记录。
 
 四个已有 bridge 已重新连接，新快照提供结构化展示消息。一次真实静默 `sleep` 命令进行中时观察到 `command_name=sleep`、`display_label=运行中 · sleep`；结束后仍保留命令记录。生成流可用性也有实时快照观测，工具执行阶段没有模型生成流时维持 `—`。
 

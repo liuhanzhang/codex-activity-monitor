@@ -12,6 +12,7 @@ from .i18n import tr
 MAX_LABEL = 160
 MAX_CODE_PREFIX = 64 * 1024
 MAX_TOOL_NAMES = 6
+MAX_PATCH_FILES = 64
 
 _IDENTIFIER = re.compile(r'^[A-Za-z_$][\w$]{0,127}$')
 
@@ -171,6 +172,92 @@ def _literal_prefix(code, start, end):
 
 def is_command_tool(name):
     return bool(name) and name.rsplit('.', 1)[-1] in ('exec_command', 'shell_command')
+
+
+def is_patch_tool(name):
+    return name in ('apply_patch', 'functions.apply_patch')
+
+
+def _patch_files(patch):
+    """Read complete patch headers only; retain names, never patch contents."""
+    preview = {'files': [], 'file_count': 0, 'current_file': ''}
+    if len(patch) > MAX_CODE_PREFIX:
+        return preview
+    lines = patch.splitlines(keepends=True)
+    if not lines or lines[0].rstrip('\r\n') != '*** Begin Patch' or not lines[0].endswith('\n'):
+        return preview
+    indices, current = {}, None
+
+    def filename(raw):
+        if any(unicodedata.category(char).startswith('C') for char in raw):
+            return ''
+        base = PurePath(raw).name
+        return clean_name(base) if base not in ('', '.', '..') and len(base) <= MAX_LABEL else ''
+
+    for line in lines[1:]:
+        if line.rstrip('\r\n') == '*** End Patch':
+            break
+        if not line.endswith('\n'):
+            if line.startswith('*** '):
+                preview['current_file'] = ''
+            break
+        line = line.rstrip('\r\n')
+        header = re.fullmatch(r'\*\*\* (?:Add|Update|Delete) File: (.+)', line)
+        if header:
+            raw = header[1]
+            name = filename(raw)
+            if not name:
+                current, preview['current_file'] = None, ''
+                continue
+            if raw not in indices:
+                if len(indices) == MAX_PATCH_FILES:
+                    return {'files': [], 'file_count': 0, 'current_file': ''}
+                indices[raw] = len(preview['files'])
+                preview['files'].append({'path': name})
+            current = indices[raw]
+            preview['current_file'] = name
+        elif line.startswith('*** Move to: ') and current is not None:
+            name = filename(line[len('*** Move to: '):])
+            preview['current_file'] = name
+            if name:
+                preview['files'][current]['path'] = name
+    preview['file_count'] = len(preview['files'])
+    return preview
+
+
+def file_edit_preview(name, code):
+    """Recognize direct patches or a literal argument to the latest Code Mode call."""
+    empty = {'files': [], 'file_count': 0, 'current_file': ''}
+    if is_patch_tool(name):
+        return _patch_files(code)
+    if not is_code_exec(name):
+        return None
+    truncated = len(code) > MAX_CODE_PREFIX
+    code = code[:MAX_CODE_PREFIX]
+    tokens = list(_code_tokens(code))
+    latest = None
+    for index in range(len(tokens) - 3):
+        if (tokens[index][0] == 'tools' and tokens[index + 1][0] == '.'
+                and _IDENTIFIER.fullmatch(tokens[index + 2][0]) and tokens[index + 3][0] == '('
+                and (index == 0 or tokens[index - 1][0] != '.')):
+            latest = index
+    if latest is None or not is_patch_tool(tokens[latest + 2][0]):
+        return None
+    if truncated:
+        return empty
+    if latest + 4 >= len(tokens):
+        return empty
+    value, begin, end = tokens[latest + 4]
+    if value or code[begin] not in ('"', "'", '`'):
+        return empty
+    # Interpolation and concatenation can alter filenames; stay conservative.
+    if code[begin] == '`' and '${' in code[begin:end]:
+        return empty
+    decoded = _literal_prefix(code, begin, end)
+    following = tokens[latest + 5][0] if latest + 5 < len(tokens) else None
+    if decoded is None or (decoded[1] and following not in (None, ')', ',')):
+        return empty
+    return _patch_files(decoded[0])
 
 
 def _object_command(code, tokens, start, name):
