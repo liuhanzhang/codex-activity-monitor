@@ -34,9 +34,11 @@ def serve(runtime):
     clients={}
     owners={}
     engine=Engine()
-    implementation=source_identity('collector','engine','progress_state','events','metrics','runtime','tool_labels','i18n','messages_zh_cn')
+    implementation=source_identity('collector','engine','progress_state','events','usage','metrics','runtime','tool_labels','i18n','messages_zh_cn')
     previous=read_snapshot(runtime)
     historical=previous.get('threads',[]) if time.time()-(previous.get('updated_at') or 0)<600 else []
+    if historical:
+        engine.usage.restore(previous.get('usage_recovery'))
     for thread in historical:
         thread['connected']=False
         thread['token_rates']={'text':None,'tool_input':None}

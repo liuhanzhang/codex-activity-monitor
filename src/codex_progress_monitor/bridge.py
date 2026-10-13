@@ -48,9 +48,11 @@ class Observer:
         self.runtime,self.backend=runtime,backend
         from .runtime import source_identity
         self.info={'type':'bridge/started','home':home,'cli':str(cli),'bridge_pid':os.getpid(),
-                   'implementation':source_identity('bridge','events','tool_labels','runtime','i18n','messages_zh_cn')}
+                   'implementation':source_identity('bridge','events','usage','tool_labels','runtime','i18n','messages_zh_cn')}
         self.packets=queue.Queue(maxsize=queue_size)
         self.cache=OrderedDict()
+        self.cache_sizes={}
+        self.cache_bytes=0
         self.dropped=0
         self.framing_drops=0
         self.drop_reasons=Counter()
@@ -102,6 +104,10 @@ class Observer:
         key=None
         if method=='thread/started':
             key=('thread',params.get('thread',{}).get('id'))
+        elif method=='thread/tokenUsage/updated':
+            key=('usage',params.get('threadId'))
+        elif event.get('type') in ('response.completed','response.failed','response.incomplete'):
+            key=('response_usage',event.get('response',{}).get('id'))
         elif method in ('turn/started','turn/completed'):
             key=('turn',params.get('threadId'))
             if method=='turn/completed':
@@ -114,11 +120,11 @@ class Observer:
                     if old_turn!=turn_id:
                         continue
                     if cached_key[0] in ('approval','strict_review','review','hook','auth','turn/plan/updated','model/safetyBuffering/updated'):
-                        self.cache.pop(cached_key,None)
+                        self.forget(cached_key)
                     elif cached_key[0]=='item' and (old.get('method')=='item/started' or old.get('type')=='response.output_item.added'):
                         background=old_item.get('type')=='commandExecution' and old_item.get('processId') and old_item.get('source') in ('unifiedExecStartup','unifiedExecInteraction')
                         if not background or params.get('turn',{}).get('status')!='completed':
-                            self.cache.pop(cached_key,None)
+                            self.forget(cached_key)
         elif method=='item/started' or event.get('type')=='response.output_item.added':
             key=('item',item.get('id'))
         elif method=='item/completed' or event.get('type')=='response.output_item.done':
@@ -141,7 +147,7 @@ class Observer:
             strict_key=('strict_review',params.get('threadId'),params.get('turnId'))
             strict=self.cache.get(strict_key,{}).get('event',{}).get('params',{})
             if not strict or strict.get('startedAtMs') in (None,params.get('startedAtMs')):
-                self.cache.pop(strict_key,None)
+                self.forget(strict_key)
         elif method=='autoApprovalReview/strictReviewRequired':
             key=('strict_review',params.get('threadId'),params.get('turnId'))
         elif method in ('hook/started','hook/completed'):
@@ -156,16 +162,24 @@ class Observer:
         elif method in ('turn/plan/updated','model/safetyBuffering/updated'):
             key=(method,params.get('threadId'),params.get('turnId'))
         elif method=='serverRequest/resolved':
-            self.cache.pop(('approval',params.get('requestId')),None)
+            self.forget(('approval',params.get('requestId')))
         elif row['direction']=='protocol_in' and not method:
-            self.cache.pop(('approval',event.get('id')),None)
+            self.forget(('approval',event.get('id')))
         if key:
             # Keep terminal metadata too, so a missed end cannot become perpetual work.
             # Reconciliation text is sent once to the live consumer, never cached.
+            self.forget(key)
             self.cache[key]=row
+            size=len(json.dumps(row,ensure_ascii=False,separators=(',',':')).encode())
+            self.cache_sizes[key]=size
+            self.cache_bytes+=size
             self.cache.move_to_end(key)
-            while len(self.cache)>512:
-                self.cache.popitem(last=False)
+            while len(self.cache)>512 or self.cache_bytes>4*1024*1024:
+                self.forget(next(iter(self.cache)))
+
+    def forget(self,key):
+        self.cache.pop(key,None)
+        self.cache_bytes-=self.cache_sizes.pop(key,0)
 
     def send(self,row):
         if self.sock is None:
@@ -206,7 +220,7 @@ class Observer:
             self.sock=sock
             self.send(self.row('lifecycle',self.info))
             for row in self.cache.values():
-                if not self.send(row):
+                if not self.send({**row,'replayed':True}):
                     return
             self.send(self.row('lifecycle',self.health('bridge/reconnected')))
         except OSError:

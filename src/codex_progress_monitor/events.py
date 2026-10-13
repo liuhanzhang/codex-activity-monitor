@@ -5,6 +5,7 @@ from datetime import datetime
 import json
 
 from .tool_labels import command_name, command_summary
+from .usage import response_metadata, usage_fields
 
 
 DELTA_KINDS = {
@@ -25,6 +26,7 @@ for _kind, _methods in {
     'thread_status': 'thread/status/changed',
     'thread_boundary': 'thread/archived thread/deleted thread/unarchived thread/closed thread/reverted',
     'turn': 'turn/started turn/completed',
+    'usage': 'thread/tokenUsage/updated',
     'item': 'item/started item/completed',
     'review': 'item/autoApprovalReview/started item/autoApprovalReview/completed autoApprovalReview/strictReviewRequired',
     'plan': 'turn/plan/updated',
@@ -121,8 +123,7 @@ def filter_event(direction, event):
             return result
         if 'response' in event:
             response = event['response']
-            result = {'type':kind, 'response':{k:response[k] for k in ('id','model','status') if k in response}}
-            result['response']['item_ids'] = [v['id'] for v in response.get('output',[])[:512] if isinstance(v,dict) and v.get('id')]
+            result = {'type':kind, 'response':response_metadata(response)}
             result['identity'] = {k:v for k,v in event.get('identity',{}).items() if k in ('thread_id','turn_id')}
             result['identity'].update({k:event[k] for k in ('thread_id','turn_id') if k in event})
             return result
@@ -167,6 +168,9 @@ def filter_event(direction, event):
         safe['itemId'] = params.get('callId')
     if isinstance(params.get('threadSettings'),dict):
         safe['threadSettings'] = {k:params['threadSettings'][k] for k in ('model',) if k in params['threadSettings']}
+    if method=='thread/tokenUsage/updated':
+        usage=params.get('tokenUsage',{})
+        safe['tokenUsage']={k:usage_fields(usage.get(k),camel=True) for k in ('total','last')} if isinstance(usage,dict) else {}
     if isinstance(params.get('review'),dict):
         safe['review'] = {'status':params['review'].get('status')}
     if isinstance(params.get('goal'),dict):
@@ -230,6 +234,7 @@ class Event:
     data: dict
     at: float
     wall_time: float
+    replayed: bool = False
 
     @classmethod
     def from_row(cls, row, backend='replay'):
@@ -238,4 +243,4 @@ class Event:
         if not at:
             wall = wall or (datetime.fromisoformat(row['source_timestamp'].replace('Z','+00:00')).timestamp() if row.get('source_timestamp') else 0)
             at = wall
-        return cls(row.get('backend',backend), row['direction'],row.get('event',{}),at,wall)
+        return cls(row.get('backend',backend), row['direction'],row.get('event',{}),at,wall,bool(row.get('replayed',False)))

@@ -1,6 +1,6 @@
 # Codex Progress Monitor
 
-本项目实现 Codex Desktop 本机聊天的实时进度反馈：当前阶段、工具活动、持续时间、Reasoning 摘要增长、正文与工具参数的接收 token/s。
+本项目实现 Codex Desktop 本机聊天的实时进度反馈：当前阶段、工具活动、持续时间、正文与工具参数的接收 token/s、本回合 Output / Reasoning 用量和最近推理均速。
 
 第一版采集器、状态聚合和终端看板已经可以运行。当前机器已配置登录启动与原 CLI 包装器，已观察到主 home 后端接入；隔离 Desktop 的真实 UI 核心采集检查已通过。主 App 普通入口的独立启动验收与长期运行验收尚待完成。正式 UI 与远程主机后续增加。
 
@@ -13,6 +13,8 @@
 接入 Monitor 后的前后端通信、监听位置和指标计算见 [产品架构与工作方式](/Users/bytedance/personal/codex_progress_monitor/docs/02_product_mvp/architecture.md)。
 
 文案统一、命令名简化、1Hz 看板与多语言准备见 [易用性需求](docs/04_usability_and_localization/requirements.md)、[实现计划](docs/04_usability_and_localization/implementation-plan.md) 和 [实施结果](docs/04_usability_and_localization/implementation-results.md)。
+
+本回合 Output / Reasoning 用量与最近推理均速已实现并完成隔离运行验证；规则见 [需求文档](docs/05_token_usage_and_reasoning_speed/requirements.md)，步骤见 [实现计划](docs/05_token_usage_and_reasoning_speed/implementation-plan.md)，验收与日常进程加载边界见 [实现结果](docs/05_token_usage_and_reasoning_speed/implementation-results.md)。
 
 主 App / 隔离 App 的启动步骤、环境变量保存位置，以及各进程如何启动、停止和通信，见 [启动步骤与进程管理](/Users/bytedance/personal/codex_progress_monitor/docs/02_product_mvp/startup-and-processes.md)。
 
@@ -30,7 +32,8 @@ codex_progress_monitor/
 │   ├── 01_initial_experiment/       最初可行性研究，解释方案从何而来
 │   ├── 02_product_mvp/             当前产品的需求、架构与使用说明
 │   ├── 03_event_lifecycle_and_progress_display/  生命周期与展示改进
-│   └── 04_usability_and_localization/           易用性与多语言准备
+│   ├── 04_usability_and_localization/           易用性与多语言准备
+│   └── 05_token_usage_and_reasoning_speed/      本回合用量与最近推理均速需求 / 计划 / 验收
 ├── experiments/                    可复用实验脚本
 │   ├── desktop-isolation/          隔离 Desktop / WebSocket 实验
 │   │   └── runs/                   本机隔离 App 数据和原始记录，不提交

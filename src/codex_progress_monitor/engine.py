@@ -7,6 +7,7 @@ import json
 from .events import DELTA_KINDS, TOOL_TYPES, Event
 from .progress_state import handle_protocol, resolve_request, presentation
 from .metrics import TextStream, TokenCounter
+from .usage import UsageBook
 from .i18n import PHASE_KEYS, phase_message, render_message, tr
 from .tool_labels import code_tool_names, command_name, command_previews, command_summary, file_edit_preview, is_code_exec, is_command_tool, is_patch_tool, tool_display, tool_label, tool_name
 
@@ -106,6 +107,7 @@ class Engine:
         self.counter = TokenCounter(asynchronous_counts)
         self.clock=0
         self.resolved_requests = OrderedDict()
+        self.usage = UsageBook()
 
     def _thread(self, backend, thread_id):
         key = (backend, thread_id)
@@ -213,6 +215,7 @@ class Engine:
         elif event.direction=='upstream':
             self._upstream(event)
         self._resolve(event.backend)
+        self.usage.ingest(event,self)
 
     def _lifecycle(self,event):
         kind = event.data.get('type')
@@ -278,6 +281,8 @@ class Engine:
             if isinstance(result.get('thread'),dict):
                 thread=self._metadata(backend,result['thread'])
                 if thread and request and request[0]=='thread/start':
+                    identity=self.usage.identity(backend,thread.id,self)
+                    self.usage.state(identity,at)['new_thread']=not bool(result['thread'].get('turns'))
                     if thread.ephemeral is None and isinstance(request[1].get('ephemeral'),bool):
                         thread.ephemeral=request[1]['ephemeral']
                     thread.thread_source=thread.thread_source or request[1].get('threadSource')
@@ -327,6 +332,7 @@ class Engine:
             if thread.turn_id==turn_id and thread.status=='inProgress':
                 self.counts['duplicate_lifecycle_ignored']+=1
                 return
+            event.turn_started_accepted=True
             for activity in thread.activities.values():
                 if activity.turn_id!=turn_id and activity.active and activity.turn_bound:
                     activity.status='unknown'
@@ -497,6 +503,9 @@ class Engine:
                     self._upstream(event)
                 else:
                     self._protocol(event)
+                if (event.data.get('type') in ('response.output_item.added','response.output_item.done')
+                        or event.data.get('method') in ('item/started','item/completed')):
+                    self.usage.item(event,self)
 
     def _upstream(self,event):
         value,backend,at=event.data,event.backend,event.at
@@ -721,6 +730,7 @@ class Engine:
                 stream.text=''
 
     def tick(self,now):
+        self.usage.tick(now,self)
         for key in list(self.pending):
             kept=[e for e in self.pending[key] if now-e.at<10]
             self.counts['unassociated_expired']+=len(self.pending[key])-len(kept)
@@ -842,6 +852,7 @@ class Engine:
                           'token_rates':{k:v if k in seen_rates and k not in unavailable_rates else None for k,v in rates.items()},
                           'quality':sorted(quality),'connected':backend.get('connected',True),
                           'activities':details})
+            views[-1]['usage']=self.usage.view(self.usage.identity(thread.backend,thread.id,self),thread.turn_id)
             presentation(self,thread,views[-1],now)
         by_identity={}
         for view in views:
@@ -856,7 +867,8 @@ class Engine:
         views=list(by_identity.values())
         views.sort(key=lambda t:(not t['has_active_work'],t['last_progress_seconds'] or 0))
         return {'schema_version':1,'updated_at':wall_time,'clock':now,'threads':views,
-                'backends':self.backends,'unassociated_events':self.pending_count,'counters':dict(self.counts)}
+                'backends':self.backends,'unassociated_events':self.pending_count,'counters':dict(self.counts),
+                'usage_recovery':self.usage.dump(),'usage_diagnostics':dict(self.usage.diagnostics)}
 
     def close(self):
         self.counter.close()

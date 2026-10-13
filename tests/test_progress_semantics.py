@@ -64,9 +64,9 @@ class ProgressTests(unittest.TestCase):
         for row in rows:
             with self.subTest(method=row['method']):
                 kept = filter_event('protocol_out', {'method':row['method'],'params':{}})
-                self.assertEqual(kept is not None,row['recommendation']['consume']!='忽略')
+                self.assertEqual(kept is not None,row['method']=='thread/tokenUsage/updated' or row['recommendation']['consume']!='忽略')
                 self.assertIn('implementation_review',row)
-        self.assertEqual(set(NOTIFICATION_KINDS), {r['method'] for r in rows if r['recommendation']['consume']!='忽略'})
+        self.assertEqual(set(NOTIFICATION_KINDS), {r['method'] for r in rows if r['recommendation']['consume']!='忽略'} | {'thread/tokenUsage/updated'})
         self.assertEqual(ITEM_TYPES, {r['type'] for r in decisions['thread_item_types']})
         self.assertIsNone(filter_event('protocol_out',{'method':'item/futureSecret/delta','params':{'delta':'secret'}}))
         raw=filter_event('protocol_out',{'method':'rawResponseItem/completed','params':{

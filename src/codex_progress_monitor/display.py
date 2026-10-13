@@ -72,8 +72,8 @@ def render(snapshot, selected=0, detail=False, thread_filter=None, language=DEFA
     if thread_filter:
         threads = [t for t in threads if thread_filter in t['id'] or thread_filter in t['name']]
     table = Table(expand=True, box=None, padding=(0, 1))
-    for key in ('table.chat', 'table.activity', 'table.duration', 'table.speed'):
-        table.add_column(t(key))
+    for key in ('table.chat', 'table.activity', 'table.duration', 'table.tokens', 'table.speed'):
+        table.add_column(t(key), overflow='fold', ratio=1 if key in ('table.chat', 'table.activity') else None)
     selected = min(selected, max(0, len(threads)-1))
     for index, thread in enumerate(threads):
         active = [a for a in thread['activities'] if a['active']]
@@ -97,10 +97,16 @@ def render(snapshot, selected=0, detail=False, thread_filter=None, language=DEFA
             phase += t('view.parallel', count=parallel-1)
         value = thread.get('generation_rate')
         rate = '—' if value is None else ('≈' if thread.get('generation_estimated') else '')+f'{value:.1f} token/s'
+        usage = thread.get('usage', {})
+        token_lines = '\n'.join(f'{label} '+(f'{usage[key]:,}' if usage.get(key) is not None else '—')
+                                for label, key in (('Output', 'output_tokens'), ('Reasoning', 'reasoning_tokens')))
+        recent = usage.get('latest_reasoning')
+        reasoning_rate = '—' if not recent else f'≈{recent["tokens_per_second"]:.1f} token/s'
+        rates = t('usage.generation')+' '+rate+'\n'+t('usage.reasoning_compact')+' '+reasoning_rate
         cwd = Path(thread['cwd']).name if thread.get('cwd') else ''
         title = thread['name'] if thread['name'] != thread['id'][:8] else t('view.unnamed')
         name = ('› ' if index == selected else '  ')+title+('\n  '+cwd if cwd else '')
-        table.add_row(Text(name), Text(phase), seconds(thread.get('display_seconds', thread.get('phase_seconds')), language), rate,
+        table.add_row(Text(name), Text(phase), seconds(thread.get('display_seconds', thread.get('phase_seconds')), language), Text(token_lines), Text(rates),
                       style='bold' if index == selected else None)
     state = t('activity.disconnected' if stale else 'view.local')
     header = Text(t('view.header', state=state, count=len(threads)), style='bold')
@@ -125,6 +131,10 @@ def render(snapshot, selected=0, detail=False, thread_filter=None, language=DEFA
             details.add_row(Text(render_message(_activity_message(activity), language)), state,
                             seconds(activity['duration_seconds'], language) if activity.get('start_known') else '—')
         context = []
+        recent = thread.get('usage', {}).get('latest_reasoning')
+        if recent:
+            context.append(t('usage.reasoning_detail', rate=f'{recent["tokens_per_second"]:.1f}',
+                             model=recent.get('model') or 'unknown', turn=recent['turn_id']))
         if thread.get('model') and thread['model'] != 'unknown':
             context.append(t('context.model', name=thread['model']))
         plan = thread.get('plan', [])

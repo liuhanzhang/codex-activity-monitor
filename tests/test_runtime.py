@@ -8,6 +8,7 @@ import sys
 import tempfile
 import time
 import unittest
+from unittest.mock import patch, MagicMock
 
 from codex_progress_monitor.cli import start,stop
 from codex_progress_monitor.runtime import runtime_dir,read_snapshot
@@ -122,6 +123,27 @@ class RuntimeTests(unittest.TestCase):
         self.assertEqual(observer.dropped,18)
         observer.offer('stdout',b'x'*(9*1024*1024))
         self.assertLessEqual(observer.queued_bytes,8*1024*1024)
+
+    def test_usage_cache_byte_limit_and_explicit_original_time_replay(self):
+        observer=Observer(self.runtime,'b','/tmp','/bin/echo')
+        for n in range(90):
+            observer.remember(observer.row('upstream',{'type':'response.completed','response':{
+                'id':str(n),'item_ids':[str(i)+'x'*128 for i in range(512)],'usage':{'output_tokens':100,'reasoning_tokens':40}}}))
+        self.assertLessEqual(observer.cache_bytes,4*1024*1024)
+        self.assertLess(len(observer.cache),90)
+        self.assertEqual(observer.cache_bytes,sum(observer.cache_sizes.values()))
+        fresh=Observer(self.runtime,'b','/tmp','/bin/echo')
+        original=fresh.row('protocol_out',{'method':'turn/started','params':{'threadId':'t','turn':{'id':'u'}}},at=123456789,wall=111)
+        fresh.remember(original)
+        sent=[]
+        fresh.send=lambda row:sent.append(row) or True
+        with patch('codex_progress_monitor.bridge.socket.socket',return_value=MagicMock()):
+            fresh.connect()
+        replay=next(row for row in sent if row['direction']=='protocol_out')
+        self.assertTrue(replay['replayed'])
+        self.assertEqual(replay['observed_ns'],123456789)
+        self.assertEqual(replay['observed_timestamp'],111)
+        self.assertNotIn('replayed',original)
 
     def test_brief_collector_pause_preserves_stream(self):
         start(self.runtime)

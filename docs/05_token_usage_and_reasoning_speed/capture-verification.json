@@ -1,0 +1,107 @@
+{
+  "capture_sha256": "82ca0868fc2b219dc402b07fb6fd6f103a41a8ffb2bfcadb4018be28e7688582",
+  "scope": "20261011 concurrent capture",
+  "responses": [
+    {
+      "turn": "01a129db-423a-7140-bb12-ccf10fa13e4c",
+      "response_id": "resp_0cffef2e6f9f8717016acb3a33eaf48199a691c9dc0ce2d352",
+      "usage": [
+        1267,
+        114
+      ],
+      "duration_seconds": 2.328202832999523,
+      "tokens_per_second": 48.96480598003953,
+      "usage_delay_seconds": 6.2839555840037065,
+      "items_source": "output"
+    },
+    {
+      "turn": "01a129db-423a-7140-bb12-ccf10fa13e4c",
+      "response_id": "resp_0cffef2e6f9f8717016acb3a3da2dc81998136b37808bb11f6",
+      "usage": [
+        157,
+        42
+      ],
+      "duration_seconds": 1.57125991700741,
+      "tokens_per_second": 26.730141554169062,
+      "usage_delay_seconds": 0.4163306659902446,
+      "items_source": "output"
+    },
+    {
+      "turn": "01a129db-43f2-7e21-a4fe-4176a34936c9",
+      "response_id": "resp_0e64fc2139f62a12016acb3a310b7887d0833e18db9735be76",
+      "usage": [
+        1674,
+        189
+      ],
+      "duration_seconds": 5.572087583001121,
+      "tokens_per_second": 33.919064836056435,
+      "usage_delay_seconds": 24.57389970800432,
+      "items_source": "validated_attribution"
+    },
+    {
+      "turn": "01a129db-43f2-7e21-a4fe-4176a34936c9",
+      "response_id": "resp_0e64fc2139f62a12016acb3a502ed887d0b204874e0e18cf81",
+      "usage": [
+        146,
+        48
+      ],
+      "duration_seconds": 2.1730973329977132,
+      "tokens_per_second": 22.088288118133047,
+      "usage_delay_seconds": 0.4728040830086684,
+      "items_source": "validated_attribution"
+    }
+  ],
+  "threads": [
+    {
+      "expected": [
+        1424,
+        156
+      ],
+      "actual": [
+        1424,
+        156
+      ],
+      "protocol_total": [
+        1424,
+        156
+      ],
+      "latest_reasoning": {
+        "tokens_per_second": 26.730141554169062,
+        "reasoning_tokens": 42,
+        "duration_seconds": 1.57125991700741,
+        "turn_id": "01a129db-423a-7140-bb12-ccf10fa13e4c",
+        "response_id": "resp_0cffef2e6f9f8717016acb3a3da2dc81998136b37808bb11f6",
+        "item_id": "rs_0cffef2e6f9f8717016acb3a3e3578819983e1fb604b1f351d",
+        "model": "gpt-6-luna",
+        "source": "upstream",
+        "order": 1791703614.321642
+      }
+    },
+    {
+      "expected": [
+        1820,
+        237
+      ],
+      "actual": [
+        1820,
+        237
+      ],
+      "protocol_total": [
+        1820,
+        237
+      ],
+      "latest_reasoning": {
+        "tokens_per_second": 22.088288118133047,
+        "reasoning_tokens": 48,
+        "duration_seconds": 2.1730973329977132,
+        "turn_id": "01a129db-43f2-7e21-a4fe-4176a34936c9",
+        "response_id": "resp_0e64fc2139f62a12016acb3a502ed887d0b204874e0e18cf81",
+        "item_id": "rs_0e64fc2139f62a12016acb3a50bc7c87d09e9eaf4d11f9b95c",
+        "model": "gpt-6-luna",
+        "source": "upstream",
+        "order": 1791703632.816561
+      }
+    }
+  ],
+  "passed": true
+}

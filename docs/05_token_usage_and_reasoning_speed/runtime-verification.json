@@ -1,0 +1,141 @@
+{
+  "scope": "owned stdio backend and isolated collector",
+  "turns": [
+    {
+      "notification_count": 2,
+      "expected": [
+        269,
+        120
+      ],
+      "actual": [
+        269,
+        120
+      ],
+      "latest_reasoning": {
+        "tokens_per_second": 23.10618720950216,
+        "reasoning_tokens": 120,
+        "duration_seconds": 5.193414167035371,
+        "turn_id": "01a134ff-7927-7693-abec-531ace8537b7",
+        "response_id": "resp_0e5542c39aaa473a016ace145f3e688198b83ebe93d97af990",
+        "item_id": "rs_0e5542c39aaa473a016ace145f8d188198874ef0e8c85bfd10",
+        "model": "gpt-6-luna",
+        "source": "upstream",
+        "order": 1791890527.646715
+      },
+      "zero_observed": true,
+      "live_generation_observed": true
+    },
+    {
+      "notification_count": 1,
+      "expected": [
+        39,
+        0
+      ],
+      "actual": [
+        39,
+        0
+      ],
+      "latest_reasoning": {
+        "tokens_per_second": 23.10618720950216,
+        "reasoning_tokens": 120,
+        "duration_seconds": 5.193414167035371,
+        "turn_id": "01a134ff-7927-7693-abec-531ace8537b7",
+        "response_id": "resp_0e5542c39aaa473a016ace145f3e688198b83ebe93d97af990",
+        "item_id": "rs_0e5542c39aaa473a016ace145f8d188198874ef0e8c85bfd10",
+        "model": "gpt-6-luna",
+        "source": "upstream",
+        "order": 1791890527.646715
+      },
+      "zero_observed": true,
+      "live_generation_observed": false
+    }
+  ],
+  "restart_preserved": true,
+  "collector_implementation": {
+    "source_sha256": "435a335c2cfa1c5ea6bae1162a46e8faf579c3021dcbca9702ac1b03e3543a4f",
+    "modules": {
+      "collector": "4f6946d47875603574bacc7cd544377ffee1d69914454914943b6b56468aaf77",
+      "engine": "9533a456295d411a613660d368c54d66af03905376e5368cf0f73a389aefe220",
+      "progress_state": "6e9586ba5a104b77a207d43f8ac061aecbae7b0ebb62f4047986a239d5e640ba",
+      "events": "ed1a9c89dc997b0fe0f15b7e8541922c85190e434a2b90867fb46c78165708bf",
+      "usage": "a9ec1e137510a230f964193e3ce0641eb985c00b5379905dcab3f3ad81f2fa30",
+      "metrics": "35f954d1acdb55c05564b14739be4869fe4a7e7a72abf5ce8075a1f11636a1f4",
+      "runtime": "c6f14cf01447b8a361893d4419c04de9e37efeb912ee69cf34809fa25732ce74",
+      "tool_labels": "96cb6aa7037fdf2c2066b85149aa0ef3835baab408370b8d9ef92ab082270a14",
+      "i18n": "4fe93c1f750d8b86c7deb4658c88e00887acd4f6a7c1141512fc01caf8b8f8cd",
+      "messages_zh_cn": "10e4aeeaab3ef9bc6be4fb29d80d7aed6f724990ccbd1baf9d209f9f587d0498"
+    }
+  },
+  "bridge_implementation": {
+    "source_sha256": "649404af9829b046245599f17c46db4993ddc2d3fe4666e773e15b258f3d7ffb",
+    "modules": {
+      "bridge": "06f62635e7d3c5ad30ab1672eacdf80cd3c928d4f25cff6845aa08e702f1a1ce",
+      "events": "ed1a9c89dc997b0fe0f15b7e8541922c85190e434a2b90867fb46c78165708bf",
+      "usage": "a9ec1e137510a230f964193e3ce0641eb985c00b5379905dcab3f3ad81f2fa30",
+      "tool_labels": "96cb6aa7037fdf2c2066b85149aa0ef3835baab408370b8d9ef92ab082270a14",
+      "runtime": "c6f14cf01447b8a361893d4419c04de9e37efeb912ee69cf34809fa25732ce74",
+      "i18n": "4fe93c1f750d8b86c7deb4658c88e00887acd4f6a7c1141512fc01caf8b8f8cd",
+      "messages_zh_cn": "10e4aeeaab3ef9bc6be4fb29d80d7aed6f724990ccbd1baf9d209f9f587d0498"
+    }
+  },
+  "config_unchanged": true,
+  "observation_health": {
+    "dropped_packets": null,
+    "parse_errors": null,
+    "drop_reasons": {
+      "send_error": 1
+    }
+  },
+  "passed": true,
+  "cli_version": "0.162.0-alpha.17.2",
+  "captured_at": 1791890666.8375459,
+  "collector_source_matches": true,
+  "bridge_source_matches": true,
+  "watch_implementation": {
+    "source_sha256": "9240de56856a8936f80d24cfad48030185cdf9542fde5436b3ca179b58d48f79",
+    "modules": {
+      "display": "8d1a52bb54e451c52c25d61667172827feac55283dffc46732c2180839548862",
+      "i18n": "4fe93c1f750d8b86c7deb4658c88e00887acd4f6a7c1141512fc01caf8b8f8cd",
+      "messages_zh_cn": "10e4aeeaab3ef9bc6be4fb29d80d7aed6f724990ccbd1baf9d209f9f587d0498",
+      "runtime": "c6f14cf01447b8a361893d4419c04de9e37efeb912ee69cf34809fa25732ce74",
+      "progress_state": "6e9586ba5a104b77a207d43f8ac061aecbae7b0ebb62f4047986a239d5e640ba",
+      "tool_labels": "96cb6aa7037fdf2c2066b85149aa0ef3835baab408370b8d9ef92ab082270a14",
+      "events": "ed1a9c89dc997b0fe0f15b7e8541922c85190e434a2b90867fb46c78165708bf",
+      "usage": "a9ec1e137510a230f964193e3ce0641eb985c00b5379905dcab3f3ad81f2fa30"
+    }
+  },
+  "watch_cli_verified": true,
+  "native_desktop_ui_verified": false,
+  "usage_recovery_version": 2,
+  "test_suite": {
+    "tests": 135,
+    "elapsed_seconds": 19.634,
+    "final_usage_tests": 28
+  },
+  "main_runtime": {
+    "collector_matches": false,
+    "connected_backends": [
+      {
+        "bridge_pid": 45948,
+        "matches": false,
+        "includes_usage": false
+      },
+      {
+        "bridge_pid": 30157,
+        "matches": false,
+        "includes_usage": false
+      },
+      {
+        "bridge_pid": 30128,
+        "matches": false,
+        "includes_usage": false
+      },
+      {
+        "bridge_pid": 79858,
+        "matches": false,
+        "includes_usage": false
+      }
+    ],
+    "restarted": false
+  }
+}
