@@ -7,15 +7,11 @@ import json
 from .events import DELTA_KINDS, TOOL_TYPES, Event
 from .progress_state import handle_protocol, resolve_request, presentation
 from .metrics import TextStream, TokenCounter
-from .tool_labels import code_tool_names, command_previews, command_summary, is_code_exec, is_command_tool, tool_label, tool_name
+from .i18n import PHASE_KEYS, phase_message, render_message, tr
+from .tool_labels import code_tool_names, command_name, command_previews, command_summary, is_code_exec, is_command_tool, tool_display, tool_label, tool_name
 
 
-PHASES = {'waiting':'准备开始', 'reasoning':'思考中', 'text':'生成回答', 'plan':'整理计划',
-          'tool_input':'准备操作', 'tool_ready':'处理中', 'tool':'调用工具',
-          'approval':'已暂停', 'input':'已暂停', 'unknown':'状态暂不可用',
-          'review':'自动审核中', 'compaction':'压缩上下文', 'sleep':'等待中',
-          'auth':'连接服务', 'retry':'正在重试', 'buffering':'等待输出', 'hook':'处理中',
-          'completed':'任务完成', 'interrupted':'已停止', 'failed':'任务失败', 'idle':'空闲'}
+PHASES = {phase: render_message(phase_message(phase)) for phase in PHASE_KEYS}
 PRIORITY = {'tool_input':0,'text':1,'plan':1,'reasoning':2,'tool':3,'compaction':4,
             'review':5,'auth':6,'retry':6,'buffering':7,'hook':7,'sleep':8,
             'input':9,'approval':9,'tool_ready':10,'unknown':11}
@@ -39,6 +35,8 @@ class Activity:
     tool_name: str | None = None
     tool_names: list = field(default_factory=list)
     command: str | None = None
+    command_name: str | None = None
+    app_context: dict = field(default_factory=dict)
     command_previews: list = field(default_factory=list)
     tool_label_revision: int = -1
     item_type: str | None = None
@@ -178,8 +176,11 @@ class Engine:
             sources = {'unifiedExecStartup': 'exec_command', 'unifiedExecInteraction': 'write_stdin'}
             name = name or sources.get(item.get('source'))
             if item.get('command'):
+                activity.command_name = item.get('command_name') or command_name(item['command'])
                 activity.command = command_summary(item['command'])
-        activity.tool_name = name or activity.tool_name or ('命令' if item.get('type') == 'commandExecution' else item.get('type'))
+        if isinstance(item.get('appContext'), dict):
+            activity.app_context.update(item['appContext'])
+        activity.tool_name = name or activity.tool_name or ('exec_command' if item.get('type') == 'commandExecution' else item.get('type'))
         self._tool_label(activity)
 
     def _tool_label(self, activity, code=None):
@@ -191,7 +192,7 @@ class Engine:
         if activity.command:
             label += ' · ' + activity.command
         elif activity.command_previews:
-            label += ' · 拟执行: ' + ' | '.join(p['command'] for p in activity.command_previews)
+            label += tr('diagnostic.planned', commands=' | '.join(p['command'] for p in activity.command_previews))
         activity.label = label
 
     def ingest(self, row):
@@ -542,7 +543,7 @@ class Engine:
                 known['started_at']=None
                 self.counts['late_terminal_items']+=1
                 return
-            label=tool_name(item) or ('工具名未知' if phase=='tool_input' else PHASES[phase])
+            label=tool_name(item) or (tr('diagnostic.tool_unknown') if phase=='tool_input' else PHASES[phase])
             activity=self._activity(thread,item_id,turn_id,phase,label,known['started_at'])
             if phase == 'tool_input':
                 if tool_name(item):
@@ -785,6 +786,8 @@ class Engine:
                                 'turn_bound':activity.turn_bound,
                                 'tool_name':activity.tool_name, 'tool_names':list(activity.tool_names),
                                 'command':activity.command,
+                                'command_name':activity.command_name, 'item_type':activity.item_type,
+                                **tool_display(activity.tool_name, activity.app_context),
                                 'command_previews':[dict(p) for p in activity.command_previews],
                                 'start_known':activity.started_at is not None,'summary_chars':activity.summary_chars,
                                 'summary_parts':len(activity.summary_parts), 'output_chars':activity.output_chars,

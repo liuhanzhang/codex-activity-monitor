@@ -12,6 +12,8 @@
 
 接入 Monitor 后的前后端通信、监听位置和指标计算见 [产品架构与工作方式](/Users/bytedance/personal/codex_progress_monitor/docs/02_product_mvp/architecture.md)。
 
+文案统一、命令名简化、1Hz 看板与多语言准备见 [易用性需求](docs/04_usability_and_localization/requirements.md)、[实现计划](docs/04_usability_and_localization/implementation-plan.md) 和 [实施结果](docs/04_usability_and_localization/implementation-results.md)。
+
 主 App / 隔离 App 的启动步骤、环境变量保存位置，以及各进程如何启动、停止和通信，见 [启动步骤与进程管理](/Users/bytedance/personal/codex_progress_monitor/docs/02_product_mvp/startup-and-processes.md)。
 
 ## 目录
@@ -26,7 +28,9 @@ codex_progress_monitor/
 ├── pyproject.toml                  Python 包配置和产品依赖
 ├── docs/
 │   ├── 01_initial_experiment/       最初可行性研究，解释方案从何而来
-│   └── 02_product_mvp/             当前产品的需求、架构与使用说明
+│   ├── 02_product_mvp/             当前产品的需求、架构与使用说明
+│   ├── 03_event_lifecycle_and_progress_display/  生命周期与展示改进
+│   └── 04_usability_and_localization/           易用性与多语言准备
 ├── experiments/                    可复用实验脚本
 │   ├── desktop-isolation/          隔离 Desktop / WebSocket 实验
 │   │   └── runs/                   本机隔离 App 数据和原始记录，不提交

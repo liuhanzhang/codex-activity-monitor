@@ -12,6 +12,7 @@ import uuid
 from .engine import Engine
 from .events import Event
 from .runtime import atomic_json,read_snapshot,source_identity
+from .i18n import message, render_message
 
 
 def serve(runtime):
@@ -33,7 +34,7 @@ def serve(runtime):
     clients={}
     owners={}
     engine=Engine()
-    implementation=source_identity('collector','engine','progress_state','events','metrics','runtime')
+    implementation=source_identity('collector','engine','progress_state','events','metrics','runtime','tool_labels','i18n','messages_zh_cn')
     previous=read_snapshot(runtime)
     historical=previous.get('threads',[]) if time.time()-(previous.get('updated_at') or 0)<600 else []
     for thread in historical:
@@ -41,12 +42,15 @@ def serve(runtime):
         thread['token_rates']={'text':None,'tool_input':None}
         thread['generation_rate']=None
         if thread.get('status')=='inProgress' or thread.get('active_count'):
-            thread.update(status='unknown',phase='unknown',phase_label='状态暂不可用',display_label='状态暂不可用',
+            unavailable = message('activity.unknown')
+            thread.update(status='unknown',phase='unknown',phase_label=render_message(unavailable),display_label=render_message(unavailable),
+                          display_message=unavailable,
                           display_active_count=0,display_seconds=None,active_count=0,phase_seconds=None,has_active_work=False)
             thread['quality']=sorted(set(thread.get('quality',[])) | {'collector_restarted'})
         for activity in thread.get('activities',[]):
             if activity.get('active'):
                 activity.update(active=False,status='unknown')
+                activity.pop('display_message', None)
             for stream in activity.get('streams',[]):
                 stream['token_rate']=None
     recovered_at=time.time()

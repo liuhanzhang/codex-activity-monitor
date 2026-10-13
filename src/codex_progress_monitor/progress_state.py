@@ -3,7 +3,8 @@
 from pathlib import Path
 
 from .events import BLOCKING_REQUESTS, SERVER_REQUESTS, brief
-from .tool_labels import is_code_exec
+from .i18n import message, phase_message, render_message
+from .tool_labels import command_name, is_code_exec, is_command_tool, tool_display
 
 
 def finish(engine, activity, at, status='completed'):
@@ -247,42 +248,63 @@ def handle_protocol(engine, event):
 
 
 def short_tool(name):
-    if not name or is_code_exec(name):
+    return tool_display(name)['tool_display_name'][:80]
+
+
+def _value(activity, key, default=None):
+    return activity.get(key, default) if isinstance(activity, dict) else getattr(activity, key, default)
+
+
+def activity_target(activity):
+    command = _value(activity, 'command')
+    if command:
+        return _value(activity, 'command_name') or command_name(command) or ''
+    previews = _value(activity, 'command_previews', [])
+    if previews:
+        preview = previews[0]
+        return preview.get('command_name') or command_name(preview.get('command', ''), preview.get('complete', False)) or ''
+    names = _value(activity, 'tool_names', [])
+    name = names[0] if names else _value(activity, 'tool_name')
+    if is_command_tool(name) or _value(activity, 'item_type') == 'commandExecution':
         return ''
-    return name.split('__')[-1].split('.')[-1].split('/')[-1][:80]
+    display = tool_display(name, _value(activity, 'app_context', {}))
+    # Snapshots carry only the resolved names, rather than the app context.
+    if not names:
+        display['product_name'] = _value(activity, 'product_name') or display['product_name']
+        display['tool_display_name'] = _value(activity, 'tool_display_name') or display['tool_display_name']
+    return ' · '.join(v for v in (display['product_name'], display['tool_display_name']) if v)
+
+
+def activity_message(activity, ended=False):
+    kind, item_type = _value(activity, 'kind'), _value(activity, 'item_type')
+    target = activity_target(activity)
+    if kind in ('tool_input', 'tool_ready'):
+        if ended:
+            return message('activity.named', name=target) if target else message('activity.tool')
+        return message('activity.preparing' if kind == 'tool_input' else 'activity.processing', target=target)
+    if kind == 'tool':
+        if item_type == 'fileChange':
+            files, count = _value(activity, 'files', []), _value(activity, 'file_count', 0)
+            params = {'target': Path(files[0]['path']).name if files else ''}
+            if count > 1:
+                return message('activity.file_change_more', **params, count=count-1)
+            return message('activity.file_change', **params)
+        keys = {'webSearch': 'web', 'imageView': 'image_view', 'imageGeneration': 'image_generation'}
+        if item_type in keys:
+            return message('activity.' + keys[item_type])
+        if item_type == 'collabAgentToolCall':
+            keys = {'wait': 'agent_wait', 'spawnAgent': 'agent_spawn', 'sendInput': 'agent_update',
+                    'resumeAgent': 'agent_resume', 'closeAgent': 'agent_close', 'sendMessage': 'agent_update',
+                    'followupTask': 'agent_update', 'interruptAgent': 'agent_interrupt', 'listAgents': 'agent_list'}
+            return message('activity.' + keys.get(short_tool(_value(activity, 'tool_name')), 'agent_work'))
+        if ended:
+            return message('activity.named', name=target) if target else message('activity.command' if item_type == 'commandExecution' else 'activity.tool')
+        return message('activity.preparing' if _value(activity, 'startup_pending', False) else 'activity.running', target=target)
+    return phase_message(kind)
 
 
 def activity_label(activity):
-    kind, item_type = activity.kind, activity.item_type
-    if kind == 'tool_input':
-        if activity.command_previews:
-            return '准备命令 · ' + activity.command_previews[0]['command']
-        name = short_tool(activity.tool_names[0] if activity.tool_names else activity.tool_name)
-        return '准备操作' + (' · ' + name if name else '')
-    if kind == 'tool_ready':
-        summary = activity.command or (activity.command_previews[0]['command'] if activity.command_previews else '')
-        name = short_tool(activity.tool_names[0] if activity.tool_names else activity.tool_name)
-        return '处理中' + (' · ' + (summary or name) if summary or name else '')
-    if kind == 'tool':
-        if item_type == 'commandExecution':
-            return '运行命令' + (' · ' + activity.command if activity.command else '')
-        if item_type == 'fileChange':
-            files = activity.files
-            return '修改文件' + (' · ' + Path(files[0]['path']).name if files else '') + (f'（另 {activity.file_count-1} 个）' if activity.file_count > 1 else '')
-        names = {'webSearch':'搜索网页','imageView':'查看图片','imageGeneration':'生成图片'}
-        if item_type in names:
-            return names[item_type]
-        if item_type == 'collabAgentToolCall':
-            return {'wait':'等待子任务','spawnAgent':'分配子任务','sendInput':'更新子任务',
-                    'resumeAgent':'恢复子任务','closeAgent':'结束子任务','sendMessage':'更新子任务',
-                    'followupTask':'更新子任务','interruptAgent':'暂停子任务','listAgents':'查看子任务'}.get(short_tool(activity.tool_name),'处理子任务')
-        if getattr(activity,'startup_pending',False):
-            return '准备工具'
-        name = short_tool(activity.tool_name)
-        return '调用工具' + (' · ' + name if name else '')
-    return {'text':'生成回答','plan':'整理计划','reasoning':'思考中','review':'自动审核中',
-            'compaction':'压缩上下文','sleep':'等待中','auth':'连接服务','retry':'正在重试',
-            'buffering':'等待输出','hook':'处理中','input':'已暂停','approval':'已暂停'}.get(kind,'处理中')
+    return render_message(activity_message(activity, ended=not activity.active))
 
 
 def presentation(engine, thread, view, now):
@@ -302,41 +324,41 @@ def presentation(engine, thread, view, now):
         primary = pending[-1]
     connected = view['connected']
     if not connected or 'system_error' in thread.quality:
-        label = '连接中断' if not connected else '状态暂不可用'
+        label = message('activity.disconnected' if not connected else 'activity.unknown')
         primary = None
     elif primary and 'observation_gap' in thread.quality and primary.last_progress_at <= engine.backends[thread.backend].get('gap_at',0):
-        label = '状态暂不可用'
+        label = message('activity.unknown')
         primary = None
     elif primary:
-        label = activity_label(primary)
+        label = activity_message(primary)
     elif thread.active_flags:
-        label = '已暂停'
+        label = message('activity.paused')
     elif thread.error_status:
-        label = '正在重试' if thread.error_status == 'retry' else '任务失败'
+        label = message('activity.retry' if thread.error_status == 'retry' else 'activity.failed')
     elif thread.goal_status in ('paused','blocked','usageLimited','budgetLimited'):
-        label = '已暂停'
+        label = message('activity.paused')
     elif thread.status == 'completed':
-        label = '本轮完成' if thread.goal_status and thread.goal_status != 'complete' else '任务完成'
+        label = message('activity.turn_completed' if thread.goal_status and thread.goal_status != 'complete' else 'activity.completed')
     elif thread.status == 'inProgress':
         recent = next((a for a in reversed(activities) if a.ended_at is not None and
                        0 <= now-a.ended_at < 1 and a.status == 'completed' and
                        a.kind not in ('input','approval','tool_ready','tool_input','hook')),None)
-        label = ('刚完成 · ' + activity_label(recent)) if recent else '处理中' if activities else '准备开始'
+        label = message('activity.recent', activity=activity_message(recent, ended=True)) if recent else message('activity.processing' if activities else 'activity.waiting')
     else:
-        label = {'interrupted':'已停止','failed':'任务失败','unknown':'状态暂不可用','idle':'空闲'}.get(thread.status,'处理中')
+        label = phase_message(thread.status)
     # Brief service/review transitions coalesce; real work and terminal results
     # update immediately. The separate activities remain available in details.
     if primary and primary.kind in ('auth','retry','hook','buffering') and primary.started_at and now-primary.started_at < 1:
-        label = '处理中'
+        label = message('activity.processing')
     if primary and primary.kind == 'sleep' and primary.started_at and now-primary.started_at < 3:
-        label = '处理中'
+        label = message('activity.processing')
     primary_id = primary.id if primary else None
     if primary_id != thread.display_primary:
         thread.display_primary, thread.display_since = primary_id, now
     visible = actual if actual else blockers[:1] or pending[-1:]
     if any(a.kind != 'hook' for a in visible):
         visible = [a for a in visible if a.kind != 'hook']
-    if not primary and label in ('连接中断','状态暂不可用'):
+    if not primary and label['key'] in ('activity.disconnected', 'activity.unknown'):
         visible=[]
     visible_ids = {a.id for a in visible}
     rates, unavailable, estimated = [], False, False
@@ -350,14 +372,15 @@ def presentation(engine, thread, view, now):
                 else:
                     rates.append(rate)
                     estimated |= stream.estimated
-    view.update(display_label=label, visible=thread.visible,
+    view.update(display_message=label, display_label=render_message(label), visible=thread.visible,
                 display_active_count=len(visible_ids), display_primary_id=primary.id if primary else None,
-                generation_rate=sum(rates) if rates and not unavailable and connected and label not in ('状态暂不可用','连接中断') else None,
+                generation_rate=sum(rates) if rates and not unavailable and connected and label['key'] not in ('activity.unknown', 'activity.disconnected') else None,
                 generation_estimated=estimated, plan=list(thread.plan), goal_status=thread.goal_status,
                 review_mode=thread.review_mode, subagents=dict(thread.subagents),
                 environment_connected=thread.environment_connected, project_id=thread.project_id,
                 display_seconds=max(0,now-primary.started_at) if primary and primary.started_at and connected else None)
     for detail, activity in zip(view['activities'], reversed(activities)):
-        detail.update(display_label=activity_label(activity), display_visible=activity.kind not in ('approval','input','hook') and not (activity.kind=='tool_ready' and is_code_exec(activity.tool_name) and actual),
+        detail.update(display_message=activity_message(activity, ended=not activity.active),
+                      display_label=activity_label(activity), display_visible=activity.kind not in ('approval','input','hook') and not (activity.kind=='tool_ready' and is_code_exec(activity.tool_name) and actual),
                       files=list(activity.files), file_count=activity.file_count,
                       receiver_thread_ids=list(activity.receiver_thread_ids), agents_states=dict(activity.agents_states))

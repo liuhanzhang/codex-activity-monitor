@@ -6,6 +6,8 @@ import os
 from pathlib import Path
 import tempfile
 
+from .i18n import DEFAULT_LANGUAGE, available_languages, tr, validate_language
+
 ROOT = Path(__file__).resolve().parents[2]
 REAL_CLI = Path('/Applications/ChatGPT.app/Contents/Resources/codex-cli/CodexCLI.app/Contents/MacOS/codex')
 
@@ -18,12 +20,12 @@ def source_identity(*modules):
             'modules':hashes}
 
 
-def runtime_dir(value=None):
+def runtime_dir(value=None, language=DEFAULT_LANGUAGE):
     path = Path(value or os.environ.get('CODEX_PROGRESS_RUNTIME', ROOT/'.local/runtime')).expanduser().resolve()
     path.mkdir(parents=True, exist_ok=True, mode=0o700)
     path.chmod(0o700)
     if len(str(path/'events.sock').encode())>103:
-        raise ValueError('Runtime path is too long for a macOS Unix socket; choose a shorter --runtime path')
+        raise ValueError(tr('cli.runtime_long', language))
     return path
 
 
@@ -44,3 +46,18 @@ def read_snapshot(path):
         return json.loads((path/'snapshot.json').read_text())
     except (OSError,ValueError):
         return {'threads':[],'backends':{},'counters':{},'updated_at':None}
+
+
+def ui_language(runtime, explicit=None):
+    if explicit is not None:
+        return validate_language(explicit)
+    try:
+        settings = json.loads((runtime/'ui-settings.json').read_text())
+        value = settings.get('language') if isinstance(settings, dict) and settings.get('version') == 1 else None
+        return value if value in available_languages() else DEFAULT_LANGUAGE
+    except (OSError, ValueError):
+        return DEFAULT_LANGUAGE
+
+
+def save_ui_language(runtime, language):
+    atomic_json(runtime/'ui-settings.json', {'version': 1, 'language': validate_language(language)})

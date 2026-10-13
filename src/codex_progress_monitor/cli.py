@@ -10,12 +10,14 @@ import subprocess
 import sys
 import time
 
-from .runtime import ROOT,REAL_CLI,atomic_json,read_snapshot,runtime_dir
+from .runtime import ROOT,REAL_CLI,atomic_json,read_snapshot,runtime_dir,ui_language
+
+from .i18n import DEFAULT_LANGUAGE, tr
 
 _children={}
 
 
-def start(runtime):
+def start(runtime, language=DEFAULT_LANGUAGE):
     if running(runtime):
         return
     log=runtime/'collector.log'
@@ -30,9 +32,9 @@ def start(runtime):
         if running(runtime):
             return
         if process.poll() is not None:
-            raise RuntimeError('Collector failed to start; inspect '+str(log))
+            raise RuntimeError(tr('cli.start_failed', language, path=str(log)))
         time.sleep(0.05)
-    raise RuntimeError('Collector startup timed out; inspect '+str(log))
+    raise RuntimeError(tr('cli.start_timeout', language, path=str(log)))
 
 
 def running(runtime):
@@ -86,7 +88,20 @@ def replay(path,output=None):
 
 
 def main(argv=None):
-    parser=argparse.ArgumentParser(description='Codex Desktop 本机实时进度')
+    argv = list(sys.argv[1:] if argv is None else argv)
+    # Never interpret language options inside forwarded original CLI arguments.
+    seed = argparse.ArgumentParser(add_help=False, allow_abbrev=False)
+    seed.add_argument('--runtime', type=Path)
+    seed.add_argument('--lang')
+    known, _ = seed.parse_known_args(argv[:argv.index('--')] if '--' in argv else argv)
+    initial_runtime = Path(known.runtime or os.environ.get('CODEX_PROGRESS_RUNTIME', ROOT/'.local/runtime')).expanduser()
+    try:
+        language = ui_language(initial_runtime, known.lang)
+    except ValueError as exc:
+        print(str(exc), file=sys.stderr)
+        return 1
+    parser=argparse.ArgumentParser(description=tr('cli.description', language))
+    parser.add_argument('--lang', help=tr('cli.language', language))
     parser.add_argument('--runtime',type=Path)
     subs=parser.add_subparsers(dest='command',required=True)
     for name in ('collect','start','stop','status','setup','uninstall','desktop'):
@@ -94,7 +109,7 @@ def main(argv=None):
         if name in ('setup','desktop'):
             p.add_argument('--real-cli',type=Path,default=REAL_CLI)
         if name=='setup':
-            p.add_argument('--launch-agent',action='store_true',help='配置登录启动和 Desktop 默认入口')
+            p.add_argument('--launch-agent',action='store_true',help=tr('cli.launch_agent', language))
         if name=='desktop':
             p.add_argument('--home',type=Path)
             p.add_argument('--profile',type=Path)
@@ -104,22 +119,23 @@ def main(argv=None):
     p=subs.add_parser('watch')
     p.add_argument('--once',action='store_true')
     p.add_argument('--json',action='store_true')
-    p.add_argument('--thread',help='聊天名称或 ID 筛选')
+    p.add_argument('--thread',help=tr('cli.thread', language))
+    p.add_argument('--lang', default=argparse.SUPPRESS, help=tr('cli.language', language))
     p=subs.add_parser('replay')
     p.add_argument('path',type=Path)
     p.add_argument('--output',type=Path)
     args=parser.parse_args(argv)
-    runtime=runtime_dir(args.runtime)
     try:
+        runtime=runtime_dir(args.runtime, language)
         if args.command=='collect':
             from .collector import serve
             serve(runtime)
         elif args.command=='start':
-            start(runtime)
-            print('采集进程已运行：'+str(runtime))
+            start(runtime, language)
+            print(tr('cli.started', language, path=str(runtime)))
         elif args.command=='stop':
             stop(runtime)
-            print('采集进程已停止；Codex 通信继续运行')
+            print(tr('cli.stopped', language))
         elif args.command=='status':
             value=read_snapshot(runtime)
             print(json.dumps({'running':running(runtime),'runtime':str(runtime),'updated_at':value.get('updated_at'),
@@ -130,17 +146,17 @@ def main(argv=None):
             return forward(args.args[1:] if args.args[:1]==['--'] else args.args,runtime,args.real_cli)
         elif args.command=='watch':
             from .display import watch
-            watch(runtime,args.once,args.json,args.thread)
+            watch(runtime,args.once,args.json,args.thread,language)
         elif args.command=='replay':
             replay(args.path,args.output)
         else:
             from .integration import setup,uninstall,desktop
             if args.command=='setup':
-                setup(runtime,args.real_cli,args.launch_agent)
+                setup(runtime,args.real_cli,args.launch_agent,language)
             elif args.command=='uninstall':
-                uninstall(runtime)
+                uninstall(runtime,language)
             else:
-                desktop(runtime,args.real_cli,args.home,args.profile)
+                desktop(runtime,args.real_cli,args.home,args.profile,language)
         return 0
     except (OSError,ValueError,RuntimeError) as exc:
         print(str(exc),file=sys.stderr)

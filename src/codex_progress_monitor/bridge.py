@@ -48,7 +48,7 @@ class Observer:
         self.runtime,self.backend=runtime,backend
         from .runtime import source_identity
         self.info={'type':'bridge/started','home':home,'cli':str(cli),'bridge_pid':os.getpid(),
-                   'implementation':source_identity('bridge','events','tool_labels','runtime')}
+                   'implementation':source_identity('bridge','events','tool_labels','runtime','i18n','messages_zh_cn')}
         self.packets=queue.Queue(maxsize=queue_size)
         self.cache=OrderedDict()
         self.dropped=0

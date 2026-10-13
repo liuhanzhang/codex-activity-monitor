@@ -1,16 +1,16 @@
 import shlex
 import unittest
 
-from codex_progress_monitor.tool_labels import MAX_CODE_PREFIX, code_tool_names, command_previews, command_summary
+from codex_progress_monitor.tool_labels import MAX_CODE_PREFIX, code_tool_names, command_name, command_previews, command_summary, tool_display
 
 
 class ToolLabelTests(unittest.TestCase):
     def test_command_preview_is_incremental_and_only_at_command_argument_root(self):
         code = 'const unrelated={cmd:"SECRET"}; tools.exec_command({env:{cmd:"SECRET"},cmd:"rg --fi'
         self.assertEqual(command_previews('exec', code), [
-            {'tool_name':'exec_command','command':'rg --fi…','complete':False}])
+            {'tool_name':'exec_command','command':'rg --fi…','complete':False,'command_name':'rg'}])
         self.assertEqual(command_previews('exec', code + 'les"});'), [
-            {'tool_name':'exec_command','command':'rg --files','complete':True}])
+            {'tool_name':'exec_command','command':'rg --files','complete':True,'command_name':'rg'}])
         for code in ('tools.exec_command({cmd: variable});',
                      'tools.other({cmd:"SECRET"});',
                      'const s="tools.exec_command({cmd: hidden})";',
@@ -92,6 +92,55 @@ class ToolLabelTests(unittest.TestCase):
         self.assertEqual(command_summary('/bin/zsh -lc "rg --files src'), 'rg --files src…')
         self.assertEqual(len(command_summary('rg ' + 'x' * 500)), 160)
         self.assertTrue(command_summary('rg ' + 'x' * 500).endswith('…'))
+
+    def test_command_name_strips_paths_arguments_and_known_wrappers(self):
+        cases = {
+            '.local/venv/bin/python SECRET.py --verbose': 'python',
+            '/usr/bin/python3 -c "SECRET"': 'python3',
+            '/bin/zsh -lc \'rg --files SECRET\'': 'rg',
+            'DEBUG=1 .local/venv/bin/python SECRET.py': 'python',
+            'env -i --unset DEBUG DEBUG=1 python SECRET.py': 'python',
+            'sudo -n -u root env DEBUG=1 /opt/bin/python SECRET.py': 'python',
+            'cd "directory with spaces" && python SECRET.py': 'python',
+            'cd -- project; python SECRET.py': 'python',
+            'git status && pytest -q': 'git',
+            'git status | head -n 1': 'git',
+            '"/path with spaces/python" SECRET': 'python',
+            '/bin/bash --login -c \'env DEBUG=1 python SECRET\'': 'python',
+            'python SECRET > output': 'python',
+        }
+        for source, expected in cases.items():
+            with self.subTest(source=source):
+                self.assertEqual(command_name(source), expected)
+        self.assertEqual(command_name(['/bin/zsh', '-lc', 'rg --files']), 'rg')
+
+    def test_command_name_partial_dynamic_and_unknown_wrappers(self):
+        for source in ('$PROGRAM SECRET', '`program` SECRET', 'python${VERSION} SECRET',
+                       '.local/venv/bin/py…', 'env --unknown SECRET python', 'sudo -x SECRET python'):
+            with self.subTest(source=source):
+                self.assertIsNone(command_name(source))
+        self.assertIsNone(command_name('.local/venv/bin/py', complete=False))
+        self.assertEqual(command_name('.local/venv/bin/python ', complete=False), 'python')
+        self.assertEqual(command_name('python -c "unfinished', complete=False), 'python')
+        self.assertEqual(command_name('/bin/zsh -lc "rg --fi', complete=False), 'rg')
+        self.assertIsNone(command_name('/bin/zsh -lc "rg', complete=False))
+        self.assertIsNone(command_previews('exec_command', '{"cmd":"py')[0]['command_name'])
+        self.assertEqual(command_previews('exec_command', '{"cmd":"python -')[0]['command_name'], 'python')
+        self.assertIsNone(command_previews('exec_command', '{"cmd":"python" + name}')[0]['command_name'])
+
+    def test_provider_names_and_protocol_fallback_use_one_rule(self):
+        for raw in ('mcp__example__search', 'mcp__example.search', 'example/search'):
+            with self.subTest(raw=raw):
+                display = tool_display(raw)
+                self.assertEqual((display['product_name'], display['tool_display_name']), ('example', 'search'))
+                named = tool_display(raw, {'appName': 'Friendly Product', 'actionName': 'Find documents'})
+                self.assertEqual((named['product_name'], named['tool_display_name']), ('Friendly Product', 'Find documents'))
+                self.assertEqual(named['name_source'], {'product': 'display', 'tool': 'display'})
+        nested = tool_display('mcp__host__app__search')
+        self.assertEqual(nested['product_name'], 'host · app')
+        self.assertEqual(tool_display('mcp__cua_repl__js')['product_name'], 'cua_repl')
+        self.assertEqual(tool_display('exec')['tool_display_name'], '')
+        self.assertEqual(tool_display('mcp__example__search', {'appName': 'Product\x1b\nName'})['product_name'], 'ProductName')
 
 
 if __name__ == '__main__':

@@ -70,7 +70,7 @@ class EngineTests(unittest.TestCase):
         self.assertEqual(self.view(110)['threads'][0]['phase'],'approval')
         self.send({'id':99,'result':{'decision':'decline'}},111,direction='protocol_in')
         self.assertEqual(self.view(112)['threads'][0]['phase'],'tool_ready')
-        self.assertEqual(self.view(112)['threads'][0]['display_label'],'处理中 · sleep 10')
+        self.assertEqual(self.view(112)['threads'][0]['display_label'],'处理中 · sleep')
 
     def test_reasoning_counts_and_terminal_freezes_time(self):
         self.turn()
@@ -92,7 +92,7 @@ class EngineTests(unittest.TestCase):
         self.assertEqual(thread['activities'][0]['output_chars'],0)
         self.send({'id':99,'method':'item/commandExecution/requestApproval','params':{'threadId':'t','turnId':'u','itemId':'cmd'}},116)
         self.assertEqual(self.view(117)['threads'][0]['phase'],'tool')
-        self.assertEqual(self.view(117)['threads'][0]['display_label'],'运行命令')
+        self.assertEqual(self.view(117)['threads'][0]['display_label'],'运行中')
 
     def test_gap_disables_speed_and_next_turn_recovers(self):
         self.turn()

@@ -2,8 +2,11 @@
 
 import re
 import shlex
+import unicodedata
 from collections import deque
 from pathlib import PurePath
+
+from .i18n import tr
 
 
 MAX_LABEL = 160
@@ -192,7 +195,8 @@ def _object_command(code, tokens, start, name):
                         summary = command_summary(command)
                         if not complete and not summary.endswith('…'):
                             summary = summary[:MAX_LABEL - 1] + '…'
-                        preview = {'tool_name': name, 'command': summary, 'complete': complete}
+                        preview = {'tool_name': name, 'command': summary, 'complete': complete,
+                                   'command_name': command_name(command, complete=complete)}
             # A spread can overwrite cmd, so its final value is unobservable.
             if value == '.' and [t[0] for t in tokens[index:index + 3]] == ['.', '.', '.']:
                 preview = None
@@ -253,7 +257,7 @@ def is_code_exec(name):
 
 def tool_label(name, names=()):
     if is_code_exec(name):
-        return (name + ' → ' + ', '.join(names)) if names else name + '（Code Mode）'
+        return (name + ' → ' + ', '.join(names)) if names else tr('diagnostic.code_mode', name=name)
     return name
 
 
@@ -288,3 +292,122 @@ def command_summary(command):
                     break
     first = command.split('\n', 1)[0]
     return first if len(first) <= MAX_LABEL else first[:MAX_LABEL - 1] + '…'
+
+
+def clean_name(value):
+    if not isinstance(value, str):
+        return ''
+    return ' '.join(''.join(c for c in value if not unicodedata.category(c).startswith('C')).split())[:MAX_LABEL]
+
+
+def tool_display(name, app_context=None):
+    """One provider-first rule for all tools; no service aliases or inferred brands."""
+    name = clean_name(name)
+    context = app_context or {}
+    product = clean_name(context.get('appName'))
+    tool = clean_name(context.get('actionName'))
+    raw_product, raw_tool = '', ''
+    if name and not is_code_exec(name):
+        normalized = name.split('mcp__', 1)[-1] if 'mcp__' in name else name
+        if 'mcp__' in name:
+            parts = re.split(r'__|\.', normalized)
+            raw_product, raw_tool = ' · '.join(parts[:-1]), parts[-1]
+        elif '/' in name:
+            raw_product, raw_tool = name.rsplit('/', 1)
+        else:
+            raw_tool = name.rsplit('.', 1)[-1]
+    product_source = 'display' if product else 'protocol' if raw_product else None
+    tool_source = 'display' if tool else 'protocol' if raw_tool else None
+    product, tool = product or raw_product, tool or raw_tool
+    return {'product_name': product, 'tool_display_name': tool,
+            'name_source': {'product': product_source, 'tool': tool_source}}
+
+
+def _shell_words(command, complete):
+    lexer = shlex.shlex(command, posix=True, punctuation_chars=';&|()<>')
+    lexer.whitespace_split = True
+    words = []
+    try:
+        for word in lexer:
+            words.append((word, True))
+            if len(words) == 64:
+                break
+    except ValueError:
+        if lexer.token:
+            words.append((lexer.token, False))
+        return words
+    if words and not complete and command and command[-1] not in ' \t\r\n;&|()<>':
+        words[-1] = (words[-1][0], False)
+    return words
+
+
+def command_name(command, complete=True, _depth=0):
+    """Extract a proven executable token, never evaluating shell expressions."""
+    if _depth > 4 or not isinstance(command, (str, list)):
+        return None
+    if isinstance(command, list):
+        command = shlex.join(str(part) for part in command)
+    if len(command) > MAX_CODE_PREFIX:
+        command, complete = command[:MAX_CODE_PREFIX], False
+    words = _shell_words(command, complete)
+    index = 0
+    assignments = re.compile(r'^[A-Za-z_][A-Za-z0-9_]*=')
+    while index < len(words):
+        token, known = words[index]
+        if not known:
+            return None
+        if assignments.match(token):
+            index += 1
+            continue
+        base = PurePath(token).name
+        if base in ('env', 'sudo'):
+            index += 1
+            flags = ({'-i', '--ignore-environment', '-0', '--null', '-'} if base == 'env'
+                     else {'-n', '-E', '-H', '-S', '-b', '-k', '-K'})
+            valued = ({'-u', '--unset', '-C', '--chdir'} if base == 'env'
+                      else {'-u', '--user', '-g', '--group', '-h', '--host', '-p', '--prompt', '-C', '--close-from'})
+            while index < len(words):
+                option, finished = words[index]
+                if not finished:
+                    return None
+                if option == '--':
+                    index += 1
+                    break
+                if not option.startswith('-'):
+                    break
+                if option in flags:
+                    index += 1
+                elif option in valued:
+                    if index + 1 >= len(words) or not words[index + 1][1]:
+                        return None
+                    index += 2
+                elif any(option.startswith(v + '=') for v in valued if v.startswith('--')):
+                    index += 1
+                else:
+                    return None
+            continue
+        if base in {'bash', 'zsh', 'sh', 'dash', 'ksh', 'fish'}:
+            for pos in range(index + 1, len(words)):
+                option, finished = words[pos]
+                if not finished:
+                    return None
+                if re.fullmatch(r'-[ilxvefu]*c[ilxvefu]*', option):
+                    if pos + 1 >= len(words):
+                        return None
+                    body, body_complete = words[pos + 1]
+                    return command_name(body, body_complete, _depth + 1)
+                if option in ('--login', '--noprofile', '--norc') or re.fullmatch(r'-[ilxvefu]+', option):
+                    continue
+                break
+        if base == 'cd':
+            pos = index + 1
+            if pos < len(words) and words[pos][0] in ('--', '-L', '-P'):
+                pos += 1
+            if pos + 1 < len(words) and words[pos][1] and words[pos + 1][0] in ('&&', ';'):
+                index = pos + 2
+                continue
+        if (not base or base in ('.', '..') or token.startswith('-') or
+                any(c in token for c in '$`…;&|()<>\n\r\x00')):
+            return None
+        return clean_name(base) or None
+    return None

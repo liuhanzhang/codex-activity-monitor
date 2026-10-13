@@ -4,7 +4,7 @@ from dataclasses import dataclass
 from datetime import datetime
 import json
 
-from .tool_labels import command_summary
+from .tool_labels import command_name, command_summary
 
 
 DELTA_KINDS = {
@@ -77,6 +77,7 @@ def item_metadata(value):
                'senderThreadId','agentThreadId','kind','durationMs','success','delivery')
     result = {k: value[k] for k in allowed if k in value}
     if 'command' in result:
+        result['command_name'] = command_name(result['command'])
         result['command'] = command_summary(result['command'])
     if 'metadata' in result:
         result['metadata'] = {k:v for k,v in result['metadata'].items() if k in ('turn_id','thread_id')}

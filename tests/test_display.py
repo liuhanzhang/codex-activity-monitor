@@ -20,8 +20,8 @@ class DisplayTests(unittest.TestCase):
             snapshot=engine.snapshot(103,time.time())
             output=io.StringIO()
             Console(file=output,width=240).print(render(snapshot,detail=True)[0])
-            self.assertIn('准备命令',output.getvalue())
-            self.assertIn('rg --fi…',output.getvalue())
+            self.assertIn('准备中 · rg',output.getvalue())
+            self.assertNotIn('--fi',output.getvalue())
             self.assertNotIn('exec →',output.getvalue())
             self.assertNotIn('执行工具',output.getvalue())
         finally:
@@ -37,8 +37,9 @@ class DisplayTests(unittest.TestCase):
             output=io.StringIO()
             Console(file=output,width=240).print(render(engine.snapshot(102,time.time()),detail=True)[0])
             text=output.getvalue()
-            self.assertIn('运行命令',text)
-            self.assertIn('tool_labels.py',text)
+            self.assertIn('运行中 · rg',text)
+            self.assertNotIn('tool_labels.py',text)
+            self.assertNotIn('--files',text)
             self.assertNotIn('/bin/zsh',text)
         finally:
             engine.close()
@@ -54,7 +55,7 @@ class DisplayTests(unittest.TestCase):
             engine.tick(102.1)
             output=io.StringIO()
             Console(file=output,width=300).print(render(engine.snapshot(103,time.time()))[0])
-            self.assertIn('准备操作',output.getvalue())
+            self.assertIn('准备中 · openaiDeveloperDocs · fetch_openai_doc',output.getvalue())
             self.assertIn('fetch_openai_doc',output.getvalue())
             self.assertNotIn('mcp__openaiDeveloperDocs__',output.getvalue())
         finally:

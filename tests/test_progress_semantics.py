@@ -132,7 +132,7 @@ class ProgressTests(unittest.TestCase):
         self.command()
         for request in (7,8):
             self.send('item/commandExecution/requestApproval',{'threadId':'t','turnId':'u','itemId':'cmd'},102,request)
-        self.assertEqual(self.view()['display_label'],'运行命令 · sleep 10')
+        self.assertEqual(self.view()['display_label'],'运行中 · sleep')
         self.send('serverRequest/resolved',{'threadId':'t','requestId':7},105)
         self.assertEqual(len(self.engine.approvals),1)
         self.value({'id':8,'result':{'decision':'decline'}},106,'protocol_in')
@@ -149,7 +149,7 @@ class ProgressTests(unittest.TestCase):
         self.command('other',105)
         view=self.view(106)
         self.assertEqual(view['display_active_count'],1)
-        self.assertEqual(view['display_label'],'运行命令 · sleep 10')
+        self.assertEqual(view['display_label'],'运行中 · sleep')
 
     def test_legacy_and_empty_target_requests_never_store_prompts(self):
         self.send('execCommandApproval',{'conversationId':'t','callId':'cmd','command':['secret']},102,7)
@@ -182,7 +182,7 @@ class ProgressTests(unittest.TestCase):
         self.send('item/autoApprovalReview/completed',{'threadId':'t','turnId':'u','reviewId':'r2',
                   'startedAtMs':2000,'review':{'status':'denied'}},108)
         self.assertEqual(self.view(110)['display_active_count'],0)
-        self.assertNotIn('运行命令',self.visual(110))
+        self.assertNotIn('运行中',self.visual(110))
         self.assertIn('审核未通过',self.visual(110))
         self.assertNotIn('PRIVATE',self.visual(110))
 
@@ -265,7 +265,7 @@ class ProgressTests(unittest.TestCase):
         self.assertFalse(next(a for a in waiting['activities'] if a['kind']=='hook')['display_visible'])
         self.command('cmd',104)
         working=self.view(106)
-        self.assertTrue(working['display_label'].startswith('运行命令'))
+        self.assertTrue(working['display_label'].startswith('运行中'))
         self.assertEqual(working['display_active_count'],1)
         self.assertNotIn('另 1 项进行中',self.visual(106))
         self.send('hook/completed',{'threadId':'t','turnId':'u','run':{'id':'sync','scope':'turn','executionMode':'sync','status':'completed'}},107)
@@ -293,9 +293,9 @@ class ProgressTests(unittest.TestCase):
         self.assertEqual(self.view(118)['display_label'],'等待输出')
         self.item({'id':'mcp','type':'mcpToolCall','server':'srv','tool':'read_docs'},119)
         self.send('mcpServer/startupStatus/updated',{'name':'srv','status':'starting'},120)
-        self.assertEqual(self.view(122)['display_label'],'准备工具')
+        self.assertEqual(self.view(122)['display_label'],'准备中 · srv · read_docs')
         self.send('item/mcpToolCall/progress',{'threadId':'t','turnId':'u','itemId':'mcp','message':'PRIVATE'},123)
-        self.assertEqual(self.view(124)['display_label'],'调用工具 · read_docs')
+        self.assertEqual(self.view(124)['display_label'],'运行中 · srv · read_docs')
         self.assertNotIn('PRIVATE',self.visual(124))
 
     def test_goal_paused_archive_and_completed_turn_are_distinct(self):
@@ -343,7 +343,7 @@ class ProgressTests(unittest.TestCase):
         self.send('thread/status/changed',{'threadId':'t','status':{'type':'idle'}},103)
         view=self.view(104)
         self.assertEqual(view['status'],'idle')
-        self.assertEqual(view['display_label'],'运行命令 · sleep 10')
+        self.assertEqual(view['display_label'],'运行中 · sleep')
         self.assertEqual(view['display_active_count'],1)
         self.assertIsNone(view['generation_rate'])
         self.assertNotIn('任务完成',self.visual(104))

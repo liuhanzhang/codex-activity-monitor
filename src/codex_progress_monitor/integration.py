@@ -9,6 +9,7 @@ import subprocess
 import sys
 
 from .runtime import atomic_json
+from .i18n import DEFAULT_LANGUAGE, tr
 
 LABEL='com.local.codex-progress-monitor'
 KEYS=('CODEX_CLI_PATH','CODEX_APP_SERVER_FORCE_CLI','CODEX_APP_SERVER_USE_LOCAL_DAEMON','CODEX_APP_SERVER_WS_URL')
@@ -22,13 +23,13 @@ def _values(wrapper):
     return dict(zip(KEYS,(str(wrapper),'1','0','')))
 
 
-def setup(runtime,actual,launch_agent=False):
+def setup(runtime,actual,launch_agent=False,language=DEFAULT_LANGUAGE):
     actual=actual.expanduser().resolve()
     if not actual.is_file() or not os.access(actual,os.X_OK):
-        raise ValueError('Original Codex CLI is not executable: '+str(actual))
+        raise ValueError(tr('cli.original_invalid', language, path=str(actual)))
     wrapper=runtime/'codex-observed'
     if actual==wrapper:
-        raise ValueError('Original CLI cannot be the wrapper')
+        raise ValueError(tr('cli.original_wrapper', language))
     wrapper.write_text('#!/bin/sh\nexec '+shlex.quote(sys.executable)+' -m codex_progress_monitor.cli --runtime '+
                        shlex.quote(str(runtime))+' bridge --real-cli '+shlex.quote(str(actual))+' -- "$@"\n')
     wrapper.chmod(0o700)
@@ -39,7 +40,7 @@ def setup(runtime,actual,launch_agent=False):
         if plist.exists():
             existing=plistlib.loads(plist.read_bytes())
             if str(runtime) not in json.dumps(existing):
-                raise RuntimeError('Another runtime owns this LaunchAgent; uninstall it first')
+                raise RuntimeError(tr('cli.agent_owned', language))
         if not saved.exists():
             previous={}
             for key in KEYS:
@@ -62,14 +63,14 @@ def setup(runtime,actual,launch_agent=False):
         stop(runtime)
         _run(['/bin/launchctl','bootout',f'gui/{os.getuid()}/{LABEL}'],False)
         _run(['/bin/launchctl','bootstrap',f'gui/{os.getuid()}',str(plist)])
-        print('已安装登录启动和 Desktop 默认采集入口。现有任务继续运行；下次退出并重新打开 Codex 后接入。')
+        print(tr('cli.installed', language))
     else:
         from .cli import start
-        start(runtime)
-        print('采集进程和包装器已准备：'+str(wrapper))
+        start(runtime,language)
+        print(tr('cli.prepared', language, path=str(wrapper)))
 
 
-def uninstall(runtime):
+def uninstall(runtime,language=DEFAULT_LANGUAGE):
     plist=Path.home()/'Library/LaunchAgents'/f'{LABEL}.plist'
     saved=runtime/'desktop-environment.json'
     if saved.exists():
@@ -86,13 +87,13 @@ def uninstall(runtime):
         saved.unlink()
     from .cli import stop
     stop(runtime)
-    print('已恢复原启动环境。下次重新打开 Codex 使用原 CLI；现有任务可继续结束。')
+    print(tr('cli.uninstalled', language))
 
 
-def desktop(runtime,actual,home=None,profile=None):
+def desktop(runtime,actual,home=None,profile=None,language=DEFAULT_LANGUAGE):
     from .cli import start
-    setup(runtime,actual)
-    start(runtime)
+    setup(runtime,actual,language=language)
+    start(runtime,language)
     values=_values(runtime/'codex-observed')
     command=['/usr/bin/open']
     if profile:
@@ -109,6 +110,6 @@ def desktop(runtime,actual,home=None,profile=None):
         command.extend(['--args','--user-data-dir='+str(profile)])
     _run(command)
     if profile:
-        print('已请求打开独立 Codex 测试实例，使用指定 profile。主 App 无需退出；请在新窗口提交测试聊天。')
+        print(tr('cli.desktop_isolated', language))
     else:
-        print('已请求打开 Codex。已在运行的实例需先正常退出再重开，才能切换后端入口。')
+        print(tr('cli.desktop', language))
