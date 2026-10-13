@@ -69,7 +69,8 @@ class EngineTests(unittest.TestCase):
         self.send({'id':99,'method':'item/commandExecution/requestApproval','params':{'threadId':'t','turnId':'u','itemId':'cmd'}},101.01)
         self.assertEqual(self.view(110)['threads'][0]['phase'],'approval')
         self.send({'id':99,'result':{'decision':'decline'}},111,direction='protocol_in')
-        self.assertEqual(self.view(112)['threads'][0]['phase'],'waiting')
+        self.assertEqual(self.view(112)['threads'][0]['phase'],'tool_ready')
+        self.assertEqual(self.view(112)['threads'][0]['display_label'],'处理中 · sleep 10')
 
     def test_reasoning_counts_and_terminal_freezes_time(self):
         self.turn()
@@ -77,7 +78,7 @@ class EngineTests(unittest.TestCase):
         self.delta(text='摘要🙂',kind='response.reasoning_summary_text.delta')
         a=self.view()['threads'][0]['activities'][0]
         self.assertEqual((a['summary_chars'],a['summary_parts']),(3,1))
-        self.assertIsNone(a['streams'][0]['token_rate'])
+        self.assertGreater(a['streams'][0]['token_rate'],0)
         self.send({'method':'turn/completed','params':{'threadId':'t','turn':{'id':'u','status':'interrupted'}}},104)
         self.assertEqual(self.view(120)['threads'][0]['activities'][0]['duration_seconds'],3)
         self.assertEqual(self.view(120)['threads'][0]['phase'],'interrupted')
@@ -90,7 +91,8 @@ class EngineTests(unittest.TestCase):
         self.assertEqual(thread['phase_seconds'],15)
         self.assertEqual(thread['activities'][0]['output_chars'],0)
         self.send({'id':99,'method':'item/commandExecution/requestApproval','params':{'threadId':'t','turnId':'u','itemId':'cmd'}},116)
-        self.assertEqual(self.view(117)['threads'][0]['phase'],'approval')
+        self.assertEqual(self.view(117)['threads'][0]['phase'],'tool')
+        self.assertEqual(self.view(117)['threads'][0]['display_label'],'运行命令')
 
     def test_gap_disables_speed_and_next_turn_recovers(self):
         self.turn()
@@ -186,6 +188,92 @@ class EngineTests(unittest.TestCase):
         self.assertEqual(self.view(120)['threads'][0]['phase'],'tool_ready')
         self.send({'method':'item/commandExecution/outputDelta','params':{'threadId':'t','turnId':'u','itemId':'cmd','delta':'running'}},121)
         self.assertEqual(self.view(122)['threads'][0]['phase'],'tool')
+
+    def test_code_mode_names_update_during_arguments_without_confirming_execution(self):
+        self.turn()
+        self.send({'type':'response.output_item.added','item':{'id':'code','type':'custom_tool_call','name':'exec',
+                   'metadata':{'turn_id':'u'}}},101,direction='upstream')
+        self.assertEqual(self.view(101.1)['threads'][0]['activities'][0]['label'],'exec（Code Mode）')
+        self.delta('code','await tools.exec_com',at=102,kind='response.custom_tool_call_input.delta')
+        self.assertEqual(self.view(102.1)['threads'][0]['activities'][0]['tool_names'],[])
+        self.delta('code','mand({cmd: "rg --files",extra: "PRIVATE_TOOL_INPUT"});',sequence=2,at=103,kind='response.custom_tool_call_input.delta')
+        thread=self.view(103.1)['threads'][0]
+        self.assertEqual(thread['phase'],'tool_input')
+        self.assertEqual(thread['activities'][0]['label'],'exec → exec_command · 拟执行: rg --files')
+        self.assertNotIn('PRIVATE_TOOL_INPUT',json.dumps(thread))
+        self.send({'type':'response.output_item.done','item':{'id':'code','type':'custom_tool_call','name':'exec',
+                   'input':'await tools.exec_command({cmd: "rg --files",extra: "PRIVATE_TOOL_INPUT"});','metadata':{'turn_id':'u'}}},104,direction='upstream')
+        self.assertEqual(self.view(105)['threads'][0]['phase'],'tool_ready')
+        self.assertEqual(self.engine.streams[('b','code','tool_input',0)].text,'')
+        self.item('next',kind='reasoning',at=106)
+        previous=next(a for a in self.view(107)['threads'][0]['activities'] if a['id']=='code')
+        self.assertFalse(previous['active'])
+        self.assertEqual(previous['tool_name'],'exec')
+
+    def test_command_preview_grows_before_parameters_complete_and_does_not_confirm_execution(self):
+        self.turn()
+        self.send({'type':'response.output_item.added','item':{'id':'code','type':'custom_tool_call','name':'exec',
+                   'metadata':{'turn_id':'u'}}},101,direction='upstream')
+        self.delta('code','tools.exec_command({cmd:"git sta',at=102,kind='response.custom_tool_call_input.delta')
+        thread=self.view(102.1)['threads'][0];activity=thread['activities'][0]
+        self.assertEqual(thread['phase'],'tool_input')
+        self.assertEqual(activity['command_previews'][0]['command'],'git sta…')
+        self.assertIsNone(activity['command'])
+        self.delta('code','tus",env:{key:"PRIVATE_ENV"}});',sequence=2,at=103,kind='response.custom_tool_call_input.delta')
+        activity=self.view(103.1)['threads'][0]['activities'][0]
+        self.assertEqual(activity['command_previews'][0]['command'],'git status')
+        self.assertNotIn('PRIVATE_ENV',json.dumps(activity))
+        self.send({'type':'response.output_item.done','item':{'id':'code','type':'custom_tool_call','name':'exec',
+                   'input':'tools.exec_command({cmd:"git status",env:{key:"PRIVATE_ENV"}});','metadata':{'turn_id':'u'}}},104,direction='upstream')
+        thread=self.view(105)['threads'][0]
+        self.assertEqual(thread['phase'],'tool_ready')
+        self.assertEqual(thread['activities'][0]['command_previews'][0]['command'],'git status')
+        self.assertIsNone(thread['activities'][0]['command'])
+        self.assertEqual(self.engine.streams[('b','code','tool_input',0)].text,'')
+
+    def test_direct_command_function_has_preview_during_json_argument_generation(self):
+        self.turn()
+        self.send({'type':'response.output_item.added','item':{'id':'cmd','type':'function_call','name':'exec_command',
+                   'namespace':'functions','metadata':{'turn_id':'u'}}},101,direction='upstream')
+        self.delta('cmd','{"cmd":"rg --fi',at=102,kind='response.function_call_arguments.delta')
+        thread=self.view()['threads'][0]
+        self.assertEqual(thread['phase'],'tool_input')
+        self.assertEqual(thread['activities'][0]['label'],'functions.exec_command · 拟执行: rg --fi…')
+
+    def test_final_metadata_supplies_missing_tool_name_and_namespace(self):
+        self.turn();self.item(kind='function_call')
+        self.delta(text='{"private":true}',kind='response.function_call_arguments.delta')
+        self.assertEqual(self.view()['threads'][0]['activities'][0]['label'],'工具名未知')
+        self.send({'type':'response.output_item.done','item':{'id':'i','type':'function_call','name':'lookup',
+                   'namespace':'catalog','arguments':'{"private":true}','metadata':{'turn_id':'u'}}},104,direction='upstream')
+        activity=self.view(105)['threads'][0]['activities'][0]
+        self.assertEqual(activity['label'],'catalog.lookup')
+        self.assertNotIn('private',json.dumps(activity))
+
+    def test_completed_code_reconciles_names_and_namespaced_exec_closes(self):
+        self.turn()
+        self.send({'type':'response.output_item.added','item':{'id':'code','type':'custom_tool_call','name':'exec',
+                   'namespace':'functions','metadata':{'turn_id':'u'}}},101,direction='upstream')
+        self.delta('code','tools.partial()',at=102,kind='response.custom_tool_call_input.delta')
+        self.view()
+        self.send({'type':'response.output_item.done','item':{'id':'code','type':'custom_tool_call',
+                   'input':'await Promise.all([tools.exec_command({}), tools.mcp__web__run({})]);',
+                   'metadata':{'turn_id':'u'}}},104,direction='upstream')
+        self.assertEqual(self.view(105)['threads'][0]['activities'][0]['tool_names'],['exec_command','mcp__web__run'])
+        self.item('next',at=106)
+        previous=next(a for a in self.view(107)['threads'][0]['activities'] if a['id']=='code')
+        self.assertFalse(previous['active'])
+
+    def test_command_summary_updates_when_lifecycle_metadata_arrives_late(self):
+        self.turn()
+        self.send({'method':'item/started','params':{'threadId':'t','turnId':'u','item':{'id':'cmd',
+                   'type':'commandExecution','source':'unifiedExecStartup','processId':'123'}}},101)
+        self.send({'method':'item/completed','params':{'threadId':'t','turnId':'u','item':{'id':'cmd',
+                   'type':'commandExecution','status':'completed','command':'/bin/zsh -lc "rg --files src"'}}},104)
+        activity=self.view(105)['threads'][0]['activities'][0]
+        self.assertEqual(activity['label'],'exec_command · rg --files src')
+        self.assertEqual(activity['command'],'rg --files src')
+        self.assertFalse(activity['active'])
 
     def test_final_after_rejoin_has_count_but_no_speed(self):
         self.turn()

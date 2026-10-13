@@ -11,7 +11,7 @@ import uuid
 
 from .engine import Engine
 from .events import Event
-from .runtime import atomic_json,read_snapshot
+from .runtime import atomic_json,read_snapshot,source_identity
 
 
 def serve(runtime):
@@ -33,13 +33,16 @@ def serve(runtime):
     clients={}
     owners={}
     engine=Engine()
+    implementation=source_identity('collector','engine','progress_state','events','metrics','runtime')
     previous=read_snapshot(runtime)
     historical=previous.get('threads',[]) if time.time()-(previous.get('updated_at') or 0)<600 else []
     for thread in historical:
         thread['connected']=False
         thread['token_rates']={'text':None,'tool_input':None}
+        thread['generation_rate']=None
         if thread.get('status')=='inProgress' or thread.get('active_count'):
-            thread.update(status='unknown',phase='unknown',phase_label='状态未知',active_count=0,phase_seconds=None,has_active_work=False)
+            thread.update(status='unknown',phase='unknown',phase_label='状态暂不可用',display_label='状态暂不可用',
+                          display_active_count=0,display_seconds=None,active_count=0,phase_seconds=None,has_active_work=False)
             thread['quality']=sorted(set(thread.get('quality',[])) | {'collector_restarted'})
         for activity in thread.get('activities',[]):
             if activity.get('active'):
@@ -56,9 +59,14 @@ def serve(runtime):
             identity=(thread.get('home'),thread['id'])
             fresh.add(identity)
             previous=older.get(identity)
+            if previous:
+                if not thread.get('name') or thread['name']==thread['id'][:8]:
+                    thread['name']=previous.get('name',thread.get('name'))
+                if not thread.get('cwd'):
+                    thread['cwd']=previous.get('cwd','')
             if previous and thread['status']=='idle' and not thread['activities']:
                 # Metadata replay must not erase the restored final metrics.
-                snapshot['threads'][index]={**previous,'backend':thread['backend'],
+                snapshot['threads'][index]={**previous,'backend':thread['backend'],'name':thread['name'],'cwd':thread.get('cwd',''),
                                            'ephemeral':thread.get('ephemeral') if isinstance(thread.get('ephemeral'),bool) else previous.get('ephemeral'),
                                            'thread_source':thread.get('thread_source') or previous.get('thread_source'),
                                            'connected':thread['connected'] if previous['status']!='unknown' else False}
@@ -83,7 +91,8 @@ def serve(runtime):
     signal.signal(signal.SIGTERM,stop)
     signal.signal(signal.SIGINT,stop)
     token=uuid.uuid4().hex
-    atomic_json(runtime/'collector.json',{'pid':os.getpid(),'started_at':time.time(),'token':token})
+    atomic_json(runtime/'collector.json',{'pid':os.getpid(),'started_at':time.time(),'token':token,
+                                        'implementation':implementation})
     next_snapshot=0
     def close_client(conn,reason='shutdown'):
         engine.counts['ipc_close_'+reason]+=1
@@ -157,6 +166,7 @@ def serve(runtime):
                 snapshot=engine.snapshot(now,time.time())
                 retain_history(snapshot)
                 snapshot['collector_pid']=os.getpid()
+                snapshot['implementation']=implementation
                 snapshot['running']=True
                 atomic_json(runtime/'snapshot.json',snapshot)
                 next_snapshot=now+0.25
@@ -167,6 +177,7 @@ def serve(runtime):
         snapshot=engine.snapshot(time.monotonic(),time.time())
         retain_history(snapshot)
         snapshot['running']=False
+        snapshot['implementation']=implementation
         atomic_json(runtime/'snapshot.json',snapshot)
         engine.close()
         selector.close()

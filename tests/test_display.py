@@ -8,6 +8,58 @@ from codex_progress_monitor.display import render
 
 
 class DisplayTests(unittest.TestCase):
+    def test_partial_command_preview_is_visible_and_remains_planned(self):
+        engine=Engine(False)
+        try:
+            engine.ingest(Event('b','protocol_out',{'method':'turn/started','params':{'threadId':'t','turn':{'id':'u'}}},100,0))
+            engine.ingest(Event('b','upstream',{'type':'response.output_item.added','item':{'id':'code',
+                'type':'custom_tool_call','name':'exec','metadata':{'turn_id':'u'}}},101,0))
+            engine.ingest(Event('b','upstream',{'type':'response.custom_tool_call_input.delta','item_id':'code',
+                'delta':'tools.exec_command({cmd:"rg --fi'},102,0))
+            engine.tick(102.1)
+            snapshot=engine.snapshot(103,time.time())
+            output=io.StringIO()
+            Console(file=output,width=240).print(render(snapshot,detail=True)[0])
+            self.assertIn('准备命令',output.getvalue())
+            self.assertIn('rg --fi…',output.getvalue())
+            self.assertNotIn('exec →',output.getvalue())
+            self.assertNotIn('执行工具',output.getvalue())
+        finally:
+            engine.close()
+
+    def test_tool_name_and_command_are_visible_without_shell_wrapper(self):
+        engine=Engine(False)
+        try:
+            engine.ingest(Event('b','protocol_out',{'method':'turn/started','params':{'threadId':'t','turn':{'id':'u'}}},100,0))
+            engine.ingest(Event('b','protocol_out',{'method':'item/started','params':{'threadId':'t','turnId':'u',
+                'item':{'id':'cmd','type':'commandExecution','source':'unifiedExecStartup','processId':'123',
+                        'command':'/bin/zsh -lc "rg --files src/codex_progress_monitor/tool_labels.py"'}}},101,0))
+            output=io.StringIO()
+            Console(file=output,width=240).print(render(engine.snapshot(102,time.time()),detail=True)[0])
+            text=output.getvalue()
+            self.assertIn('运行命令',text)
+            self.assertIn('tool_labels.py',text)
+            self.assertNotIn('/bin/zsh',text)
+        finally:
+            engine.close()
+
+    def test_generated_tool_names_render_in_argument_phase(self):
+        engine=Engine(False)
+        try:
+            engine.ingest(Event('b','protocol_out',{'method':'turn/started','params':{'threadId':'t','turn':{'id':'u'}}},100,0))
+            engine.ingest(Event('b','upstream',{'type':'response.output_item.added','item':{'id':'code',
+                'type':'custom_tool_call','name':'exec','metadata':{'turn_id':'u'}}},101,0))
+            engine.ingest(Event('b','upstream',{'type':'response.custom_tool_call_input.delta','item_id':'code',
+                'delta':'await tools.mcp__openaiDeveloperDocs__fetch_openai_doc({});'},102,0))
+            engine.tick(102.1)
+            output=io.StringIO()
+            Console(file=output,width=300).print(render(engine.snapshot(103,time.time()))[0])
+            self.assertIn('准备操作',output.getvalue())
+            self.assertIn('fetch_openai_doc',output.getvalue())
+            self.assertNotIn('mcp__openaiDeveloperDocs__',output.getvalue())
+        finally:
+            engine.close()
+
     def test_ephemeral_helpers_hidden_by_default_but_can_be_filtered(self):
         engine=Engine(False)
         try:
@@ -32,7 +84,7 @@ class DisplayTests(unittest.TestCase):
         output=io.StringIO()
         Console(file=output,width=200).print(render(snapshot)[0])
         text=output.getvalue()
-        self.assertIn('观测中断',text)
+        self.assertIn('连接中断',text)
         self.assertNotIn('999.9',text)
         self.assertEqual(snapshot['threads'][0]['status'],'inProgress')
         self.assertEqual(snapshot['threads'][0]['token_rates']['text'],999.9)

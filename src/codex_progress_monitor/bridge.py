@@ -14,7 +14,7 @@ import threading
 import time
 import uuid
 
-from .events import decode_log, filter_event
+from .events import decode_log, filter_event, BLOCKING_REQUESTS
 from .runtime import REAL_CLI
 
 TRACE_FILTER='warn,codex_api::sse=trace,tungstenite::protocol=trace,tungstenite::protocol::frame=off'
@@ -46,7 +46,9 @@ def observes_stdio(args):
 class Observer:
     def __init__(self,runtime,backend,home,cli,queue_size=128):
         self.runtime,self.backend=runtime,backend
-        self.info={'type':'bridge/started','home':home,'cli':str(cli),'bridge_pid':os.getpid()}
+        from .runtime import source_identity
+        self.info={'type':'bridge/started','home':home,'cli':str(cli),'bridge_pid':os.getpid(),
+                   'implementation':source_identity('bridge','events','tool_labels','runtime')}
         self.packets=queue.Queue(maxsize=queue_size)
         self.cache=OrderedDict()
         self.dropped=0
@@ -102,6 +104,21 @@ class Observer:
             key=('thread',params.get('thread',{}).get('id'))
         elif method in ('turn/started','turn/completed'):
             key=('turn',params.get('threadId'))
+            if method=='turn/completed':
+                turn_id=params.get('turn',{}).get('id')
+                for cached_key,cached in list(self.cache.items()):
+                    old=cached['event']
+                    old_params=old.get('params',{})
+                    old_item=old_params.get('item',old.get('item',{}))
+                    old_turn=old_params.get('turnId') or old_item.get('metadata',{}).get('turn_id') or old.get('identity',{}).get('turn_id')
+                    if old_turn!=turn_id:
+                        continue
+                    if cached_key[0] in ('approval','strict_review','review','hook','auth','turn/plan/updated','model/safetyBuffering/updated'):
+                        self.cache.pop(cached_key,None)
+                    elif cached_key[0]=='item' and (old.get('method')=='item/started' or old.get('type')=='response.output_item.added'):
+                        background=old_item.get('type')=='commandExecution' and old_item.get('processId') and old_item.get('source') in ('unifiedExecStartup','unifiedExecInteraction')
+                        if not background or params.get('turn',{}).get('status')!='completed':
+                            self.cache.pop(cached_key,None)
         elif method=='item/started' or event.get('type')=='response.output_item.added':
             key=('item',item.get('id'))
         elif method=='item/completed' or event.get('type')=='response.output_item.done':
@@ -117,8 +134,27 @@ class Observer:
             key=('name',params.get('threadId'))
         elif method in ('thread/settings/updated','model/rerouted'):
             key=('model',params.get('threadId'))
-        elif method and (method.endswith('/requestApproval') or method.endswith('/requestUserInput')):
+        elif method in BLOCKING_REQUESTS:
             key=('approval',event.get('id'))
+        elif method in ('item/autoApprovalReview/started','item/autoApprovalReview/completed'):
+            key=('review',params.get('reviewId'))
+            strict_key=('strict_review',params.get('threadId'),params.get('turnId'))
+            strict=self.cache.get(strict_key,{}).get('event',{}).get('params',{})
+            if not strict or strict.get('startedAtMs') in (None,params.get('startedAtMs')):
+                self.cache.pop(strict_key,None)
+        elif method=='autoApprovalReview/strictReviewRequired':
+            key=('strict_review',params.get('threadId'),params.get('turnId'))
+        elif method in ('hook/started','hook/completed'):
+            key=('hook',params.get('run',{}).get('id'))
+        elif method in ('modelProvider/authRecoveryStarted','modelProvider/authRecoveryCompleted'):
+            key=('auth',params.get('threadId'),params.get('turnId'))
+        elif method in ('thread/status/changed','thread/goal/updated','thread/goal/cleared',
+                         'thread/project/updated','thread/environment/connected','thread/environment/disconnected',
+                         'thread/archived','thread/deleted','thread/unarchived','thread/closed','thread/reverted'):
+            category='goal' if '/goal/' in method else 'environment' if '/environment/' in method else 'visibility' if method in ('thread/archived','thread/deleted','thread/unarchived') else method
+            key=(category,params.get('threadId'))
+        elif method in ('turn/plan/updated','model/safetyBuffering/updated'):
+            key=(method,params.get('threadId'),params.get('turnId'))
         elif method=='serverRequest/resolved':
             self.cache.pop(('approval',params.get('requestId')),None)
         elif row['direction']=='protocol_in' and not method:

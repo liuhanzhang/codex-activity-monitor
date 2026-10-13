@@ -14,10 +14,15 @@ def verify(path):
     engine=Engine(False)
     expected={}
     phases=set()
+    labels=set()
+    peak_generation_rate=0
+    input_bytes=path.stat().st_size
+    capture_hash=hashlib.sha256(path.read_bytes()).hexdigest()
     at=0
     began=time.perf_counter()
     for line in path.open():
         row=json.loads(line)
+        row.setdefault('direction','protocol_out')
         value=row['event']
         if row['direction']=='upstream' and value.get('type')=='response.output_item.done':
             item=value['item'];item_id=item['id']
@@ -39,7 +44,10 @@ def verify(path):
             engine.ingest(event)
         at=max(at,event.at)
         engine.tick(at)
-        phases.update(t['phase'] for t in engine.snapshot(at)['threads'])
+        for thread in engine.snapshot(at)['threads']:
+            phases.add(thread['phase'])
+            labels.add(thread['display_label'].split(' · ')[0])
+            peak_generation_rate=max(peak_generation_rate,thread.get('generation_rate') or 0)
     engine.tick(at+.3)
     results=[]
     for key,want in expected.items():
@@ -49,7 +57,10 @@ def verify(path):
         assert match,(key,stream.chars,stream.tokens,want)
         assert not stream.text,key
         results.append({'item_id':key[0],'kind':key[1],'part':key[2],**want,'counts_match':match,'buffer_released':True})
-    report={'capture':str(path),'streams':results,'phases_seen':sorted(phases),'counters':dict(engine.counts),
+    final=engine.snapshot(at+.3)
+    assert all(t.get('generation_rate') is None for t in final['threads'] if t['status']!='inProgress')
+    report={'capture':str(path),'sha256':capture_hash,'bytes':input_bytes,'streams':results,'phases_seen':sorted(phases),
+            'display_labels_seen':sorted(labels),'peak_generation_rate':peak_generation_rate,'counters':dict(engine.counts),
             'unassociated_events':engine.pending_count,'elapsed_ms':round((time.perf_counter()-began)*1000,2)}
     engine.close()
     return report

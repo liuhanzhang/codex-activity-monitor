@@ -32,77 +32,77 @@ def render(snapshot,selected=0,detail=False,thread_filter=None):
         for thread in snapshot.get('threads',[]):
             thread['connected']=False
             thread['token_rates']={'text':None,'tool_input':None}
+            thread['generation_rate']=None
             thread['quality']=sorted(set(thread.get('quality',[])) | {'stale_snapshot'})
             if thread.get('last_progress_seconds') is not None:
                 thread['last_progress_seconds']=thread['last_progress_seconds']+max(0,age) if snapshot.get('updated_at') else None
             if thread['status']=='inProgress' or thread.get('active_count'):
-                thread.update(status='unknown',phase='unknown',phase_label='观测中断',phase_seconds=None,active_count=0,has_active_work=False)
+                thread.update(status='unknown',phase='unknown',phase_label='连接中断',display_label='连接中断',
+                              phase_seconds=None,display_seconds=None,display_active_count=0,active_count=0,has_active_work=False)
             for activity in thread.get('activities',[]):
                 if activity['active']:
                     activity.update(active=False,status='unknown')
     threads=[t for t in snapshot.get('threads',[]) if (t['status']!='idle' or t.get('active_count'))
-             and (t.get('ephemeral') is not True or thread_filter)]
+             and t.get('visible',True) and (t.get('ephemeral') is not True or thread_filter)]
     if thread_filter:
         threads=[t for t in threads if thread_filter in t['id'] or thread_filter in t['name']]
     table=Table(expand=True,box=None,padding=(0,1))
-    for label in ('聊天 / 项目','阶段 · 活动','持续','正文 / 参数 token/s','本段 token','最近进展','采集'):
+    for label in ('聊天 / 项目','当前活动','耗时','生成速度'):
         table.add_column(label)
     selected=min(selected,max(0,len(threads)-1))
     for index,thread in enumerate(threads):
         active=[a for a in thread['activities'] if a['active']]
-        primary=next((a for a in active if a['id']==thread.get('primary_activity_id')),None)
-        current=primary or (thread['activities'][0] if thread['activities'] else None)
-        streams=current['streams'] if current else []
-        known=[s['tokens'] for s in streams if s.get('tokens') is not None and s['kind']!='summary']
-        total=f'{sum(known):,}' if known else '—'
-        if any(s.get('estimated') for s in streams):
-            total='≈'+total if known else total
-        phase=thread['phase_label']
-        if current and (current['kind']=='reasoning'):
-            phase+=f" · 摘要 {current['summary_chars']} 字/{current['summary_parts']} 段"
-        elif primary and primary['label']:
-            phase+=' · '+primary['label'][:40]
+        primary=next((a for a in active if a['id']==thread.get('display_primary_id',thread.get('primary_activity_id'))),None)
+        phase=thread.get('display_label',thread['phase_label'])
         if primary and not primary.get('turn_bound',True) and thread['status']=='completed':
             phase+=' · 回合已完成'
-        if thread['active_count']>1:
-            phase+=f" (+{thread['active_count']-1})"
-        rates=thread['token_rates']
-        estimated={k:any(s.get('estimated') for a in active for s in a['streams'] if s['kind']==k) for k in ('text','tool_input')}
-        rate=' / '.join('—' if rates.get(k) is None else ('≈' if estimated[k] else '')+f'{rates[k]:.1f}' for k in ('text','tool_input'))
-        quality='断开' if not thread['connected'] else ', '.join(thread['quality']) or '正常'
+        parallel=thread.get('display_active_count',thread['active_count'])
+        if parallel>1:
+            phase+=f" · 另 {parallel-1} 项进行中"
+        value=thread.get('generation_rate')
+        rate='—' if value is None else ('≈' if thread.get('generation_estimated') else '')+f'{value:.1f} token/s'
         cwd=Path(thread['cwd']).name if thread.get('cwd') else ''
-        name=('› ' if index==selected else '  ')+thread['name']+'\n  '+thread['id'][:8]+(' · '+cwd if cwd else '')
-        table.add_row(Text(name),Text(phase),seconds(thread.get('phase_seconds')),rate,total,
-                      seconds(thread.get('last_progress_seconds'))+' 前',Text(quality),
+        title=thread['name'] if thread['name']!=thread['id'][:8] else '未命名聊天'
+        name=('› ' if index==selected else '  ')+title+('\n  '+cwd if cwd else '')
+        table.add_row(Text(name),Text(phase),seconds(thread.get('display_seconds',thread.get('phase_seconds'))),rate,
                       style='bold' if index==selected else None)
-    state='采集进程未运行 / 快照已过期' if stale else '本机实时采集'
+    state='连接中断' if stale else '本机进度'
     header=Text(f'Codex Progress · {state} · {len(threads)} 条聊天',style='bold')
-    footer=Text('j/k 或 ↑/↓ 选择 · Enter 展开活动 · q 退出 | 接收文本 token/s · ≈ 编码未知时用 o200k_base 估算 · 2 秒窗口',style='dim')
-    counts=snapshot.get('counters',{})
-    if snapshot.get('unassociated_events') or counts.get('unassociated_expired'):
-        footer.append(f"\n未关联: {snapshot.get('unassociated_events',0)}，已过期: {counts.get('unassociated_expired',0)}")
-    elements=[header,table if threads else Text('等待本机 Codex 任务。首次接入后需重启 Desktop 才会创建受监控后端。'),footer]
+    footer=Text('j/k 或 ↑/↓ 选择 · Enter 展开活动 · q 退出 | 生成速度：收到的模型文本 · — 暂无可用生成流 · ≈ 估算',style='dim')
+    elements=[header,table if threads else Text('等待 Codex 任务。'),footer]
     if detail and threads:
         thread=threads[selected]
         details=Table(box=None,expand=True)
-        for label in ('活动','状态','经过时间','接收指标 / 来源'):
+        for label in ('活动','状态','耗时'):
             details.add_column(label)
         for activity in thread['activities']:
-            notes=[]
-            for stream in activity['streams']:
-                total='—' if stream.get('tokens') is None else str(stream['tokens'])
-                notes.append(f"{stream['kind']}: {total} token / {stream['chars']} 字 / {stream['deltas']} Δ · {stream['source']} · {stream['encoding']} ({'估算' if stream['estimated'] else '模型映射'}) · {stream['quality']} · 修正 {stream['corrections']}")
-                if stream.get('mean_received_rate') is not None:
-                    notes.append(f"本段接收均速 {stream['mean_received_rate']:.1f} token/s")
-            if activity['summary_chars']:
-                notes.append(f"摘要 {activity['summary_chars']} 字 / {activity['summary_parts']} 段")
-            if activity.get('output_chars'):
-                notes.append(f"工具输出 {activity['output_chars']} 字")
-            if activity.get('exit_code') is not None:
-                notes.append(f"exit {activity['exit_code']}")
-            details.add_row(Text(activity['kind']+' · '+activity['label']),activity['status'],
-                            seconds(activity['duration_seconds']) if activity.get('start_known') else '开始未知',Text('\n'.join(notes)))
-        elements.append(Panel(Group(Text(thread['id']+'\n'+thread.get('cwd','')+'\n模型 '+thread['model']),details),title=Text(thread['name'])))
+            if not activity.get('display_visible',True) or activity['kind'] in ('approval','input'):
+                continue
+            state='进行中' if activity['active'] else {'completed':'完成','failed':'失败','declined':'未执行',
+                    'approved':'审核通过','denied':'审核未通过','timedOut':'审核超时','aborted':'已停止',
+                    'interrupted':'已停止','unknown':'状态暂不可用','resolved':'已结束','superseded':'已结束'}.get(activity['status'],'已结束')
+            if activity.get('exit_code') not in (None,0):
+                state='命令失败'
+            details.add_row(Text(activity.get('display_label','处理中')),state,
+                            seconds(activity['duration_seconds']) if activity.get('start_known') else '—')
+        context=[]
+        if thread.get('model') and thread['model']!='unknown':
+            context.append('模型 · '+thread['model'])
+        plan=thread.get('plan',[])
+        if plan:
+            completed=sum(p.get('status')=='completed' for p in plan)
+            current=next((p.get('step','') for p in plan if p.get('status')=='inProgress'),'')
+            context.append(f'计划 {completed}/{len(plan)}'+(' · '+current if current else ''))
+        agents={key:state.get('status') for a in thread['activities'] for key,state in a.get('agents_states',{}).items()}
+        if agents:
+            context.append(f'子任务 {len(agents)} 项 · '+str(sum(s=='completed' for s in agents.values()))+' 项完成')
+        if thread.get('review_mode'):
+            context.append('审阅代码')
+        if thread.get('environment_connected') is False and thread['status']=='inProgress':
+            context.append('工作环境连接中断')
+        if thread.get('subagents'):
+            context.append('子任务 '+str(len(thread['subagents']))+' 项 · '+str(sum(s=='completed' for s in thread['subagents'].values()))+' 项完成')
+        elements.append(Panel(Group(Text('\n'.join(context)),details),title=Text(thread['name'])))
     return Group(*elements),len(threads)
 
 

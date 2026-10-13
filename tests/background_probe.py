@@ -38,8 +38,9 @@ def main():
         rpc.send({'method':'initialized'})
         model=rpc.request('config/read',{'includeLayers':False})['config']['model']
         thread=new_thread(rpc,run,model,'后台生命周期验证')
-        prompt=('这是有限后台命令生命周期验证，只调用一次 exec，里面只调用一次 tools.exec_command。'
+        prompt=('这是有限后台命令生命周期验证。先启动第一条命令，yield 返回后立即启动第二条命令，使两个进程实际重叠。'
                 '在 JavaScript 中执行：const r = await tools.exec_command({cmd: "python3 -B -c \'import time; print(\"BG_BEGIN\",flush=True); time.sleep(8); print(\"BG_END\",flush=True)\'", yield_time_ms: 1000}); text(r); '
+                '随后执行 tools.exec_command({cmd: "python3 -B -c \'import time; time.sleep(5)\'", yield_time_ms: 1000}) 并显示其返回值。'
                 '不要调用 write_stdin，不要等待进程结束，不要重试。看到工具返回后立刻只回复“已启动”。'
                 '不读写文件，不联网。')
         rpc.request('turn/start',{'threadId':thread,'input':[{'type':'text','text':prompt}],'effort':'low','summary':'auto'})
@@ -51,7 +52,7 @@ def main():
             commands=[e for e in events if e.get('method')=='item/started' and e.get('params',{}).get('item',{}).get('type')=='commandExecution']
             ends=[e for e in events if e.get('method')=='item/completed' and e.get('params',{}).get('item',{}).get('type')=='commandExecution']
             if thread in rpc.completed and done_at is None:done_at=time.monotonic()
-            if done_at and (ends or time.monotonic()-done_at>12):break
+            if done_at and ((len(commands)>=2 and len(ends)>=len(commands)) or time.monotonic()-done_at>12):break
             time.sleep(.1)
         time.sleep(.5)
         events=list(rpc.events)
@@ -67,7 +68,12 @@ def main():
         end_index=next((e['index'] for e in ordering if e['event']=='item/completed'),None)
         result['command_outlived_turn']=turn_index is not None and end_index is not None and turn_index<end_index
         result['active_after_turn_samples']=sum(t['status']=='completed' and t.get('has_active_work',False) for s in samples for t in s.get('threads',[]) if t['id']==thread)
-        result['passed']=result['command_outlived_turn'] and result['active_after_turn_samples']>0 and result['turn_status']=='completed'
+        result['parallel_active_samples']=sum(t.get('display_active_count',0)>=2 for s in samples for t in s.get('threads',[]) if t['id']==thread)
+        result['display_labels_seen']=sorted({t.get('display_label','').split(' · ')[0] for s in samples for t in s.get('threads',[]) if t['id']==thread})
+        completed=[e for e in ordering if e['event']=='item/completed']
+        result['all_commands_completed']=len(completed)>=2 and all(e['status']=='completed' and e['exit_code']==0 for e in completed)
+        result['final_active_count']=next((t.get('display_active_count',0) for t in result['snapshot'].get('threads',[]) if t['id']==thread),0)
+        result['passed']=result['command_outlived_turn'] and result['active_after_turn_samples']>0 and result['parallel_active_samples']>0 and result['turn_status']=='completed' and result['all_commands_completed'] and result['final_active_count']==0
         result['config_unchanged']=before==hashlib.sha256((home/'config.toml').read_bytes()).hexdigest()
     finally:
         if process.poll() is None:

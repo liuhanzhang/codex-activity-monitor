@@ -32,18 +32,29 @@ class TextStream:
     corrections: int = 0
     samples: deque = field(default_factory=deque)
     pending: object = None
+    reset_rate_baseline: bool = False
 
     def __post_init__(self):
         self.samples.append((self.started_at, 0))
         self.set_model(self.model)
 
     def set_model(self, model):
+        previous = self.encoding_name
         self.model = model or 'unknown'
         try:
             self.encoding_name = tiktoken.encoding_name_for_model(self.model)
             self.estimated = False
         except KeyError:
             self.encoding_name, self.estimated = 'o200k_base', True
+        if previous != self.encoding_name and self.text and self.ended_at is None:
+            self.pending = None
+            self.revision += 1
+            self.counted_revision = -1
+            self.tokens = 0
+            self.last_count_at = None
+            self.reset_rate_baseline = True
+            self.samples.clear()
+            self.samples.append((self.last_delta_at or self.started_at, 0))
 
     def append(self, delta, at, max_bytes=8*1024*1024):
         if self.ended_at is not None:
@@ -67,6 +78,9 @@ class TextStream:
             self.corrections += 1
         self.tokens, self.counted_revision = count, revision
         self.last_count_at, self.count_cost_ms = at, cost_ms
+        if self.reset_rate_baseline:
+            self.samples.clear()
+            self.reset_rate_baseline = False
         self.samples.append((at, count))
         # Keep one point before the speed window, bounded by actual sampling frequency.
         while len(self.samples) > 2 and self.samples[1][0] < at-3:
@@ -75,7 +89,7 @@ class TextStream:
             self.text = ''
 
     def rate(self, now, window=2.0):
-        if self.ended_at is not None or self.kind == 'summary' or self.quality != 'complete':
+        if self.ended_at is not None or self.quality != 'complete':
             return None
         if self.last_count_at is None:
             return None

@@ -238,7 +238,8 @@ protocol('turn/completed',{'threadId':'t','turn':{'id':'u','status':'completed'}
         with socket.socket(socket.AF_UNIX,socket.SOCK_STREAM) as sock:
             sock.connect(str(self.runtime/'events.sock'))
             now=time.monotonic_ns()
-            rows=[{'backend':'test','direction':'protocol_out','observed_ns':now,'event':{'method':'turn/started','params':{'threadId':'t','turn':{'id':'u'}}}},
+            rows=[{'backend':'test','direction':'protocol_out','observed_ns':now,'event':{'method':'thread/started','params':{'thread':{'id':'t','name':'Known chat','cwd':'/tmp/owned-project'}}}},
+                  {'backend':'test','direction':'protocol_out','observed_ns':now,'event':{'method':'turn/started','params':{'threadId':'t','turn':{'id':'u'}}}},
                   {'backend':'test','direction':'upstream','observed_ns':now,'event':{'type':'response.output_item.added','item':{'id':'i','type':'message','metadata':{'turn_id':'u'}}}},
                   {'backend':'test','direction':'upstream','observed_ns':now,'event':{'type':'response.output_text.delta','item_id':'i','delta':'PRIVATE_BODY','sequence_number':1}}]
             sock.sendall(b''.join(json.dumps(r).encode()+b'\n' for r in rows))
@@ -254,6 +255,22 @@ protocol('turn/completed',{'threadId':'t','turn':{'id':'u','status':'completed'}
         restored=read_snapshot(self.runtime)['threads'][0]
         self.assertEqual(restored['phase'],'unknown')
         self.assertIsNone(restored['token_rates']['text'])
+        with socket.socket(socket.AF_UNIX,socket.SOCK_STREAM) as sock:
+            sock.connect(str(self.runtime/'events.sock'))
+            def send(value):
+                sock.sendall(json.dumps({'backend':'test','direction':'protocol_out','observed_ns':time.monotonic_ns(),'event':value}).encode()+b'\n')
+            send({'method':'turn/started','params':{'threadId':'t','turn':{'id':'v'}}})
+            time.sleep(.5)
+            fresh=read_snapshot(self.runtime)['threads'][0]
+            self.assertEqual(fresh['name'],'Known chat')
+            self.assertEqual(fresh['cwd'],'/tmp/owned-project')
+            self.assertEqual(fresh['turn_id'],'v')
+            self.assertIsNone(fresh['generation_rate'])
+            send({'method':'thread/started','params':{'thread':{'id':'t','name':'Updated chat','cwd':'/tmp/new-project'}}})
+            time.sleep(.5)
+            renamed=read_snapshot(self.runtime)['threads'][0]
+            self.assertEqual(renamed['name'],'Updated chat')
+            self.assertEqual(renamed['cwd'],'/tmp/new-project')
 
     def test_restart_keeps_completed_metrics_when_metadata_replays(self):
         start(self.runtime)
@@ -277,6 +294,7 @@ protocol('turn/completed',{'threadId':'t','turn':{'id':'u','status':'completed'}
             after=read_snapshot(self.runtime)['threads'][0]
             self.assertEqual(after['phase'],'completed')
             self.assertTrue(after['ephemeral'])
+            self.assertEqual(after['name'],'replayed')
             self.assertEqual(after['activities'][0]['streams'][0]['tokens'],before['activities'][0]['streams'][0]['tokens'])
             self.assertIsNone(after['token_rates']['text'])
 

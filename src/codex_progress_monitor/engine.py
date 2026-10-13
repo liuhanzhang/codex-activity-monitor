@@ -5,14 +5,20 @@ from dataclasses import dataclass, field
 import json
 
 from .events import DELTA_KINDS, TOOL_TYPES, Event
+from .progress_state import handle_protocol, resolve_request, presentation
 from .metrics import TextStream, TokenCounter
+from .tool_labels import code_tool_names, command_previews, command_summary, is_code_exec, is_command_tool, tool_label, tool_name
 
 
-PHASES = {'waiting':'等待响应', 'reasoning':'Reasoning', 'text':'生成正文',
-          'tool_input':'生成工具参数', 'tool_ready':'工具准备 / 执行未确认', 'tool':'执行工具',
-          'approval':'等待审批', 'input':'等待回答', 'unknown':'状态未知',
-          'completed':'完成', 'interrupted':'已中断', 'failed':'失败', 'idle':'空闲'}
-PRIORITY = {'input':0,'approval':0,'tool_input':1,'text':2,'reasoning':3,'tool':4,'tool_ready':5,'unknown':6}
+PHASES = {'waiting':'准备开始', 'reasoning':'思考中', 'text':'生成回答', 'plan':'整理计划',
+          'tool_input':'准备操作', 'tool_ready':'处理中', 'tool':'调用工具',
+          'approval':'已暂停', 'input':'已暂停', 'unknown':'状态暂不可用',
+          'review':'自动审核中', 'compaction':'压缩上下文', 'sleep':'等待中',
+          'auth':'连接服务', 'retry':'正在重试', 'buffering':'等待输出', 'hook':'处理中',
+          'completed':'任务完成', 'interrupted':'已停止', 'failed':'任务失败', 'idle':'空闲'}
+PRIORITY = {'tool_input':0,'text':1,'plan':1,'reasoning':2,'tool':3,'compaction':4,
+            'review':5,'auth':6,'retry':6,'buffering':7,'hook':7,'sleep':8,
+            'input':9,'approval':9,'tool_ready':10,'unknown':11}
 
 
 @dataclass
@@ -30,6 +36,22 @@ class Activity:
     output_chars: int = 0
     exit_code: int | None = None
     turn_bound: bool = True
+    tool_name: str | None = None
+    tool_names: list = field(default_factory=list)
+    command: str | None = None
+    command_previews: list = field(default_factory=list)
+    tool_label_revision: int = -1
+    item_type: str | None = None
+    last_progress_at: float = 0
+    files: list = field(default_factory=list)
+    file_count: int = 0
+    receiver_thread_ids: list = field(default_factory=list)
+    agents_states: dict = field(default_factory=dict)
+    server: str | None = None
+    mirrored: bool = False
+    target_item_id: str | None = None
+    review_started_ms: int | None = None
+    startup_pending: bool = False
 
     @property
     def active(self):
@@ -51,6 +73,18 @@ class Thread:
     quality: set = field(default_factory=set)
     ephemeral: bool | None = None
     thread_source: str | None = None
+    active_flags: set = field(default_factory=set)
+    visible: bool = True
+    goal_status: str | None = None
+    plan: list = field(default_factory=list)
+    review_mode: bool = False
+    project_id: str | None = None
+    environment_connected: bool | None = None
+    environment_id: str | None = None
+    error_status: str | None = None
+    subagents: dict = field(default_factory=dict)
+    display_primary: str | None = None
+    display_since: float = 0
 
 
 class Engine:
@@ -71,6 +105,7 @@ class Engine:
         self.counts = defaultdict(int)
         self.counter = TokenCounter(asynchronous_counts)
         self.clock=0
+        self.resolved_requests = OrderedDict()
 
     def _thread(self, backend, thread_id):
         key = (backend, thread_id)
@@ -126,9 +161,38 @@ class Engine:
     def _activity(self, thread, item_id, turn_id, kind, label, at):
         if item_id not in thread.activities:
             thread.activities[item_id] = Activity(item_id,turn_id,kind,label,at)
+            thread.activities[item_id].last_progress_at = at or 0
             if at is not None:
                 thread.last_progress_at = max(thread.last_progress_at,at)
         return thread.activities[item_id]
+
+    def _tool_metadata(self, activity, item):
+        activity.item_type = item.get('type',activity.item_type)
+        activity.server = item.get('server',activity.server)
+        activity.files = item.get('changes',activity.files)
+        activity.file_count = item.get('file_count',activity.file_count or len(activity.files))
+        activity.receiver_thread_ids = item.get('receiverThreadIds',activity.receiver_thread_ids)
+        activity.agents_states = item.get('agentsStates',activity.agents_states)
+        name = tool_name(item)
+        if item.get('type') == 'commandExecution':
+            sources = {'unifiedExecStartup': 'exec_command', 'unifiedExecInteraction': 'write_stdin'}
+            name = name or sources.get(item.get('source'))
+            if item.get('command'):
+                activity.command = command_summary(item['command'])
+        activity.tool_name = name or activity.tool_name or ('命令' if item.get('type') == 'commandExecution' else item.get('type'))
+        self._tool_label(activity)
+
+    def _tool_label(self, activity, code=None):
+        if code is not None:
+            if is_code_exec(activity.tool_name):
+                activity.tool_names = code_tool_names(code)
+            activity.command_previews = command_previews(activity.tool_name, code)
+        label = tool_label(activity.tool_name, activity.tool_names)
+        if activity.command:
+            label += ' · ' + activity.command
+        elif activity.command_previews:
+            label += ' · 拟执行: ' + ' | '.join(p['command'] for p in activity.command_previews)
+        activity.label = label
 
     def ingest(self, row):
         event = row if isinstance(row,Event) else Event.from_row(row)
@@ -156,8 +220,10 @@ class Engine:
                 kind='bridge/gap'
             backend.update(dropped_packets=drops,parse_errors=errors)
         if kind=='bridge/started':
-            backend.update(connected=True,home=event.data.get('home'),cli=event.data.get('cli'))
+            backend.update(connected=True,home=event.data.get('home'),cli=event.data.get('cli'),
+                           bridge_pid=event.data.get('bridge_pid'),implementation=event.data.get('implementation'))
         elif kind in ('bridge/gap','bridge/reconnected'):
+            backend['gap_at']=event.at
             for thread in self.threads.values():
                 if thread.backend==event.backend and (thread.status=='inProgress' or any(a.active for a in thread.activities.values())):
                     thread.quality.add('observation_gap')
@@ -192,22 +258,8 @@ class Engine:
         if event.direction=='protocol_in':
             if method and value.get('id') is not None:
                 self.requests[request_key]=(method,params)
-            elif request_key in self.approvals:
-                thread_key,item_id = self.approvals.pop(request_key)
-                thread=self.threads[thread_key]
-                activity=thread.activities.get(item_id)
-                decision=value.get('result',{}).get('decision')
-                if activity and decision in ('decline','cancel'):
-                    activity.status='declined'
-                    activity.ended_at=at
-                elif activity and activity.kind=='input':
-                    activity.ended_at=at
-                    activity.status='completed'
-                    thread.wait_started_at=at
-                elif activity:
-                    activity.kind='tool_ready'
-                    activity.started_at=at
-                    activity.ready_until=at+0.1
+            elif value.get('id') is not None:
+                resolve_request(self,backend,value.get('id'),at,value.get('result',{}).get('decision'))
             return
         if not method:
             request=self.requests.pop(request_key,None)
@@ -233,6 +285,8 @@ class Engine:
                         thread.wait_started_at=at
                         thread.quality.add('joined_in_progress')
             return
+        if handle_protocol(self,event):
+            return
         thread_id=params.get('threadId')
         turn_id=params.get('turnId')
         if method=='thread/started':
@@ -243,7 +297,12 @@ class Engine:
             return
         if method in ('thread/settings/updated','model/rerouted') and thread_id:
             thread=self._thread(backend,thread_id)
-            thread.model=params.get('model',params.get('toModel',thread.model))
+            model=params.get('threadSettings',{}).get('model') or params.get('toModel') or params.get('model')
+            if model:
+                thread.model=model
+                for key,stream in self.streams.items():
+                    if key[0]==backend and self.turns.get((backend,self.items.get((backend,key[1]),{}).get('turn_id')))==thread_id and stream.ended_at is None:
+                        stream.set_model(model)
             return
         if method in ('turn/started','turn/completed'):
             turn_id=params.get('turn',{}).get('id')
@@ -255,6 +314,9 @@ class Engine:
         if turn_id and not self._map_turn(backend,turn_id,thread_id):
             return
         if method=='turn/started':
+            if (backend,turn_id) in self.ended_turns:
+                self.counts['late_terminal_items']+=1
+                return
             if thread.turn_id==turn_id and thread.status=='inProgress':
                 self.counts['duplicate_lifecycle_ignored']+=1
                 return
@@ -271,6 +333,9 @@ class Engine:
             thread.turn_id,thread.status=turn_id,'inProgress'
             thread.wait_started_at=thread.last_progress_at=at
             thread.quality.clear()
+            thread.active_flags.clear()
+            thread.error_status=None
+            thread.plan=[]
         elif method=='turn/completed':
             self.ended_turns[(backend,turn_id)]=params.get('turn',{}).get('status','unknown')
             if thread.turn_id and thread.turn_id!=turn_id:
@@ -286,24 +351,19 @@ class Engine:
                     if not activity.turn_bound and thread.status=='completed':
                         continue
                     activity.ended_at=at
-                    activity.status='completed' if thread.status=='completed' else thread.status
+                    activity.status=('unknown' if activity.kind=='tool_ready' else 'completed') if thread.status=='completed' else thread.status
+            thread.active_flags.clear()
+            for request_key,(owner,item_id) in list(self.approvals.items()):
+                if owner==(backend,thread_id) and thread.activities[item_id].turn_id==turn_id and thread.activities[item_id].turn_bound:
+                    resolve_request(self,backend,request_key[1],at)
             for key,stream in self.streams.items():
                 if key[0]==backend and self.items.get((backend,key[1]),{}).get('turn_id')==turn_id and stream.ended_at is None:
                     stream.ended_at=at
         elif method in ('item/started','item/completed'):
             self._protocol_item(thread,turn_id,params.get('item',{}),method,at)
-        elif method.endswith('/requestApproval') or method.endswith('/requestUserInput'):
-            item_id=params.get('itemId') or 'request:'+str(value.get('id'))
-            kind='approval' if method.endswith('/requestApproval') else 'input'
-            activity=self._activity(thread,item_id,turn_id,kind,kind,at)
-            activity.kind,activity.started_at=kind,at
-            activity.status='inProgress'
-            activity.ended_at=None
-            self.approvals[request_key]=((backend,thread_id),item_id)
-            thread.last_progress_at=at
-        elif method in ('item/agentMessage/delta','item/reasoning/summaryTextDelta'):
+        elif method in ('item/agentMessage/delta','item/plan/delta','item/reasoning/summaryTextDelta'):
             item_id=params.get('itemId')
-            kind='summary' if 'reasoning' in method else 'text'
+            kind='summary' if 'reasoning' in method else 'plan' if '/plan/' in method else 'text'
             if not self._delta(event,item_id,kind,params.get('delta',''),params.get('summaryIndex',0),source='protocol'):
                 self._queue(event,item_id)
         elif method=='item/commandExecution/outputDelta':
@@ -312,6 +372,7 @@ class Engine:
                 activity.output_chars+=params.get('output_chars',len(params.get('delta','')))
                 if activity.ended_at is None:
                     activity.kind='tool'
+                    activity.last_progress_at=at
                 thread.last_progress_at=at
 
     def _protocol_item(self,thread,turn_id,item,method,at):
@@ -323,8 +384,40 @@ class Engine:
         known.setdefault('started_at',at if method=='item/started' else None)
         known['turn_id']=turn_id or known.get('turn_id')
         kind=item.get('type')
-        if kind in ('agentMessage','reasoning'):
-            phase='text' if kind=='agentMessage' else 'reasoning'
+        known['mirrored'] = known.get('mirrored',False) or item.get('delivery')=='async'
+        if known['mirrored']:
+            previous=thread.activities.get(item_id)
+            if previous:
+                previous.mirrored=True
+                previous.ended_at=at
+                previous.status='unknown'
+                for stream_key in previous.stream_keys:
+                    stream=self.streams.get(stream_key)
+                    if stream:
+                        stream.ended_at=at
+                        stream.quality='mirrored'
+                        stream.text=''
+            self.counts['mirrored_items']+=1
+            return
+        if method=='item/started' and (thread.backend,turn_id) in self.ended_turns:
+            self.counts['late_terminal_items']+=1
+            return
+        if kind in ('userMessage','hookPrompt','functionCallOutput'):
+            known['protocol_completed']=method=='item/completed'
+            return
+        if kind in ('enteredReviewMode','exitedReviewMode'):
+            if not thread.turn_id or turn_id==thread.turn_id:
+                thread.review_mode=kind=='enteredReviewMode'
+            return
+        if kind=='subAgentActivity':
+            if item.get('agentThreadId'):
+                thread.subagents[item['agentThreadId']]=item.get('kind','unknown')
+            return
+        if kind in ('agentMessage','reasoning','plan'):
+            phase={'agentMessage':'text','reasoning':'reasoning','plan':'plan'}[kind]
+            activity=self._activity(thread,item_id,turn_id,phase,PHASES[phase],known.get('started_at'))
+        elif kind in ('contextCompaction','sleep'):
+            phase='compaction' if kind=='contextCompaction' else 'sleep'
             activity=self._activity(thread,item_id,turn_id,phase,PHASES[phase],known.get('started_at'))
         elif kind in TOOL_TYPES:
             label=item.get('command') or '/'.join(str(item.get(k,'')) for k in ('server','tool')).strip('/') or item.get('tool') or kind
@@ -332,10 +425,16 @@ class Engine:
                                and item.get('source') in ('unifiedExecStartup','unifiedExecInteraction'))
             phase='tool_ready' if kind=='commandExecution' and not confirmed_process else 'tool'
             activity=self._activity(thread,item_id,turn_id,phase,label,known.get('started_at'))
+            self._tool_metadata(activity, item)
             if confirmed_process:
                 activity.turn_bound=False
+            if confirmed_process and activity.ended_at is None:
+                activity.kind='tool'
         else:
             return
+        activity.item_type=kind
+        if kind=='plan' and activity.active:
+            activity.kind='plan'
         if method=='item/started' and activity.status=='unknown':
             activity.status='inProgress'
             activity.kind=phase
@@ -354,7 +453,7 @@ class Engine:
                 stream=self.streams[stream_key]
                 # Upstream completion remains the authority for upstream text.
                 if stream.source=='protocol':
-                    final=item.get('text') if stream.kind=='text' else None
+                    final=item.get('text') if stream.kind in ('text','plan') else None
                     self._finish_stream(stream,at,final)
 
     def _queue(self,event,item_id):
@@ -391,6 +490,18 @@ class Engine:
             model=value.get('response',{}).get('model')
             if model:
                 self.backends[backend]['model']=model
+            ids=set(value.get('response',{}).get('item_ids',[]))
+            identity=value.get('identity',{})
+            for key,stream in self.streams.items():
+                known=self.items.get((backend,key[1]),{})
+                scoped=key[1] in ids if ids else identity.get('turn_id') and known.get('turn_id')==identity['turn_id']
+                if key[0]==backend and scoped and stream.ended_at is None:
+                    self._finish_stream(stream,at)
+                    owner=self.turns.get((backend,known.get('turn_id')))
+                    activity=self.threads.get((backend,owner)).activities.get(key[1]) if (backend,owner) in self.threads else None
+                    if activity and activity.kind in ('text','reasoning','plan','tool_input'):
+                        activity.ended_at=at
+                        activity.status='unknown' if kind!='response.completed' else 'completed'
             return
         if kind in ('response.output_item.added','response.output_item.done'):
             item=value.get('item',{})
@@ -399,7 +510,10 @@ class Engine:
                 return
             key=(backend,item_id)
             known=self.items.setdefault(key,{'started_at':at if kind.endswith('.added') else None})
-            metadata=item.get('metadata',{})
+            if known.get('mirrored'):
+                self.counts['mirrors_ignored']+=1
+                return
+            metadata={**value.get('identity',{}),**item.get('metadata',{})}
             known.update(type=item.get('type'),upstream=True)
             if metadata.get('turn_id'):
                 known['turn_id']=metadata['turn_id']
@@ -428,22 +542,30 @@ class Engine:
                 known['started_at']=None
                 self.counts['late_terminal_items']+=1
                 return
-            label=item.get('name') or ('工具参数' if phase=='tool_input' else PHASES[phase])
+            label=tool_name(item) or ('工具名未知' if phase=='tool_input' else PHASES[phase])
             activity=self._activity(thread,item_id,turn_id,phase,label,known['started_at'])
+            if phase == 'tool_input':
+                if tool_name(item):
+                    self._tool_metadata(activity, item)
+                if kind.endswith('.done'):
+                    final = item.get('input', item.get('arguments'))
+                    if isinstance(final, str) and activity.tool_name:
+                        self._tool_label(activity, final)
             if kind.endswith('.added'):
                 if activity.status=='unknown':
                     activity.status='inProgress'
                     activity.ended_at=None
-                # A new model item means the previous foreground exec has returned.
+                # A new model item ends the preparation context; it does not
+                # prove that an outer Code Mode cell or a background tool ended.
                 if phase in ('reasoning','text'):
                     for previous in thread.activities.values():
                         if previous.id!=item_id and previous.turn_id==turn_id and previous.kind=='reasoning' and previous.active:
                             previous.ended_at=at
                             previous.status='unknown'
                             thread.quality.add('missing_item_end')
-                        if previous.id!=item_id and previous.turn_id==turn_id and previous.kind=='tool_ready' and previous.label=='exec':
+                        if previous.id!=item_id and previous.turn_id==turn_id and previous.kind=='tool_ready' and is_code_exec(previous.tool_name):
                             previous.ended_at=at
-                            previous.status='completed'
+                            previous.status='unknown'
                 return
             known['ended_at']=at
             known['upstream_completed']=True
@@ -501,6 +623,9 @@ class Engine:
 
     def _delta(self,event,item_id,kind,delta,part,source,sequence=None):
         known=self.items.get((event.backend,item_id),{})
+        if known.get('mirrored'):
+            self.counts['mirrors_ignored']+=1
+            return True
         turn_id=known.get('turn_id')
         if (event.backend,turn_id) in self.conflicted_turns:
             self.counts['quarantined_events']+=1
@@ -540,10 +665,17 @@ class Engine:
             stream=TextStream(key,kind,source,thread.model,known.get('started_at') or event.at)
             self.streams[key]=stream
             activity.stream_keys.append(key)
-            if thread.quality:
+            if 'identity_conflict' in thread.quality or ('observation_gap' in thread.quality and
+                    stream.started_at <= self.backends[event.backend].get('gap_at',event.at)):
                 stream.quality='observation_gap'
         stream.append(delta,event.at)
         if delta:
+            activity.last_progress_at=event.at
+            thread.error_status=None
+            for waiting in thread.activities.values():
+                if waiting.turn_id==turn_id and waiting.kind in ('retry','buffering','auth') and waiting.active:
+                    waiting.status='completed'
+                    waiting.ended_at=event.at
             thread.last_progress_at=max(thread.last_progress_at,event.at)
             if kind=='summary':
                 activity.summary_chars+=len(delta)
@@ -591,9 +723,20 @@ class Engine:
                 self.streams.pop(key,None)
                 self.sequence.pop(key,None)
         for key in list(self.items):
-            if key not in alive_items and key not in self.pending:
+            known=self.items[key]
+            if key not in alive_items and key not in self.pending and (key[0],known.get('turn_id')) not in self.turns:
                 self.items.pop(key,None)
         for thread in self.threads.values():
+            for activity in thread.activities.values():
+                if not (is_code_exec(activity.tool_name) or is_command_tool(activity.tool_name)):
+                    continue
+                for key in activity.stream_keys:
+                    stream = self.streams.get(key)
+                    if (stream and stream.kind == 'tool_input' and stream.text
+                            and stream.revision != activity.tool_label_revision
+                            and stream.quality in ('complete', 'reconciled')):
+                        self._tool_label(activity, stream.text)
+                        activity.tool_label_revision = stream.revision
             terminal=[a for a in thread.activities.values() if not a.active]
             for activity in terminal[:-20]:
                 thread.activities.pop(activity.id,None)
@@ -602,6 +745,8 @@ class Engine:
         self.turns={k:v for k,v in self.turns.items() if k in alive_turns or k in pending_turns}
         self.ended_turns={k:v for k,v in self.ended_turns.items() if k in alive_turns or k in pending_turns}
         self.conflicted_turns.intersection_update(alive_turns | pending_turns)
+        self.items={k:v for k,v in self.items.items() if k in alive_items or k in self.pending
+                    or (k[0],v.get('turn_id')) in self.turns}
         if len(self.requests)>512:
             self.requests=dict(list(self.requests.items())[-512:])
         self.approvals={k:v for k,v in self.approvals.items() if v[0] in self.threads}
@@ -638,6 +783,9 @@ class Engine:
                                 'label':str(activity.label)[:160], 'status':activity.status,
                                 'active':activity.active, 'duration_seconds':max(0,(end or now)-(activity.started_at or now)),
                                 'turn_bound':activity.turn_bound,
+                                'tool_name':activity.tool_name, 'tool_names':list(activity.tool_names),
+                                'command':activity.command,
+                                'command_previews':[dict(p) for p in activity.command_previews],
                                 'start_known':activity.started_at is not None,'summary_chars':activity.summary_chars,
                                 'summary_parts':len(activity.summary_parts), 'output_chars':activity.output_chars,
                                 'exit_code':activity.exit_code,
@@ -674,6 +822,7 @@ class Engine:
                           'token_rates':{k:v if k in seen_rates and k not in unavailable_rates else None for k,v in rates.items()},
                           'quality':sorted(quality),'connected':backend.get('connected',True),
                           'activities':details})
+            presentation(self,thread,views[-1],now)
         by_identity={}
         for view in views:
             identity=(view.get('home') or view['backend'],view['id'])

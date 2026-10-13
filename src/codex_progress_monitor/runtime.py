@@ -1,12 +1,21 @@
 """Private runtime paths and atomic, metrics-only snapshots."""
 
 import json
+import hashlib
 import os
 from pathlib import Path
 import tempfile
 
 ROOT = Path(__file__).resolve().parents[2]
 REAL_CLI = Path('/Applications/ChatGPT.app/Contents/Resources/codex-cli/CodexCLI.app/Contents/MacOS/codex')
+
+
+def source_identity(*modules):
+    """Fingerprint code at process startup, for rollout diagnostics only."""
+    directory=Path(__file__).resolve().parent
+    hashes={name:hashlib.sha256((directory/(name+'.py')).read_bytes()).hexdigest() for name in modules}
+    return {'source_sha256':hashlib.sha256(json.dumps(hashes,sort_keys=True).encode()).hexdigest(),
+            'modules':hashes}
 
 
 def runtime_dir(value=None):
