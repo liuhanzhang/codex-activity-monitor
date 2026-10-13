@@ -1,0 +1,543 @@
+{
+  "date": "2026-10-12",
+  "status": "implementation, offline validation, core live verification and daily runtime rollout completed; documented boundaries retained",
+  "source_hashes": {
+    "src/codex_progress_monitor/metrics.py": "35f954d1acdb55c05564b14739be4869fe4a7e7a72abf5ce8075a1f11636a1f4",
+    "src/codex_progress_monitor/events.py": "95eb916fd2df81e4752c13b66667ba585d6c1319a4623d07d55a64244490b03c",
+    "src/codex_progress_monitor/bridge.py": "a9d16f3a14b41bf6ae52707bde027cc4a4e66e832062b4f171891602dbdab1ea",
+    "src/codex_progress_monitor/collector.py": "880bfbedc6e544d19c61e8c198f949da100159f0a851640adf4b46ca94c0ac43",
+    "src/codex_progress_monitor/__init__.py": "8ff8ff094da5ef9ea9df535021923735983e5d74a03272beb1e6defa71ec1b99",
+    "src/codex_progress_monitor/display.py": "e6d8305f67f95e8944f37bfdeee75084c1d9e9a471d0b12fbd2f35ffb78d8fe2",
+    "src/codex_progress_monitor/runtime.py": "f47248067d61bc96b05dced53c7b8140742c6e5bbda7690fb7902a293eecf149",
+    "src/codex_progress_monitor/integration.py": "c6a94980bb1ac0d53f6931185bfa533b3a5afa9a93260a00608bcf4b29d102f1",
+    "src/codex_progress_monitor/progress_state.py": "601e11879e5507da20bdfab1c73ea9362d596ebd2e86dd320092d9e3dca32156",
+    "src/codex_progress_monitor/engine.py": "fbc44f390df27c7d70bc79747bff0924b247dc6a1b44e0a065f6402937223fe9",
+    "src/codex_progress_monitor/cli.py": "70a7aa202c84787775b1f35fe595f2f3a6228c6ac45384e60a130085386feb4d",
+    "src/codex_progress_monitor/tool_labels.py": "46497856cfe35e321e7c3d54456d9088271c7d179eeed2b7b90e6e3c7c8fdf43"
+  },
+  "cli_version": "0.162.0-alpha.17.2",
+  "desktop": {
+    "version": "26.1007.30912",
+    "build": "20156",
+    "asar_sha256": "75e397e2280dde93b70a85aa926f4282c728eacc84dfeb15ba7fb6ddd84628af",
+    "evidence": ".local/improve/desktop-1012/current-render-paths.json",
+    "scope": "shipped source verified; interactive per-event UI not verified"
+  },
+  "audit": {
+    "notifications": 87,
+    "consume_required": 30,
+    "consume_conditional": 18,
+    "ignored": 39,
+    "item_types": 19,
+    "server_requests": 11
+  },
+  "unit": {
+    "passed": true,
+    "tests": 81,
+    "seconds": 15.078,
+    "log": ".local/improve/20261012-event-lifecycle/unit-tests-runtime.log",
+    "log_sha256": "7bbaa460b7a93c01c2822cddeeb32d564dfa80701b251c9b7422705c36c9629d"
+  },
+  "replays": [
+    {
+      "capture": ".local/product-preflight/live-20261011/capture.jsonl",
+      "sha256": "82ca0868fc2b219dc402b07fb6fd6f103a41a8ffb2bfcadb4018be28e7688582",
+      "bytes": 2030710,
+      "streams": [
+        {
+          "item_id": "msg_0cffef2e6f9f8717016acb3a36eedc8199a22fd0dce3bd8d1d",
+          "kind": "text",
+          "part": 0,
+          "chars": 110,
+          "tokens": 78,
+          "sha256": "8ac5b5e62dda2857fcd225f698c9a5bd351f5f3febb84a8691d694f57e38404b",
+          "counts_match": true,
+          "buffer_released": true
+        },
+        {
+          "item_id": "msg_0e64fc2139f62a12016acb3a37357c87d0b82fa8a022c61279",
+          "kind": "text",
+          "part": 0,
+          "chars": 88,
+          "tokens": 61,
+          "sha256": "c2be802e39add612dd7397679483a8449f8e2f6665b54c71b124c3f569e76db5",
+          "counts_match": true,
+          "buffer_released": true
+        },
+        {
+          "item_id": "ctc_0cffef2e6f9f8717016acb3a36fe1c81999bb8390aa4f119eb",
+          "kind": "tool_input",
+          "part": 0,
+          "chars": 3803,
+          "tokens": 1056,
+          "sha256": "0863e2800d0242f4d2c7f8dba040647a10ed68428612ec3cd640cbc36a0c9bdd",
+          "counts_match": true,
+          "buffer_released": true
+        },
+        {
+          "item_id": "msg_0cffef2e6f9f8717016acb3a3fcf248199802038fd5a0468d7",
+          "kind": "text",
+          "part": 0,
+          "chars": 207,
+          "tokens": 109,
+          "sha256": "868ae09d217f5363d8333a0a399b75cd9bc380b505db652caa483f19c3e3ab71",
+          "counts_match": true,
+          "buffer_released": true
+        },
+        {
+          "item_id": "ctc_0e64fc2139f62a12016acb3a375f9087d0a9c50ff56b9118cf",
+          "kind": "tool_input",
+          "part": 0,
+          "chars": 5171,
+          "tokens": 1405,
+          "sha256": "d7c3ffb4adecd026f4ba7196287d5e66a90af6094effb78cad0f854103a66ac9",
+          "counts_match": true,
+          "buffer_released": true
+        },
+        {
+          "item_id": "msg_0e64fc2139f62a12016acb3a52e63487d0ba90c30da097a825",
+          "kind": "text",
+          "part": 0,
+          "chars": 174,
+          "tokens": 92,
+          "sha256": "51eb73749641d2b30c45fa3266ad9ab1ac45455d77650723e2caf07200aae302",
+          "counts_match": true,
+          "buffer_released": true
+        }
+      ],
+      "phases_seen": [
+        "completed",
+        "idle",
+        "interrupted",
+        "reasoning",
+        "text",
+        "tool_input",
+        "tool_ready",
+        "waiting"
+      ],
+      "display_labels_seen": [
+        "任务完成",
+        "准备命令",
+        "准备开始",
+        "准备操作",
+        "刚完成",
+        "处理中",
+        "已停止",
+        "思考中",
+        "生成回答",
+        "空闲"
+      ],
+      "peak_generation_rate": 39280.393227624525,
+      "counters": {
+        "duplicates_ignored": 2800,
+        "mirrors_ignored": 339
+      },
+      "unassociated_events": 0,
+      "elapsed_ms": 2280.86
+    },
+    {
+      "capture": ".local/product-preflight/tools-20261011/capture.jsonl",
+      "sha256": "3b7ade5d4ff232d71114ee11a1664c401d674d14668e4ef22180b59b7bdad229",
+      "bytes": 1044061,
+      "streams": [
+        {
+          "item_id": "msg_0dde16823b6e0564016acb3adc0ab4819ba34b7af115efb561",
+          "kind": "text",
+          "part": 0,
+          "chars": 40,
+          "tokens": 23,
+          "sha256": "e5a94d73c9338906f03f302f54afa635f0e912f2e123600de6f6ed1cd75316bd",
+          "counts_match": true,
+          "buffer_released": true
+        },
+        {
+          "item_id": "ctc_0dde16823b6e0564016acb3adc4c54819b90b6fdec8f644564",
+          "kind": "tool_input",
+          "part": 0,
+          "chars": 302,
+          "tokens": 84,
+          "sha256": "233d04cc962e43a191f32ea7d9c19cd5eb08cc734fa2cf13bb363c8f929b8bb5",
+          "counts_match": true,
+          "buffer_released": true
+        },
+        {
+          "item_id": "msg_0530afdb37229c90016acb3adc21a887d08b7cb88df233f525",
+          "kind": "text",
+          "part": 0,
+          "chars": 56,
+          "tokens": 35,
+          "sha256": "f0f7bfb3ed969104e42ef811d7017bf19b2221b35a363c87cd9c0b6e39cd8d5c",
+          "counts_match": true,
+          "buffer_released": true
+        },
+        {
+          "item_id": "ctc_0530afdb37229c90016acb3adcfe7c87d08e80b5e53f012729",
+          "kind": "tool_input",
+          "part": 0,
+          "chars": 239,
+          "tokens": 68,
+          "sha256": "7a451809d06add23fdb571a1e7fbc99e1ba64872b0c2726dc317246130df3f77",
+          "counts_match": true,
+          "buffer_released": true
+        },
+        {
+          "item_id": "msg_0dde16823b6e0564016acb3ae12794819bb45c5ae42c8af280",
+          "kind": "text",
+          "part": 0,
+          "chars": 25,
+          "tokens": 19,
+          "sha256": "90b5f144b0ab4dc170d965e5f32a209b55ae8b73cd4d74f99fee0c6fd795e49c",
+          "counts_match": true,
+          "buffer_released": true
+        },
+        {
+          "item_id": "msg_0530afdb37229c90016acb3ae22efc87d0b34d710340a1981d",
+          "kind": "text",
+          "part": 0,
+          "chars": 24,
+          "tokens": 19,
+          "sha256": "0bfef8e53e17a85b88701e80f7fc4658195e789102983859de58296b00c2c088",
+          "counts_match": true,
+          "buffer_released": true
+        }
+      ],
+      "phases_seen": [
+        "completed",
+        "idle",
+        "text",
+        "tool",
+        "tool_input",
+        "tool_ready",
+        "waiting"
+      ],
+      "display_labels_seen": [
+        "任务完成",
+        "准备命令",
+        "准备开始",
+        "准备操作",
+        "刚完成",
+        "处理中",
+        "生成回答",
+        "空闲",
+        "运行命令"
+      ],
+      "peak_generation_rate": 48000.763279415885,
+      "counters": {
+        "duplicates_ignored": 246,
+        "mirrors_ignored": 94
+      },
+      "unassociated_events": 0,
+      "elapsed_ms": 30.31
+    },
+    {
+      "capture": ".local/product-implementation/fb-3/protocol.jsonl",
+      "sha256": "479fb38d180c277950e53c63f685150fc25775c30af3d6e61cdd88071c9d2e56",
+      "bytes": 444056,
+      "streams": [],
+      "phases_seen": [
+        "completed",
+        "idle",
+        "reasoning",
+        "text",
+        "tool",
+        "waiting"
+      ],
+      "display_labels_seen": [
+        "任务完成",
+        "准备开始",
+        "刚完成",
+        "处理中",
+        "思考中",
+        "生成回答",
+        "空闲",
+        "运行命令"
+      ],
+      "peak_generation_rate": 32475.95439532214,
+      "counters": {},
+      "unassociated_events": 0,
+      "elapsed_ms": 73.75
+    },
+    {
+      "capture": ".local/product-implementation/bg-2/protocol.jsonl",
+      "sha256": "5b2c0a8f119d976c9d3879eec0920bffba222322a6abfa2e3459f8e70021d8dc",
+      "bytes": 39294,
+      "streams": [],
+      "phases_seen": [
+        "completed",
+        "idle",
+        "text",
+        "tool",
+        "waiting"
+      ],
+      "display_labels_seen": [
+        "任务完成",
+        "准备开始",
+        "刚完成",
+        "生成回答",
+        "空闲",
+        "运行命令"
+      ],
+      "peak_generation_rate": 10.614490472490552,
+      "counters": {},
+      "unassociated_events": 0,
+      "elapsed_ms": 1.27
+    },
+    {
+      "capture": ".local/improve/live-1012b/protocol.jsonl",
+      "sha256": "a389984d0cfc8cdb0150f6a2a7dc88206280491ae0b27e5229fce1c65ca667ea",
+      "bytes": 374972,
+      "streams": [],
+      "phases_seen": [
+        "approval",
+        "completed",
+        "idle",
+        "text",
+        "tool",
+        "tool_ready",
+        "waiting"
+      ],
+      "display_labels_seen": [
+        "任务完成",
+        "准备开始",
+        "刚完成",
+        "处理中",
+        "已暂停",
+        "生成回答",
+        "空闲",
+        "运行命令"
+      ],
+      "peak_generation_rate": 22857.136069513897,
+      "counters": {},
+      "unassociated_events": 0,
+      "elapsed_ms": 38.02
+    },
+    {
+      "capture": ".local/improve/bg-1012b/protocol.jsonl",
+      "sha256": "afc0a097c160b8907c21342230de8e18bb3bbff2f1a41bfb74b278da938260b6",
+      "bytes": 45921,
+      "streams": [],
+      "phases_seen": [
+        "completed",
+        "idle",
+        "text",
+        "tool",
+        "waiting"
+      ],
+      "display_labels_seen": [
+        "任务完成",
+        "准备开始",
+        "刚完成",
+        "生成回答",
+        "空闲",
+        "运行命令"
+      ],
+      "peak_generation_rate": 528.7041430178369,
+      "counters": {},
+      "unassociated_events": 0,
+      "elapsed_ms": 1.65
+    }
+  ],
+  "live_smoke": {
+    "scope": "product collector/bridge on owned stdio backend",
+    "phases": {
+      "01a13078-ffa2-7e81-b35c-e5eaa5d75072": [
+        "completed",
+        "idle",
+        "text",
+        "waiting"
+      ],
+      "01a13078-fd6d-7d51-981b-2d6d24d9bad4": [
+        "idle",
+        "text",
+        "tool",
+        "tool_input",
+        "tool_ready",
+        "waiting"
+      ]
+    },
+    "display_labels": {
+      "01a13078-ffa2-7e81-b35c-e5eaa5d75072": [
+        "任务完成",
+        "准备开始",
+        "生成回答",
+        "空闲"
+      ],
+      "01a13078-fd6d-7d51-981b-2d6d24d9bad4": [
+        "准备开始",
+        "准备操作",
+        "处理中",
+        "生成回答",
+        "空闲",
+        "运行命令"
+      ]
+    },
+    "peak_rates": {
+      "generation": 147.32800356910943,
+      "text": 99.0226875369638,
+      "tool_input": 147.32800356910943
+    },
+    "recovery": true,
+    "parallel_work": false,
+    "plan_observed": true,
+    "silent_command_observed": true,
+    "approval_resolved": true,
+    "model": "gpt-6-luna",
+    "consumer_stopped_during_tool": true,
+    "statuses": {
+      "01a13078-fd6d-7d51-981b-2d6d24d9bad4": "completed",
+      "01a13078-ffa2-7e81-b35c-e5eaa5d75072": "completed",
+      "01a13079-7944-7a33-aa1a-0eb86705f2b6": "completed",
+      "01a13079-94a8-7961-952c-aac1e73645ab": "completed"
+    },
+    "config_unchanged": true,
+    "final_rates_cleared": true,
+    "passed": false
+  },
+  "live_background": {
+    "scope": "owned stdio command lifecycle across turn completion",
+    "model": "gpt-6-luna",
+    "turn_status": "completed",
+    "lifecycle": [
+      {
+        "event": "item/started",
+        "index": 47,
+        "turn_id": "01a1307c-8183-72e2-b87e-d51624dcc92f",
+        "status": "inProgress",
+        "exit_code": null
+      },
+      {
+        "event": "item/started",
+        "index": 48,
+        "turn_id": "01a1307c-8183-72e2-b87e-d51624dcc92f",
+        "status": "inProgress",
+        "exit_code": null
+      },
+      {
+        "event": "turn/completed",
+        "index": 58,
+        "turn_id": null,
+        "status": null,
+        "exit_code": null
+      },
+      {
+        "event": "item/completed",
+        "index": 59,
+        "turn_id": "01a1307c-8183-72e2-b87e-d51624dcc92f",
+        "status": "completed",
+        "exit_code": 0
+      },
+      {
+        "event": "item/completed",
+        "index": 61,
+        "turn_id": "01a1307c-8183-72e2-b87e-d51624dcc92f",
+        "status": "completed",
+        "exit_code": 0
+      }
+    ],
+    "command_outlived_turn": true,
+    "active_after_turn_samples": 46,
+    "parallel_active_samples": 47,
+    "display_labels_seen": [
+      "准备命令",
+      "准备开始",
+      "刚完成",
+      "处理中",
+      "生成回答",
+      "空闲",
+      "运行命令"
+    ],
+    "all_commands_completed": true,
+    "final_active_count": 0,
+    "passed": true,
+    "config_unchanged": true
+  },
+  "composed_live_validation": {
+    "minimum_paths_observed": true,
+    "note": "smoke 本身 passed=false，因为 A 的模型顺序执行命令；同聊天真实并行和跨回合结束由独立 background probe 补齐。没有把 smoke 改标为通过。"
+  },
+  "live_protocol_method_counts": {
+    "remoteControl/status/changed": 2,
+    "thread/started": 5,
+    "mcpServer/startupStatus/updated": 56,
+    "thread/name/updated": 4,
+    "thread/settings/updated": 5,
+    "account/updated": 2,
+    "thread/status/changed": 12,
+    "turn/started": 5,
+    "item/started": 20,
+    "item/completed": 20,
+    "item/agentMessage/delta": 865,
+    "turn/plan/updated": 2,
+    "thread/tokenUsage/updated": 13,
+    "account/rateLimits/updated": 13,
+    "turn/completed": 5,
+    "item/commandExecution/outputDelta": 3,
+    "item/commandExecution/requestApproval": 1,
+    "serverRequest/resolved": 1
+  },
+  "runtime": {
+    "verified_at": "2026-10-12T23:13:40.733530+08:00",
+    "collector_pid": 21871,
+    "collector_identity_matches": true,
+    "connected_bridges": 2,
+    "bridges_with_new_identity": 2,
+    "watcher_loaded_new_code": true,
+    "watcher_pids": [
+      19017
+    ],
+    "desktop_restarted": true,
+    "desktop_restarted_by_agent": false,
+    "watcher_restarted_by_agent": false,
+    "new_presentation_present": true,
+    "silent_command_started": true,
+    "silent_command_completed": true,
+    "preparation_preview_observed": true,
+    "peak_generation_rate": 42.95733291760501,
+    "auto_review_snapshot_observed": true,
+    "auto_review_approved": true,
+    "hook_rows_hidden": true,
+    "collector_reload_gap_recorded": true,
+    "observation_gap_expected": true,
+    "snapshot_age_seconds": 0.173569917678833,
+    "native_window_screenshot_verified": false,
+    "evidence_scope": "current installed Desktop -> main-home wrapper -> collector -> actual watch renderer; snapshot sampling, not raw wire recording",
+    "passed": true,
+    "evidence": ".local/improve/20261012-event-lifecycle/runtime-restart-verified/final.json",
+    "evidence_sha256": "f1a86a025f8b3cc811dee443e2f7662cdb5543dd875b2f0e41ec03d15e5e3ada",
+    "render_evidence": ".local/improve/20261012-event-lifecycle/runtime-restart-verified/render-final.txt",
+    "render_sha256": "91955733a04e6d79ecf024361648cd56f9444c5353f5697d640b09671694366f",
+    "sample_evidence": ".local/improve/20261012-event-lifecycle/runtime-restart-verified/samples.json",
+    "sample_sha256": "6590452f34ae4cae4ede9609c083e11ccf1030d1c0840ebc9e9264b257b8c067",
+    "sample_count": 226,
+    "watcher_check_basis": "process start after display/cli/runtime source mtimes; unchanged renderer hash; same renderer live snapshot output",
+    "collector_only_fixes": [
+      "Internal hooks only affect current waiting status; no activity rows or parallel-work count",
+      "Known chat title and project path survive collector metadata gaps without overriding fresh metadata"
+    ],
+    "review_evidence": "Current main-home snapshot contains a review identity with start_known=true, status=approved and ended activity; automatic-review status also observed. This is snapshot proof, not a raw-wire capture or risk-policy parity test."
+  },
+  "limitations": [
+    "上下文压缩、父子消息镜像和条件长尾未逐项真实触发；自动审核及同步内部处理已有本轮日常快照证据，其余离线 / 源码证据与实测分开标记。",
+    "Code Mode 外层 cell 与嵌套工具的精确关联和实时结束信号未取得，不推断真实结束。",
+    "本轮采集器重载有观测缺口；重载前测速样本独立记录，不把整个回合当作连续完整测速验收。",
+    "常驻看板已重开，通过进程启动时间、源码哈希与同一 renderer 的真实快照输出验证；Terminal UI 访问受限，没有原生窗口截图或逐键交互验收。"
+  ],
+  "workspace": {
+    "staged_unchanged": true,
+    "docs02_unchanged": true,
+    "committed": false,
+    "pushed": false,
+    "as_of": "2026-10-12 runtime validation, before commit authorization on 2026-10-13"
+  },
+  "runtime_before_user_restart": {
+    "previous_collector_pid": 7277,
+    "new_collector_pid": 8914,
+    "collector_identity_matches": true,
+    "connected_bridges": 2,
+    "bridges_with_new_identity": 0,
+    "new_presentation_present": true,
+    "desktop_restarted": false,
+    "observation_gap_expected": true,
+    "automatic_restart_race": null
+  }
+}

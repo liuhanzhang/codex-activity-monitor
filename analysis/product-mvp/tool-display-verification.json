@@ -1,0 +1,142 @@
+{
+  "date": "2026-10-12",
+  "unit_tests": 50,
+  "runs": [
+    {
+      "capture": ".local/product-preflight/tools-20261011/capture.jsonl",
+      "sha256": "3b7ade5d4ff232d71114ee11a1664c401d674d14668e4ef22180b59b7bdad229",
+      "scope": "upstream and protocol",
+      "verified_streams": 6,
+      "counts_match": true,
+      "buffers_released": true,
+      "unassociated_events": 0,
+      "internal_names": [
+        "exec_command"
+      ],
+      "internal_name_phases": [
+        "tool_input",
+        "tool_ready"
+      ],
+      "commands": [
+        "python3 -B -c 'import time; print(\"PREFLIGHT_A_BEGIN\", flush=True); time.sleep(3); print(\"PREFLIGHT_A_END\", flush=True); raise SystemExit(0)'",
+        "python3 -B -c 'import time; print(\"PREFLIGHT_B_BEGIN\", flush=True); time.sleep(3); print(\"PREFLIGHT_B_END\", flush=True); raise SystemExit(7)'"
+      ],
+      "replay_elapsed_ms": 192.39
+    },
+    {
+      "capture": ".local/product-preflight/live-20261011/capture.jsonl",
+      "sha256": "82ca0868fc2b219dc402b07fb6fd6f103a41a8ffb2bfcadb4018be28e7688582",
+      "scope": "upstream and protocol",
+      "verified_streams": 6,
+      "counts_match": true,
+      "buffers_released": true,
+      "unassociated_events": 0,
+      "internal_names": [
+        "exec_command"
+      ],
+      "internal_name_phases": [
+        "tool_input",
+        "tool_ready"
+      ],
+      "commands": [],
+      "replay_elapsed_ms": 688.57
+    },
+    {
+      "capture": ".local/product-implementation/fb-3/protocol.jsonl",
+      "sha256": "479fb38d180c277950e53c63f685150fc25775c30af3d6e61cdd88071c9d2e56",
+      "scope": "command lifecycle only",
+      "verified_streams": null,
+      "counts_match": null,
+      "buffers_released": null,
+      "unassociated_events": 0,
+      "internal_names": [],
+      "internal_name_phases": [],
+      "commands": [
+        "python3 -B -c 'import time; print(\"START\", flush=True); time.sleep(20); print(\"END\", flush=True)'"
+      ],
+      "replay_elapsed_ms": 47.18
+    },
+    {
+      "capture": ".local/product-implementation/bg-2/protocol.jsonl",
+      "sha256": "5b2c0a8f119d976c9d3879eec0920bffba222322a6abfa2e3459f8e70021d8dc",
+      "scope": "command lifecycle only",
+      "verified_streams": null,
+      "counts_match": null,
+      "buffers_released": null,
+      "unassociated_events": 0,
+      "internal_names": [],
+      "internal_name_phases": [],
+      "commands": [
+        "python3 -B -c 'import time; print(\"BG_BEGIN\",flush=True); time.sleep(8); print(\"BG_END\",flush=True)'"
+      ],
+      "replay_elapsed_ms": 3.37
+    }
+  ],
+  "unfinished_literal_probe_ms": 2.64,
+  "boundary": "Existing real-backend captures replayed; live primary-App observations recorded separately.",
+  "live_primary_app": {
+    "running": true,
+    "collector_pid": 91302,
+    "connected_primary_backends": 2,
+    "snapshot_age_seconds": 0.076,
+    "internal_names_observed": [
+      "apply_patch",
+      "clock__curr_time",
+      "exec_command",
+      "write_stdin"
+    ],
+    "visible_example": "exec → clock__curr_time, exec_command",
+    "command_summaries_observed": true,
+    "sample_window_seconds": 30.05,
+    "argument_phase_observed_in_sample": false,
+    "boundary": "Collector reload introduced an observation gap in the ongoing turn; live argument-name timing was not captured in the 30-second sample. Argument-phase behavior verified by unit tests and existing upstream replay; no new independent Desktop turn or long-term acceptance claimed."
+  },
+  "parameter_command_preview": {
+    "date": "2026-10-12",
+    "unit_tests": 57,
+    "runs": [
+      {
+        "capture": ".local/product-preflight/tools-20261011/capture.jsonl",
+        "verified_streams": 6,
+        "counts_match": true,
+        "buffers_released": true,
+        "preview_phases": [
+          "tool_input",
+          "tool_ready"
+        ],
+        "incremental_preview_changes": 88,
+        "final_command_previews": [
+          "python3 -B -c 'import time; print(\"PREFLIGHT_A_BEGIN\", flush=True); time.sleep(3); print(\"PREFLIGHT_A_END\", flush=True); raise SystemExit(0)'",
+          "python3 -B -c 'import time; print(\"PREFLIGHT_B_BEGIN\", flush=True); time.sleep(3); print(\"PREFLIGHT_B_END\", flush=True); raise SystemExit(7)'"
+        ],
+        "unassociated_events": 0
+      },
+      {
+        "capture": ".local/product-preflight/live-20261011/capture.jsonl",
+        "verified_streams": 6,
+        "counts_match": true,
+        "buffers_released": true,
+        "preview_phases": [
+          "tool_input",
+          "tool_ready"
+        ],
+        "incremental_preview_changes": 20,
+        "final_command_previews": [
+          "python3 -B - <<'PY'"
+        ],
+        "unassociated_events": 0
+      }
+    ],
+    "large_partial_literal_elapsed_ms": 19.94,
+    "live_acceptance": {
+      "collector_running": true,
+      "snapshot_age_seconds": 0.212,
+      "live_preview_examples": [
+        "exec → exec_command, apply_patch · 拟执行: .local/venv/bin/python - <<'PY' | git diff --check && git diff --exit-code HEAD -- docs/02_product_mvp && git status --s",
+        "exec → exec_command, write_stdin · 拟执行: launchctl kickstart gui/$(id -u)/com.local.codex-progress-monitor"
+      ],
+      "terminal_render_checked": true,
+      "boundary": "Current primary-App snapshots confirm generated command preview labels after completed parameters. Live partial-argument timing not independently sampled; covered by real upstream replay."
+    }
+  }
+}

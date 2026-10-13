@@ -1,0 +1,2385 @@
+{
+  "date": "2026-10-12",
+  "scope": "source-declared protocol inventory and current monitor implementation; not all events are live-verified",
+  "codex_source_commit": "806d9732c974bc8a51b8317c1bd8985544fe627c",
+  "source_hashes": {
+    "/Users/bytedance/playground/codex/codex-rs/app-server-protocol/src/protocol/common.rs": "a25bada0ac3706b9f987efd4f0329a431fdafd0a507b5bbd46981288ef4c5e8e",
+    "/Users/bytedance/playground/codex/codex-rs/protocol/src/protocol.rs": "63ab3274451ea56398dcdba2861e8de797608b2939cad189bfb79a8b180cd0c8",
+    "/Users/bytedance/playground/codex/codex-rs/app-server-protocol/src/protocol/v2/item.rs": "e3ca6b9b880d815a16ff956b701beb9690abc222fb70a5b7e697e1c0ff91e099",
+    "/Users/bytedance/personal/codex_progress_monitor/src/codex_progress_monitor/events.py": "bee2732648f7997dfc240e861310e58b37e8b5f9399e647d792e81739026c77e",
+    "/Users/bytedance/personal/codex_progress_monitor/src/codex_progress_monitor/engine.py": "8270baaa414cdfc2ce1693b73e12d8f4f541ae30ec689e30459e052ddcf952b6",
+    "/Users/bytedance/personal/codex_progress_monitor/src/codex_progress_monitor/display.py": "3728119e98c88ed51fb1e1968e7013f3b7f56bd533e0de4a15f5f628e6f06337",
+    "/Users/bytedance/personal/codex_progress_monitor/src/codex_progress_monitor/bridge.py": "aada864a4f13eef65a0cb2751f4c664050c7b1ac608a5695d9f2c08d1e6325b3"
+  },
+  "counts": {
+    "notifications": 87,
+    "requests": 11,
+    "core_events": 84,
+    "thread_item_types": 19,
+    "recognized_item_types": 9,
+    "notifications_by_support": {
+      "丢弃": 36,
+      "已展示": 10,
+      "仅透传": 39,
+      "部分消费": 2
+    },
+    "requests_by_support": {
+      "已展示": 3,
+      "丢弃": 6,
+      "部分消费": 1,
+      "仅透传": 1
+    }
+  },
+  "server_notifications": [
+    {
+      "variant": "Error",
+      "method": "error",
+      "experimental": false,
+      "source": {
+        "file": "/Users/bytedance/playground/codex/codex-rs/app-server-protocol/src/protocol/common.rs",
+        "line": 1950
+      },
+      "filter": "丢弃",
+      "bridge_replay": "不缓存",
+      "meaning": "任务错误、重试中的流错误",
+      "monitor": "过滤器直接丢弃；最终失败仅从 turn/completed 显示，错误原因和重试不显示。",
+      "support": "丢弃"
+    },
+    {
+      "variant": "ThreadStarted",
+      "method": "thread/started",
+      "experimental": false,
+      "source": {
+        "file": "/Users/bytedance/playground/codex/codex-rs/app-server-protocol/src/protocol/common.rs",
+        "line": 1951
+      },
+      "filter": "透传",
+      "bridge_replay": "缓存",
+      "meaning": "聊天创建或接入",
+      "monitor": "保存聊天 ID、名称、cwd、模型、ephemeral 等，显示聊天信息；不恢复完整历史活动。",
+      "support": "已展示"
+    },
+    {
+      "variant": "ThreadStatusChanged",
+      "method": "thread/status/changed",
+      "experimental": false,
+      "source": {
+        "file": "/Users/bytedance/playground/codex/codex-rs/app-server-protocol/src/protocol/common.rs",
+        "line": 1952
+      },
+      "filter": "透传",
+      "bridge_replay": "不缓存",
+      "meaning": "聊天综合状态更新",
+      "monitor": "status 透传但无处理分支；当前状态主要由 turn 生命周期推导。",
+      "support": "仅透传"
+    },
+    {
+      "variant": "ThreadReadStateChanged",
+      "method": "thread/readState/changed",
+      "experimental": true,
+      "source": {
+        "file": "/Users/bytedance/playground/codex/codex-rs/app-server-protocol/src/protocol/common.rs",
+        "line": 1954
+      },
+      "filter": "透传",
+      "bridge_replay": "不缓存",
+      "meaning": "聊天已读状态",
+      "monitor": "无状态处理。",
+      "support": "仅透传"
+    },
+    {
+      "variant": "ThreadArchived",
+      "method": "thread/archived",
+      "experimental": false,
+      "source": {
+        "file": "/Users/bytedance/playground/codex/codex-rs/app-server-protocol/src/protocol/common.rs",
+        "line": 1955
+      },
+      "filter": "透传",
+      "bridge_replay": "不缓存",
+      "meaning": "聊天归档",
+      "monitor": "无状态处理；不会据此移除聊天。",
+      "support": "仅透传"
+    },
+    {
+      "variant": "ThreadDeleted",
+      "method": "thread/deleted",
+      "experimental": false,
+      "source": {
+        "file": "/Users/bytedance/playground/codex/codex-rs/app-server-protocol/src/protocol/common.rs",
+        "line": 1956
+      },
+      "filter": "透传",
+      "bridge_replay": "不缓存",
+      "meaning": "聊天删除",
+      "monitor": "无状态处理；不会据此移除聊天。",
+      "support": "仅透传"
+    },
+    {
+      "variant": "ThreadUnarchived",
+      "method": "thread/unarchived",
+      "experimental": false,
+      "source": {
+        "file": "/Users/bytedance/playground/codex/codex-rs/app-server-protocol/src/protocol/common.rs",
+        "line": 1957
+      },
+      "filter": "透传",
+      "bridge_replay": "不缓存",
+      "meaning": "聊天恢复归档",
+      "monitor": "无状态处理。",
+      "support": "仅透传"
+    },
+    {
+      "variant": "ThreadClosed",
+      "method": "thread/closed",
+      "experimental": false,
+      "source": {
+        "file": "/Users/bytedance/playground/codex/codex-rs/app-server-protocol/src/protocol/common.rs",
+        "line": 1958
+      },
+      "filter": "透传",
+      "bridge_replay": "不缓存",
+      "meaning": "聊天关闭",
+      "monitor": "无状态处理；与 monitor 自己的桥接断开不是同一事件。",
+      "support": "仅透传"
+    },
+    {
+      "variant": "ThreadReverted",
+      "method": "thread/reverted",
+      "experimental": false,
+      "source": {
+        "file": "/Users/bytedance/playground/codex/codex-rs/app-server-protocol/src/protocol/common.rs",
+        "line": 1959
+      },
+      "filter": "透传",
+      "bridge_replay": "不缓存",
+      "meaning": "聊天回退",
+      "monitor": "无状态处理。",
+      "support": "仅透传"
+    },
+    {
+      "variant": "SkillsChanged",
+      "method": "skills/changed",
+      "experimental": false,
+      "source": {
+        "file": "/Users/bytedance/playground/codex/codex-rs/app-server-protocol/src/protocol/common.rs",
+        "line": 1960
+      },
+      "filter": "丢弃",
+      "bridge_replay": "不缓存",
+      "meaning": "技能列表变化",
+      "monitor": "不采集。",
+      "support": "丢弃"
+    },
+    {
+      "variant": "ThreadNameUpdated",
+      "method": "thread/name/updated",
+      "experimental": false,
+      "source": {
+        "file": "/Users/bytedance/playground/codex/codex-rs/app-server-protocol/src/protocol/common.rs",
+        "line": 1961
+      },
+      "filter": "透传",
+      "bridge_replay": "缓存",
+      "meaning": "聊天名称变化",
+      "monitor": "保存并展示聊天名称。",
+      "support": "已展示"
+    },
+    {
+      "variant": "ThreadAttachmentUpdated",
+      "method": "thread/attachment/updated",
+      "experimental": false,
+      "source": {
+        "file": "/Users/bytedance/playground/codex/codex-rs/app-server-protocol/src/protocol/common.rs",
+        "line": 1962
+      },
+      "filter": "透传",
+      "bridge_replay": "不缓存",
+      "meaning": "聊天附件变化",
+      "monitor": "无状态处理。",
+      "support": "仅透传"
+    },
+    {
+      "variant": "ThreadGoalUpdated",
+      "method": "thread/goal/updated",
+      "experimental": false,
+      "source": {
+        "file": "/Users/bytedance/playground/codex/codex-rs/app-server-protocol/src/protocol/common.rs",
+        "line": 1963
+      },
+      "filter": "透传",
+      "bridge_replay": "不缓存",
+      "meaning": "长期目标变化",
+      "monitor": "无状态处理。",
+      "support": "仅透传"
+    },
+    {
+      "variant": "ThreadPredictionUpdated",
+      "method": "thread/prediction/updated",
+      "experimental": true,
+      "source": {
+        "file": "/Users/bytedance/playground/codex/codex-rs/app-server-protocol/src/protocol/common.rs",
+        "line": 1965
+      },
+      "filter": "透传",
+      "bridge_replay": "不缓存",
+      "meaning": "预测元数据变化",
+      "monitor": "无状态处理。",
+      "support": "仅透传"
+    },
+    {
+      "variant": "ThreadGoalCleared",
+      "method": "thread/goal/cleared",
+      "experimental": false,
+      "source": {
+        "file": "/Users/bytedance/playground/codex/codex-rs/app-server-protocol/src/protocol/common.rs",
+        "line": 1966
+      },
+      "filter": "透传",
+      "bridge_replay": "不缓存",
+      "meaning": "长期目标清除",
+      "monitor": "无状态处理。",
+      "support": "仅透传"
+    },
+    {
+      "variant": "ThreadQueueChanged",
+      "method": "thread/queue/changed",
+      "experimental": true,
+      "source": {
+        "file": "/Users/bytedance/playground/codex/codex-rs/app-server-protocol/src/protocol/common.rs",
+        "line": 1968
+      },
+      "filter": "透传",
+      "bridge_replay": "不缓存",
+      "meaning": "排队消息变化",
+      "monitor": "无状态处理。",
+      "support": "仅透传"
+    },
+    {
+      "variant": "ProjectChanged",
+      "method": "project/changed",
+      "experimental": true,
+      "source": {
+        "file": "/Users/bytedance/playground/codex/codex-rs/app-server-protocol/src/protocol/common.rs",
+        "line": 1970
+      },
+      "filter": "丢弃",
+      "bridge_replay": "不缓存",
+      "meaning": "项目变化",
+      "monitor": "不采集。",
+      "support": "丢弃"
+    },
+    {
+      "variant": "ThreadProjectUpdated",
+      "method": "thread/project/updated",
+      "experimental": true,
+      "source": {
+        "file": "/Users/bytedance/playground/codex/codex-rs/app-server-protocol/src/protocol/common.rs",
+        "line": 1972
+      },
+      "filter": "透传",
+      "bridge_replay": "不缓存",
+      "meaning": "聊天所属项目变化",
+      "monitor": "无状态处理；列表项目名目前来自 cwd 的目录名。",
+      "support": "仅透传"
+    },
+    {
+      "variant": "EnvironmentConnected",
+      "method": "thread/environment/connected",
+      "experimental": true,
+      "source": {
+        "file": "/Users/bytedance/playground/codex/codex-rs/app-server-protocol/src/protocol/common.rs",
+        "line": 1974
+      },
+      "filter": "透传",
+      "bridge_replay": "不缓存",
+      "meaning": "执行环境已连接",
+      "monitor": "无状态处理；不会更新采集连接状态。",
+      "support": "仅透传"
+    },
+    {
+      "variant": "EnvironmentDisconnected",
+      "method": "thread/environment/disconnected",
+      "experimental": true,
+      "source": {
+        "file": "/Users/bytedance/playground/codex/codex-rs/app-server-protocol/src/protocol/common.rs",
+        "line": 1976
+      },
+      "filter": "透传",
+      "bridge_replay": "不缓存",
+      "meaning": "执行环境已断开",
+      "monitor": "无状态处理；不会更新采集连接状态。",
+      "support": "仅透传"
+    },
+    {
+      "variant": "ThreadSettingsUpdated",
+      "method": "thread/settings/updated",
+      "experimental": true,
+      "source": {
+        "file": "/Users/bytedance/playground/codex/codex-rs/app-server-protocol/src/protocol/common.rs",
+        "line": 1978
+      },
+      "filter": "透传",
+      "bridge_replay": "缓存",
+      "meaning": "聊天运行配置变化",
+      "monitor": "有模型更新分支，但实际 payload 为 threadSettings.model；过滤器丢弃 threadSettings，分支读取平层 model，当前事件不能正确更新模型。",
+      "support": "部分消费"
+    },
+    {
+      "variant": "ThreadTokenUsageUpdated",
+      "method": "thread/tokenUsage/updated",
+      "experimental": false,
+      "source": {
+        "file": "/Users/bytedance/playground/codex/codex-rs/app-server-protocol/src/protocol/common.rs",
+        "line": 1979
+      },
+      "filter": "丢弃",
+      "bridge_replay": "不缓存",
+      "meaning": "服务端实际 token 使用量",
+      "monitor": "明确丢弃；界面 token/s 来自接收文本重新分词，不是此事件的使用量。",
+      "support": "丢弃"
+    },
+    {
+      "variant": "TurnStarted",
+      "method": "turn/started",
+      "experimental": false,
+      "source": {
+        "file": "/Users/bytedance/playground/codex/codex-rs/app-server-protocol/src/protocol/common.rs",
+        "line": 1980
+      },
+      "filter": "透传",
+      "bridge_replay": "缓存",
+      "meaning": "回合开始",
+      "monitor": "进入等待响应状态，登记回合关联并清理上回合活动。",
+      "support": "已展示"
+    },
+    {
+      "variant": "HookStarted",
+      "method": "hook/started",
+      "experimental": false,
+      "source": {
+        "file": "/Users/bytedance/playground/codex/codex-rs/app-server-protocol/src/protocol/common.rs",
+        "line": 1981
+      },
+      "filter": "丢弃",
+      "bridge_replay": "不缓存",
+      "meaning": "hook 开始",
+      "monitor": "不采集、不展示。",
+      "support": "丢弃"
+    },
+    {
+      "variant": "TurnCompleted",
+      "method": "turn/completed",
+      "experimental": false,
+      "source": {
+        "file": "/Users/bytedance/playground/codex/codex-rs/app-server-protocol/src/protocol/common.rs",
+        "line": 1982
+      },
+      "filter": "透传",
+      "bridge_replay": "缓存",
+      "meaning": "回合结束",
+      "monitor": "显示完成、失败或中断；有进程证据的后台命令可继续活动。错误正文被过滤。",
+      "support": "已展示"
+    },
+    {
+      "variant": "HookCompleted",
+      "method": "hook/completed",
+      "experimental": false,
+      "source": {
+        "file": "/Users/bytedance/playground/codex/codex-rs/app-server-protocol/src/protocol/common.rs",
+        "line": 1983
+      },
+      "filter": "丢弃",
+      "bridge_replay": "不缓存",
+      "meaning": "hook 结束",
+      "monitor": "不采集、不展示。",
+      "support": "丢弃"
+    },
+    {
+      "variant": "TurnDiffUpdated",
+      "method": "turn/diff/updated",
+      "experimental": false,
+      "source": {
+        "file": "/Users/bytedance/playground/codex/codex-rs/app-server-protocol/src/protocol/common.rs",
+        "line": 1984
+      },
+      "filter": "丢弃",
+      "bridge_replay": "不缓存",
+      "meaning": "回合累计文件 diff",
+      "monitor": "明确丢弃，不展示文件 diff。",
+      "support": "丢弃"
+    },
+    {
+      "variant": "TurnPlanUpdated",
+      "method": "turn/plan/updated",
+      "experimental": false,
+      "source": {
+        "file": "/Users/bytedance/playground/codex/codex-rs/app-server-protocol/src/protocol/common.rs",
+        "line": 1985
+      },
+      "filter": "丢弃",
+      "bridge_replay": "不缓存",
+      "meaning": "计划步骤更新",
+      "monitor": "明确丢弃，不展示计划进度。",
+      "support": "丢弃"
+    },
+    {
+      "variant": "ItemStarted",
+      "method": "item/started",
+      "experimental": false,
+      "source": {
+        "file": "/Users/bytedance/playground/codex/codex-rs/app-server-protocol/src/protocol/common.rs",
+        "line": 1986
+      },
+      "filter": "透传",
+      "bridge_replay": "缓存",
+      "meaning": "活动开始",
+      "monitor": "按 item.type 分流；19 种类型中识别 9 种，详见活动类型表。命令开始不一定已启动进程。",
+      "support": "已展示"
+    },
+    {
+      "variant": "ItemGuardianApprovalReviewStarted",
+      "method": "item/autoApprovalReview/started",
+      "experimental": false,
+      "source": {
+        "file": "/Users/bytedance/playground/codex/codex-rs/app-server-protocol/src/protocol/common.rs",
+        "line": 1987
+      },
+      "filter": "透传",
+      "bridge_replay": "不缓存",
+      "meaning": "Guardian 自动审核开始",
+      "monitor": "丢弃 reviewId、targetItemId、review、action 等关键字段；引擎无处理分支，不能显示自动审核中。",
+      "support": "仅透传"
+    },
+    {
+      "variant": "ItemGuardianApprovalReviewCompleted",
+      "method": "item/autoApprovalReview/completed",
+      "experimental": false,
+      "source": {
+        "file": "/Users/bytedance/playground/codex/codex-rs/app-server-protocol/src/protocol/common.rs",
+        "line": 1988
+      },
+      "filter": "透传",
+      "bridge_replay": "不缓存",
+      "meaning": "Guardian 自动审核结束",
+      "monitor": "关键审核字段被过滤；引擎无处理分支，不能显示通过、拒绝、超时或取消。",
+      "support": "仅透传"
+    },
+    {
+      "variant": "StrictReviewRequired",
+      "method": "autoApprovalReview/strictReviewRequired",
+      "experimental": true,
+      "source": {
+        "file": "/Users/bytedance/playground/codex/codex-rs/app-server-protocol/src/protocol/common.rs",
+        "line": 1990
+      },
+      "filter": "丢弃",
+      "bridge_replay": "不缓存",
+      "meaning": "需要严格自动审核",
+      "monitor": "方法前缀不在白名单，直接丢弃。",
+      "support": "丢弃"
+    },
+    {
+      "variant": "ItemCompleted",
+      "method": "item/completed",
+      "experimental": false,
+      "source": {
+        "file": "/Users/bytedance/playground/codex/codex-rs/app-server-protocol/src/protocol/common.rs",
+        "line": 1991
+      },
+      "filter": "透传",
+      "bridge_replay": "缓存",
+      "meaning": "活动结束",
+      "monitor": "识别的 item.type 关闭活动并保存 status、exitCode；其他类型忽略。durationMs 经过滤但未用于活动耗时。",
+      "support": "已展示"
+    },
+    {
+      "variant": "RawResponseItemCompleted",
+      "method": "rawResponseItem/completed",
+      "experimental": false,
+      "source": {
+        "file": "/Users/bytedance/playground/codex/codex-rs/app-server-protocol/src/protocol/common.rs",
+        "line": 1993
+      },
+      "filter": "丢弃",
+      "bridge_replay": "不缓存",
+      "meaning": "完整原始模型输出 item（内部接口）",
+      "monitor": "不采集；不能与已采集的上游 response.output_item.done 混为一谈。",
+      "support": "丢弃"
+    },
+    {
+      "variant": "RawResponseCompleted",
+      "method": "rawResponse/completed",
+      "experimental": false,
+      "source": {
+        "file": "/Users/bytedance/playground/codex/codex-rs/app-server-protocol/src/protocol/common.rs",
+        "line": 1995
+      },
+      "filter": "丢弃",
+      "bridge_replay": "不缓存",
+      "meaning": "原始模型 response 与 usage（内部接口）",
+      "monitor": "不采集。",
+      "support": "丢弃"
+    },
+    {
+      "variant": "AgentMessageDelta",
+      "method": "item/agentMessage/delta",
+      "experimental": false,
+      "source": {
+        "file": "/Users/bytedance/playground/codex/codex-rs/app-server-protocol/src/protocol/common.rs",
+        "line": 1996
+      },
+      "filter": "透传",
+      "bridge_replay": "不缓存",
+      "meaning": "正文增量",
+      "monitor": "正文接收字符、token、速度与生成阶段；上游镜像存在时避免重复计数，不展示正文内容。",
+      "support": "已展示"
+    },
+    {
+      "variant": "PlanDelta",
+      "method": "item/plan/delta",
+      "experimental": false,
+      "source": {
+        "file": "/Users/bytedance/playground/codex/codex-rs/app-server-protocol/src/protocol/common.rs",
+        "line": 1998
+      },
+      "filter": "透传",
+      "bridge_replay": "不缓存",
+      "meaning": "计划文本增量",
+      "monitor": "delta 被过滤，引擎无处理分支。",
+      "support": "仅透传"
+    },
+    {
+      "variant": "CommandExecOutputDelta",
+      "method": "command/exec/outputDelta",
+      "experimental": false,
+      "source": {
+        "file": "/Users/bytedance/playground/codex/codex-rs/app-server-protocol/src/protocol/common.rs",
+        "line": 2000
+      },
+      "filter": "丢弃",
+      "bridge_replay": "不缓存",
+      "meaning": "客户端 command/exec API 的输出",
+      "monitor": "不采集；与模型工具的 item/commandExecution/outputDelta 是不同接口。",
+      "support": "丢弃"
+    },
+    {
+      "variant": "ProcessOutputDelta",
+      "method": "process/outputDelta",
+      "experimental": true,
+      "source": {
+        "file": "/Users/bytedance/playground/codex/codex-rs/app-server-protocol/src/protocol/common.rs",
+        "line": 2003
+      },
+      "filter": "丢弃",
+      "bridge_replay": "不缓存",
+      "meaning": "客户端 process/spawn API 的输出",
+      "monitor": "不采集。",
+      "support": "丢弃"
+    },
+    {
+      "variant": "ProcessExited",
+      "method": "process/exited",
+      "experimental": true,
+      "source": {
+        "file": "/Users/bytedance/playground/codex/codex-rs/app-server-protocol/src/protocol/common.rs",
+        "line": 2006
+      },
+      "filter": "丢弃",
+      "bridge_replay": "不缓存",
+      "meaning": "客户端 process/spawn API 的退出",
+      "monitor": "不采集。",
+      "support": "丢弃"
+    },
+    {
+      "variant": "CommandExecutionOutputDelta",
+      "method": "item/commandExecution/outputDelta",
+      "experimental": false,
+      "source": {
+        "file": "/Users/bytedance/playground/codex/codex-rs/app-server-protocol/src/protocol/common.rs",
+        "line": 2007
+      },
+      "filter": "透传",
+      "bridge_replay": "不缓存",
+      "meaning": "模型命令工具输出增量",
+      "monitor": "只保留输出字符数，更新最近进展，并将活跃命令设为执行工具；详情显示输出字符总数。",
+      "support": "已展示"
+    },
+    {
+      "variant": "TerminalInteraction",
+      "method": "item/commandExecution/terminalInteraction",
+      "experimental": false,
+      "source": {
+        "file": "/Users/bytedance/playground/codex/codex-rs/app-server-protocol/src/protocol/common.rs",
+        "line": 2008
+      },
+      "filter": "透传",
+      "bridge_replay": "不缓存",
+      "meaning": "命令终端 stdin 交互",
+      "monitor": "交互字段被过滤，无状态处理。",
+      "support": "仅透传"
+    },
+    {
+      "variant": "FileChangeOutputDelta",
+      "method": "item/fileChange/outputDelta",
+      "experimental": false,
+      "source": {
+        "file": "/Users/bytedance/playground/codex/codex-rs/app-server-protocol/src/protocol/common.rs",
+        "line": 2010
+      },
+      "filter": "透传",
+      "bridge_replay": "不缓存",
+      "meaning": "旧版补丁输出增量",
+      "monitor": "内容被过滤，无状态处理。",
+      "support": "仅透传"
+    },
+    {
+      "variant": "FileChangePatchUpdated",
+      "method": "item/fileChange/patchUpdated",
+      "experimental": false,
+      "source": {
+        "file": "/Users/bytedance/playground/codex/codex-rs/app-server-protocol/src/protocol/common.rs",
+        "line": 2011
+      },
+      "filter": "透传",
+      "bridge_replay": "不缓存",
+      "meaning": "补丁变化更新",
+      "monitor": "补丁字段被过滤，无状态处理。",
+      "support": "仅透传"
+    },
+    {
+      "variant": "ServerRequestResolved",
+      "method": "serverRequest/resolved",
+      "experimental": false,
+      "source": {
+        "file": "/Users/bytedance/playground/codex/codex-rs/app-server-protocol/src/protocol/common.rs",
+        "line": 2012
+      },
+      "filter": "透传",
+      "bridge_replay": "清理缓存",
+      "meaning": "客户端请求已回答或清理",
+      "monitor": "桥接缓存会删除等待请求；引擎仅在没有 threadId 时清理审批表。正常 schema 带 threadId 时没有处理分支，不能单独结束等待状态。",
+      "support": "部分消费"
+    },
+    {
+      "variant": "McpToolCallProgress",
+      "method": "item/mcpToolCall/progress",
+      "experimental": false,
+      "source": {
+        "file": "/Users/bytedance/playground/codex/codex-rs/app-server-protocol/src/protocol/common.rs",
+        "line": 2013
+      },
+      "filter": "透传",
+      "bridge_replay": "不缓存",
+      "meaning": "MCP 工具内部进度",
+      "monitor": "progress/message 等字段被过滤，无状态处理；MCP 开始结束仍可通过 item 生命周期展示。",
+      "support": "仅透传"
+    },
+    {
+      "variant": "McpServerOauthLoginCompleted",
+      "method": "mcpServer/oauthLogin/completed",
+      "experimental": false,
+      "source": {
+        "file": "/Users/bytedance/playground/codex/codex-rs/app-server-protocol/src/protocol/common.rs",
+        "line": 2014
+      },
+      "filter": "丢弃",
+      "bridge_replay": "不缓存",
+      "meaning": "MCP OAuth 登录结束",
+      "monitor": "不采集。",
+      "support": "丢弃"
+    },
+    {
+      "variant": "McpServerStatusUpdated",
+      "method": "mcpServer/startupStatus/updated",
+      "experimental": false,
+      "source": {
+        "file": "/Users/bytedance/playground/codex/codex-rs/app-server-protocol/src/protocol/common.rs",
+        "line": 2015
+      },
+      "filter": "丢弃",
+      "bridge_replay": "不缓存",
+      "meaning": "MCP 服务启动状态",
+      "monitor": "不采集；等待 MCP 启动无法单独解释。",
+      "support": "丢弃"
+    },
+    {
+      "variant": "McpServerEventStream",
+      "method": "mcpServer/event/stream/notification",
+      "experimental": true,
+      "source": {
+        "file": "/Users/bytedance/playground/codex/codex-rs/app-server-protocol/src/protocol/common.rs",
+        "line": 2017
+      },
+      "filter": "丢弃",
+      "bridge_replay": "不缓存",
+      "meaning": "MCP 事件流通知",
+      "monitor": "不采集。",
+      "support": "丢弃"
+    },
+    {
+      "variant": "AccountUpdated",
+      "method": "account/updated",
+      "experimental": false,
+      "source": {
+        "file": "/Users/bytedance/playground/codex/codex-rs/app-server-protocol/src/protocol/common.rs",
+        "line": 2018
+      },
+      "filter": "丢弃",
+      "bridge_replay": "不缓存",
+      "meaning": "账号更新",
+      "monitor": "不采集。",
+      "support": "丢弃"
+    },
+    {
+      "variant": "GatewayOAuthChanged",
+      "method": "account/gatewayOAuth/changed",
+      "experimental": false,
+      "source": {
+        "file": "/Users/bytedance/playground/codex/codex-rs/app-server-protocol/src/protocol/common.rs",
+        "line": 2019
+      },
+      "filter": "丢弃",
+      "bridge_replay": "不缓存",
+      "meaning": "网关 OAuth 变化",
+      "monitor": "不采集。",
+      "support": "丢弃"
+    },
+    {
+      "variant": "AccountRateLimitsUpdated",
+      "method": "account/rateLimits/updated",
+      "experimental": false,
+      "source": {
+        "file": "/Users/bytedance/playground/codex/codex-rs/app-server-protocol/src/protocol/common.rs",
+        "line": 2020
+      },
+      "filter": "丢弃",
+      "bridge_replay": "不缓存",
+      "meaning": "账号限额变化",
+      "monitor": "不采集。",
+      "support": "丢弃"
+    },
+    {
+      "variant": "AppListUpdated",
+      "method": "app/list/updated",
+      "experimental": false,
+      "source": {
+        "file": "/Users/bytedance/playground/codex/codex-rs/app-server-protocol/src/protocol/common.rs",
+        "line": 2021
+      },
+      "filter": "丢弃",
+      "bridge_replay": "不缓存",
+      "meaning": "应用列表变化",
+      "monitor": "不采集。",
+      "support": "丢弃"
+    },
+    {
+      "variant": "RemoteControlStatusChanged",
+      "method": "remoteControl/status/changed",
+      "experimental": false,
+      "source": {
+        "file": "/Users/bytedance/playground/codex/codex-rs/app-server-protocol/src/protocol/common.rs",
+        "line": 2022
+      },
+      "filter": "丢弃",
+      "bridge_replay": "不缓存",
+      "meaning": "远程控制状态",
+      "monitor": "不采集；monitor 仅观察本机受监控 stdio 后端。",
+      "support": "丢弃"
+    },
+    {
+      "variant": "ExternalAgentConfigImportProgress",
+      "method": "externalAgentConfig/import/progress",
+      "experimental": false,
+      "source": {
+        "file": "/Users/bytedance/playground/codex/codex-rs/app-server-protocol/src/protocol/common.rs",
+        "line": 2023
+      },
+      "filter": "丢弃",
+      "bridge_replay": "不缓存",
+      "meaning": "外部配置导入进度",
+      "monitor": "不采集。",
+      "support": "丢弃"
+    },
+    {
+      "variant": "ExternalAgentConfigImportCompleted",
+      "method": "externalAgentConfig/import/completed",
+      "experimental": false,
+      "source": {
+        "file": "/Users/bytedance/playground/codex/codex-rs/app-server-protocol/src/protocol/common.rs",
+        "line": 2024
+      },
+      "filter": "丢弃",
+      "bridge_replay": "不缓存",
+      "meaning": "外部配置导入结束",
+      "monitor": "不采集。",
+      "support": "丢弃"
+    },
+    {
+      "variant": "FsChanged",
+      "method": "fs/changed",
+      "experimental": false,
+      "source": {
+        "file": "/Users/bytedance/playground/codex/codex-rs/app-server-protocol/src/protocol/common.rs",
+        "line": 2025
+      },
+      "filter": "丢弃",
+      "bridge_replay": "不缓存",
+      "meaning": "客户端文件订阅变化",
+      "monitor": "不采集。",
+      "support": "丢弃"
+    },
+    {
+      "variant": "ReasoningSummaryTextDelta",
+      "method": "item/reasoning/summaryTextDelta",
+      "experimental": false,
+      "source": {
+        "file": "/Users/bytedance/playground/codex/codex-rs/app-server-protocol/src/protocol/common.rs",
+        "line": 2026
+      },
+      "filter": "透传",
+      "bridge_replay": "不缓存",
+      "meaning": "可见 reasoning 摘要增量",
+      "monitor": "统计摘要字数、段数与 token；界面显示摘要字/段，不显示摘要 token/s 或摘要正文。",
+      "support": "已展示"
+    },
+    {
+      "variant": "ReasoningSummaryPartAdded",
+      "method": "item/reasoning/summaryPartAdded",
+      "experimental": false,
+      "source": {
+        "file": "/Users/bytedance/playground/codex/codex-rs/app-server-protocol/src/protocol/common.rs",
+        "line": 2027
+      },
+      "filter": "透传",
+      "bridge_replay": "不缓存",
+      "meaning": "reasoning 摘要分段开始",
+      "monitor": "summaryIndex 透传但无处理分支；段数来自摘要 delta 或上游对应事件。",
+      "support": "仅透传"
+    },
+    {
+      "variant": "ReasoningTextDelta",
+      "method": "item/reasoning/textDelta",
+      "experimental": false,
+      "source": {
+        "file": "/Users/bytedance/playground/codex/codex-rs/app-server-protocol/src/protocol/common.rs",
+        "line": 2028
+      },
+      "filter": "透传",
+      "bridge_replay": "不缓存",
+      "meaning": "reasoning 原始文本增量",
+      "monitor": "delta 被过滤，无状态处理；不能据此显示完整 reasoning 速度。",
+      "support": "仅透传"
+    },
+    {
+      "variant": "ContextCompacted",
+      "method": "thread/compacted",
+      "experimental": false,
+      "source": {
+        "file": "/Users/bytedance/playground/codex/codex-rs/app-server-protocol/src/protocol/common.rs",
+        "line": 2030
+      },
+      "filter": "透传",
+      "bridge_replay": "不缓存",
+      "meaning": "旧版上下文压缩通知",
+      "monitor": "透传但不处理；新版 contextCompaction 活动类型也未识别。",
+      "support": "仅透传"
+    },
+    {
+      "variant": "ModelRerouted",
+      "method": "model/rerouted",
+      "experimental": false,
+      "source": {
+        "file": "/Users/bytedance/playground/codex/codex-rs/app-server-protocol/src/protocol/common.rs",
+        "line": 2031
+      },
+      "filter": "透传",
+      "bridge_replay": "缓存",
+      "meaning": "模型被重新路由",
+      "monitor": "更新 toModel，详情显示当前模型；不展示切换原因。",
+      "support": "已展示"
+    },
+    {
+      "variant": "ModelVerification",
+      "method": "model/verification",
+      "experimental": false,
+      "source": {
+        "file": "/Users/bytedance/playground/codex/codex-rs/app-server-protocol/src/protocol/common.rs",
+        "line": 2032
+      },
+      "filter": "透传",
+      "bridge_replay": "不缓存",
+      "meaning": "需要账号验证",
+      "monitor": "验证信息被过滤，无状态处理。",
+      "support": "仅透传"
+    },
+    {
+      "variant": "AuthRecoveryStarted",
+      "method": "modelProvider/authRecoveryStarted",
+      "experimental": false,
+      "source": {
+        "file": "/Users/bytedance/playground/codex/codex-rs/app-server-protocol/src/protocol/common.rs",
+        "line": 2033
+      },
+      "filter": "丢弃",
+      "bridge_replay": "不缓存",
+      "meaning": "模型供应商认证恢复开始",
+      "monitor": "不采集，不能显示认证恢复中。",
+      "support": "丢弃"
+    },
+    {
+      "variant": "AuthRecoveryCompleted",
+      "method": "modelProvider/authRecoveryCompleted",
+      "experimental": false,
+      "source": {
+        "file": "/Users/bytedance/playground/codex/codex-rs/app-server-protocol/src/protocol/common.rs",
+        "line": 2034
+      },
+      "filter": "丢弃",
+      "bridge_replay": "不缓存",
+      "meaning": "模型供应商认证恢复结束",
+      "monitor": "不采集。",
+      "support": "丢弃"
+    },
+    {
+      "variant": "TurnModerationMetadata",
+      "method": "turn/moderationMetadata",
+      "experimental": true,
+      "source": {
+        "file": "/Users/bytedance/playground/codex/codex-rs/app-server-protocol/src/protocol/common.rs",
+        "line": 2036
+      },
+      "filter": "透传",
+      "bridge_replay": "不缓存",
+      "meaning": "审核元数据",
+      "monitor": "关键字段被过滤，无状态处理。",
+      "support": "仅透传"
+    },
+    {
+      "variant": "ModelSafetyBufferingUpdated",
+      "method": "model/safetyBuffering/updated",
+      "experimental": false,
+      "source": {
+        "file": "/Users/bytedance/playground/codex/codex-rs/app-server-protocol/src/protocol/common.rs",
+        "line": 2037
+      },
+      "filter": "透传",
+      "bridge_replay": "不缓存",
+      "meaning": "输出等待安全审核",
+      "monitor": "关键字段被过滤，无状态处理。",
+      "support": "仅透传"
+    },
+    {
+      "variant": "Warning",
+      "method": "warning",
+      "experimental": false,
+      "source": {
+        "file": "/Users/bytedance/playground/codex/codex-rs/app-server-protocol/src/protocol/common.rs",
+        "line": 2038
+      },
+      "filter": "丢弃",
+      "bridge_replay": "不缓存",
+      "meaning": "一般警告",
+      "monitor": "不采集、不展示。",
+      "support": "丢弃"
+    },
+    {
+      "variant": "GuardianWarning",
+      "method": "guardianWarning",
+      "experimental": false,
+      "source": {
+        "file": "/Users/bytedance/playground/codex/codex-rs/app-server-protocol/src/protocol/common.rs",
+        "line": 2039
+      },
+      "filter": "丢弃",
+      "bridge_replay": "不缓存",
+      "meaning": "自动审核警告",
+      "monitor": "不采集、不展示。",
+      "support": "丢弃"
+    },
+    {
+      "variant": "DeprecationNotice",
+      "method": "deprecationNotice",
+      "experimental": false,
+      "source": {
+        "file": "/Users/bytedance/playground/codex/codex-rs/app-server-protocol/src/protocol/common.rs",
+        "line": 2040
+      },
+      "filter": "丢弃",
+      "bridge_replay": "不缓存",
+      "meaning": "弃用通知",
+      "monitor": "不采集。",
+      "support": "丢弃"
+    },
+    {
+      "variant": "ConfigWarning",
+      "method": "configWarning",
+      "experimental": false,
+      "source": {
+        "file": "/Users/bytedance/playground/codex/codex-rs/app-server-protocol/src/protocol/common.rs",
+        "line": 2041
+      },
+      "filter": "丢弃",
+      "bridge_replay": "不缓存",
+      "meaning": "配置警告",
+      "monitor": "不采集。",
+      "support": "丢弃"
+    },
+    {
+      "variant": "FuzzyFileSearchSessionUpdated",
+      "method": "fuzzyFileSearch/sessionUpdated",
+      "experimental": false,
+      "source": {
+        "file": "/Users/bytedance/playground/codex/codex-rs/app-server-protocol/src/protocol/common.rs",
+        "line": 2042
+      },
+      "filter": "丢弃",
+      "bridge_replay": "不缓存",
+      "meaning": "客户端文件搜索结果更新",
+      "monitor": "不采集。",
+      "support": "丢弃"
+    },
+    {
+      "variant": "FuzzyFileSearchSessionCompleted",
+      "method": "fuzzyFileSearch/sessionCompleted",
+      "experimental": false,
+      "source": {
+        "file": "/Users/bytedance/playground/codex/codex-rs/app-server-protocol/src/protocol/common.rs",
+        "line": 2043
+      },
+      "filter": "丢弃",
+      "bridge_replay": "不缓存",
+      "meaning": "客户端文件搜索结束",
+      "monitor": "不采集。",
+      "support": "丢弃"
+    },
+    {
+      "variant": "ThreadRealtimeStarted",
+      "method": "thread/realtime/started",
+      "experimental": true,
+      "source": {
+        "file": "/Users/bytedance/playground/codex/codex-rs/app-server-protocol/src/protocol/common.rs",
+        "line": 2045
+      },
+      "filter": "透传",
+      "bridge_replay": "不缓存",
+      "meaning": "实时音视频会话：started",
+      "monitor": "不处理；音频、SDP、转录等字段被过滤。",
+      "support": "仅透传"
+    },
+    {
+      "variant": "ThreadRealtimeItemAdded",
+      "method": "thread/realtime/itemAdded",
+      "experimental": true,
+      "source": {
+        "file": "/Users/bytedance/playground/codex/codex-rs/app-server-protocol/src/protocol/common.rs",
+        "line": 2047
+      },
+      "filter": "透传",
+      "bridge_replay": "不缓存",
+      "meaning": "实时音视频会话：itemAdded",
+      "monitor": "不处理；音频、SDP、转录等字段被过滤。",
+      "support": "仅透传"
+    },
+    {
+      "variant": "ThreadRealtimeItemStarted",
+      "method": "thread/realtime/item/started",
+      "experimental": true,
+      "source": {
+        "file": "/Users/bytedance/playground/codex/codex-rs/app-server-protocol/src/protocol/common.rs",
+        "line": 2049
+      },
+      "filter": "透传",
+      "bridge_replay": "不缓存",
+      "meaning": "实时音视频会话：started",
+      "monitor": "不处理；音频、SDP、转录等字段被过滤。",
+      "support": "仅透传"
+    },
+    {
+      "variant": "ThreadRealtimeItemTranscriptDelta",
+      "method": "thread/realtime/item/transcript/delta",
+      "experimental": true,
+      "source": {
+        "file": "/Users/bytedance/playground/codex/codex-rs/app-server-protocol/src/protocol/common.rs",
+        "line": 2051
+      },
+      "filter": "透传",
+      "bridge_replay": "不缓存",
+      "meaning": "实时音视频会话：delta",
+      "monitor": "不处理；音频、SDP、转录等字段被过滤。",
+      "support": "仅透传"
+    },
+    {
+      "variant": "ThreadRealtimeItemCompleted",
+      "method": "thread/realtime/item/completed",
+      "experimental": true,
+      "source": {
+        "file": "/Users/bytedance/playground/codex/codex-rs/app-server-protocol/src/protocol/common.rs",
+        "line": 2053
+      },
+      "filter": "透传",
+      "bridge_replay": "不缓存",
+      "meaning": "实时音视频会话：completed",
+      "monitor": "不处理；音频、SDP、转录等字段被过滤。",
+      "support": "仅透传"
+    },
+    {
+      "variant": "ThreadRealtimeTranscriptDelta",
+      "method": "thread/realtime/transcript/delta",
+      "experimental": true,
+      "source": {
+        "file": "/Users/bytedance/playground/codex/codex-rs/app-server-protocol/src/protocol/common.rs",
+        "line": 2055
+      },
+      "filter": "透传",
+      "bridge_replay": "不缓存",
+      "meaning": "实时音视频会话：delta",
+      "monitor": "不处理；音频、SDP、转录等字段被过滤。",
+      "support": "仅透传"
+    },
+    {
+      "variant": "ThreadRealtimeTranscriptDone",
+      "method": "thread/realtime/transcript/done",
+      "experimental": true,
+      "source": {
+        "file": "/Users/bytedance/playground/codex/codex-rs/app-server-protocol/src/protocol/common.rs",
+        "line": 2057
+      },
+      "filter": "透传",
+      "bridge_replay": "不缓存",
+      "meaning": "实时音视频会话：done",
+      "monitor": "不处理；音频、SDP、转录等字段被过滤。",
+      "support": "仅透传"
+    },
+    {
+      "variant": "ThreadRealtimeOutputAudioDelta",
+      "method": "thread/realtime/outputAudio/delta",
+      "experimental": true,
+      "source": {
+        "file": "/Users/bytedance/playground/codex/codex-rs/app-server-protocol/src/protocol/common.rs",
+        "line": 2059
+      },
+      "filter": "透传",
+      "bridge_replay": "不缓存",
+      "meaning": "实时音视频会话：delta",
+      "monitor": "不处理；音频、SDP、转录等字段被过滤。",
+      "support": "仅透传"
+    },
+    {
+      "variant": "ThreadRealtimeSdp",
+      "method": "thread/realtime/sdp",
+      "experimental": true,
+      "source": {
+        "file": "/Users/bytedance/playground/codex/codex-rs/app-server-protocol/src/protocol/common.rs",
+        "line": 2061
+      },
+      "filter": "透传",
+      "bridge_replay": "不缓存",
+      "meaning": "实时音视频会话：sdp",
+      "monitor": "不处理；音频、SDP、转录等字段被过滤。",
+      "support": "仅透传"
+    },
+    {
+      "variant": "ThreadRealtimeError",
+      "method": "thread/realtime/error",
+      "experimental": true,
+      "source": {
+        "file": "/Users/bytedance/playground/codex/codex-rs/app-server-protocol/src/protocol/common.rs",
+        "line": 2063
+      },
+      "filter": "透传",
+      "bridge_replay": "不缓存",
+      "meaning": "实时音视频会话：error",
+      "monitor": "不处理；音频、SDP、转录等字段被过滤。",
+      "support": "仅透传"
+    },
+    {
+      "variant": "ThreadRealtimeClosed",
+      "method": "thread/realtime/closed",
+      "experimental": true,
+      "source": {
+        "file": "/Users/bytedance/playground/codex/codex-rs/app-server-protocol/src/protocol/common.rs",
+        "line": 2065
+      },
+      "filter": "透传",
+      "bridge_replay": "不缓存",
+      "meaning": "实时音视频会话：closed",
+      "monitor": "不处理；音频、SDP、转录等字段被过滤。",
+      "support": "仅透传"
+    },
+    {
+      "variant": "WindowsWorldWritableWarning",
+      "method": "windows/worldWritableWarning",
+      "experimental": false,
+      "source": {
+        "file": "/Users/bytedance/playground/codex/codex-rs/app-server-protocol/src/protocol/common.rs",
+        "line": 2068
+      },
+      "filter": "丢弃",
+      "bridge_replay": "不缓存",
+      "meaning": "Windows 可写目录警告",
+      "monitor": "不采集。",
+      "support": "丢弃"
+    },
+    {
+      "variant": "WindowsSandboxSetupCompleted",
+      "method": "windowsSandbox/setupCompleted",
+      "experimental": false,
+      "source": {
+        "file": "/Users/bytedance/playground/codex/codex-rs/app-server-protocol/src/protocol/common.rs",
+        "line": 2069
+      },
+      "filter": "丢弃",
+      "bridge_replay": "不缓存",
+      "meaning": "Windows 沙箱安装结束",
+      "monitor": "不采集。",
+      "support": "丢弃"
+    },
+    {
+      "variant": "AccountLoginCompleted",
+      "method": "account/login/completed",
+      "experimental": false,
+      "source": {
+        "file": "/Users/bytedance/playground/codex/codex-rs/app-server-protocol/src/protocol/common.rs",
+        "line": 2074
+      },
+      "filter": "丢弃",
+      "bridge_replay": "不缓存",
+      "meaning": "账号登录结束",
+      "monitor": "不采集。",
+      "support": "丢弃"
+    }
+  ],
+  "server_requests": [
+    {
+      "variant": "CommandExecutionRequestApproval",
+      "method": "item/commandExecution/requestApproval",
+      "experimental": false,
+      "source": {
+        "file": "/Users/bytedance/playground/codex/codex-rs/app-server-protocol/src/protocol/common.rs",
+        "line": 1797
+      },
+      "filter": "透传",
+      "bridge_replay": "缓存",
+      "meaning": "命令审批请求",
+      "monitor": "等待审批；不显示请求中的原因、审批选项和额外权限，命令名称依赖已有 item。",
+      "support": "已展示"
+    },
+    {
+      "variant": "FileChangeRequestApproval",
+      "method": "item/fileChange/requestApproval",
+      "experimental": false,
+      "source": {
+        "file": "/Users/bytedance/playground/codex/codex-rs/app-server-protocol/src/protocol/common.rs",
+        "line": 1804
+      },
+      "filter": "透传",
+      "bridge_replay": "缓存",
+      "meaning": "文件变更审批请求",
+      "monitor": "等待审批；不展示变更内容或审批原因。",
+      "support": "已展示"
+    },
+    {
+      "variant": "ToolRequestUserInput",
+      "method": "item/tool/requestUserInput",
+      "experimental": false,
+      "source": {
+        "file": "/Users/bytedance/playground/codex/codex-rs/app-server-protocol/src/protocol/common.rs",
+        "line": 1810
+      },
+      "filter": "透传",
+      "bridge_replay": "缓存",
+      "meaning": "工具请求用户回答",
+      "monitor": "等待回答；不展示问题/选项。回复后结束等待，不保存答案。",
+      "support": "已展示"
+    },
+    {
+      "variant": "McpServerElicitationRequest",
+      "method": "mcpServer/elicitation/request",
+      "experimental": false,
+      "source": {
+        "file": "/Users/bytedance/playground/codex/codex-rs/app-server-protocol/src/protocol/common.rs",
+        "line": 1816
+      },
+      "filter": "丢弃",
+      "bridge_replay": "不缓存",
+      "meaning": "MCP 请求用户补充信息或外部确认",
+      "monitor": "过滤器直接丢弃；不会显示等待回答。",
+      "support": "丢弃"
+    },
+    {
+      "variant": "PermissionsRequestApproval",
+      "method": "item/permissions/requestApproval",
+      "experimental": false,
+      "source": {
+        "file": "/Users/bytedance/playground/codex/codex-rs/app-server-protocol/src/protocol/common.rs",
+        "line": 1822
+      },
+      "filter": "透传",
+      "bridge_replay": "缓存",
+      "meaning": "请求新增权限",
+      "monitor": "显示等待审批，但回复是 permissions/scope，过滤器只保留 decision；不能解释实际授予了什么。",
+      "support": "部分消费"
+    },
+    {
+      "variant": "DynamicToolCall",
+      "method": "item/tool/call",
+      "experimental": false,
+      "source": {
+        "file": "/Users/bytedance/playground/codex/codex-rs/app-server-protocol/src/protocol/common.rs",
+        "line": 1828
+      },
+      "filter": "透传",
+      "bridge_replay": "不缓存",
+      "meaning": "动态工具委托客户端执行",
+      "monitor": "请求透传但没有处理分支；dynamicToolCall 的 item 开始结束另有基本展示。",
+      "support": "仅透传"
+    },
+    {
+      "variant": "ChatgptAuthTokensRefresh",
+      "method": "account/chatgptAuthTokens/refresh",
+      "experimental": false,
+      "source": {
+        "file": "/Users/bytedance/playground/codex/codex-rs/app-server-protocol/src/protocol/common.rs",
+        "line": 1833
+      },
+      "filter": "丢弃",
+      "bridge_replay": "不缓存",
+      "meaning": "请求客户端刷新认证 token",
+      "monitor": "不采集。",
+      "support": "丢弃"
+    },
+    {
+      "variant": "AttestationGenerate",
+      "method": "attestation/generate",
+      "experimental": false,
+      "source": {
+        "file": "/Users/bytedance/playground/codex/codex-rs/app-server-protocol/src/protocol/common.rs",
+        "line": 1839
+      },
+      "filter": "丢弃",
+      "bridge_replay": "不缓存",
+      "meaning": "请求客户端产生认证证明",
+      "monitor": "不采集。",
+      "support": "丢弃"
+    },
+    {
+      "variant": "CurrentTimeRead",
+      "method": "currentTime/read",
+      "experimental": true,
+      "source": {
+        "file": "/Users/bytedance/playground/codex/codex-rs/app-server-protocol/src/protocol/common.rs",
+        "line": 1846
+      },
+      "filter": "丢弃",
+      "bridge_replay": "不缓存",
+      "meaning": "请求客户端提供当前时间",
+      "monitor": "不采集。",
+      "support": "丢弃"
+    },
+    {
+      "variant": "ApplyPatchApproval",
+      "method": "applyPatchApproval",
+      "experimental": false,
+      "source": {
+        "file": "/Users/bytedance/playground/codex/codex-rs/app-server-protocol/src/protocol/common.rs",
+        "line": 1854
+      },
+      "filter": "丢弃",
+      "bridge_replay": "不缓存",
+      "meaning": "旧版文件修改审批",
+      "monitor": "不采集。",
+      "support": "丢弃"
+    },
+    {
+      "variant": "ExecCommandApproval",
+      "method": "execCommandApproval",
+      "experimental": false,
+      "source": {
+        "file": "/Users/bytedance/playground/codex/codex-rs/app-server-protocol/src/protocol/common.rs",
+        "line": 1860
+      },
+      "filter": "丢弃",
+      "bridge_replay": "不缓存",
+      "meaning": "旧版命令审批",
+      "monitor": "不采集。",
+      "support": "丢弃"
+    }
+  ],
+  "thread_item_types": [
+    {
+      "variant": "UserMessage",
+      "source": {
+        "file": "/Users/bytedance/playground/codex/codex-rs/app-server-protocol/src/protocol/v2/item.rs",
+        "line": 239
+      },
+      "type": "userMessage",
+      "recognized": false,
+      "monitor": "故意忽略，不统计或展示用户输入正文。"
+    },
+    {
+      "variant": "HookPrompt",
+      "source": {
+        "file": "/Users/bytedance/playground/codex/codex-rs/app-server-protocol/src/protocol/v2/item.rs",
+        "line": 246
+      },
+      "type": "hookPrompt",
+      "recognized": false,
+      "monitor": "未识别，不展示 hook 注入信息。"
+    },
+    {
+      "variant": "AgentMessage",
+      "source": {
+        "file": "/Users/bytedance/playground/codex/codex-rs/app-server-protocol/src/protocol/v2/item.rs",
+        "line": 252
+      },
+      "type": "agentMessage",
+      "recognized": true,
+      "monitor": "生成正文；正文增量与最终文本用于接收指标，不展示正文。"
+    },
+    {
+      "variant": "FunctionCallOutput",
+      "source": {
+        "file": "/Users/bytedance/playground/codex/codex-rs/app-server-protocol/src/protocol/v2/item.rs",
+        "line": 266
+      },
+      "type": "functionCallOutput",
+      "recognized": false,
+      "monitor": "未识别；不能假设此类型为所有工具（包括 exec）统一提供返回事件。源码中的生产点包括 hook_runtime。"
+    },
+    {
+      "variant": "Plan",
+      "source": {
+        "file": "/Users/bytedance/playground/codex/codex-rs/app-server-protocol/src/protocol/v2/item.rs",
+        "line": 276
+      },
+      "type": "plan",
+      "recognized": false,
+      "monitor": "未识别，计划正文与增量不展示。"
+    },
+    {
+      "variant": "Reasoning",
+      "source": {
+        "file": "/Users/bytedance/playground/codex/codex-rs/app-server-protocol/src/protocol/v2/item.rs",
+        "line": 282
+      },
+      "type": "reasoning",
+      "recognized": true,
+      "monitor": "Reasoning；显示可见摘要字数和段数；完整 reasoning 内容不展示。"
+    },
+    {
+      "variant": "CommandExecution",
+      "source": {
+        "file": "/Users/bytedance/playground/codex/codex-rs/app-server-protocol/src/protocol/v2/item.rs",
+        "line": 291
+      },
+      "type": "commandExecution",
+      "recognized": true,
+      "monitor": "有 unifiedExecStartup/Interaction 与 processId 时视为执行；否则执行未确认，直到收到输出。显示命令摘要、输出字符数、结束状态、退出码。"
+    },
+    {
+      "variant": "FileChange",
+      "source": {
+        "file": "/Users/bytedance/playground/codex/codex-rs/app-server-protocol/src/protocol/v2/item.rs",
+        "line": 330
+      },
+      "type": "fileChange",
+      "recognized": true,
+      "monitor": "通用“执行工具 · fileChange”；只显示生命周期，不展示文件清单或 diff。"
+    },
+    {
+      "variant": "McpToolCall",
+      "source": {
+        "file": "/Users/bytedance/playground/codex/codex-rs/app-server-protocol/src/protocol/v2/item.rs",
+        "line": 337
+      },
+      "type": "mcpToolCall",
+      "recognized": true,
+      "monitor": "显示 server/tool、生命周期；不显示 MCP progress 或结果/错误详情。"
+    },
+    {
+      "variant": "DynamicToolCall",
+      "source": {
+        "file": "/Users/bytedance/playground/codex/codex-rs/app-server-protocol/src/protocol/v2/item.rs",
+        "line": 360
+      },
+      "type": "dynamicToolCall",
+      "recognized": true,
+      "monitor": "显示工具名称、生命周期；客户端委托请求没有专门展示。"
+    },
+    {
+      "variant": "CollabAgentToolCall",
+      "source": {
+        "file": "/Users/bytedance/playground/codex/codex-rs/app-server-protocol/src/protocol/v2/item.rs",
+        "line": 374
+      },
+      "type": "collabAgentToolCall",
+      "recognized": false,
+      "monitor": "未识别：TOOL_TYPES 写成 collabToolCall，与实际协议类型不匹配；接收方字段也误用单数 receiverThreadId。"
+    },
+    {
+      "variant": "SubAgentActivity",
+      "source": {
+        "file": "/Users/bytedance/playground/codex/codex-rs/app-server-protocol/src/protocol/v2/item.rs",
+        "line": 397
+      },
+      "type": "subAgentActivity",
+      "recognized": false,
+      "monitor": "未识别，不展示子代理路径及其活动。"
+    },
+    {
+      "variant": "WebSearch",
+      "source": {
+        "file": "/Users/bytedance/playground/codex/codex-rs/app-server-protocol/src/protocol/v2/item.rs",
+        "line": 407
+      },
+      "type": "webSearch",
+      "recognized": true,
+      "monitor": "通用工具生命周期；不展示查询、结果或动作详情。"
+    },
+    {
+      "variant": "ImageView",
+      "source": {
+        "file": "/Users/bytedance/playground/codex/codex-rs/app-server-protocol/src/protocol/v2/item.rs",
+        "line": 410
+      },
+      "type": "imageView",
+      "recognized": true,
+      "monitor": "通用工具生命周期；path 被过滤，不展示图片或路径。"
+    },
+    {
+      "variant": "Sleep",
+      "source": {
+        "file": "/Users/bytedance/playground/codex/codex-rs/app-server-protocol/src/protocol/v2/item.rs",
+        "line": 414
+      },
+      "type": "sleep",
+      "recognized": false,
+      "monitor": "未识别，不能单独显示后台等待/休眠。"
+    },
+    {
+      "variant": "ImageGeneration",
+      "source": {
+        "file": "/Users/bytedance/playground/codex/codex-rs/app-server-protocol/src/protocol/v2/item.rs",
+        "line": 415
+      },
+      "type": "imageGeneration",
+      "recognized": true,
+      "monitor": "通用工具生命周期；不展示生成图片或任务进度。"
+    },
+    {
+      "variant": "EnteredReviewMode",
+      "source": {
+        "file": "/Users/bytedance/playground/codex/codex-rs/app-server-protocol/src/protocol/v2/item.rs",
+        "line": 418
+      },
+      "type": "enteredReviewMode",
+      "recognized": false,
+      "monitor": "未识别，不显示进入代码 review 模式（与审批不同）。"
+    },
+    {
+      "variant": "ExitedReviewMode",
+      "source": {
+        "file": "/Users/bytedance/playground/codex/codex-rs/app-server-protocol/src/protocol/v2/item.rs",
+        "line": 424
+      },
+      "type": "exitedReviewMode",
+      "recognized": false,
+      "monitor": "未识别，不显示退出代码 review 模式。"
+    },
+    {
+      "variant": "ContextCompaction",
+      "source": {
+        "file": "/Users/bytedance/playground/codex/codex-rs/app-server-protocol/src/protocol/v2/item.rs",
+        "line": 430
+      },
+      "type": "contextCompaction",
+      "recognized": false,
+      "monitor": "未识别，上下文压缩不能解释为独立活动。"
+    }
+  ],
+  "core_event_variants": [
+    {
+      "variant": "Error",
+      "source": {
+        "file": "/Users/bytedance/playground/codex/codex-rs/protocol/src/protocol.rs",
+        "line": 1466
+      }
+    },
+    {
+      "variant": "Warning",
+      "source": {
+        "file": "/Users/bytedance/playground/codex/codex-rs/protocol/src/protocol.rs",
+        "line": 1470
+      }
+    },
+    {
+      "variant": "AuthRecoveryStarted",
+      "source": {
+        "file": "/Users/bytedance/playground/codex/codex-rs/protocol/src/protocol.rs",
+        "line": 1473
+      }
+    },
+    {
+      "variant": "AuthRecoveryCompleted",
+      "source": {
+        "file": "/Users/bytedance/playground/codex/codex-rs/protocol/src/protocol.rs",
+        "line": 1476
+      }
+    },
+    {
+      "variant": "GuardianWarning",
+      "source": {
+        "file": "/Users/bytedance/playground/codex/codex-rs/protocol/src/protocol.rs",
+        "line": 1479
+      }
+    },
+    {
+      "variant": "RealtimeConversationStarted",
+      "source": {
+        "file": "/Users/bytedance/playground/codex/codex-rs/protocol/src/protocol.rs",
+        "line": 1482
+      }
+    },
+    {
+      "variant": "RealtimeConversationRealtime",
+      "source": {
+        "file": "/Users/bytedance/playground/codex/codex-rs/protocol/src/protocol.rs",
+        "line": 1485
+      }
+    },
+    {
+      "variant": "RealtimeConversationClosed",
+      "source": {
+        "file": "/Users/bytedance/playground/codex/codex-rs/protocol/src/protocol.rs",
+        "line": 1488
+      }
+    },
+    {
+      "variant": "RealtimeConversationSdp",
+      "source": {
+        "file": "/Users/bytedance/playground/codex/codex-rs/protocol/src/protocol.rs",
+        "line": 1491
+      }
+    },
+    {
+      "variant": "ModelReroute",
+      "source": {
+        "file": "/Users/bytedance/playground/codex/codex-rs/protocol/src/protocol.rs",
+        "line": 1494
+      }
+    },
+    {
+      "variant": "ModelVerification",
+      "source": {
+        "file": "/Users/bytedance/playground/codex/codex-rs/protocol/src/protocol.rs",
+        "line": 1497
+      }
+    },
+    {
+      "variant": "TurnModerationMetadata",
+      "source": {
+        "file": "/Users/bytedance/playground/codex/codex-rs/protocol/src/protocol.rs",
+        "line": 1500
+      }
+    },
+    {
+      "variant": "SafetyBuffering",
+      "source": {
+        "file": "/Users/bytedance/playground/codex/codex-rs/protocol/src/protocol.rs",
+        "line": 1503
+      }
+    },
+    {
+      "variant": "ContextCompacted",
+      "source": {
+        "file": "/Users/bytedance/playground/codex/codex-rs/protocol/src/protocol.rs",
+        "line": 1506
+      }
+    },
+    {
+      "variant": "ThreadRolledBack",
+      "source": {
+        "file": "/Users/bytedance/playground/codex/codex-rs/protocol/src/protocol.rs",
+        "line": 1510
+      }
+    },
+    {
+      "variant": "TurnStarted",
+      "source": {
+        "file": "/Users/bytedance/playground/codex/codex-rs/protocol/src/protocol.rs",
+        "line": 1515
+      }
+    },
+    {
+      "variant": "ThreadSettingsApplied",
+      "source": {
+        "file": "/Users/bytedance/playground/codex/codex-rs/protocol/src/protocol.rs",
+        "line": 1519
+      }
+    },
+    {
+      "variant": "TurnComplete",
+      "source": {
+        "file": "/Users/bytedance/playground/codex/codex-rs/protocol/src/protocol.rs",
+        "line": 1524
+      }
+    },
+    {
+      "variant": "TokenCount",
+      "source": {
+        "file": "/Users/bytedance/playground/codex/codex-rs/protocol/src/protocol.rs",
+        "line": 1528
+      }
+    },
+    {
+      "variant": "AgentMessage",
+      "source": {
+        "file": "/Users/bytedance/playground/codex/codex-rs/protocol/src/protocol.rs",
+        "line": 1531
+      }
+    },
+    {
+      "variant": "UserMessage",
+      "source": {
+        "file": "/Users/bytedance/playground/codex/codex-rs/protocol/src/protocol.rs",
+        "line": 1534
+      }
+    },
+    {
+      "variant": "AgentReasoning",
+      "source": {
+        "file": "/Users/bytedance/playground/codex/codex-rs/protocol/src/protocol.rs",
+        "line": 1537
+      }
+    },
+    {
+      "variant": "AgentReasoningRawContent",
+      "source": {
+        "file": "/Users/bytedance/playground/codex/codex-rs/protocol/src/protocol.rs",
+        "line": 1540
+      }
+    },
+    {
+      "variant": "AgentReasoningSectionBreak",
+      "source": {
+        "file": "/Users/bytedance/playground/codex/codex-rs/protocol/src/protocol.rs",
+        "line": 1543
+      }
+    },
+    {
+      "variant": "SessionConfigured",
+      "source": {
+        "file": "/Users/bytedance/playground/codex/codex-rs/protocol/src/protocol.rs",
+        "line": 1546
+      }
+    },
+    {
+      "variant": "EnvironmentConnected",
+      "source": {
+        "file": "/Users/bytedance/playground/codex/codex-rs/protocol/src/protocol.rs",
+        "line": 1549
+      }
+    },
+    {
+      "variant": "EnvironmentDisconnected",
+      "source": {
+        "file": "/Users/bytedance/playground/codex/codex-rs/protocol/src/protocol.rs",
+        "line": 1552
+      }
+    },
+    {
+      "variant": "ThreadGoalUpdated",
+      "source": {
+        "file": "/Users/bytedance/playground/codex/codex-rs/protocol/src/protocol.rs",
+        "line": 1555
+      }
+    },
+    {
+      "variant": "ThreadQueueChanged",
+      "source": {
+        "file": "/Users/bytedance/playground/codex/codex-rs/protocol/src/protocol.rs",
+        "line": 1558
+      }
+    },
+    {
+      "variant": "McpStartupUpdate",
+      "source": {
+        "file": "/Users/bytedance/playground/codex/codex-rs/protocol/src/protocol.rs",
+        "line": 1561
+      }
+    },
+    {
+      "variant": "McpStartupComplete",
+      "source": {
+        "file": "/Users/bytedance/playground/codex/codex-rs/protocol/src/protocol.rs",
+        "line": 1564
+      }
+    },
+    {
+      "variant": "McpToolCallBegin",
+      "source": {
+        "file": "/Users/bytedance/playground/codex/codex-rs/protocol/src/protocol.rs",
+        "line": 1566
+      }
+    },
+    {
+      "variant": "McpToolCallEnd",
+      "source": {
+        "file": "/Users/bytedance/playground/codex/codex-rs/protocol/src/protocol.rs",
+        "line": 1568
+      }
+    },
+    {
+      "variant": "WebSearchBegin",
+      "source": {
+        "file": "/Users/bytedance/playground/codex/codex-rs/protocol/src/protocol.rs",
+        "line": 1570
+      }
+    },
+    {
+      "variant": "WebSearchEnd",
+      "source": {
+        "file": "/Users/bytedance/playground/codex/codex-rs/protocol/src/protocol.rs",
+        "line": 1572
+      }
+    },
+    {
+      "variant": "ImageGenerationBegin",
+      "source": {
+        "file": "/Users/bytedance/playground/codex/codex-rs/protocol/src/protocol.rs",
+        "line": 1574
+      }
+    },
+    {
+      "variant": "ImageGenerationEnd",
+      "source": {
+        "file": "/Users/bytedance/playground/codex/codex-rs/protocol/src/protocol.rs",
+        "line": 1576
+      }
+    },
+    {
+      "variant": "ExecCommandBegin",
+      "source": {
+        "file": "/Users/bytedance/playground/codex/codex-rs/protocol/src/protocol.rs",
+        "line": 1579
+      }
+    },
+    {
+      "variant": "ExecCommandOutputDelta",
+      "source": {
+        "file": "/Users/bytedance/playground/codex/codex-rs/protocol/src/protocol.rs",
+        "line": 1582
+      }
+    },
+    {
+      "variant": "TerminalInteraction",
+      "source": {
+        "file": "/Users/bytedance/playground/codex/codex-rs/protocol/src/protocol.rs",
+        "line": 1585
+      }
+    },
+    {
+      "variant": "ExecCommandEnd",
+      "source": {
+        "file": "/Users/bytedance/playground/codex/codex-rs/protocol/src/protocol.rs",
+        "line": 1587
+      }
+    },
+    {
+      "variant": "ViewImageToolCall",
+      "source": {
+        "file": "/Users/bytedance/playground/codex/codex-rs/protocol/src/protocol.rs",
+        "line": 1590
+      }
+    },
+    {
+      "variant": "ExecApprovalRequest",
+      "source": {
+        "file": "/Users/bytedance/playground/codex/codex-rs/protocol/src/protocol.rs",
+        "line": 1592
+      }
+    },
+    {
+      "variant": "RequestPermissions",
+      "source": {
+        "file": "/Users/bytedance/playground/codex/codex-rs/protocol/src/protocol.rs",
+        "line": 1594
+      }
+    },
+    {
+      "variant": "RequestUserInput",
+      "source": {
+        "file": "/Users/bytedance/playground/codex/codex-rs/protocol/src/protocol.rs",
+        "line": 1596
+      }
+    },
+    {
+      "variant": "DynamicToolCallRequest",
+      "source": {
+        "file": "/Users/bytedance/playground/codex/codex-rs/protocol/src/protocol.rs",
+        "line": 1598
+      }
+    },
+    {
+      "variant": "DynamicToolCallResponse",
+      "source": {
+        "file": "/Users/bytedance/playground/codex/codex-rs/protocol/src/protocol.rs",
+        "line": 1600
+      }
+    },
+    {
+      "variant": "ElicitationRequest",
+      "source": {
+        "file": "/Users/bytedance/playground/codex/codex-rs/protocol/src/protocol.rs",
+        "line": 1602
+      }
+    },
+    {
+      "variant": "ElicitationAbandoned",
+      "source": {
+        "file": "/Users/bytedance/playground/codex/codex-rs/protocol/src/protocol.rs",
+        "line": 1605
+      }
+    },
+    {
+      "variant": "ApplyPatchApprovalRequest",
+      "source": {
+        "file": "/Users/bytedance/playground/codex/codex-rs/protocol/src/protocol.rs",
+        "line": 1607
+      }
+    },
+    {
+      "variant": "GuardianAssessment",
+      "source": {
+        "file": "/Users/bytedance/playground/codex/codex-rs/protocol/src/protocol.rs",
+        "line": 1610
+      }
+    },
+    {
+      "variant": "DeprecationNotice",
+      "source": {
+        "file": "/Users/bytedance/playground/codex/codex-rs/protocol/src/protocol.rs",
+        "line": 1614
+      }
+    },
+    {
+      "variant": "StreamError",
+      "source": {
+        "file": "/Users/bytedance/playground/codex/codex-rs/protocol/src/protocol.rs",
+        "line": 1618
+      }
+    },
+    {
+      "variant": "PatchApplyBegin",
+      "source": {
+        "file": "/Users/bytedance/playground/codex/codex-rs/protocol/src/protocol.rs",
+        "line": 1622
+      }
+    },
+    {
+      "variant": "PatchApplyUpdated",
+      "source": {
+        "file": "/Users/bytedance/playground/codex/codex-rs/protocol/src/protocol.rs",
+        "line": 1625
+      }
+    },
+    {
+      "variant": "PatchApplyEnd",
+      "source": {
+        "file": "/Users/bytedance/playground/codex/codex-rs/protocol/src/protocol.rs",
+        "line": 1628
+      }
+    },
+    {
+      "variant": "TurnDiff",
+      "source": {
+        "file": "/Users/bytedance/playground/codex/codex-rs/protocol/src/protocol.rs",
+        "line": 1630
+      }
+    },
+    {
+      "variant": "RealtimeConversationListVoicesResponse",
+      "source": {
+        "file": "/Users/bytedance/playground/codex/codex-rs/protocol/src/protocol.rs",
+        "line": 1633
+      }
+    },
+    {
+      "variant": "PlanUpdate",
+      "source": {
+        "file": "/Users/bytedance/playground/codex/codex-rs/protocol/src/protocol.rs",
+        "line": 1635
+      }
+    },
+    {
+      "variant": "TurnAborted",
+      "source": {
+        "file": "/Users/bytedance/playground/codex/codex-rs/protocol/src/protocol.rs",
+        "line": 1637
+      }
+    },
+    {
+      "variant": "ShutdownComplete",
+      "source": {
+        "file": "/Users/bytedance/playground/codex/codex-rs/protocol/src/protocol.rs",
+        "line": 1640
+      }
+    },
+    {
+      "variant": "EnteredReviewMode",
+      "source": {
+        "file": "/Users/bytedance/playground/codex/codex-rs/protocol/src/protocol.rs",
+        "line": 1643
+      }
+    },
+    {
+      "variant": "ExitedReviewMode",
+      "source": {
+        "file": "/Users/bytedance/playground/codex/codex-rs/protocol/src/protocol.rs",
+        "line": 1646
+      }
+    },
+    {
+      "variant": "RawResponseItem",
+      "source": {
+        "file": "/Users/bytedance/playground/codex/codex-rs/protocol/src/protocol.rs",
+        "line": 1648
+      }
+    },
+    {
+      "variant": "RawResponseCompleted",
+      "source": {
+        "file": "/Users/bytedance/playground/codex/codex-rs/protocol/src/protocol.rs",
+        "line": 1649
+      }
+    },
+    {
+      "variant": "ItemStarted",
+      "source": {
+        "file": "/Users/bytedance/playground/codex/codex-rs/protocol/src/protocol.rs",
+        "line": 1651
+      }
+    },
+    {
+      "variant": "ItemCompleted",
+      "source": {
+        "file": "/Users/bytedance/playground/codex/codex-rs/protocol/src/protocol.rs",
+        "line": 1652
+      }
+    },
+    {
+      "variant": "HookStarted",
+      "source": {
+        "file": "/Users/bytedance/playground/codex/codex-rs/protocol/src/protocol.rs",
+        "line": 1653
+      }
+    },
+    {
+      "variant": "HookCompleted",
+      "source": {
+        "file": "/Users/bytedance/playground/codex/codex-rs/protocol/src/protocol.rs",
+        "line": 1654
+      }
+    },
+    {
+      "variant": "AgentMessageContentDelta",
+      "source": {
+        "file": "/Users/bytedance/playground/codex/codex-rs/protocol/src/protocol.rs",
+        "line": 1656
+      }
+    },
+    {
+      "variant": "PlanDelta",
+      "source": {
+        "file": "/Users/bytedance/playground/codex/codex-rs/protocol/src/protocol.rs",
+        "line": 1657
+      }
+    },
+    {
+      "variant": "ReasoningContentDelta",
+      "source": {
+        "file": "/Users/bytedance/playground/codex/codex-rs/protocol/src/protocol.rs",
+        "line": 1658
+      }
+    },
+    {
+      "variant": "ReasoningRawContentDelta",
+      "source": {
+        "file": "/Users/bytedance/playground/codex/codex-rs/protocol/src/protocol.rs",
+        "line": 1659
+      }
+    },
+    {
+      "variant": "CollabAgentSpawnBegin",
+      "source": {
+        "file": "/Users/bytedance/playground/codex/codex-rs/protocol/src/protocol.rs",
+        "line": 1662
+      }
+    },
+    {
+      "variant": "CollabAgentSpawnEnd",
+      "source": {
+        "file": "/Users/bytedance/playground/codex/codex-rs/protocol/src/protocol.rs",
+        "line": 1664
+      }
+    },
+    {
+      "variant": "CollabAgentInteractionBegin",
+      "source": {
+        "file": "/Users/bytedance/playground/codex/codex-rs/protocol/src/protocol.rs",
+        "line": 1666
+      }
+    },
+    {
+      "variant": "CollabAgentInteractionEnd",
+      "source": {
+        "file": "/Users/bytedance/playground/codex/codex-rs/protocol/src/protocol.rs",
+        "line": 1668
+      }
+    },
+    {
+      "variant": "CollabWaitingBegin",
+      "source": {
+        "file": "/Users/bytedance/playground/codex/codex-rs/protocol/src/protocol.rs",
+        "line": 1670
+      }
+    },
+    {
+      "variant": "CollabWaitingEnd",
+      "source": {
+        "file": "/Users/bytedance/playground/codex/codex-rs/protocol/src/protocol.rs",
+        "line": 1672
+      }
+    },
+    {
+      "variant": "CollabCloseBegin",
+      "source": {
+        "file": "/Users/bytedance/playground/codex/codex-rs/protocol/src/protocol.rs",
+        "line": 1674
+      }
+    },
+    {
+      "variant": "CollabCloseEnd",
+      "source": {
+        "file": "/Users/bytedance/playground/codex/codex-rs/protocol/src/protocol.rs",
+        "line": 1676
+      }
+    },
+    {
+      "variant": "CollabResumeBegin",
+      "source": {
+        "file": "/Users/bytedance/playground/codex/codex-rs/protocol/src/protocol.rs",
+        "line": 1678
+      }
+    },
+    {
+      "variant": "CollabResumeEnd",
+      "source": {
+        "file": "/Users/bytedance/playground/codex/codex-rs/protocol/src/protocol.rs",
+        "line": 1680
+      }
+    },
+    {
+      "variant": "SubAgentActivity",
+      "source": {
+        "file": "/Users/bytedance/playground/codex/codex-rs/protocol/src/protocol.rs",
+        "line": 1683
+      }
+    }
+  ],
+  "upstream_events": [
+    "response.completed",
+    "response.custom_tool_call_input.delta",
+    "response.failed",
+    "response.function_call_arguments.delta",
+    "response.incomplete",
+    "response.output_item.added",
+    "response.output_item.done",
+    "response.output_text.delta",
+    "response.reasoning_summary_part.added",
+    "response.reasoning_summary_text.delta"
+  ],
+  "observed_client_request_methods": [
+    "initialize",
+    "initialized",
+    "thread/start",
+    "thread/resume",
+    "thread/read",
+    "thread/name/set",
+    "turn/start",
+    "turn/interrupt",
+    "config/read",
+    "model/list"
+  ],
+  "captures": [
+    {
+      "path": ".local/product-preflight/tools-20261011/capture.jsonl",
+      "sha256": "3b7ade5d4ff232d71114ee11a1664c401d674d14668e4ef22180b59b7bdad229",
+      "protocol_methods": {
+        "initialize": 1,
+        "remoteControl/status/changed": 1,
+        "initialized": 1,
+        "account/read": 1,
+        "account/updated": 1,
+        "config/read": 1,
+        "thread/start": 2,
+        "thread/started": 2,
+        "mcpServer/startupStatus/updated": 23,
+        "thread/name/set": 2,
+        "thread/name/updated": 2,
+        "turn/start": 2,
+        "thread/settings/updated": 2,
+        "thread/status/changed": 4,
+        "turn/started": 2,
+        "item/started": 8,
+        "item/completed": 8,
+        "item/agentMessage/delta": 94,
+        "item/commandExecution/outputDelta": 2,
+        "thread/tokenUsage/updated": 4,
+        "account/rateLimits/updated": 4,
+        "turn/completed": 2
+      },
+      "protocol_item_types": {
+        "userMessage": 4,
+        "agentMessage": 8,
+        "commandExecution": 4
+      },
+      "upstream_event_types": {
+        "response.created": 6,
+        "response.in_progress": 6,
+        "response.completed": 6,
+        "response.output_item.added": 6,
+        "response.content_part.added": 4,
+        "response.output_text.delta": 94,
+        "response.output_text.done": 4,
+        "response.content_part.done": 4,
+        "response.output_item.done": 6,
+        "response.custom_tool_call_input.delta": 152,
+        "response.custom_tool_call_input.done": 2
+      }
+    },
+    {
+      "path": ".local/product-preflight/live-20261011/capture.jsonl",
+      "sha256": "82ca0868fc2b219dc402b07fb6fd6f103a41a8ffb2bfcadb4018be28e7688582",
+      "protocol_methods": {
+        "initialize": 1,
+        "remoteControl/status/changed": 1,
+        "initialized": 1,
+        "account/read": 1,
+        "account/updated": 1,
+        "config/read": 1,
+        "thread/start": 3,
+        "thread/started": 3,
+        "mcpServer/startupStatus/updated": 33,
+        "thread/name/set": 3,
+        "thread/name/updated": 3,
+        "turn/start": 3,
+        "thread/settings/updated": 3,
+        "thread/status/changed": 6,
+        "turn/started": 3,
+        "item/started": 11,
+        "item/completed": 11,
+        "item/agentMessage/delta": 339,
+        "thread/tokenUsage/updated": 4,
+        "account/rateLimits/updated": 4,
+        "turn/completed": 3,
+        "turn/interrupt": 1
+      },
+      "protocol_item_types": {
+        "userMessage": 6,
+        "reasoning": 8,
+        "agentMessage": 8
+      },
+      "upstream_event_types": {
+        "response.created": 5,
+        "response.in_progress": 5,
+        "response.completed": 5,
+        "response.output_item.added": 10,
+        "response.output_item.done": 10,
+        "response.content_part.added": 4,
+        "response.output_text.delta": 339,
+        "response.output_text.done": 4,
+        "response.content_part.done": 4,
+        "response.custom_tool_call_input.delta": 2461,
+        "response.custom_tool_call_input.done": 2
+      }
+    },
+    {
+      "path": ".local/product-preflight/approval-20261011/capture.jsonl",
+      "sha256": "ce0742e5e36091400656a9273f7ae8b1fab871678c1f3e8c865e47bcc1696447",
+      "protocol_methods": {
+        "initialize": 1,
+        "remoteControl/status/changed": 1,
+        "initialized": 1,
+        "config/read": 1,
+        "thread/start": 1,
+        "thread/started": 1,
+        "mcpServer/startupStatus/updated": 12,
+        "turn/start": 1,
+        "thread/settings/updated": 1,
+        "thread/status/changed": 4,
+        "turn/started": 1,
+        "account/updated": 1,
+        "item/started": 4,
+        "item/completed": 4,
+        "item/agentMessage/delta": 39,
+        "item/commandExecution/requestApproval": 1,
+        "serverRequest/resolved": 1,
+        "thread/tokenUsage/updated": 2,
+        "account/rateLimits/updated": 2,
+        "turn/completed": 1
+      },
+      "protocol_item_types": {
+        "userMessage": 2,
+        "agentMessage": 4,
+        "commandExecution": 2
+      },
+      "upstream_event_types": {
+        "response.created": 3,
+        "response.in_progress": 3,
+        "response.completed": 3,
+        "response.output_item.added": 3,
+        "response.content_part.added": 2,
+        "response.output_text.delta": 39,
+        "response.output_text.done": 2,
+        "response.content_part.done": 2,
+        "response.output_item.done": 3,
+        "response.custom_tool_call_input.delta": 45,
+        "response.custom_tool_call_input.done": 1
+      }
+    }
+  ],
+  "audit_diagnostics": {
+    "scope": "synthetic events through actual filter_event and Engine; no model or external tool execution",
+    "results": [
+      {
+        "probe": "thread_settings",
+        "filtered_params": {
+          "threadId": "t"
+        },
+        "model_before": "before",
+        "model_after_event": "before"
+      },
+      {
+        "probe": "collab_item",
+        "item_type": "collabAgentToolCall",
+        "activities": []
+      },
+      {
+        "probe": "resolved_without_client_reply",
+        "phase": "approval",
+        "approval_requests_remaining": 1
+      },
+      {
+        "probe": "auto_review",
+        "filtered_fields": [
+          "threadId",
+          "turnId",
+          "startedAtMs"
+        ],
+        "activities": []
+      }
+    ]
+  }
+}

@@ -57,7 +57,7 @@ class ProgressTests(unittest.TestCase):
         self.send('item/agentMessage/delta', {'threadId':'t','turnId':'u','itemId':item,'delta':'可见模型文本'}, at+.2)
 
     def test_all_87_intake_decisions_and_19_type_inventory_match_baseline(self):
-        decisions = json.loads((ROOT/'docs/03_improve/event-display-decisions.json').read_text())
+        decisions = json.loads((ROOT/'docs/03_event_lifecycle_and_progress_display/event-display-decisions.json').read_text())
         rows = decisions['server_notifications']
         self.assertEqual(len(rows),87)
         self.assertEqual(len({r['method'] for r in rows}),87)
@@ -109,7 +109,7 @@ class ProgressTests(unittest.TestCase):
         self.assertEqual(self.view(113)['display_active_count'],0)
 
     def test_11_server_requests_and_dynamic_reply_do_not_supply_execution_proof(self):
-        decisions=json.loads((ROOT/'docs/03_improve/event-display-decisions.json').read_text())
+        decisions=json.loads((ROOT/'docs/03_event_lifecycle_and_progress_display/event-display-decisions.json').read_text())
         self.assertEqual(len(decisions['server_requests']),11)
         for row in decisions['server_requests']:
             with self.subTest(method=row['method']):
