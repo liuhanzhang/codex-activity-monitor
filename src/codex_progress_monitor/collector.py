@@ -12,10 +12,13 @@ import uuid
 from .engine import Engine
 from .events import Event
 from .runtime import atomic_json,read_snapshot,source_identity
+from .app_session import observing
 from .i18n import message, render_message
 
 
 def serve(runtime):
+    if not observing(runtime):
+        raise RuntimeError('Monitor 界面未运行或观察会话已过期。')
     lock=(runtime/'collector.lock').open('a+')
     try:
         fcntl.flock(lock,fcntl.LOCK_EX|fcntl.LOCK_NB)
@@ -34,7 +37,7 @@ def serve(runtime):
     clients={}
     owners={}
     engine=Engine()
-    implementation=source_identity('collector','engine','progress_state','events','usage','metrics','runtime','tool_labels','i18n','messages_zh_cn')
+    implementation=source_identity('collector','app_session','engine','overview','progress_state','events','usage','metrics','runtime','tool_labels','i18n','messages_zh_cn')
     previous=read_snapshot(runtime)
     historical=previous.get('threads',[]) if time.time()-(previous.get('updated_at') or 0)<600 else []
     if historical:
@@ -109,7 +112,12 @@ def serve(runtime):
         selector.unregister(conn)
         conn.close()
     try:
+        next_owner_check=0
         while running:
+            if time.monotonic()>=next_owner_check:
+                if not observing(runtime):
+                    break
+                next_owner_check=time.monotonic()+0.5
             for key,_ in selector.select(timeout=0.05):
                 conn=key.fileobj
                 if conn is listener:

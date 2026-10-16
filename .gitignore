@@ -4,6 +4,8 @@
 **/__pycache__/
 *.py[cod]
 src/*.egg-info/
+macos/.build/
+macos/.swiftpm/
 
 # Isolated Desktop profiles, credentials, databases, logs and raw transcripts.
 experiments/desktop-isolation/runs/

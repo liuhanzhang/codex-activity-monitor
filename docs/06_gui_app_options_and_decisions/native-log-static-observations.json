@@ -1,0 +1,83 @@
+{
+  "record_type": "historical static investigation summary",
+  "investigation_date": "2026-10-15",
+  "scope": "Installed Codex Desktop local stdio path; alternative capture route, not selected for implementation",
+  "app_version": "26.1007.71326",
+  "app_build": "20398",
+  "configuration_changed": false,
+  "runtime_stream_capture_validated": false,
+  "provenance": {
+    "method": "Partial REA analysis followed by focused reads of packaged JavaScript",
+    "rea_evidence_id": "ev_26a6aab6da965322badbf7a1cc86d24e638a2d9f1856f3a66442021b129e80d6",
+    "rea_coverage": "Partial: main module semantic analysis exceeded 1024 MiB; do not interpret as complete semantic recovery",
+    "artifact_member_root": "app.asar/.vite/build/",
+    "offset_unit": "Zero-based Python string character offset in the decoded source, not a byte offset",
+    "contents": "Metadata only; no conversation content, generated text, raw TRACE records or full analysis exports"
+  },
+  "static_findings": [
+    {
+      "claim": "Desktop passes RUST_LOG from its process environment to the local CLI; defaults LOG_FORMAT to json",
+      "file": "application-network-startup-YSC7OAs0.js",
+      "character_offset": 264889
+    },
+    {
+      "claim": "Local stdio stderr data is routed to the connection error callback as a message; chunks are trimmed",
+      "file": "application-network-startup-YSC7OAs0.js",
+      "anchor": "onStderrData"
+    },
+    {
+      "claim": "Local non-reconnecting connection writes CLI stderr to Desktop debug logger under safe.message",
+      "file": "src-DCNiwad_.js",
+      "character_offset": 1229472
+    },
+    {
+      "claim": "CODEX_MAX_LOG_LEVEL controls Desktop filtering; prod defaults to info",
+      "file": "bootstrap-DOZRFVdo.js",
+      "character_offset": 4354
+    },
+    {
+      "claim": "Accepted Desktop logs are written through a rotating file stream; backpressure can drop lines",
+      "file": "bootstrap-DOZRFVdo.js",
+      "character_offset": 389329
+    },
+    {
+      "claim": "macOS log root is Library/Logs/<bundle id>; defaults are 10 MiB per segment, five segments, fifteen-day retention",
+      "file": "bootstrap-DOZRFVdo.js",
+      "character_offset": 387301
+    }
+  ],
+  "source_files": [
+    {
+      "file": "application-network-startup-YSC7OAs0.js",
+      "sha256": "52f0be375fb08281e88ad41be64220fb73f85210523e53e7d7acf094fda6344e"
+    },
+    {
+      "file": "bootstrap-DOZRFVdo.js",
+      "sha256": "8602f1022fc835148268e8cdfcfb939d8ab5a969e4fd0b4141e264ce8ec4be4d"
+    },
+    {
+      "file": "logger-CUwSCKgw.js",
+      "sha256": "12addc90a4c08de03dd5ce908b5dc042fe65c46e98d8264aedacb31cf2b8f630"
+    },
+    {
+      "file": "main-CwxgTOle.js",
+      "sha256": "87d52265eb13608a380fabcac47ecf13a39b981115c0960c18af563ea6d32d51"
+    },
+    {
+      "file": "src-DCNiwad_.js",
+      "sha256": "86fb2066bbc2f7428864b76b46ef570b09eb1e92e81e9d6f089f5b048a66df25"
+    },
+    {
+      "file": "worker.js",
+      "sha256": "0874df6a424d1d6a1adb85931964c2e0cec128790a835c35e96b529624896fc2"
+    }
+  ],
+  "unverified": [
+    "Unwrapped fresh Desktop runtime",
+    "Completeness of streamed tool arguments and text",
+    "Interleaved backend stderr chunk reconstruction",
+    "Original event timestamps and correct thread/turn attribution",
+    "End-to-end latency and resource overhead",
+    "Daemon transport path"
+  ]
+}

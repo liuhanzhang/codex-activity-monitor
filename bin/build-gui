@@ -1,0 +1,34 @@
+#!/bin/sh
+set -eu
+task_root=$(CDPATH= cd -- "$(dirname -- "$0")/.." && pwd)
+cd "$task_root"
+export CLANG_MODULE_CACHE_PATH="$task_root/.local/clang-module-cache"
+swift build --disable-sandbox --cache-path "$task_root/.local/swift-cache" --package-path macos --configuration debug
+task_binary_dir=$(swift build --disable-sandbox --cache-path "$task_root/.local/swift-cache" --package-path macos --configuration debug --show-bin-path)
+task_app="$task_root/.local/gui/Codex Monitor.app"
+mkdir -p "$task_app/Contents/MacOS" "$task_app/Contents/Resources"
+# Preserve the inode mapped by an already running GUI. Replacing its executable
+# atomically avoids truncating code pages during an ordinary local rebuild.
+cp "$task_binary_dir/MonitorApp" "$task_app/Contents/MacOS/MonitorApp.new"
+mv -f "$task_app/Contents/MacOS/MonitorApp.new" "$task_app/Contents/MacOS/MonitorApp"
+for task_resource in "$task_binary_dir"/*.bundle; do
+  if [ -d "$task_resource" ]; then cp -R "$task_resource" "$task_app/Contents/Resources/"; fi
+done
+"$task_root/.local/venv/bin/python" - "$task_root" "$task_app" <<'PY'
+import hashlib,json,plistlib,sys
+from pathlib import Path
+root,app=map(Path,sys.argv[1:])
+sources=sorted(p for p in (root/'macos/Sources').rglob('*') if p.is_file())
+build=hashlib.sha256(b''.join(str(p.relative_to(root)).encode()+b'\0'+p.read_bytes() for p in sources)).hexdigest()
+info={'CFBundleExecutable':'MonitorApp','CFBundleIdentifier':'com.local.codex-progress-monitor.app',
+      'CFBundleName':'Codex Monitor','CFBundleDisplayName':'Codex Monitor','CFBundlePackageType':'APPL',
+      'CFBundleShortVersionString':'0.1.0','CFBundleVersion':'1','LSMinimumSystemVersion':'26.0',
+      'LSUIElement':True,'NSPrincipalClass':'NSApplication'}
+(app/'Contents/Info.plist').write_bytes(plistlib.dumps(info))
+config={'python':str(root/'.local/venv/bin/python'),'source_root':str(root),
+        'runtime':str(root/'.local/runtime'),
+        'data_root':str(Path.home()/'Library/Application Support/CodexProgressMonitor'), 'build_id':build}
+(app/'Contents/Resources/backend.json').write_text(json.dumps(config))
+print(app)
+PY
+codesign --force --deep --sign - "$task_app"

@@ -1,0 +1,195 @@
+{
+  "recorded_at": "2026-10-16T08:02:48.623632+00:00",
+  "host": {
+    "macos": "27.0",
+    "architecture": "arm64"
+  },
+  "gui": {
+    "bundle_id": "com.local.codex-progress-monitor.app",
+    "build_id": "c6a2bf00c76167523e687ebfa931dd417bbcafdb9aed9af9deb9db0f7e73ea4b",
+    "signing": "local-ad-hoc",
+    "python_packaged": false,
+    "native_window_checked": true,
+    "native_popover_checked": true,
+    "artifact_build_id": "c6a2bf00c76167523e687ebfa931dd417bbcafdb9aed9af9deb9db0f7e73ea4b",
+    "mach_o_minimum_macos": "26.0",
+    "minimum_macos": "26.0"
+  },
+  "tests": {
+    "python_full_suite": {
+      "passed": 183,
+      "scope": "before final targeted additions"
+    },
+    "swift_model": 11,
+    "swift_lifecycle": 4,
+    "python_late_targeted": 28
+  },
+  "integration": {
+    "state": "configured",
+    "runtime_kind": "source-checkout-runtime-after-restoration",
+    "originals_all_unset": true,
+    "legacy_resolution": "user_confirmed_monitor_introduced_unset",
+    "legacy_original_file_unchanged": true,
+    "legacy_login_writes_environment": false,
+    "legacy_agent_plist_exists": false,
+    "login_preference": true,
+    "current_state": "configured",
+    "legacy_original_file_unchanged_scope": "verified at migration; owned legacy files later removed by completed restore"
+  },
+  "collector": {
+    "running": true,
+    "loaded_source_matches": true,
+    "overview_coverage": "unavailable",
+    "overview_quality": [
+      "unassociated_events"
+    ]
+  },
+  "bridges": {
+    "connected": 2,
+    "pause_capable": 2,
+    "normal_codex_restart_required": false,
+    "loaded_modules_match_current": true
+  },
+  "runtime_checks": {
+    "native_normal_quit_stopped_collector": true,
+    "native_reopen_resumed_collector": true,
+    "gui_crash_expiry_stopped_collector": true,
+    "isolated_pending_cleanup_survived_reopen": true,
+    "isolated_cli_purge_completed": true,
+    "isolated_gui_purge_final_action_executed": true,
+    "dark_appearance_checked": true,
+    "long_title_and_project_checked": true,
+    "native_parent_child_expansion_checked": true,
+    "native_recent_ten_limit_and_scroll_checked": true,
+    "native_partial_total_and_reason_checked": true,
+    "native_connection_hint_contract_tested": true,
+    "latest_gui_loaded_and_native_notice_visible": true,
+    "isolated_gui_purge_process_exited": true,
+    "isolated_gui_purge_original_environment_restored": true,
+    "isolated_after_purge_reopen_autoconfigured": true,
+    "reduced_transparency_checked": true
+  },
+  "remaining": [
+    "daily natural child-agent tree",
+    "real logout and login"
+  ],
+  "contains_chat_payloads": false,
+  "daily_overview_probe": {
+    "sample_count": 111,
+    "complete_samples": 109,
+    "positive_samples": 50,
+    "max_rate": 60.2990928393829,
+    "max_known_streams": 1,
+    "max_active_threads": 1,
+    "window_seconds": 30,
+    "scope": "one naturally observed generation stream; independent multistream not proven",
+    "first_at": 1792137905.6202571,
+    "last_at": 1792137935.601741
+  },
+  "followup_recorded_at": "2026-10-16T09:07:10.903457+00:00",
+  "post_codex_restart": {
+    "recorded_at": "2026-10-16T08:37:36.262556+00:00",
+    "old_bridges_disconnected": true,
+    "current_bridge_pid": 7583,
+    "native_old_bridge_warning_absent": true,
+    "native_quit_stopped_collector": true,
+    "same_bridge_and_cli_survived": true,
+    "stdio_fds_preserved": true,
+    "observation_socket_removed_while_paused": true,
+    "observation_socket_restored_on_reopen": true,
+    "normal_context_lease_enabled_on_reopen": true,
+    "daily_multistream": {
+      "samples": 450,
+      "two_stream_complete_samples": 20,
+      "max_active_threads_during_two_streams": 2,
+      "max_total_during_two_streams": 160.3007166225869,
+      "scope": "limited naturally overlapping generation; no raw chat content recorded"
+    },
+    "late_thread_gap_fix": {
+      "targeted_tests_passed": 93,
+      "new_collector_loaded": true,
+      "actual_active_thread_retains_gap": true,
+      "next_turn_clears_gap_unit_tested": true
+    },
+    "normal_restore_waiting_for_user_exit": false,
+    "normal_restore_originals_verified": true
+  },
+  "normal_restore_cycle": {
+    "recorded_at": "2026-10-16T08:56:11.328481+00:00",
+    "original_environment_all_unset_verified": true,
+    "cleanup_deferred_while_codex_running": true,
+    "cleanup_completed_after_user_normal_exit": true,
+    "restored_flag_persisted": true,
+    "native_restored_state_seen": true,
+    "temporary_acceptance_coordinator_finished": false,
+    "temporary_acceptance_coordinator_result": "exited without final result across Codex quit; product restore and cleanup completed independently",
+    "explicit_native_configure_executed": true,
+    "new_installation_id_differs": true,
+    "new_original_environment_all_unset": true,
+    "installed_environment_matches_verified": true,
+    "restored_flag_after_configure": false,
+    "login_preference_retained": true,
+    "collector_started": true,
+    "current_backend_connected": true,
+    "native_restart_hint_seen": true,
+    "user_normal_restart_reconnected": true,
+    "native_connected_state_seen": true,
+    "final_reconnection": {
+      "recorded_at": "2026-10-16T08:59:42.242232+00:00",
+      "snapshot_age_seconds": 0.3728818893432617,
+      "collector_pid": 17806,
+      "connected_bridge_pids": [
+        18900,
+        20102
+      ],
+      "loaded_source": [
+        {
+          "kind": "collector",
+          "source_matches": true,
+          "module_count": 12,
+          "pause_capable": true
+        },
+        {
+          "kind": "bridge",
+          "source_matches": true,
+          "module_count": 8,
+          "pause_capable": true
+        },
+        {
+          "kind": "bridge",
+          "source_matches": true,
+          "module_count": 8,
+          "pause_capable": true
+        }
+      ],
+      "gui_artifact_matches_source": true,
+      "lease_observing": true,
+      "overview": {
+        "version": 1,
+        "scope": "observed_local",
+        "coverage": "unavailable",
+        "generation_rate": null,
+        "observed_subtotal": null,
+        "estimated": false,
+        "active_thread_count": 1,
+        "known_stream_count": 0,
+        "unknown_stream_count": 1,
+        "quality": [
+          "unassociated_events"
+        ]
+      },
+      "new_baseline_all_unset": true,
+      "installed_environment_matches": true
+    }
+  },
+  "reduced_transparency": {
+    "evidence_source": "user_manual_comparison_and_explicit_confirmation",
+    "user_enabled_then_restored": true,
+    "user_observation": "no obvious UI difference",
+    "restored_system_api_value": false,
+    "restored_native_settings_toggle": "off",
+    "agent_observed_enabled_state": false,
+    "scope": "current local UI; not a cross-device or all-accessibility-settings guarantee"
+  },
+  "remaining_scope": "additional natural-use and system-login checks beyond the recorded unit, native, isolated-process and limited daily validation"
+}

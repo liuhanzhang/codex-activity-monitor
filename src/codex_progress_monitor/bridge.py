@@ -16,6 +16,7 @@ import uuid
 
 from .events import decode_log, filter_event, BLOCKING_REQUESTS
 from .runtime import REAL_CLI
+from .app_session import observing
 
 TRACE_FILTER='warn,codex_api::sse=trace,tungstenite::protocol=trace,tungstenite::protocol::frame=off'
 
@@ -48,7 +49,7 @@ class Observer:
         self.runtime,self.backend=runtime,backend
         from .runtime import source_identity
         self.info={'type':'bridge/started','home':home,'cli':str(cli),'bridge_pid':os.getpid(),
-                   'implementation':source_identity('bridge','events','usage','tool_labels','runtime','i18n','messages_zh_cn')}
+                   'implementation':source_identity('bridge','app_session','events','usage','tool_labels','runtime','i18n','messages_zh_cn')}
         self.packets=queue.Queue(maxsize=queue_size)
         self.cache=OrderedDict()
         self.cache_sizes={}
@@ -65,8 +66,19 @@ class Observer:
         self.stopping=False
         self.queued_bytes=0
         self.queue_lock=threading.Lock()
+        self.observe_until=0.0
+        self.observe_enabled=True
+
+    def observing(self):
+        now=time.monotonic()
+        if now>=self.observe_until:
+            self.observe_enabled=observing(self.runtime)
+            self.observe_until=now+0.5
+        return self.observe_enabled
 
     def offer(self,source,data,at=None):
+        if not self.observing():
+            return
         with self.queue_lock:
             if self.queued_bytes+len(data)>8*1024*1024:
                 self.dropped+=1
@@ -231,10 +243,31 @@ class Observer:
         buffers={'stdin':b'','stdout':b'','stderr':b''}
         observed_drops=self.framing_drops
         next_connect=next_heartbeat=0
+        paused=False
         while not self.stopping or not self.packets.empty():
             now=time.monotonic()
             if self.drain_deadline is not None and now>=self.drain_deadline:
                 break
+            if not self.observing():
+                paused=True
+                if self.sock:
+                    self.sock.close()
+                    self.sock=None
+                buffers={k:b'' for k in buffers}
+                self.cache.clear()
+                self.cache_sizes.clear()
+                self.cache_bytes=0
+                try:
+                    _,_,_,data,_=self.packets.get(timeout=0.1)
+                    with self.queue_lock:
+                        self.queued_bytes-=len(data)
+                except queue.Empty:
+                    pass
+                continue
+            if paused:
+                paused=False
+                self.lose('observation_resumed')
+                next_connect=next_heartbeat=0
             if self.sock is None and now>=next_connect:
                 self.connect()
                 next_connect=now+1
@@ -304,6 +337,18 @@ def forward(args,runtime,actual=None):
     child=subprocess.Popen([str(actual),*args],stdin=subprocess.PIPE,stdout=subprocess.PIPE,stderr=subprocess.PIPE,
                            env=env,start_new_session=True)
     observer=Observer(runtime,uuid.uuid4().hex,env.get('CODEX_HOME',str(Path.home()/'.codex')),actual)
+    registration=None
+    if (runtime/'app-managed.json').exists():
+        from .app_session import process_identity
+        from .runtime import atomic_json
+        try:
+            directory=runtime/'bridges'
+            directory.mkdir(mode=0o700,exist_ok=True)
+            registration=directory/f'{os.getpid()}.json'
+            atomic_json(registration,{'pid':os.getpid(),'identity':process_identity(os.getpid()),
+                                      'cli_pid':child.pid,'started_at':time.time()})
+        except OSError:
+            registration=None
     observer.start()
     def stop(signum,_):
         try:
@@ -397,6 +442,8 @@ def forward(args,runtime,actual=None):
     for thread in outgoing:
         thread.join(timeout=1)
     observer.close()
+    if registration:
+        registration.unlink(missing_ok=True)
     if code<0:
         signal.signal(-code,signal.SIG_DFL)
         os.kill(os.getpid(),-code)

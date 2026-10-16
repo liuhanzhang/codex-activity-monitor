@@ -2,7 +2,7 @@
 
 本项目实现 Codex Desktop 本机聊天的实时进度反馈：当前阶段、工具活动、持续时间、正文与工具参数的接收 token/s、本回合 Output / Reasoning 用量和最近推理均速。
 
-第一版采集器、状态聚合和终端看板已经可以运行。当前机器已配置登录启动与原 CLI 包装器，已观察到主 home 后端接入；隔离 Desktop 的真实 UI 核心采集检查已通过。主 App 普通入口的独立启动验收与长期运行验收尚待完成。正式 UI 与远程主机后续增加。
+第一版采集器、状态聚合和终端看板已经可以运行。当前机器已配置登录启动与原 CLI 包装器，已观察到主 home 后端接入；隔离 Desktop 的真实 UI 核心采集检查已通过。主 App 普通入口的独立启动验收与长期运行验收尚待完成。原生 GUI 已在本机实现与接入，远程主机支持后续增加。
 
 ```sh
 /Users/bytedance/personal/codex_progress_monitor/bin/codex-progress watch
@@ -18,6 +18,8 @@
 
 主 App / 隔离 App 的启动步骤、环境变量保存位置，以及各进程如何启动、停止和通信，见 [启动步骤与进程管理](/Users/bytedance/personal/codex_progress_monitor/docs/02_product_mvp/startup-and-processes.md)。
 
+原生 macOS 菜单栏 GUI 已可在本机运行：`bin/build-gui` 构建，`bin/run-gui` 打开。支持总速度、聊天 / 活动详情、配置与恢复、退出停止采集及登录启动；缺 App / Python 时的 shell 回退已通过隔离进程验证。新版桥接暂停 / 恢复观察、日常双聊天生成、正式恢复后的延后清理和主动再配置已验证。见 [GUI 使用](docs/06_gui_app_options_and_decisions/usage.md)、[实施结果与验收边界](docs/06_gui_app_options_and_decisions/implementation-results.md) 和 [方案决策](docs/06_gui_app_options_and_decisions/README.md)；公开发行包后续交付。
+
 ## 目录
 
 **日常开发主要看 `src/`、`tests/`、`bin/`、`pyproject.toml` 和 `docs/02_product_mvp/`。** 其余目录是实验资料或本机运行环境。
@@ -25,6 +27,7 @@
 ```text
 codex_progress_monitor/
 ├── src/codex_progress_monitor/      产品代码：包装器、采集器、指标计算、看板
+├── macos/                          原生 SwiftUI / AppKit 菜单栏 App 与 Swift 测试
 ├── tests/                          产品测试与有限验收脚本
 ├── bin/codex-progress              命令入口，使用 .local/venv
 ├── pyproject.toml                  Python 包配置和产品依赖
@@ -33,7 +36,8 @@ codex_progress_monitor/
 │   ├── 02_product_mvp/             当前产品的需求、架构与使用说明
 │   ├── 03_event_lifecycle_and_progress_display/  生命周期与展示改进
 │   ├── 04_usability_and_localization/           易用性与多语言准备
-│   └── 05_token_usage_and_reasoning_speed/      本回合用量与最近推理均速需求 / 计划 / 验收
+│   ├── 05_token_usage_and_reasoning_speed/      本回合用量与最近推理均速需求 / 计划 / 验收
+│   └── 06_gui_app_options_and_decisions/       GUI 目标、技术与采集方案比较、安装 / 卸载决策
 ├── experiments/                    可复用实验脚本
 │   ├── desktop-isolation/          隔离 Desktop / WebSocket 实验
 │   │   └── runs/                   本机隔离 App 数据和原始记录，不提交

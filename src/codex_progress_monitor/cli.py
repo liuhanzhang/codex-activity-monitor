@@ -124,7 +124,51 @@ def main(argv=None):
     p=subs.add_parser('replay')
     p.add_argument('path',type=Path)
     p.add_argument('--output',type=Path)
+    p=subs.add_parser('app', help='GUI 管理接口')
+    p.add_argument('action', choices=('status','configure','resume','stop','restore','cleanup','preferences'))
+    p.add_argument('--data-root', type=Path)
+    p.add_argument('--app', type=Path)
+    p.add_argument('--real-cli', type=Path, default=REAL_CLI)
+    p.add_argument('--owner-pid', type=int)
+    p.add_argument('--legacy-runtime', type=Path)
+    p.add_argument('--legacy-unset', action='store_true')
+    p.add_argument('--purge', action='store_true')
+    p.add_argument('--launch-at-login', choices=('on','off'))
+    p.add_argument('--test-profile', type=Path, help=argparse.SUPPRESS)
     args=parser.parse_args(argv)
+    if args.command == 'app':
+        from .app_control import AppController, ControlError, DATA_ROOT
+        try:
+            control = AppController(args.data_root or DATA_ROOT, runtime=args.runtime, current_app=args.app)
+            if args.test_profile:
+                from .test_profile import controller
+                control, args.real_cli = controller(args.test_profile, args.app)
+                args.legacy_runtime = None
+            if args.action == 'configure':
+                if args.app is None:
+                    raise ControlError('app_missing', '配置需要 Monitor App 路径。')
+                value = control.configure(args.app, args.real_cli, legacy_runtime=args.legacy_runtime,
+                                          legacy_unset=args.legacy_unset)
+            elif args.action == 'resume':
+                if args.owner_pid is None:
+                    raise ControlError('owner_missing', '缺少界面进程身份。')
+                value = control.resume(args.owner_pid)
+            elif args.action == 'restore':
+                value = control.restore(args.purge)
+            elif args.action == 'stop':
+                value = control.stop(args.owner_pid)
+            elif args.action == 'preferences':
+                if args.launch_at_login is None:
+                    raise ControlError('preference_missing', '缺少登录启动选项。')
+                value = control.set_preferences(args.launch_at_login == 'on')
+            else:
+                value = getattr(control, args.action)()
+            print(json.dumps(value, ensure_ascii=False))
+            return 0
+        except (OSError, ValueError, RuntimeError) as exc:
+            print(json.dumps({'version': 1, 'ok': False, 'code': getattr(exc, 'code', 'operation_failed'),
+                              'error': str(exc)}, ensure_ascii=False))
+            return 1
     try:
         runtime=runtime_dir(args.runtime, language)
         if args.command=='collect':
@@ -150,6 +194,8 @@ def main(argv=None):
         elif args.command=='replay':
             replay(args.path,args.output)
         else:
+            if args.command in ('setup', 'uninstall') and (runtime/'app-managed.json').exists():
+                raise RuntimeError('当前接入由 GUI 管理，请在 App 中配置或恢复；终端 watch / status 仍可使用。')
             from .integration import setup,uninstall,desktop
             if args.command=='setup':
                 setup(runtime,args.real_cli,args.launch_agent,language)

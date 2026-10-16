@@ -28,8 +28,8 @@ class IntegrationTests(unittest.TestCase):
         self.calls.append(args)
         code,output=0,''
         if args[:2]==['/bin/launchctl','getenv']:
-            code=0 if args[2] in self.env else 1
-            output=self.env.get(args[2],'')
+            code=0
+            output=self.env[args[2]]+'\n' if args[2] in self.env else ''
         elif args[:2]==['/bin/launchctl','setenv']:
             self.env[args[2]]=args[3]
         elif args[:2]==['/bin/launchctl','unsetenv']:
@@ -77,6 +77,27 @@ class IntegrationTests(unittest.TestCase):
         with patch('builtins.print'):
             integration.uninstall(self.runtime)
         self.assertEqual(self.env,{'CODEX_CLI_PATH':'/user/replacement'})
+
+    def test_empty_unset_and_trailing_newline_are_preserved(self):
+        self.env={'CODEX_CLI_PATH':'/original\n','CODEX_APP_SERVER_FORCE_CLI':''}
+        original=self.env.copy()
+        state=self.install()
+        self.assertEqual(state['previous']['CODEX_CLI_PATH'],'/original\n')
+        self.assertEqual(state['previous']['CODEX_APP_SERVER_FORCE_CLI'],'')
+        self.assertIsNone(state['previous']['CODEX_APP_SERVER_WS_URL'])
+        self.env.update(state['installed'])
+        with patch('builtins.print'):
+            integration.uninstall(self.runtime)
+        self.assertEqual(self.env,original)
+
+    def test_user_unset_is_different_from_installed_empty(self):
+        self.env={'CODEX_APP_SERVER_WS_URL':'original'}
+        state=self.install()
+        self.env.update(state['installed'])
+        self.env.pop('CODEX_APP_SERVER_WS_URL')
+        with patch('builtins.print'):
+            integration.uninstall(self.runtime)
+        self.assertNotIn('CODEX_APP_SERVER_WS_URL',self.env)
 
     def test_explicit_desktop_launch_preserves_cloud_routing(self):
         with patch('builtins.print'):

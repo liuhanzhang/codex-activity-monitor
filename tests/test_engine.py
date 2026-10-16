@@ -57,6 +57,20 @@ class EngineTests(unittest.TestCase):
         self.view(120)
         self.assertEqual(self.engine.counts['unassociated_expired'],1)
 
+    def test_reconnect_before_thread_identity_keeps_gap_until_new_turn(self):
+        self.engine.ingest(Event('b','lifecycle',{'type':'bridge/started'},100,0))
+        self.engine.ingest(Event('b','lifecycle',{'type':'bridge/reconnected'},101,0))
+        self.send({'method':'thread/status/changed','params':{'threadId':'t','status':{'type':'active','activeFlags':[]}}},102)
+        # Also receive an item while the start of its turn was not observed.
+        self.send({'method':'item/started','params':{'threadId':'t','turnId':'old','item':{'id':'i','type':'reasoning'}}},103)
+        view=self.view(104)
+        self.assertIn('observation_gap',view['threads'][0]['quality'])
+        self.assertIsNone(view['overview']['generation_rate'])
+        self.turn(turn='new',at=105)
+        view=self.view(106)
+        self.assertNotIn('observation_gap',view['threads'][0]['quality'])
+        self.assertEqual(view['overview']['generation_rate'],0)
+
     def test_delayed_mapping_uses_original_time(self):
         self.delta(at=102)
         self.item(at=103)
