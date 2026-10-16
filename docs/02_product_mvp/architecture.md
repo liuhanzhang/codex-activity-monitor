@@ -1,6 +1,6 @@
 # Codex Desktop 架构与 Monitor 接入方案
 
-更新日期：2026-10-12。本文说明本项目核查和验证过的本机架构、可用配置，以及 Monitor 的方案选择。依据是项目保留的安装包源码快照、隔离实验和当前 Monitor 代码；不同版本、远程主机的行为可能不同。
+更新日期：2026-10-15。本文说明本项目核查和验证过的本机架构、可用配置，以及 Monitor 的方案选择。依据是项目保留的安装包源码快照、隔离实验和当前 Monitor 代码；不同版本、远程主机的行为可能不同。
 
 **当前方案：在 Desktop 与原版后端之间加入 stdio 包装器，复制运行事件，读取 Rust 日志中的流式增量。** 它满足首版的本机实时监控需求；选择依据是数据覆盖、日常接入方式和已有验证，不是已经证明它在所有场景下优于 WebSocket。
 
@@ -60,7 +60,7 @@ Desktop 还支持连接已有 WebSocket 后端，以及有条件地连接本地�
 | --- | --- | --- |
 | `CODEX_CLI_PATH` | Desktop | 指定启动哪个 CLI 可执行文件；可以指向我们的包装器 |
 | `CODEX_APP_SERVER_WS_URL` | Desktop | 指定要连接的后端 WebSocket 地址 |
-| `CODEX_APP_SERVER_FORCE_CLI=1` | Desktop | 绕过显式 WebSocket 和 daemon 分支，采用 CLI 子进程路线 |
+| `CODEX_APP_SERVER_FORCE_CLI` | Desktop | `1` 会绕过 WebSocket 和 daemon；Monitor 设为 `0`，保留 `durable` 云路由 |
 | `CODEX_APP_SERVER_USE_LOCAL_DAEMON=1` | Desktop | 允许尝试连接本地常驻服务；仍受版本和其他条件限制 |
 | `RUST_LOG`、`LOG_FORMAT` | Rust 后端 | 设置日志模块/级别，以及是否使用 JSON 格式 |
 | `CODEX_MAX_LOG_LEVEL` | Desktop | 调整 Desktop 自身的日志级别；与 Rust 后端日志是两层配置 |
@@ -170,9 +170,9 @@ Monitor 的改动是**启动配置、日志配置，以及新增的进程和通�
 | 改动位置 / 配置 | 之前的值或行为 | 接入后的值或行为 | 是否改变、实际影响 |
 | --- | --- | --- | --- |
 | Desktop：`CODEX_CLI_PATH` | 没有有效覆盖值，Desktop 选择自带 CLI | `…/.local/runtime/codex-observed` | **值和启动链均改变。** 从直接启动原 CLI，变为先启动包装器；最终使用的 CLI 二进制不变 |
-| Desktop：`CODEX_APP_SERVER_FORCE_CLI` | 未设为 `1`，按正常条件选择连接方式 | `1` | **值改变，基准传输方式不变。** 本机仍用 stdio，但现在强制选择该路线，绕过 WebSocket / daemon |
-| Desktop：`CODEX_APP_SERVER_USE_LOCAL_DAEMON` | 未设为 `1`，不主动启用 daemon | `0` | **显式设置值，基准行为不变。** 之前和之后都不启用 daemon；`FORCE_CLI=1` 也会绕过它 |
-| Desktop：`CODEX_APP_SERVER_WS_URL` | 未指定环境覆盖时，可读取主机配置的 `websocket_url`；普通本机无该地址 | 空字符串 | **显式设空，基准连接方式不变。** 普通本机原本就不连 WebSocket；设空还阻断主机地址回退，`FORCE_CLI=1` 也会绕过该分支 |
+| Desktop：`CODEX_APP_SERVER_FORCE_CLI` | 未设为 `1`，按正常条件选择连接方式 | `0` | **显式关闭全局强制。** 本地入口由 `CODEX_CLI_PATH` 接入包装器；`durable` 继续使用自己的云 WebSocket 地址 |
+| Desktop：`CODEX_APP_SERVER_USE_LOCAL_DAEMON` | 未设为 `1`，不主动启用 daemon | `0` | **显式设置值，基准行为不变。** 普通本机接入使用 stdio 包装器，不接入共享 daemon |
+| Desktop：`CODEX_APP_SERVER_WS_URL` | 未指定环境覆盖时，可读取主机配置的 `websocket_url`；普通本机无该地址 | 空字符串 | **显式设空，普通本机连接方式不变。** 阻断普通主机的地址回退；当前安装包的 `durable` 分支直接读取其主机地址，不使用此覆盖 |
 | CLI 子进程：`LOG_FORMAT` | Desktop 已设为 `json` | `json` | **值和格式均不变。** 包装器再次写入相同值 |
 | CLI 子进程：`RUST_LOG` | Desktop 未继承自定义值时设为 `warn`，输出 WARN / ERROR | `warn,codex_api::sse=trace,tungstenite::protocol=trace,tungstenite::protocol::frame=off` | **值和日志行为均改变。** 开启指定模块的详细日志，关闭 frame 模块所有级别日志；增加生成和解析成本 |
 | CLI 子进程：`CODEX_CLI_PATH` | Desktop 填入原 CLI 路径 | 包装器将其从包装器路径改回原 CLI 路径 | **后端收到的最终值不变。** 新链路中先被设为包装器路径，再恢复原 CLI 路径，防止递归进入包装器 |
@@ -180,7 +180,7 @@ Monitor 的改动是**启动配置、日志配置，以及新增的进程和通�
 | stderr 路径 | 后端诊断直接交给 Desktop | 指定模块 DEBUG / TRACE 在包装器内消费，其他诊断转交；超长行受限 | **路径和日志内容均改变。** 不保证与原默认日志一致，详见下文 |
 | 本机运行环境 | 没有 Monitor 的进程和文件 | 增加 runtime、Unix socket、指标快照及登录启动 LaunchAgent | **新增进程和文件。** 增加 CPU、内存和磁盘写入；不新增网络代理 |
 
-表中的“基准行为不变”仅指上述原生本机 stdio 场景。如果原先配置了 WebSocket 或启用了 daemon，接入会改为 CLI / stdio。显式设置这些变量是为了固定接入路线，不能把每一次写入配置都理解为行为变化。
+表中的“基准行为不变”仅指上述原生本机 stdio 场景。如果原先配置了普通主机 WebSocket 或启用了 daemon，接入会改为 CLI / stdio；`durable` 云连接保留。2026-10-15 修正了旧版全局设置 `FORCE_CLI=1` 的副作用：它会将 `durable` 也变成第二个本地 app-server。原因、升级恢复和验证边界见 [远程连接修复记录](../07_remote_transport_repair/README.md)。
 
 Desktop 的原默认值见 [子进程环境构造](/Users/bytedance/personal/codex_progress_monitor/analysis/upstream-stream/desktop-source/application-network-startup.pretty.js:14004)。原本已经走 stdio 的本机实例，接入后仍走 stdio，但中间增加了包装器。
 

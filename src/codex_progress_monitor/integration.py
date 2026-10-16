@@ -20,7 +20,9 @@ def _run(args,check=True):
 
 
 def _values(wrapper):
-    return dict(zip(KEYS,(str(wrapper),'1','0','')))
+    # CLI_PATH selects the local launcher. FORCE_CLI also reroutes Desktop's
+    # durable cloud host to a second local app-server, so explicitly disable it.
+    return dict(zip(KEYS,(str(wrapper),'0','0','')))
 
 
 def setup(runtime,actual,launch_agent=False,language=DEFAULT_LANGUAGE):
@@ -41,12 +43,18 @@ def setup(runtime,actual,launch_agent=False,language=DEFAULT_LANGUAGE):
             existing=plistlib.loads(plist.read_bytes())
             if str(runtime) not in json.dumps(existing):
                 raise RuntimeError(tr('cli.agent_owned', language))
-        if not saved.exists():
+        if saved.exists():
+            state=json.loads(saved.read_text())
+        else:
             previous={}
             for key in KEYS:
                 result=_run(['/bin/launchctl','getenv',key],False)
                 previous[key]=result.stdout.rstrip('\n') if result.returncode==0 else None
-            atomic_json(saved,{'previous':previous,'installed':_values(wrapper)})
+            state={'previous':previous}
+        # Keep the original backup, but track the values owned by this install
+        # so uninstall can restore them after an upgrade changes our defaults.
+        state['installed']=_values(wrapper)
+        atomic_json(saved,state)
         script=runtime/'login-start'
         lines=['#!/bin/sh']
         lines.extend('/bin/launchctl setenv '+key+' '+shlex.quote(value) for key,value in _values(wrapper).items())
