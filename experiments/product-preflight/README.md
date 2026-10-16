@@ -61,5 +61,6 @@ Desktop 回归脚本只启动和停止自己创建的独立 profile，不启动�
 | `tokenizer_probe.py` | 旧 trace / Unicode / 代码样本的分块计数与快照开销 |
 | `fault_probe.py` | 合成 CLI 的传输故障与真实 capture 重放 |
 | `export_results.py` | 校验实时流与上游完成项、隔离 sessions，并输出计数和哈希 |
+| `reasoning_timing_probe.py` | 绕过产品 bridge，对比 reasoning 事件的原始接收时钟、CLI 日志时钟与响应级时间字段；[结果](../../analysis/reasoning-timing/README.md) |
 
 捕获文件仅用于有限诊断。完整上游事件包含正文和工具参数，不应该作为产品默认的长期持久化格式。包装器本身故障仍可能影响承载中的任务；旁路丢包或记录失败必须传递为观测缺口。

@@ -1,0 +1,330 @@
+{
+  "date": "2026-10-15",
+  "timezone": "Asia/Shanghai",
+  "scope": "five bounded no-tools turns on owned isolated stdio backends; public API facts checked from official schema separately",
+  "cli_version": "0.162.0-alpha.17.2",
+  "analysis_script_sha256": "47f216bfdd32b5b8a00de1dbb79e3356ca8592a41e55b3db938d982e14f4c33e",
+  "runs": [
+    {
+      "directory": ".local/reasoning-timing/20261015-sol-auto",
+      "capture_sha256": "97cbe2e0443c244396784b987244e3a91759fb29737ac203789509f22f9ff934",
+      "run_script_sha256": "5297480cba88aeef7a910c7a3364e2399133c42dc9dd9947e104a5c772674c45",
+      "cli_sha256": "0d5ac7aae20c4eda6242428d5e218c55ba96d8763fda2a271088ff37104b9d28",
+      "config_sha256": "6369f29b696b67e1b1617b40fa91cf7a5c626fa7dc35f030560d6899b682309d",
+      "config_unchanged": true,
+      "child_returncode": 0,
+      "row_count": 60,
+      "tool_calls": 0
+    },
+    {
+      "directory": ".local/reasoning-timing/20261015-short",
+      "capture_sha256": "68872ccd812fd7ed0f1982c4996373c14c5722c8c483d80fffb7b8ef439131d8",
+      "run_script_sha256": "7960eddad8a7c739f03defbea1dcf6f8a6c8760f8cbe139bc4b0b40ad2ebeb07",
+      "cli_sha256": "0d5ac7aae20c4eda6242428d5e218c55ba96d8763fda2a271088ff37104b9d28",
+      "config_sha256": "6369f29b696b67e1b1617b40fa91cf7a5c626fa7dc35f030560d6899b682309d",
+      "config_unchanged": true,
+      "child_returncode": 0,
+      "row_count": 264,
+      "tool_calls": 0
+    },
+    {
+      "directory": ".local/reasoning-timing/20261015-comparison",
+      "capture_sha256": "141682558952b644e2f0c70ea122d2f4ecd8bce9d1c70518480be1af17266e0a",
+      "run_script_sha256": "7960eddad8a7c739f03defbea1dcf6f8a6c8760f8cbe139bc4b0b40ad2ebeb07",
+      "cli_sha256": "0d5ac7aae20c4eda6242428d5e218c55ba96d8763fda2a271088ff37104b9d28",
+      "config_sha256": "6369f29b696b67e1b1617b40fa91cf7a5c626fa7dc35f030560d6899b682309d",
+      "config_unchanged": true,
+      "child_returncode": 0,
+      "row_count": 106,
+      "tool_calls": 0
+    }
+  ],
+  "cases": [
+    {
+      "label": "sol-auto",
+      "requested_model": "gpt-6.1-sol",
+      "reported_model": "gpt-6.1-sol",
+      "effort": "medium",
+      "requested_summary": "auto",
+      "thread_id": "01a13ee9-d80e-7c11-8275-8a4a5dd9f029",
+      "turn_id": "01a13ee9-d950-7ff3-b0c9-a59837aa8168",
+      "response_id": "resp_0528e2738e911eea016ad09e308544819ab518daca29ef7353",
+      "usage": {
+        "output_tokens": 246,
+        "reasoning_tokens": 237
+      },
+      "response_created_to_completed_receive_seconds": 7.183064458,
+      "response_time_fields": {
+        "response.created_at": 1792056880,
+        "response.completed_at": 1792056888
+      },
+      "codex_timing_metrics": null,
+      "reasoning": [
+        {
+          "item_id": "rs_0528e2738e911eea016ad09e31b8f8819aad86d0dd67688eae",
+          "receive_seconds": 6.333577916,
+          "cli_log_seconds": 6.333559,
+          "same_read_batch": false,
+          "added_time_fields": {},
+          "done_time_fields": {},
+          "response_created_to_item_added_receive_seconds": 0.699303375,
+          "naive_tokens_per_second": 37.419607549357885,
+          "protocol_receive_seconds": 6.334123125
+        }
+      ],
+      "event_counts": {
+        "codex.rate_limits": 2,
+        "codex.response.metadata": 2,
+        "response.created": 2,
+        "response.in_progress": 2,
+        "responsesapi.websocket_timing": 2,
+        "response.completed": 2,
+        "response.output_item.added": 2,
+        "response.output_item.done": 2,
+        "response.content_part.added": 1,
+        "response.output_text.delta": 3,
+        "response.output_text.done": 1,
+        "response.content_part.done": 1
+      }
+    },
+    {
+      "label": "sol-auto-short",
+      "requested_model": "gpt-6.1-sol",
+      "reported_model": "gpt-6.1-sol",
+      "effort": "medium",
+      "requested_summary": "auto",
+      "thread_id": "01a13eea-a0a2-75c2-a774-c488c80ac010",
+      "turn_id": "01a13eea-a193-7013-ad2b-803e43bf8f98",
+      "response_id": "resp_0e9d46035aedf3e8016ad09e630fc08199ab1aadbcd1452788",
+      "usage": {
+        "output_tokens": 34,
+        "reasoning_tokens": 26
+      },
+      "response_created_to_completed_receive_seconds": 3.010643917,
+      "response_time_fields": {
+        "response.created_at": 1792056931,
+        "response.completed_at": 1792056934
+      },
+      "codex_timing_metrics": {
+        "responsesapi_chat_runner_streaming_token_batch_size": 0,
+        "websocket_output_text_delta_tbt_ms": 1.5090649999999999,
+        "websocket_output_text_delta_count": 2,
+        "pre_inference_ms": 281.798112,
+        "client_tool_pause_total_ms": 0.0,
+        "total_turn_time_s": 1.722646892,
+        "xapi_validation_time_s": 0.001084652,
+        "num_engine_calls": 1,
+        "engine_total_prompt_tokens_total": 16731,
+        "first_sampled_message_ttft_ms": null,
+        "num_sampled_tokens_total": 34
+      },
+      "reasoning": [
+        {
+          "item_id": "rs_0e9d46035aedf3e8016ad09e6469a48199911a670ba98255d9",
+          "receive_seconds": 1.694572625,
+          "cli_log_seconds": 1.69448,
+          "same_read_batch": false,
+          "added_time_fields": {},
+          "done_time_fields": {},
+          "response_created_to_item_added_receive_seconds": 0.996856333,
+          "naive_tokens_per_second": 15.34310162717281,
+          "protocol_receive_seconds": 1.695432084
+        }
+      ],
+      "event_counts": {
+        "codex.rate_limits": 2,
+        "codex.response.metadata": 2,
+        "response.created": 2,
+        "response.in_progress": 2,
+        "responsesapi.websocket_timing": 2,
+        "response.completed": 2,
+        "response.output_item.added": 2,
+        "response.reasoning_summary_part.added": 1,
+        "response.reasoning_summary_text.delta": 77,
+        "response.reasoning_summary_text.done": 1,
+        "response.reasoning_summary_part.done": 1,
+        "response.output_item.done": 2,
+        "response.content_part.added": 1,
+        "response.output_text.delta": 2,
+        "response.output_text.done": 1,
+        "response.content_part.done": 1
+      }
+    },
+    {
+      "label": "sol-none-short",
+      "requested_model": "gpt-6.1-sol",
+      "reported_model": "gpt-6.1-sol",
+      "effort": "medium",
+      "requested_summary": "none",
+      "thread_id": "01a13eea-c209-7903-8ac3-e067944687cf",
+      "turn_id": "01a13eea-c2c2-7433-a9ef-9fdc9cd209d0",
+      "response_id": "resp_090e002b9ba1d77b016ad09e6ae49c819b9baa19fa2bcba43d",
+      "usage": {
+        "output_tokens": 33,
+        "reasoning_tokens": 25
+      },
+      "response_created_to_completed_receive_seconds": 1.651292834,
+      "response_time_fields": {
+        "response.created_at": 1792056939,
+        "response.completed_at": 1792056940
+      },
+      "codex_timing_metrics": {
+        "responsesapi_chat_runner_streaming_token_batch_size": 0,
+        "websocket_output_text_delta_tbt_ms": 0.076474,
+        "websocket_output_text_delta_count": 2,
+        "pre_inference_ms": 251.65118800000002,
+        "client_tool_pause_total_ms": 0.0,
+        "total_turn_time_s": 1.776450862,
+        "xapi_validation_time_s": 0.000991657,
+        "num_engine_calls": 1,
+        "engine_total_prompt_tokens_total": 19524,
+        "first_sampled_message_ttft_ms": null,
+        "num_sampled_tokens_total": 33
+      },
+      "reasoning": [
+        {
+          "item_id": "rs_090e002b9ba1d77b016ad09e6ccdc8819ba616f84ce49755f8",
+          "receive_seconds": 0.149392375,
+          "cli_log_seconds": 0.149417,
+          "same_read_batch": false,
+          "added_time_fields": {},
+          "done_time_fields": {},
+          "response_created_to_item_added_receive_seconds": 1.501373542,
+          "naive_tokens_per_second": 167.34455155425437,
+          "protocol_receive_seconds": 0.150270292
+        }
+      ],
+      "event_counts": {
+        "codex.rate_limits": 2,
+        "codex.response.metadata": 2,
+        "response.created": 2,
+        "response.in_progress": 2,
+        "responsesapi.websocket_timing": 2,
+        "response.completed": 2,
+        "response.output_item.added": 2,
+        "response.output_item.done": 2,
+        "response.content_part.added": 1,
+        "response.output_text.delta": 2,
+        "response.output_text.done": 1,
+        "response.content_part.done": 1
+      }
+    },
+    {
+      "label": "sol-none",
+      "requested_model": "gpt-6.1-sol",
+      "reported_model": "gpt-6.1-sol",
+      "effort": "medium",
+      "requested_summary": "none",
+      "thread_id": "01a13eeb-0d53-76f3-b2d6-5f5da3c721c8",
+      "turn_id": "01a13eeb-0dff-7600-8959-9a3b961b7043",
+      "response_id": "resp_0ab720fe9dafeac9016ad09e7e473c819b87426273925e3798",
+      "usage": {
+        "output_tokens": 325,
+        "reasoning_tokens": 316
+      },
+      "response_created_to_completed_receive_seconds": 8.786627584,
+      "response_time_fields": {
+        "response.created_at": 1792056958,
+        "response.completed_at": 1792056967
+      },
+      "codex_timing_metrics": {
+        "responsesapi_chat_runner_streaming_token_batch_size": 0,
+        "websocket_output_text_delta_tbt_ms": 4.622217,
+        "websocket_output_text_delta_count": 3,
+        "pre_inference_ms": 235.52980000000002,
+        "client_tool_pause_total_ms": 0.0,
+        "total_turn_time_s": 8.81399831,
+        "xapi_validation_time_s": 0.001044649,
+        "num_engine_calls": 1,
+        "engine_total_prompt_tokens_total": 16750,
+        "first_sampled_message_ttft_ms": null,
+        "num_sampled_tokens_total": 325
+      },
+      "reasoning": [
+        {
+          "item_id": "rs_0ab720fe9dafeac9016ad09e873790819b817ff4c22d773288",
+          "receive_seconds": 0.002770042,
+          "cli_log_seconds": 0.002777,
+          "same_read_batch": false,
+          "added_time_fields": {},
+          "done_time_fields": {},
+          "response_created_to_item_added_receive_seconds": 8.532033542,
+          "naive_tokens_per_second": 114077.69268480406,
+          "protocol_receive_seconds": 0.00283225
+        }
+      ],
+      "event_counts": {
+        "codex.rate_limits": 2,
+        "codex.response.metadata": 2,
+        "response.created": 2,
+        "response.in_progress": 2,
+        "responsesapi.websocket_timing": 2,
+        "response.completed": 2,
+        "response.output_item.added": 2,
+        "response.output_item.done": 2,
+        "response.content_part.added": 1,
+        "response.output_text.delta": 3,
+        "response.output_text.done": 1,
+        "response.content_part.done": 1
+      }
+    },
+    {
+      "label": "luna-auto",
+      "requested_model": "gpt-6-luna",
+      "reported_model": "gpt-6-luna",
+      "effort": "medium",
+      "requested_summary": "auto",
+      "thread_id": "01a13eeb-42db-7dc1-b8df-92c1b7342091",
+      "turn_id": "01a13eeb-43aa-7c32-83fa-c8615c681e8c",
+      "response_id": "resp_096d9a78ed09a9b1016ad09e8c4bc4819887008d5f4b0ad01f",
+      "usage": {
+        "output_tokens": 6,
+        "reasoning_tokens": 0
+      },
+      "response_created_to_completed_receive_seconds": 0.568513208,
+      "response_time_fields": {
+        "response.created_at": 1792056972,
+        "response.completed_at": 1792056973
+      },
+      "codex_timing_metrics": {
+        "responsesapi_chat_runner_streaming_token_batch_size": 0,
+        "websocket_output_text_delta_tbt_ms": 28.506094,
+        "websocket_output_text_delta_count": 2,
+        "pre_inference_ms": 313.728131,
+        "client_tool_pause_total_ms": 0.0,
+        "total_turn_time_s": 0.545162055,
+        "xapi_validation_time_s": 0.001645457,
+        "num_engine_calls": 1,
+        "engine_total_prompt_tokens_total": 18851,
+        "first_sampled_message_ttft_ms": null,
+        "num_sampled_tokens_total": 6
+      },
+      "reasoning": [],
+      "event_counts": {
+        "codex.rate_limits": 2,
+        "codex.response.metadata": 2,
+        "response.created": 2,
+        "response.in_progress": 2,
+        "responsesapi.websocket_timing": 2,
+        "response.completed": 2,
+        "response.output_item.added": 1,
+        "response.content_part.added": 1,
+        "response.output_text.delta": 2,
+        "response.output_text.done": 1,
+        "response.content_part.done": 1,
+        "response.output_item.done": 1
+      }
+    }
+  ],
+  "checks": {
+    "all_turns_completed": true,
+    "all_owned_backends_exited": true,
+    "isolated_config_unchanged": true,
+    "no_tool_calls": true,
+    "captures_have_no_model_text_or_encrypted_content": true,
+    "capture_hashes_match_original_run_results": true,
+    "large_rate_reproduced_without_product_bridge": true,
+    "cli_log_confirms_compressed_interval": true,
+    "reasoning_items_have_no_numeric_time_fields": true
+  }
+}
