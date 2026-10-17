@@ -1,0 +1,38 @@
+{
+  "version": 1,
+  "generator": "built-in image_gen",
+  "reference": "user-supplied beagle GIF",
+  "sheet_sha256": "3d71ce13d64ea475e32d0bb20de12c86186ffbf0836fcfd20617c0f489e3686b",
+  "sheet_size": [
+    1774,
+    887
+  ],
+  "grid": [
+    4,
+    2
+  ],
+  "shared_crop": [
+    18,
+    32,
+    411,
+    382
+  ],
+  "frame_size": [
+    96,
+    96
+  ],
+  "frame_count": 8,
+  "frame_duration_seconds": 0.2,
+  "render_height_pt": 18,
+  "background": "transparent; white fur remains opaque",
+  "frames_sha256": {
+    "idle-pet-00.png": "926f4077279634070bb9dd2f62cafbff74403172a3b960811b19173f0613879d",
+    "idle-pet-01.png": "229faeebdc38075b2836500c5a5110ba0d743eeea1e3335c08843ff7a503a9f4",
+    "idle-pet-02.png": "861fa272b885fb5203b9418da59c4f91d7239b2c53c30f08dbad87dba93ec0d1",
+    "idle-pet-03.png": "06554f987bc7afe75f85c70e426ecf38a91701cea660375911b276192792485d",
+    "idle-pet-04.png": "5f36380c64aac0fdccac0a8aa56dbd9ef026ec0a0546ee37ba7f49b9055289dc",
+    "idle-pet-05.png": "40700e19444fd2ebbef03c52016340c3904ca66c56bae37e7f93e78ea6d37f69",
+    "idle-pet-06.png": "1b1b12dea5e9435fad13ab804263212dbbb8588d834d124e864ca8f7c6d69927",
+    "idle-pet-07.png": "78594b27af48ea31114321805071ff6a5ee63397c22d7921d9db53c8d25b0419"
+  }
+}

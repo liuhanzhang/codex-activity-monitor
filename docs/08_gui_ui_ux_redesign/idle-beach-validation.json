@@ -1,0 +1,73 @@
+{
+  "version": 1,
+  "date": "2026-10-17",
+  "build_id": "7cb8378cc51186e0e45292bb52785efc7cdb7febc14e5ae10a18b374af3166b4",
+  "native_export": {
+    "artwork": "beach",
+    "frame_duration_seconds": 0,
+    "frames": 1,
+    "icon_height_pt": 18,
+    "scale": 2,
+    "status_item_height_pt": 22,
+    "status_item_width_pt": 47,
+    "system_reduce_motion": false
+  },
+  "initial_idle": {
+    "mode": "idle",
+    "animating": false,
+    "button_frame_pt": [
+      8,
+      -11,
+      47,
+      22
+    ]
+  },
+  "synthetic_transitions": [
+    {
+      "case": "waiting",
+      "mode": "speed",
+      "title": "0 T/s",
+      "animating": false,
+      "button_frame_pt": [
+        -322,
+        2170.5,
+        47,
+        22
+      ]
+    },
+    {
+      "case": "partial",
+      "mode": "unavailable",
+      "title": "\u2014",
+      "animating": false,
+      "button_frame_pt": [
+        -322,
+        2170.5,
+        47,
+        22
+      ]
+    },
+    {
+      "case": "idle",
+      "mode": "idle",
+      "title": "0 T/s",
+      "animating": false,
+      "button_frame_pt": [
+        -322,
+        2170.5,
+        47,
+        22
+      ]
+    }
+  ],
+  "targeted_swift_tests_passed": 4,
+  "runtime_reload": {
+    "old_lease_removed": true,
+    "new_lease_created": true,
+    "fresh_collector_snapshot": true
+  },
+  "limits": [
+    "Synthetic read-only preview and shared native renderer; not a fresh-machine or distribution test.",
+    "Current live turn spans reload and retains its observation gap; no claim of live natural idle acceptance."
+  ]
+}

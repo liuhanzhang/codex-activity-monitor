@@ -1,0 +1,155 @@
+{
+  "date": "2026-10-16",
+  "native_preview_build_id": "f0e122fb79981ce68dc2a21ef82d03cb9aada172bd03fbf77540cfb2aaa69c35",
+  "final_build_id": "c17adf532d844ec01a0a07c1a6d9f3ce189ad1eb809621881b96d8c0bc2b13a9",
+  "final_build_delta": "Added the disconnected or missing-backend guard; targeted model tests passed after this change.",
+  "render": {
+    "frame_duration_seconds": 0.2,
+    "frames": 8,
+    "pet_height_pt": 18,
+    "scale": 2,
+    "status_item_height_pt": 22,
+    "status_item_width_pt": 47,
+    "system_reduce_motion": false
+  },
+  "checks": [
+    {
+      "mode": "idle",
+      "title": "0 T/s",
+      "animating": true,
+      "button_frame": [
+        967,
+        1089.5,
+        47,
+        22
+      ],
+      "build_id": "f0e122fb79981ce68dc2a21ef82d03cb9aada172bd03fbf77540cfb2aaa69c35",
+      "reduced_motion": false,
+      "case": "idle"
+    },
+    {
+      "mode": "speed",
+      "title": "0 T/s",
+      "animating": false,
+      "button_frame": [
+        967,
+        1089.5,
+        47,
+        22
+      ],
+      "build_id": "f0e122fb79981ce68dc2a21ef82d03cb9aada172bd03fbf77540cfb2aaa69c35",
+      "reduced_motion": false,
+      "case": "waiting"
+    },
+    {
+      "mode": "speed",
+      "title": "48 T/s",
+      "animating": false,
+      "button_frame": [
+        967,
+        1089.5,
+        47,
+        22
+      ],
+      "build_id": "f0e122fb79981ce68dc2a21ef82d03cb9aada172bd03fbf77540cfb2aaa69c35",
+      "reduced_motion": false,
+      "case": "generating"
+    },
+    {
+      "mode": "speed",
+      "title": "9999 T/s",
+      "animating": false,
+      "button_frame": [
+        967,
+        1089.5,
+        55,
+        22
+      ],
+      "build_id": "f0e122fb79981ce68dc2a21ef82d03cb9aada172bd03fbf77540cfb2aaa69c35",
+      "reduced_motion": false,
+      "case": "fast"
+    },
+    {
+      "mode": "thinking",
+      "title": "0 T/s",
+      "animating": true,
+      "button_frame": [
+        959,
+        1089.5,
+        47,
+        22
+      ],
+      "build_id": "f0e122fb79981ce68dc2a21ef82d03cb9aada172bd03fbf77540cfb2aaa69c35",
+      "reduced_motion": false,
+      "case": "thinking"
+    },
+    {
+      "mode": "executing",
+      "title": "0 T/s",
+      "animating": true,
+      "button_frame": [
+        967,
+        1089.5,
+        47,
+        22
+      ],
+      "build_id": "f0e122fb79981ce68dc2a21ef82d03cb9aada172bd03fbf77540cfb2aaa69c35",
+      "reduced_motion": false,
+      "case": "executing"
+    },
+    {
+      "mode": "unavailable",
+      "title": "—",
+      "animating": false,
+      "button_frame": [
+        967,
+        1089.5,
+        47,
+        22
+      ],
+      "build_id": "f0e122fb79981ce68dc2a21ef82d03cb9aada172bd03fbf77540cfb2aaa69c35",
+      "reduced_motion": false,
+      "case": "partial"
+    },
+    {
+      "mode": "idle",
+      "title": "0 T/s",
+      "animating": true,
+      "button_frame": [
+        967,
+        1089.5,
+        47,
+        22
+      ],
+      "build_id": "f0e122fb79981ce68dc2a21ef82d03cb9aada172bd03fbf77540cfb2aaa69c35",
+      "reduced_motion": false,
+      "case": "idle"
+    },
+    {
+      "render": "light",
+      "frames": 8,
+      "unique_frames": 8
+    },
+    {
+      "render": "dark",
+      "frames": 8,
+      "unique_frames": 8
+    },
+    {
+      "render": "reduced-motion",
+      "frames": 8,
+      "unique_frames": 1
+    }
+  ],
+  "targeted_swift_tests_passed": 7,
+  "boundaries": [
+    "Native state transitions use synthetic snapshots in a separate read-only Preview App.",
+    "Offscreen samples use the same AppKit renderer and actual 18 pt pet drawing size, not a whole-menu-bar recording.",
+    "No long-duration CPU or energy measurement; no new full natural-use round."
+  ],
+  "daily_app_reload": {
+    "lease_active": true,
+    "owner_pid": 16582,
+    "snapshot_fresh": true
+  }
+}

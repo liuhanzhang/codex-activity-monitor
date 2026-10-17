@@ -8,6 +8,7 @@ from .events import DELTA_KINDS, TOOL_TYPES, Event
 from .progress_state import handle_protocol, resolve_request, presentation
 from .metrics import TextStream, TokenCounter
 from .overview import overview, annotate_parents
+from .menu_presentation import menu_presentation
 from .usage import UsageBook
 from .i18n import PHASE_KEYS, phase_message, render_message, tr
 from .tool_labels import code_tool_names, command_name, command_previews, command_summary, file_edit_preview, is_code_exec, is_command_tool, is_patch_tool, tool_display, tool_label, tool_name
@@ -873,8 +874,9 @@ class Engine:
         views=list(by_identity.values())
         views.sort(key=lambda t:(not t['has_active_work'],t['last_progress_seconds'] or 0))
         annotate_parents(views)
+        total = overview(self, views, now)
         return {'schema_version':1,'updated_at':wall_time,'clock':now,'threads':views,
-                'overview':overview(self, views, now),
+                'overview':total,'menu_presentation':menu_presentation(self, views, total),
                 'backends':self.backends,'unassociated_events':self.pending_count,'counters':dict(self.counts),
                 'usage_recovery':self.usage.dump(),'usage_diagnostics':dict(self.usage.diagnostics)}
 

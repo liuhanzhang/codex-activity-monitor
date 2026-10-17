@@ -37,7 +37,7 @@ def serve(runtime):
     clients={}
     owners={}
     engine=Engine()
-    implementation=source_identity('collector','app_session','engine','overview','progress_state','events','usage','metrics','runtime','tool_labels','i18n','messages_zh_cn')
+    implementation=source_identity('collector','app_session','engine','overview','menu_presentation','progress_state','events','usage','metrics','runtime','tool_labels','i18n','messages_zh_cn')
     previous=read_snapshot(runtime)
     historical=previous.get('threads',[]) if time.time()-(previous.get('updated_at') or 0)<600 else []
     if historical:

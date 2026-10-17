@@ -32,6 +32,15 @@ public struct Activity: Decodable, Identifiable, Sendable {
     public let start_known: Bool?
 }
 
+public enum MenuMode: String, Sendable { case speed, idle, thinking, executing, unavailable }
+
+public struct MenuPresentation: Decodable, Sendable {
+    public let version: Int
+    public let mode: String
+    public let active_conversation_count: Int
+    public let reason: String?
+}
+
 public struct Chat: Decodable, Identifiable, Sendable {
     public let threadID: String
     public let home: String?
@@ -57,6 +66,7 @@ public struct Chat: Decodable, Identifiable, Sendable {
     public var scope: String { home ?? backend ?? "" }
     public var title: String { name.flatMap { $0.isEmpty ? nil : $0 } ?? "未命名聊天" }
     public var project: String { cwd.map { URL(fileURLWithPath: $0).lastPathComponent } ?? "" }
+    public var isTerminal: Bool { ["completed", "failed", "interrupted"].contains(status ?? "") }
 
     enum CodingKeys: String, CodingKey {
         case threadID = "id"
@@ -71,6 +81,7 @@ public struct Snapshot: Decodable, Sendable {
     public let updated_at: Double?
     public let running: Bool?
     public let overview: Overview?
+    public let menu_presentation: MenuPresentation?
     public let threads: [Chat]
     public let backends: [String: Backend]?
 
@@ -90,8 +101,34 @@ public struct Snapshot: Decodable, Sendable {
         guard isFresh(at: date), let overview, overview.version == 1,
               overview.coverage == "complete", let rate = overview.generation_rate,
               rate.isFinite, rate >= 0 else { return "—" }
-        if rate == 0 { return "0 t/s" }
-        return (overview.estimated == true ? "≈" : "") + String(format: "%.1f t/s", rate)
+        return MetricFormat.speed(rate)
+    }
+
+    public func menuMode(at date: Date = Date()) -> MenuMode {
+        guard menuTitle(at: date) != "—" else { return .unavailable }
+        guard let presentation = menu_presentation else { return .speed }
+        guard presentation.version == 1, presentation.active_conversation_count >= 0,
+              let mode = MenuMode(rawValue: presentation.mode), mode != .idle else { return .unavailable }
+        if mode == .speed && presentation.reason == "idle" && presentation.active_conversation_count == 0 {
+            guard backends?.values.contains(where: { $0.connected == true }) == true else { return .unavailable }
+            return .idle
+        }
+        if mode == .thinking || mode == .executing {
+            return presentation.active_conversation_count == 1 ? mode : .speed
+        }
+        return mode
+    }
+
+    public var activeConversationCount: Int {
+        if let value = menu_presentation, value.version == 1, value.active_conversation_count >= 0 {
+            return value.active_conversation_count
+        }
+        let edges = parentMap
+        return Set(threads.filter { $0.has_active_work == true }.map { chat in
+            var id = chat.id
+            while let parent = edges[id] { id = parent }
+            return id
+        }).count
     }
 
     public var observationNotice: ObservationNotice? {
@@ -107,8 +144,14 @@ public struct Snapshot: Decodable, Sendable {
 
     public var displayedChats: [Chat] {
         let eligible = threads.filter { $0.visible != false }
-        let active = eligible.filter { $0.has_active_work == true }
-        let recent = eligible.filter { $0.has_active_work != true && ($0.last_progress_seconds ?? .infinity) < 600 }
+        var activeIDs = Set(eligible.filter { $0.has_active_work == true }.map(\.id))
+        let edges = parentMap
+        for chat in eligible where chat.has_active_work == true {
+            var cursor = chat.id
+            while let parent = edges[cursor] { activeIDs.insert(parent); cursor = parent }
+        }
+        let active = eligible.filter { activeIDs.contains($0.id) }
+        let recent = eligible.filter { !activeIDs.contains($0.id) && $0.isTerminal && ($0.last_progress_seconds ?? .infinity) < 600 }
             .sorted { ($0.last_progress_seconds ?? .infinity) < ($1.last_progress_seconds ?? .infinity) }
         return active + recent.prefix(10)
     }
@@ -118,12 +161,19 @@ public struct Snapshot: Decodable, Sendable {
     }
 
     public var rootChats: [Chat] {
-        displayedChats.filter { parentMap[$0.id] == nil }
+        let displayed = displayedChats
+        let ids = Set(displayed.map(\.id))
+        return displayed.filter { parentMap[$0.id].map { !ids.contains($0) } ?? true }
+    }
+
+    public func hasActiveWork(in root: Chat) -> Bool {
+        if root.has_active_work == true { return true }
+        return children(of: root).contains { hasActiveWork(in: $0) }
     }
 
     private var parentMap: [String: String] {
         var edges: [String: String] = [:]
-        let chats = displayedChats
+        let chats = threads
         for child in chats {
             let parents = chats.filter { parent in
                 parent.scope == child.scope && parent.id != child.id &&
@@ -146,16 +196,22 @@ public struct Snapshot: Decodable, Sendable {
     }
 
     public func rows(expanded: Set<String>) -> [ChatRow] {
+        rows(roots: rootChats, expanded: expanded)
+    }
+
+    public func rows(roots: [Chat], expanded: Set<String>, order: [String: Int] = [:]) -> [ChatRow] {
         let edges = parentMap
         let chats = displayedChats
         var result: [ChatRow] = []
         func append(_ chat: Chat, depth: Int) {
             result.append(ChatRow(chat: chat, depth: depth))
             if expanded.contains(chat.id) {
-                for child in chats where edges[child.id] == chat.id { append(child, depth: depth + 1) }
+                for child in chats.filter({ edges[$0.id] == chat.id }).sorted(by: {
+                    (order[$0.id] ?? Int.max) < (order[$1.id] ?? Int.max)
+                }) { append(child, depth: depth + 1) }
             }
         }
-        for chat in chats where edges[chat.id] == nil { append(chat, depth: 0) }
+        for chat in roots { append(chat, depth: 0) }
         return result
     }
 }
@@ -195,7 +251,17 @@ public enum MetricFormat {
 
     public static func rate(_ value: Double?, estimated: Bool = false) -> String {
         guard let value, value.isFinite, value >= 0 else { return "—" }
-        return (estimated ? "≈" : "") + String(format: "%.1f", value)
+        return String(format: "%.0f", locale: Locale(identifier: "en_US_POSIX"), value.rounded(.toNearestOrAwayFromZero))
+    }
+
+    public static func speed(_ value: Double?) -> String {
+        let number = rate(value)
+        return number == "—" ? number : number + " T/s"
+    }
+
+    public static func compactSpeed(_ value: Double?) -> String {
+        guard let value, value.isFinite, value >= 0 else { return "—" }
+        return value.rounded(.toNearestOrAwayFromZero) > 99999 ? ">99999 T/s" : speed(value)
     }
 
     public static func duration(_ value: Double?) -> String {

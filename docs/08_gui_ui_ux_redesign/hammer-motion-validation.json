@@ -1,0 +1,59 @@
+{
+  "version": 1,
+  "date": "2026-10-17",
+  "build_id": "e5839c7f27213541f157a21df9faefd057545702492f07078d9df0e7fd71a118",
+  "cycle_seconds": 3.3,
+  "rest_extra_rotation_degrees": 0,
+  "orientation": "head upper-left, grip lower-right, matching the macOS hammer emoji direction",
+  "curves": {
+    "lift": "smoothstep",
+    "strike": "quadratic acceleration",
+    "rebound": "cubic deceleration",
+    "settle": "smoothstep"
+  },
+  "native_export": {
+    "artwork": "hammer",
+    "frame_duration_seconds": 0,
+    "frame_times_seconds": [
+      0,
+      0.594,
+      0.9899999999999999,
+      1.122,
+      1.386,
+      1.782,
+      2.64
+    ],
+    "frames": 7,
+    "icon_height_pt": 18,
+    "scale": 2,
+    "status_item_height_pt": 22,
+    "status_item_width_pt": 47,
+    "system_reduce_motion": false
+  },
+  "sample_checks": {
+    "light": {
+      "samples": 7,
+      "unique_images": 4,
+      "rest_pose_repeats": true
+    },
+    "dark": {
+      "samples": 7,
+      "unique_images": 4,
+      "rest_pose_repeats": true
+    },
+    "reduced-motion": {
+      "samples": 7,
+      "unique_images": 1,
+      "rest_pose_repeats": true
+    }
+  },
+  "targeted_swift_tests_passed": 4,
+  "runtime_reload": {
+    "old_lease_removed": true,
+    "new_lease_created": true,
+    "fresh_collector_snapshot": true
+  },
+  "limits": [
+    "Controlled pose samples and curve tests; no repeated full state or frame-rate matrix."
+  ]
+}

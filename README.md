@@ -20,6 +20,8 @@
 
 原生 macOS 菜单栏 GUI 已可在本机运行：`bin/build-gui` 构建，`bin/run-gui` 打开。支持总速度、聊天 / 活动详情、配置与恢复、退出停止采集及登录启动；缺 App / Python 时的 shell 回退已通过隔离进程验证。新版桥接暂停 / 恢复观察、日常双聊天生成、正式恢复后的延后清理和主动再配置已验证。见 [GUI 使用](docs/06_gui_app_options_and_decisions/usage.md)、[实施结果与验收边界](docs/06_gui_app_options_and_decisions/implementation-results.md) 和 [方案决策](docs/06_gui_app_options_and_decisions/README.md)；公开发行包后续交付。
 
+紧凑面板、以三位数为基准并按需扩宽的菜单栏、整数 `T/s`、空闲沙滩图标、单会话三点依次明暗变化 / 敲击锤子及弹出交互已实现，并更新本机 App。沙滩图标先用静态版；小狗素材和开发预览保留，普通界面不提供切换选项。需求、设计原稿、原生预览和验证边界见 [GUI UI / UX 重设计](docs/08_gui_ui_ux_redesign/README.md)及[实施结果](docs/08_gui_ui_ux_redesign/implementation-results.md)。
+
 ## 目录
 
 **日常开发主要看 `src/`、`tests/`、`bin/`、`pyproject.toml` 和 `docs/02_product_mvp/`。** 其余目录是实验资料或本机运行环境。
@@ -37,7 +39,9 @@ codex_progress_monitor/
 │   ├── 03_event_lifecycle_and_progress_display/  生命周期与展示改进
 │   ├── 04_usability_and_localization/           易用性与多语言准备
 │   ├── 05_token_usage_and_reasoning_speed/      本回合用量与最近推理均速需求 / 计划 / 验收
-│   └── 06_gui_app_options_and_decisions/       GUI 目标、技术与采集方案比较、安装 / 卸载决策
+│   ├── 06_gui_app_options_and_decisions/       GUI 目标、技术与采集方案比较、安装 / 卸载决策
+│   ├── 07_remote_transport_repair/            Remote 路由修复与本机验证边界
+│   └── 08_gui_ui_ux_redesign/                 紧凑 GUI 需求、设计稿、实施与原生验证
 ├── experiments/                    可复用实验脚本
 │   ├── desktop-isolation/          隔离 Desktop / WebSocket 实验
 │   │   └── runs/                   本机隔离 App 数据和原始记录，不提交

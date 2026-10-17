@@ -1,0 +1,173 @@
+<div id="monitor-status-motion">
+  <div class="viz-controls" aria-label="菜单栏状态">
+    <button class="btn" type="button" data-state="thinking" aria-pressed="true">思考</button>
+    <button class="btn" type="button" data-state="working" aria-pressed="false">执行</button>
+    <button class="btn" type="button" data-state="generating" aria-pressed="false">生成</button>
+    <button class="btn" type="button" data-state="multiple" aria-pressed="false">多会话</button>
+    <button class="btn btn-ghost" type="button" data-pause aria-pressed="false">暂停动画</button>
+  </div>
+  <div class="motion-stage viz-dotted-background">
+    <div class="motion-label">菜单栏原尺寸 · 固定 92 pt</div>
+    <div class="monitor-menubar" aria-label="菜单栏动态设计示意">
+      <span class="finder">Finder</span>
+      <span class="bar-space"></span>
+      <div class="monitor-slot" data-slot="small" role="img" aria-label="思考中">
+        <span class="typing"><span></span><span></span><span></span></span>
+        <span class="building" hidden><i data-lucide="hammer" aria-hidden="true"></i></span>
+        <span class="speed" hidden><span data-rate>48 T/s</span></span>
+      </div>
+      <i class="system-icon" data-lucide="wifi" aria-hidden="true"></i>
+      <span class="clock">14:27</span>
+    </div>
+    <div class="detail-stage">
+      <div class="detail-label">3× 动作细节</div>
+      <div class="magnifier">
+        <div class="monitor-slot enlarged" data-slot="large" role="img" aria-label="思考中">
+          <span class="typing"><span></span><span></span><span></span></span>
+          <span class="building" hidden><i data-lucide="hammer" aria-hidden="true"></i></span>
+          <span class="speed" hidden><span data-rate>48 T/s</span></span>
+        </div>
+      </div>
+      <span class="status-caption" aria-live="polite">单会话 · 思考中</span>
+    </div>
+  </div>
+</div>
+<style>
+#monitor-status-motion .motion-stage {
+  --monitor-ink: light-dark(#202124, #ececf0);
+  --monitor-secondary: light-dark(#62646c, #b4b5bc);
+  --monitor-bar: light-dark(#e9e9ed, #292a30);
+  --monitor-selected: light-dark(#d1def0, #394b65);
+  --monitor-separator: light-dark(#c5c6cc, #4d4f58);
+  padding: 24px 18px 18px;
+  margin-top: 14px;
+  color: var(--monitor-ink);
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "PingFang SC", sans-serif;
+  font-size: 13px;
+  line-height: 1.4;
+}
+#monitor-status-motion .motion-label,
+#monitor-status-motion .detail-label { color: var(--monitor-secondary); font-size: 12px; }
+#monitor-status-motion .motion-label { margin-bottom: 12px; }
+#monitor-status-motion .monitor-menubar {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  background: var(--monitor-bar);
+  border-radius: 6px;
+  min-height: 30px;
+  padding: 0 12px;
+  overflow: hidden;
+  color: var(--monitor-ink);
+}
+#monitor-status-motion .finder { font-weight: 500; }
+#monitor-status-motion .bar-space { flex: 1; min-width: 0; }
+#monitor-status-motion .monitor-slot {
+  flex: 0 0 92px;
+  width: 92px;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 4px;
+  background: var(--monitor-selected);
+  color: var(--monitor-ink);
+  box-sizing: border-box;
+  overflow: hidden;
+}
+#monitor-status-motion [hidden] { display: none !important; }
+#monitor-status-motion .typing { display: flex; align-items: center; gap: 3px; height: 20px; }
+#monitor-status-motion .typing > span {
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background: currentColor;
+  animation: monitor-dot-hop var(--dot-period, 1.35s) ease-in-out infinite;
+}
+#monitor-status-motion .typing > span:nth-child(2) { animation-delay: -.90s; }
+#monitor-status-motion .typing > span:nth-child(3) { animation-delay: -.72s; }
+#monitor-status-motion .typing > span:nth-child(1) { animation-delay: -1.08s; }
+#monitor-status-motion .building { display: flex; width: 22px; height: 22px; align-items: center; justify-content: center; }
+#monitor-status-motion .building > svg {
+  width: 18px;
+  height: 18px;
+  transform-origin: 24% 82%;
+  animation: monitor-hammer-hit var(--hammer-period, 1.65s) infinite;
+  animation-timing-function: cubic-bezier(.3,0,.3,1);
+}
+#monitor-status-motion .speed { display: flex; align-items: center; justify-content: center; gap: 6px; white-space: nowrap; font-size: 12px; font-variant-numeric: tabular-nums; }
+#monitor-status-motion .system-icon { width: 15px; height: 15px; flex-shrink: 0; }
+#monitor-status-motion .clock { font-size: 12px; font-variant-numeric: tabular-nums; }
+#monitor-status-motion .detail-stage { display: flex; flex-direction: column; align-items: center; padding: 26px 0 12px; }
+#monitor-status-motion .magnifier { width: 276px; height: 100px; display: flex; align-items: center; justify-content: center; }
+#monitor-status-motion .enlarged { transform: scale(3); background: var(--monitor-bar); }
+#monitor-status-motion .status-caption { margin-top: 6px; font-size: 12px; color: var(--monitor-secondary); }
+#monitor-status-motion.is-paused .typing > span,
+#monitor-status-motion.is-paused .building > svg { animation-play-state: paused; }
+@keyframes monitor-dot-hop {
+  0%, 12%, 47%, 100% { transform: translateY(0); opacity: .62; }
+  29% { transform: translateY(calc(-1 * var(--hop, 2.5px))); opacity: 1; }
+}
+@keyframes monitor-hammer-hit {
+  0%, 8% { transform: rotate(-25deg); }
+  19% { transform: rotate(16deg); }
+  25% { transform: rotate(4deg); }
+  37% { transform: rotate(-29deg); }
+  47% { transform: rotate(18deg); }
+  54% { transform: rotate(3deg); }
+  66%, 100% { transform: rotate(-25deg); }
+}
+@media (prefers-reduced-motion: reduce) {
+  #monitor-status-motion .typing > span,
+  #monitor-status-motion .building > svg { animation: none; opacity: 1; }
+}
+@media (max-width: 400px) {
+  #monitor-status-motion .motion-stage { padding: 20px 10px 14px; }
+  #monitor-status-motion .monitor-menubar { gap: 9px; padding: 0 9px; }
+}
+</style>
+<script>
+(() => {
+  const root = document.getElementById('monitor-status-motion');
+  const labels = { thinking: '单会话 · 思考中', working: '单会话 · 执行中', generating: '单会话 · 生成中', multiple: '多个活跃会话 · 总生成速度' };
+  const saved = window.openai?.widgetState;
+  const initial = saved?.privateContent ?? saved ?? {};
+  const state = { mode: labels[initial.mode] ? initial.mode : 'thinking', playing: initial.playing !== false, hop: 2.5, dotPeriod: 1.35, hammerPeriod: 1.65 };
+  const buttons = [...root.querySelectorAll('[data-state]')];
+  const pause = root.querySelector('[data-pause]');
+  function render() {
+    root.classList.toggle('is-paused', !state.playing);
+    root.style.setProperty('--hop', state.hop + 'px');
+    root.style.setProperty('--dot-period', state.dotPeriod + 's');
+    root.style.setProperty('--hammer-period', state.hammerPeriod + 's');
+    buttons.forEach(button => button.setAttribute('aria-pressed', String(button.dataset.state === state.mode)));
+    pause.setAttribute('aria-pressed', String(!state.playing));
+    pause.textContent = state.playing ? '暂停动画' : '播放动画';
+    root.querySelector('.status-caption').textContent = labels[state.mode];
+    root.querySelectorAll('[data-slot]').forEach(slot => {
+      slot.setAttribute('aria-label', labels[state.mode]);
+      slot.querySelector('.typing').hidden = state.mode !== 'thinking';
+      slot.querySelector('.building').hidden = state.mode !== 'working';
+      slot.querySelector('.speed').hidden = state.mode !== 'generating' && state.mode !== 'multiple';
+      slot.querySelector('[data-rate]').textContent = state.mode === 'multiple' ? '126 T/s' : '48 T/s';
+    });
+  }
+  function persist() {
+    window.openai?.setWidgetState?.({ modelContent: { previewState: state.mode, thinkingMotion: 'staggered-bounce', executionMotion: 'hammer-strikes' }, privateContent: { mode: state.mode, playing: state.playing } })?.catch(() => {});
+  }
+  buttons.forEach(button => button.addEventListener('click', () => { state.mode = button.dataset.state; render(); persist(); }));
+  pause.addEventListener('click', () => { state.playing = !state.playing; render(); persist(); });
+  window.addEventListener('openai:set_globals', event => {
+    const updated = event.detail?.globals?.widgetState;
+    const restored = updated?.privateContent ?? updated;
+    if (restored && labels[restored.mode]) { state.mode = restored.mode; state.playing = restored.playing !== false; render(); }
+  });
+  render();
+  if (globalThis.Tweak) {
+    const tweak = new Tweak({ container: root.querySelector('.motion-stage'), onChange: render });
+    tweak.addSlider(state, 'hop', { label: '小点跳动高度', min: 1, max: 4, step: .5, unit: 'px' });
+    tweak.addSlider(state, 'dotPeriod', { label: '小点周期', min: .9, max: 2, step: .05, unit: 's' });
+    tweak.addSlider(state, 'hammerPeriod', { label: '敲击周期', min: 1.2, max: 2.4, step: .05, unit: 's' });
+  }
+})();
+</script>

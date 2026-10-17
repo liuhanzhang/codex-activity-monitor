@@ -1,0 +1,61 @@
+{
+  "version": 1,
+  "date": "2026-10-17",
+  "build_id": "5600242a86650af3ef6233efb48b6ca247df8164ea1afeb58a6c3f623de3033c",
+  "driver": "NSView display link",
+  "frame_rate_request": {
+    "minimum": 60,
+    "maximum": 120,
+    "preferred": 120
+  },
+  "native_builtin_probe": {
+    "executing": {
+      "callback_fps": 118.68465270849526,
+      "callbacks": 506,
+      "draw_calls": 506,
+      "draw_fps": 118.68465270849526,
+      "draws": 506,
+      "driver": "display-link",
+      "preferred_fps": 120,
+      "sample_seconds": 4.2633987499866635,
+      "screen_max_fps": 120
+    },
+    "idle": {
+      "callback_fps": 0,
+      "callbacks": 0,
+      "draw_calls": 1,
+      "draw_fps": 0.9985164126622379,
+      "draws": 1,
+      "driver": "none",
+      "preferred_fps": 0,
+      "sample_seconds": 1.0014857916394249,
+      "screen_max_fps": 120
+    },
+    "idle_animating": false,
+    "reduced_motion_animating": false,
+    "reduced_motion_callback_delta": 0,
+    "screen": "Built-in Retina Display",
+    "screen_max_fps": 120,
+    "thinking": {
+      "callback_fps": 117.55241673141357,
+      "callbacks": 501,
+      "draw_calls": 502,
+      "draw_fps": 117.78705229375173,
+      "draws": 502,
+      "driver": "display-link",
+      "preferred_fps": 120,
+      "sample_seconds": 4.261928541585803,
+      "screen_max_fps": 120
+    }
+  },
+  "targeted_swift_tests_passed": 2,
+  "runtime_reload": {
+    "old_lease_removed": true,
+    "new_lease_created": true,
+    "fresh_collector_snapshot": true
+  },
+  "limits": [
+    "Short isolated native window using the same StatusContentView, not a long-term power or frame-pacing study.",
+    "Callback and distinct presentation draw counts are CPU-side observations, not physical scanout measurements."
+  ]
+}

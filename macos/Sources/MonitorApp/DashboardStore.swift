@@ -17,6 +17,7 @@ final class DashboardStore {
     var snapshot: Snapshot?
     var readError: String?
     var menuTitle = "—"
+    var menuMode: MenuMode = .unavailable
     var fresh = false
     var management: ManagementState?
     var operationError: String?
@@ -24,6 +25,11 @@ final class DashboardStore {
     var loginEnabled = false
     var loginNeedsApproval = false
     var expanded: Set<String> = []
+    var showRecent = false
+    var dismissPresentation = 0
+    var panelMaxHeight: CGFloat = 520
+    private(set) var chatOrder: [String: Int] = [:]
+    private var nextChatRank = 0
     let configuration: BackendConfiguration
     let readOnly: Bool
     let dataRoot: String
@@ -73,8 +79,7 @@ final class DashboardStore {
                 case .success(let value): snapshot = value; readError = nil
                 case .failure: readError = L("暂时无法读取采集数据")
                 }
-                fresh = readError == nil && snapshot?.isFresh() == true
-                menuTitle = fresh ? (snapshot?.menuTitle() ?? "—") : "—"
+                updatePresentation()
                 if !readOnly && management?.configured == true && !fresh && !busy && !closing && Date() >= nextResume {
                     nextResume = Date().addingTimeInterval(5)
                     busy = true
@@ -86,6 +91,38 @@ final class DashboardStore {
                 try? await Task.sleep(for: .seconds(1))
             }
         }
+    }
+
+    func updatePresentation(at date: Date = Date()) {
+        fresh = readError == nil && snapshot?.isFresh(at: date) == true
+        menuTitle = fresh ? (snapshot?.menuTitle(at: date) ?? "—") : "—"
+        menuMode = fresh ? (snapshot?.menuMode(at: date) ?? .unavailable) : .unavailable
+        let chats = snapshot?.threads ?? []
+        let ids = Set(chats.map(\.id))
+        chatOrder = chatOrder.filter { ids.contains($0.key) }
+        expanded.formIntersection(ids)
+        for chat in chats where chatOrder[chat.id] == nil {
+            chatOrder[chat.id] = nextChatRank
+            nextChatRank += 1
+        }
+    }
+
+    var activeRows: [ChatRow] {
+        guard let snapshot else { return [] }
+        let roots = snapshot.rootChats.filter { snapshot.hasActiveWork(in: $0) }.sorted {
+            (chatOrder[$0.id] ?? Int.max) < (chatOrder[$1.id] ?? Int.max)
+        }
+        return snapshot.rows(roots: roots, expanded: expanded, order: chatOrder)
+    }
+
+    var recentRoots: [Chat] {
+        guard let snapshot else { return [] }
+        return snapshot.rootChats.filter { !snapshot.hasActiveWork(in: $0) }
+    }
+
+    var recentRows: [ChatRow] {
+        guard showRecent, let snapshot else { return [] }
+        return snapshot.rows(roots: recentRoots, expanded: expanded, order: chatOrder)
     }
 
     var connectionLabel: String {
@@ -102,6 +139,22 @@ final class DashboardStore {
 
     var bridgeNeedsRestart: Bool {
         snapshot?.backends?.values.contains { $0.connected == true && !$0.supportsObservationLease } == true
+    }
+
+    var compactConnectionLabel: String {
+        if !readOnly, let management, !management.configured { return L("未接入") }
+        if !fresh { return L("数据不可用") }
+        if snapshot?.overview?.coverage == "partial" { return L("部分观测") }
+        if snapshot?.backends?.values.contains(where: { $0.connected == true }) == true { return L("已连接") }
+        return L("等待接入")
+    }
+
+    var connectionDetail: String? {
+        if bridgeNeedsRestart { return L("旧接入仍在运行；任务结束后重开 Codex，以启用退出暂停采集。") }
+        if !readOnly, let management, !management.configured { return L(management.label) }
+        if !fresh { return connectionLabel }
+        if let notice = snapshot?.observationNotice { return L(notice.rawValue) }
+        return nil
     }
 
     private func bootstrap() async {

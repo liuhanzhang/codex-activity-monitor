@@ -1,0 +1,108 @@
+{
+  "date": "2026-10-16",
+  "environment": {
+    "arch": "arm64",
+    "macos": "27.0",
+    "build": "26A428",
+    "screen_frames_pt": [
+      [
+        0,
+        0,
+        1728,
+        1117
+      ],
+      [
+        -1083,
+        1117,
+        1920,
+        1080
+      ]
+    ],
+    "display_preferences_changed": false
+  },
+  "swift_build_id": "067bbb3ccc37774f09cda374edb89df901769c1963a6082c36585447d6a962b8",
+  "collector_source_sha256": "24a99dc60a82b7cd353e8d878e1ba9ef905878a14512b480dae2b2f0a0ebb1ad",
+  "collector_modules_verified": 13,
+  "tests": {
+    "python_focused": 102,
+    "swift_model": 15,
+    "swift_app": 8
+  },
+  "native_rate_matrix": [
+    {
+      "title": "0 T/s",
+      "mode": "speed",
+      "status_item_width_pt": 92
+    },
+    {
+      "title": "9 T/s",
+      "mode": "speed",
+      "status_item_width_pt": 92
+    },
+    {
+      "title": "48 T/s",
+      "mode": "speed",
+      "status_item_width_pt": 92
+    },
+    {
+      "title": "126 T/s",
+      "mode": "speed",
+      "status_item_width_pt": 92
+    },
+    {
+      "title": "9999 T/s",
+      "mode": "speed",
+      "status_item_width_pt": 92
+    },
+    {
+      "title": "—",
+      "mode": "unavailable",
+      "status_item_width_pt": 92
+    }
+  ],
+  "panel_content_pt": {
+    "default": [
+      420,
+      229
+    ],
+    "expanded_first_chat": [
+      420,
+      334
+    ],
+    "long_list_max_height": 520
+  },
+  "motion_sample": {
+    "thinking": {
+      "frames": 28,
+      "distinct_frames": 23
+    },
+    "hammer": {
+      "frames": 24,
+      "distinct_frames": 18
+    },
+    "source": "NativeStatusPreview uses same StatusContentView renderer; synthetic data; screenshot sequences, not whole menu bar recordings"
+  },
+  "daily_update": {
+    "new_native_ui_observed": true,
+    "collector_running_after_panel_close": true,
+    "integration_backup_preserved": true,
+    "connected_backends": 3,
+    "current_turn_quality": [
+      "observation_gap",
+      "thread_unavailable"
+    ],
+    "codex_or_bridge_restarted": false
+  },
+  "assets": {
+    "native-panel-expanded-preview.jpg": "cbd6e9c8fa4e86d3bacde342fd629a220241eec8a023e96074d1f426b11da733",
+    "native-panel-preview.jpg": "2a2c8501397535da2bc4d9889370434609614d9cbc8fa0d6af71cd421f9017d9"
+  },
+  "limits": [
+    "No direct automated system status-button double-toggle",
+    "No standalone Cmd-Tab validation",
+    "No exhaustive display scaling or Space matrix",
+    "No VoiceOver journey or sustained CPU and power benchmark",
+    "No new fully observed natural turn after collector reload",
+    "No public release or fresh-machine validation"
+  ]
+}

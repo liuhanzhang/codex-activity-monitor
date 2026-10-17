@@ -18,7 +18,7 @@ import Testing
         """
         let value = try Snapshot.decode(Data(json.utf8))
         #expect(value.menuTitle(at: Date(timeIntervalSince1970: 110)) == "—")
-        #expect(value.menuTitle(at: Date(timeIntervalSince1970: 101)) == (coverage == "complete" ? "12.0 t/s" : "—"))
+        #expect(value.menuTitle(at: Date(timeIntervalSince1970: 101)) == (coverage == "complete" ? "12 T/s" : "—"))
     }
 }
 
@@ -67,7 +67,7 @@ private func hierarchy(_ rows: String) throws -> Snapshot {
 }
 
 @Test func recentLimitNeverEvictsActiveChats() throws {
-    let recent = (0..<14).map { "{\"id\":\"r\($0)\",\"last_progress_seconds\":\($0)}" }
+    let recent = (0..<14).map { "{\"id\":\"r\($0)\",\"status\":\"completed\",\"last_progress_seconds\":\($0)}" }
     let value = try hierarchy((["{\"id\":\"active\",\"has_active_work\":true}", "{\"id\":\"old\",\"last_progress_seconds\":700}"] + recent).joined(separator: ","))
     #expect(value.displayedChats.count == 11)
     #expect(value.displayedChats.first?.threadID == "active")
