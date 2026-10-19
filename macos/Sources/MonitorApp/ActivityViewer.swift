@@ -139,7 +139,14 @@ private struct ActivityDetailView: View {
                     Text(store.phase.label).lineLimit(1).foregroundStyle(.secondary).help(store.phase.label)
                 }
                 Spacer(minLength: 8)
-                Text(L(store.phase.statusLabel)).foregroundStyle(.secondary)
+                HStack(spacing: 4) {
+                    if let symbol = TimelineDecoration.statusSymbol(for: store.phase) {
+                        Image(systemName: symbol)
+                            .foregroundStyle(Color(nsColor: TimelineDecoration.statusColor(for: store.phase)))
+                            .accessibilityHidden(true)
+                    }
+                    Text(L(store.phase.statusLabel)).foregroundStyle(.secondary)
+                }.accessibilityElement(children: .combine)
                 Text(durationText)
                     .monospacedDigit().foregroundStyle(.secondary)
                     .help(store.phase.start_source == "receipt" || store.phase.end_source == "receipt" ? L("接收事件窗口估算，并非服务端纯计算耗时。") : L("Codex 记录的活动生命周期。"))
@@ -151,6 +158,10 @@ private struct ActivityDetailView: View {
                 Text("·")
                 Text(L(store.phase.thread_id != store.timeline.thread ? "子智能体活动" :
                        store.phase.turn_id == store.timeline.bundle?.current_turn_id ? "当前轮" : "历史轮次"))
+                if store.phase.start_ms == nil || !(store.phase.quality ?? []).isEmpty {
+                    Text("·")
+                    Text(L("部分观测")).help(L("部分时间边界未被完整观测，未知耗时不会按短线宽度计算。"))
+                }
             }.font(.system(size: 10)).foregroundStyle(.tertiary)
         }
     }

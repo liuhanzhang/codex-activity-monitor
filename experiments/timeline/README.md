@@ -4,6 +4,8 @@
 
 ## 只读原生预览
 
+最新选中与结果状态见[选中与结果状态](../../docs/09_activity_timeline/selection-status.md)。夹具包含 90 秒失败长工具、5 毫秒失败短工具和无开始时间的阻止记录，用于检查淡蓝底衬、局部图标与详情文案。
+
 ```sh
 PYTHONPATH=src .local/venv/bin/python experiments/timeline/preview.py --output .local/gui-preview/runtime --keep-fresh
 bin/build-gui --preview
@@ -13,7 +15,7 @@ bin/build-gui --preview
 
 图中所有聊天、代码、输出与检查数量均为手写合成内容。不要把真实聊天截图放进 `docs/assets`。
 
-最新布局采用[来源时间方案](../../docs/09_activity_timeline/true-time-tools.md)，夹具新增持续 90 秒的工具及 5／10 毫秒短工具，检查局部叠色、粗线直接点击和多工具详情。夹具还包含 18 个毫秒级密集工具、旧 hook、4 秒上下文整理、原始命令／文件字段，以及多个区间重叠的工具和后续独立工具。菜单最多一屏 60 秒，90 秒轮次需要横向滚动；详情沿用同一比例，调整窗口只增减可见范围。最终交互结果见[来源时间验证](../../docs/09_activity_timeline/true-time-tools.md)，固定比例见[固定比例验证](../../docs/09_activity_timeline/fixed-scale.md)，叠放交互的前版证据见[布局验收](../../docs/09_activity_timeline/overlap-layout.md)。
+最新交互见[第二轮 UI/UX 调整](../../docs/09_activity_timeline/panel-ux-round2.md)，工具布局采用[来源时间方案](../../docs/09_activity_timeline/true-time-tools.md)，夹具新增持续 90 秒的工具及 5／10 毫秒短工具，检查局部叠色、粗线直接点击和多工具详情。夹具还包含 18 个毫秒级密集工具、旧 hook、4 秒上下文整理、原始命令／文件字段，以及多个区间重叠的工具和后续独立工具。菜单默认一屏 30 秒，可用加减按钮切换到 60 秒，90 秒轮次需要横向滚动；详情沿用所选比例，调整窗口只增减可见范围。最终交互结果见[来源时间验证](../../docs/09_activity_timeline/true-time-tools.md)，固定比例见[固定比例验证](../../docs/09_activity_timeline/fixed-scale.md)，叠放交互的前版证据见[布局验收](../../docs/09_activity_timeline/overlap-layout.md)。
 
 模型第三段还包含手写的 22 毫秒边界交叠，用于检查思考、正文、参数仍逐段展示且可直接打开详情；工具只在实际图形覆盖的位置叠色，点击直接查看命中的工具；不能把视觉交叠当作模型并行证据。
 

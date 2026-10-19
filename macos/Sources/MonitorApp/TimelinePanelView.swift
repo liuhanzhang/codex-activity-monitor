@@ -16,7 +16,7 @@ struct TimelinePanelView: View {
                     labels(lanes: store.lanes).frame(width: compact ? 78 : 116)
                     TimelineSurface(store: store, layout: layout, activities: bundle.allActivities,
                                     onSelect: onSelect ?? { store.open($0) })
-                        .frame(height: layout.height + 13)
+                        .frame(height: layout.height + 2)
                         .onGeometryChange(for: Double.self) { Double($0.size.width) } action: { viewportWidth = $0 }
                         .accessibilityIdentifier("monitor.timeline.surface")
                 }
@@ -67,6 +67,7 @@ struct TimelinePanelView: View {
         }
         .task(id: pollingEnabled) {
             guard pollingEnabled else { return }
+            if compact { store.prepareForPresentation() }
             while !Task.isCancelled {
                 await store.refresh()
                 do { try await Task.sleep(for: .seconds(1)) } catch { break }
@@ -87,8 +88,24 @@ struct TimelinePanelView: View {
                 }
             } else { Text(L("活动轨迹")).foregroundStyle(.secondary) }
             Spacer(minLength: 0)
-            Text(String(format: L("每屏 %d 秒"), Int(TimelineLayout.visibleSeconds(in: viewportWidth).rounded())))
-                .font(.system(size: 10)).foregroundStyle(.secondary)
+            HStack(spacing: 5) {
+                Button { store.zoom = .overview } label: {
+                    Image(systemName: "minus").frame(width: 18, height: 18).contentShape(Rectangle())
+                }
+                    .disabled(store.zoom == .overview)
+                    .help(L("缩小时间线：菜单宽度显示 60 秒"))
+                    .accessibilityLabel(L("缩小时间线"))
+                    .accessibilityIdentifier("monitor.timeline.zoom.out")
+                Text(String(format: L("每屏 %d 秒"), Int(TimelineLayout.visibleSeconds(in: viewportWidth, zoom: store.zoom).rounded())))
+                    .monospacedDigit().foregroundStyle(.secondary)
+                Button { store.zoom = .detail } label: {
+                    Image(systemName: "plus").frame(width: 18, height: 18).contentShape(Rectangle())
+                }
+                    .disabled(store.zoom == .detail)
+                    .help(L("放大时间线：菜单宽度显示 30 秒"))
+                    .accessibilityLabel(L("放大时间线"))
+                    .accessibilityIdentifier("monitor.timeline.zoom.in")
+            }.font(.system(size: 10)).controlSize(.mini)
         }.font(.system(size: 11)).buttonStyle(.plain)
     }
 
@@ -114,7 +131,7 @@ struct TimelinePanelView: View {
                         .frame(height: lane.height)
                 } else {
                     Text(L(lane.label))
-                        .help(lane.track == "tool" ? L("短工具以粗线标记；重叠处增强颜色，点击直接查看此处的工具详情。") : L(lane.label))
+                        .help(lane.track == "tool" ? L("短工具以粗线标记；重叠处增强颜色，点击直接查看此处的工具详情。") : L("短活动以粗线标记，符号宽度不代表耗时；点击查看活动详情。"))
                         .accessibilityLabel(L(lane.label))
                         .foregroundStyle(.secondary).padding(.leading, lane.isChild ? 10 : 0)
                         .frame(height: lane.height, alignment: .leading)

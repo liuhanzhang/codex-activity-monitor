@@ -75,7 +75,7 @@ public struct TimelinePhase: Decodable, Identifiable, Sendable {
         case "completed": "已完成"
         case "failed": "失败"
         case "interrupted": "已停止"
-        case "declined": "未执行"
+        case "declined": "已阻止，未执行"
         case "waiting": "等待执行"
         default: "部分观测"
         }
@@ -164,6 +164,13 @@ public struct TimelineLane: Identifiable, Sendable, Equatable {
     }
 }
 
+public enum TimelineZoom: Double, CaseIterable, Sendable {
+    case detail = 30
+    case overview = 60
+
+    public var pointsPerSecond: Double { (TimelineLayout.menuViewportWidth - 8) / rawValue }
+}
+
 public struct TimelineLayout: Sendable {
     public let origin: Double
     public let end: Double
@@ -172,20 +179,19 @@ public struct TimelineLayout: Sendable {
     public let lanes: [TimelineLane]
     private let rectangles: [String: CGRect]
     public static let axisHeight: Double = 25
-    public static let shortToolWidth: Double = 3
+    public static let shortActivityWidth: Double = 3
 
     public static let menuViewportWidth: Double = 291
-    public static let menuSeconds: Double = 60
-    public static let fixedScale: Double = (menuViewportWidth - 8) / menuSeconds
+    public static let defaultScale: Double = TimelineZoom.detail.pointsPerSecond
 
-    public static func visibleSeconds(in viewport: Double) -> Double {
-        max(0, viewport - 8) / fixedScale
+    public static func visibleSeconds(in viewport: Double, zoom: TimelineZoom = .detail) -> Double {
+        max(0, viewport - 8) / zoom.pointsPerSecond
     }
 
     public init(origin: Double, end: Double, now: Double, lanes: [TimelineLane],
-                activities: [TimelinePhase] = []) {
+                activities: [TimelinePhase] = [], zoom: TimelineZoom = .detail) {
         self.origin = origin; self.end = max(origin, end); self.now = now
-        let points = Self.fixedScale
+        let points = zoom.pointsPerSecond
         self.pointsPerSecond = points; self.lanes = lanes
         var frames: [String: CGRect] = [:]
         for phase in activities {
@@ -220,16 +226,14 @@ public struct TimelineLayout: Sendable {
             guard lane.threadID == phase.thread_id, lane.track == phase.displayTrack || lane.track == "summary" else { continue }
             let end = phase.start_ms == nil ? anchor : (phase.end_ms ?? (phase.isActive ? now : phase.observed_until_ms) ?? anchor)
             let width = phase.displayTrack == "tool"
-                ? max(shortToolWidth, (phase.duration(at: now) ?? 0) * points)
-                : max(1, max(0, end - anchor) / 1000 * points)
+                ? max(shortActivityWidth, (phase.duration(at: now) ?? 0) * points)
+                : max(shortActivityWidth, max(0, end - anchor) / 1000 * points)
             return CGRect(x: x, y: y + (lane.height - 11) / 2, width: width, height: 11)
         }
         return nil
     }
     public func hitRect(for phase: TimelinePhase) -> CGRect? {
-        guard let rect = rect(for: phase) else { return nil }
-        if phase.displayTrack == "tool" { return rect }
-        return rect.insetBy(dx: -max(0, (12 - rect.width) / 2), dy: -3)
+        rect(for: phase)
     }
     public func hitTest(_ point: CGPoint, phases: [TimelinePhase]) -> [TimelinePhase] {
         let actual = phases.filter { rect(for: $0)?.contains(point) == true }
@@ -241,7 +245,10 @@ public struct TimelineLayout: Sendable {
            before.maxX >= offset, before.minX <= offset + viewport {
             return max(0, offset + after.minX - before.minX)
         }
-        if old.origin != origin || old.pointsPerSecond != pointsPerSecond {
+        if old.pointsPerSecond != pointsPerSecond {
+            return max(0, x(at: old.time(at: offset + viewport / 2)) - viewport / 2)
+        }
+        if old.origin != origin {
             return max(0, x(at: old.time(at: offset)))
         }
         return offset

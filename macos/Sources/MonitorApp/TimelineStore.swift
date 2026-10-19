@@ -16,6 +16,7 @@ final class TimelineStore {
     var expandedAgents: Set<String> = []
     var scrollOffset: Double = 0
     var followsLatest = true
+    var zoom: TimelineZoom = .detail
     var selectedPhaseID: String?
     var selectedPhaseIDs: Set<String> = []
     var onOpen: ((TimelineStore, [TimelinePhase]) -> Void)?
@@ -35,6 +36,10 @@ final class TimelineStore {
             guard !Task.isCancelled, token == serial else { return }
             guard next.scope_id == scope, next.thread_id == thread else {
                 throw BackendFailure(message: L("轨迹身份不匹配"))
+            }
+            if followsCurrentTurn, selectedTurn != next.selected_turn_id {
+                followsLatest = true; scrollOffset = 0
+                selectedPhaseID = nil; selectedPhaseIDs = []
             }
             bundle = next; selectedTurn = next.selected_turn_id; error = nil
         } catch is CancellationError { }
@@ -68,12 +73,19 @@ final class TimelineStore {
         selectedTurn = bundle?.current_turn_id ?? bundle?.turns.first?.id
     }
 
+    func prepareForPresentation() {
+        guard let bundle,
+              bundle.turns.contains(where: { $0.turn_id == bundle.current_turn_id && $0.status == "active" })
+                || bundle.phases.contains(where: \.isActive) else { return }
+        latest()
+    }
+
     var lanes: [TimelineLane] { bundle.map { TimelineLane.lanes(in: $0, expanded: expandedAgents) } ?? [] }
     var switchingTurn: Bool { bundle != nil && selectedTurn != bundle?.selected_turn_id }
     var layout: TimelineLayout? {
         guard let bundle, let origin = bundle.origin_ms else { return nil }
         return TimelineLayout(origin: origin, end: bundle.end_ms ?? origin, now: bundle.now_ms,
-                              lanes: lanes, activities: bundle.allActivities)
+                              lanes: lanes, activities: bundle.allActivities, zoom: zoom)
     }
 }
 

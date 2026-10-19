@@ -15,7 +15,7 @@ func timelinePhase(_ fields: [String: Any] = [:]) throws -> TimelinePhase {
     let lane = TimelineLane(id: "model", threadID: "root", track: "model", label: "模型", height: 21, isChild: false)
     let a = TimelineLayout(origin: 0, end: 300000, now: 3000, lanes: [lane])
     let b = TimelineLayout(origin: 0, end: 600000, now: 3000, lanes: [lane])
-    #expect(a.rect(for: p).map { Double($0.width) } == 2 * TimelineLayout.fixedScale)
+    #expect(a.rect(for: p).map { Double($0.width) } == 2 * TimelineLayout.defaultScale)
     #expect(b.rect(for: p) == a.rect(for: p))
     #expect(a.width(viewport: 300) > 1200)
     #expect(abs(a.time(at: a.x(at: 12458)) - 12458) < 0.000001)
@@ -26,8 +26,8 @@ func timelinePhase(_ fields: [String: Any] = [:]) throws -> TimelinePhase {
     let lane = TimelineLane(id: "model", threadID: "root", track: "model", label: "模型", height: 21, isChild: false)
     let layout = TimelineLayout(origin: 0, end: 3000, now: 3000, lanes: [lane])
     let rect = try #require(layout.rect(for: p)), hit = try #require(layout.hitRect(for: p))
-    #expect(rect.width == 1)
-    #expect(hit.width == 12)
+    #expect(rect.width == 3)
+    #expect(hit == rect)
     #expect(rect.midX == hit.midX)
     #expect(abs(Double(rect.minX) - layout.x(at: 1000)) < 0.000001)
 }
@@ -88,7 +88,7 @@ private func toolsLayout(_ phases: [TimelinePhase], now: Double = 5000,
     let layout = toolsLayout(tools), reversed = toolsLayout(Array(tools.reversed()))
     for tool in tools {
         let rect = try #require(layout.rect(for: tool))
-        #expect(Double(rect.width) == TimelineLayout.shortToolWidth)
+        #expect(Double(rect.width) == TimelineLayout.shortActivityWidth)
         #expect(layout.hitRect(for: tool) == rect)
         #expect(reversed.rect(for: tool) == rect)
         #expect(Double(rect.minX) == layout.x(at: tool.start_ms!))
@@ -119,12 +119,12 @@ private func toolsLayout(_ phases: [TimelinePhase], now: Double = 5000,
     let model = try timelinePhase(["id": "model"])
     let layout = toolsLayout([b, model, a], end: 301000)
     let ra = try #require(layout.rect(for: a)), rb = try #require(layout.rect(for: b))
-    #expect(abs(Double(ra.width) - 300 * TimelineLayout.fixedScale) < 0.000001)
-    #expect(abs(Double(rb.width) - 200 * TimelineLayout.fixedScale) < 0.000001)
+    #expect(abs(Double(ra.width) - 300 * TimelineLayout.defaultScale) < 0.000001)
+    #expect(abs(Double(rb.width) - 200 * TimelineLayout.defaultScale) < 0.000001)
     #expect(rb.minX == ra.minX)
     #expect(layout.rect(for: model).map { Double($0.minX) } == layout.x(at: 1000))
-    #expect(layout.rect(for: model).map { Double($0.width) } == 2 * TimelineLayout.fixedScale)
-    #expect(abs(layout.width(viewport: 300) - (301 * TimelineLayout.fixedScale + 8)) < 0.000001)
+    #expect(layout.rect(for: model).map { Double($0.width) } == 2 * TimelineLayout.defaultScale)
+    #expect(abs(layout.width(viewport: 300) - (301 * TimelineLayout.defaultScale + 8)) < 0.000001)
     #expect(a.duration(at: 5000) == 300 && b.duration(at: 5000) == 200)
     #expect(layout.end == 301000)
 }
@@ -149,21 +149,21 @@ private func toolsLayout(_ phases: [TimelinePhase], now: Double = 5000,
 @Test func unknownToolDurationUsesSelectableWidthWithoutInventingTime() throws {
     let tool = try timelinePhase(["track": "tool", "kind": "tool_execution", "start_ms": NSNull(), "quality": ["start_unknown"]])
     let layout = toolsLayout([tool])
-    #expect(layout.rect(for: tool).map { Double($0.width) } == TimelineLayout.shortToolWidth)
+    #expect(layout.rect(for: tool).map { Double($0.width) } == TimelineLayout.shortActivityWidth)
     #expect(tool.duration(at: 5000) == nil)
     #expect(layout.rect(for: tool).map { Double($0.minX) } == layout.x(at: 3000))
 }
 
 @Test func fixedScaleIgnoresTurnLengthAndOnlyViewportChangesVisibleTime() throws {
     let lane = TimelineLane(id: "model", threadID: "root", track: "model", label: "模型", height: 21, isChild: false)
-    let short = TimelineLayout(origin: 1000, end: 61000, now: 61000, lanes: [lane], activities: [])
-    let longer = TimelineLayout(origin: 1000, end: 61001, now: 61001, lanes: [lane], activities: [])
+    let short = TimelineLayout(origin: 1000, end: 31000, now: 31000, lanes: [lane], activities: [])
+    let longer = TimelineLayout(origin: 1000, end: 31001, now: 31001, lanes: [lane], activities: [])
     let hour = TimelineLayout(origin: 1000, end: 3601000, now: 3601000, lanes: [lane], activities: [])
     #expect(short.width(viewport: 291) == 291)
-    #expect(abs(short.pointsPerSecond - 283.0 / 60) < 0.00001)
+    #expect(abs(short.pointsPerSecond - 283.0 / 30) < 0.00001)
     #expect(short.pointsPerSecond == longer.pointsPerSecond && longer.pointsPerSecond == hour.pointsPerSecond)
-    #expect(TimelineLayout.visibleSeconds(in: 291) == 60)
-    #expect(TimelineLayout.visibleSeconds(in: 574) == 120)
+    #expect(TimelineLayout.visibleSeconds(in: 291) == 30)
+    #expect(TimelineLayout.visibleSeconds(in: 574) == 60)
     #expect(hour.width(viewport: 291) > 16000)
     let p = try timelinePhase()
     #expect(short.rect(for: p) == hour.rect(for: p))
@@ -192,9 +192,24 @@ private func toolsLayout(_ phases: [TimelinePhase], now: Double = 5000,
     let layout = toolsLayout([hook, compaction])
     #expect(layout.rect(for: hook) == nil)
     #expect(layout.hitRect(for: hook) == nil)
-    #expect(layout.rect(for: compaction).map { Double($0.width) } == 2 * TimelineLayout.fixedScale)
+    #expect(layout.rect(for: compaction).map { Double($0.width) } == 2 * TimelineLayout.defaultScale)
     #expect(compaction.kindLabel == "整理上下文")
     #expect(compaction.namespace == "canonical")
+}
+
+@Test func twoZoomLevelsPreserveSourceTimeAndReadingFocus() throws {
+    let phase = try timelinePhase(["start_ms": 40000, "end_ms": 42000])
+    let lanes = [TimelineLane(id: "model", threadID: "root", track: "model", label: "模型", height: 21, isChild: false)]
+    let overview = TimelineLayout(origin: 0, end: 90000, now: 90000, lanes: lanes, activities: [phase], zoom: .overview)
+    let detail = TimelineLayout(origin: 0, end: 90000, now: 90000, lanes: lanes, activities: [phase], zoom: .detail)
+    #expect(TimelineLayout.visibleSeconds(in: 291, zoom: .overview) == 60)
+    #expect(detail.rect(for: phase)!.width == 2 * overview.rect(for: phase)!.width)
+    #expect(phase.duration(at: 90000) == 2)
+    let offset = 90.0, viewport = 291.0
+    let centered = detail.readingOffset(from: overview, offset: offset, selectedID: nil, viewport: viewport)
+    #expect(abs(detail.time(at: centered + viewport / 2) - overview.time(at: offset + viewport / 2)) < 0.001)
+    let selected = detail.readingOffset(from: overview, offset: offset, selectedID: phase.id, viewport: viewport)
+    #expect(abs((detail.rect(for: phase)!.minX - selected) - (overview.rect(for: phase)!.minX - offset)) < 0.001)
 }
 
 @Test func rawDetailNoticeIsOptionalAndEmptyValuesAreNotMissing() throws {

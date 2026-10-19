@@ -15,9 +15,39 @@ import MonitorModel
         "tool_input": shade(0x6A429E, 0xC3A2E1), "file_edit_input": shade(0x4F2B77, 0xDCBAF1),
         "tool_execution": shade(0x965916, 0xD49B57), "contextCompaction": shade(0x567D85, 0x82ACB4)]
     static let toolOpacity: Double = 0.72
+    static var selectionColor: NSColor { NSColor.systemBlue.withAlphaComponent(0.16) }
     static func color(for kind: String) -> NSColor { shades[kind] ?? .secondaryLabelColor }
     static func color(_ phase: TimelinePhase) -> NSColor {
         color(for: phase.kind)
+    }
+}
+
+@MainActor enum TimelineDecoration {
+    static func selectionRect(for rect: CGRect) -> CGRect {
+        let width = max(11, rect.width + 8)
+        return CGRect(x: rect.midX - width / 2, y: rect.minY - 3, width: width, height: rect.height + 6)
+    }
+
+    static func statusSymbol(for phase: TimelinePhase) -> String? {
+        switch phase.status {
+        case "failed": "xmark"
+        case "declined": "hand.raised.fill"
+        default: nil
+        }
+    }
+
+    static func statusColor(for phase: TimelinePhase) -> NSColor {
+        phase.status == "failed" ? .systemRed : .secondaryLabelColor
+    }
+
+    static func statusRect(for phase: TimelinePhase, layout: TimelineLayout, viewport: CGRect) -> CGRect? {
+        guard statusSymbol(for: phase) != nil, let end = phase.end_ms, end.isFinite,
+              phase.duration(at: layout.now) != nil, let rect = layout.rect(for: phase), rect.width >= 12 else { return nil }
+        let endX = layout.x(at: end)
+        let badge = CGRect(x: endX - 10, y: rect.midY - 4, width: 8, height: 8)
+        // Never pin a result to the viewport edge or stretch a short source interval.
+        guard endX >= viewport.minX, endX <= viewport.maxX, rect.contains(badge), viewport.contains(badge) else { return nil }
+        return badge
     }
 }
 
@@ -56,7 +86,9 @@ struct TimelineSurface: NSViewRepresentable {
         let scroll = TimelineScrollView()
         scroll.drawsBackground = false
         scroll.hasHorizontalScroller = true; scroll.hasVerticalScroller = false
-        scroll.autohidesScrollers = false; scroll.borderType = .noBorder
+        scroll.scrollerStyle = .overlay
+        scroll.horizontalScroller?.controlSize = .small
+        scroll.autohidesScrollers = true; scroll.borderType = .noBorder
         scroll.horizontalScrollElasticity = .none; scroll.verticalScrollElasticity = .none
         let document = TimelineDocumentView()
         document.setAccessibilityRole(.group)
@@ -138,6 +170,8 @@ struct TimelineSurface: NSViewRepresentable {
                               abs(document.viewportWidth - scroll.contentSize.width) <= 0.5 else { return }
                         self.store.scrollOffset = scroll.contentView.bounds.minX
                         let maximum = max(0, document.frame.width - scroll.contentSize.width)
+                        // Our layout changes are guarded by `updating`; external scrolling,
+                        // including accessibility actions, preserves the reading position.
                         if self.store.scrollOffset < maximum - 3 { self.store.followsLatest = false }
                     }
                 }
@@ -169,8 +203,12 @@ final class TimelineAccessibleElement: NSAccessibilityElement, @unchecked Sendab
 @MainActor final class TimelineDocumentView: NSView {
     var layout: TimelineLayout?
     var activities: [TimelinePhase] = []
-    var selectedIDs: Set<String> = []
-    var turn: String?
+    var selectedIDs: Set<String> = [] {
+        didSet { if oldValue != selectedIDs { keyboardID = nil } }
+    }
+    var turn: String? {
+        didSet { if oldValue != turn { keyboardID = nil } }
+    }
     var onSelect: (([TimelinePhase]) -> Void)?
     var onInteraction: (() -> Void)?
     var viewportWidth = TimelineLayout.menuViewportWidth
@@ -180,17 +218,19 @@ final class TimelineAccessibleElement: NSAccessibilityElement, @unchecked Sendab
     private var accessibleElements: [String: TimelineAccessibleElement] = [:]
     override var isFlipped: Bool { true }
     override var acceptsFirstResponder: Bool { true }
+    var highlightedIDs: Set<String> { keyboardID.map { Set([$0]) } ?? selectedIDs }
 
     private func activityLabel(_ phase: TimelinePhase) -> String {
         let agent = layout?.lanes.first {
             $0.threadID == phase.thread_id && ($0.track == "header" || $0.track == "summary")
         }?.label ?? L("主智能体")
-        return agent + " · " + phase.accessibleLabel(at: layout?.now ?? 0)
+        let partial = phase.start_ms == nil || !(phase.quality ?? []).isEmpty
+        return agent + " · " + phase.accessibleLabel(at: layout?.now ?? 0) + (partial ? " · " + L("部分观测") : "")
     }
 
     override func draw(_ dirtyRect: NSRect) {
         guard let layout else { return }
-        let visible = visibleRect.intersection(dirtyRect).insetBy(dx: -3, dy: 0)
+        let visible = visibleRect.intersection(dirtyRect).insetBy(dx: -5, dy: 0)
         let tick = layout.tickSeconds
         let lower = floor((layout.time(at: visible.minX) - layout.origin) / 1000 / tick) * tick
         let upper = (layout.time(at: visible.maxX) - layout.origin) / 1000
@@ -203,6 +243,12 @@ final class TimelineAccessibleElement: NSAccessibilityElement, @unchecked Sendab
                 .font: NSFont.monospacedDigitSystemFont(ofSize: 9, weight: .regular), .foregroundColor: NSColor.secondaryLabelColor])
         }
         let phases = activities.filter { layout.rect(for: $0)?.intersects(visible) == true }
+        let selection = NSBezierPath()
+        for phase in phases where highlightedIDs.contains(phase.id) {
+            guard let rect = layout.rect(for: phase) else { continue }
+            selection.append(NSBezierPath(roundedRect: TimelineDecoration.selectionRect(for: rect), xRadius: 4, yRadius: 4))
+        }
+        TimelinePalette.selectionColor.setFill(); selection.fill()
         // Each source interval paints only itself. Alpha composition emphasizes local
         // overlap and naturally saturates; no connected-component grouping is needed.
         for phase in phases {
@@ -212,21 +258,12 @@ final class TimelineAccessibleElement: NSAccessibilityElement, @unchecked Sendab
             path(for: phase, in: rect).fill()
         }
         for phase in phases {
-            guard let rect = layout.rect(for: phase) else { continue }
-            if phase.start_ms == nil || !(phase.quality ?? []).isEmpty {
-                NSColor.secondaryLabelColor.withAlphaComponent(0.65).setStroke()
-                let outline = path(for: phase, in: rect)
-                outline.lineWidth = 0.7; outline.setLineDash([2, 2], count: 2, phase: 0); outline.stroke()
-            }
-            if phase.status == "failed" || phase.status == "interrupted" {
-                NSColor.systemRed.setStroke()
-                let failure = NSBezierPath(); failure.move(to: NSPoint(x: rect.minX, y: rect.maxY))
-                failure.line(to: NSPoint(x: rect.maxX, y: rect.maxY)); failure.lineWidth = 1.5; failure.stroke()
-            }
-            if selectedIDs.contains(phase.id) || phase.id == keyboardID {
-                NSColor.labelColor.setStroke()
-                let outline = path(for: phase, in: rect); outline.lineWidth = 1.5; outline.stroke()
-            }
+            guard let name = TimelineDecoration.statusSymbol(for: phase),
+                  let rect = TimelineDecoration.statusRect(for: phase, layout: layout, viewport: visibleRect) else { continue }
+            let configuration = NSImage.SymbolConfiguration(pointSize: 8, weight: .semibold)
+                .applying(NSImage.SymbolConfiguration(paletteColors: [TimelineDecoration.statusColor(for: phase)]))
+            NSImage(systemSymbolName: name, accessibilityDescription: nil)?.withSymbolConfiguration(configuration)?
+                .draw(in: rect, from: .zero, operation: .sourceOver, fraction: 1, respectFlipped: true, hints: nil)
         }
     }
 
@@ -255,6 +292,7 @@ final class TimelineAccessibleElement: NSAccessibilityElement, @unchecked Sendab
         activate(at: convert(event.locationInWindow, from: nil))
     }
     func activate(at point: CGPoint) {
+        keyboardID = nil
         onInteraction?()
         let selected = selection(at: point)
         if !selected.isEmpty { onSelect?(selected) }
@@ -283,12 +321,13 @@ final class TimelineAccessibleElement: NSAccessibilityElement, @unchecked Sendab
         let ordered = activities.filter { layout?.rect(for: $0) != nil }.sorted { ($0.anchor ?? 0, $0.id) < ($1.anchor ?? 0, $1.id) }
         guard !ordered.isEmpty else { return }
         if [123, 124, 125, 126].contains(event.keyCode) {
-            let index = ordered.firstIndex { $0.id == keyboardID } ?? (event.keyCode == 123 || event.keyCode == 126 ? ordered.count : -1)
+            let currentID = keyboardID ?? ordered.first(where: { selectedIDs.contains($0.id) })?.id
+            let index = ordered.firstIndex { $0.id == currentID } ?? (event.keyCode == 123 || event.keyCode == 126 ? ordered.count : -1)
             let delta = event.keyCode == 123 || event.keyCode == 126 ? -1 : 1
             let phase = ordered[max(0, min(ordered.count - 1, index + delta))]
             keyboardID = phase.id; onInteraction?()
             if let rect = layout?.rect(for: phase) { scrollToVisible(rect.insetBy(dx: -10, dy: 0)) }
-            setAccessibilityValue(activityLabel(phase)); needsDisplay = true
+            setAccessibilityValue(activityLabel(phase)); needsDisplay = true; refreshAccessibility()
         } else if event.keyCode == 36 || event.keyCode == 49 {
             if let phase = ordered.first(where: { $0.id == keyboardID }) ?? ordered.first { onSelect?([phase]) }
         } else { super.keyDown(with: event) }
@@ -306,7 +345,10 @@ final class TimelineAccessibleElement: NSAccessibilityElement, @unchecked Sendab
             element.setAccessibilityRole(.button); element.setAccessibilityLabel(activityLabel(phase))
             element.setAccessibilityEnabled(true); element.setAccessibilityIdentifier("monitor.activity." + phase.id)
             element.setAccessibilityParent(self); element.setAccessibilityFrame(window.convertToScreen(convert(rect, to: nil)))
-            element.setAction { [weak self] in self?.onSelect?([phase]) }; children.append(element)
+            element.setAccessibilitySelected(highlightedIDs.contains(phase.id))
+            element.setAction { [weak self] in
+                self?.keyboardID = nil; self?.onInteraction?(); self?.onSelect?([phase])
+            }; children.append(element)
         }
         accessibleElements = accessibleElements.filter { visibleIDs.contains($0.key) }
         setAccessibilityChildren(children)

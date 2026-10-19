@@ -105,10 +105,10 @@ private func phase(_ id: String) throws -> TimelinePhase {
     scroll.documentView = view
     let before = view.activities.map { view.layout!.rect(for: $0) }
     coordinator.resize(scroll, viewport: 600)
-    #expect(view.layout!.pointsPerSecond == TimelineLayout.fixedScale)
+    #expect(view.layout!.pointsPerSecond == TimelineLayout.defaultScale)
     #expect(view.activities.map { view.layout!.rect(for: $0) } == before)
     coordinator.resize(scroll, viewport: 291)
-    #expect(abs(view.layout!.pointsPerSecond - 283.0 / 60) < 0.000001)
+    #expect(abs(view.layout!.pointsPerSecond - 283.0 / 30) < 0.000001)
     #expect(view.viewportWidth == 291)
     #expect(view.layout?.rect(for: view.activities[2]).map { Double($0.minX) } == view.layout?.x(at: 32000))
 }
@@ -147,7 +147,7 @@ private func phase(_ id: String) throws -> TimelinePhase {
         scroll.setFrameSize(NSSize(width: width, height: 80))
         coordinator.resize(scroll, viewport: width)
         #expect(abs(scroll.contentView.bounds.maxX - view.frame.width) < 0.001)
-        #expect(view.layout!.pointsPerSecond == TimelineLayout.fixedScale)
+        #expect(view.layout!.pointsPerSecond == TimelineLayout.defaultScale)
     }
 }
 
@@ -166,6 +166,37 @@ private func phase(_ id: String) throws -> TimelinePhase {
     #expect(store.selectedTurn == "old")
     #expect(store.bundle?.selected_turn_id == "old")
     #expect(!store.followsCurrentTurn)
+}
+
+@Test @MainActor func reopeningRunningTimelineAndNewTurnRestoreFollowing() async throws {
+    let client = ControlledTimelineClient()
+    let store = TimelineStore(scope: "scope", thread: "root", title: "test", client: client)
+    store.bundle = try bundle("new"); store.selectedTurn = "new"
+    store.followsLatest = false; store.scrollOffset = 100
+    store.prepareForPresentation()
+    #expect(store.followsLatest && store.followsCurrentTurn)
+    store.followsLatest = false
+    store.selectedPhaseID = "old-phase"; store.selectedPhaseIDs = ["old-phase"]
+    let refresh = Task { await store.refresh() }
+    await client.waitFor("current")
+    await client.resolve("current", bundle: try bundle("next"))
+    await refresh.value
+    #expect(store.followsLatest && store.scrollOffset == 0)
+    #expect(store.selectedPhaseIDs.isEmpty)
+}
+
+@Test @MainActor func externalScrollPausesFollowingWithoutRequiringAMouseEvent() throws {
+    let view = try overlappingDocument()
+    let store = TimelineStore(scope: "scope", thread: "root", title: "test", client: ControlledTimelineClient())
+    let coordinator = TimelineSurface.Coordinator(store: store)
+    let scroll = TimelineScrollView(frame: NSRect(x: 0, y: 0, width: 291, height: 80))
+    scroll.documentView = view
+    coordinator.observe(scroll)
+    defer { coordinator.stop() }
+    scroll.contentView.postsBoundsChangedNotifications = true
+    scroll.contentView.scroll(to: CGPoint(x: 10, y: 0))
+    NotificationCenter.default.post(name: NSView.boundsDidChangeNotification, object: scroll.contentView)
+    #expect(!store.followsLatest)
 }
 
 @Test @MainActor func lateDetailCannotChangeNewActivitySelection() async throws {

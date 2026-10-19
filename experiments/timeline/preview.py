@@ -25,7 +25,7 @@ def fixtures(base, now):
              'start_source': 'producer', 'end_source': 'producer', 'quality': quality or []}
         phases.append(p); return p
     phase('input-initial', 'input', 0, 0)['is_initial'] = True
-    phase('background-long', 'tool_execution', 0, 90, label='持续运行的预览服务')
+    phase('background-long', 'tool_execution', 0, 90, label='持续运行的预览服务', state='failed')
     phase('thinking-1', 'reasoning', 0, 10)
     phase('text-1', 'text', 10, 13)
     phase('params-1', 'tool_input', 13, 17)
@@ -52,10 +52,15 @@ def fixtures(base, now):
     phase('text-3', 'text', 65.978, 70)
     phase('params-3', 'tool_input', 69.978, 76)
     phase('tool-3', 'tool_execution', 76, 82, label='读取验证结果')
+    phase('failed-short', 'tool_execution', 84, 84.005, label='未通过的快速检查', state='failed')
+    phase('unknown-params', 'tool_input', None, 79, quality=['start_unknown'])
+    phase('short-model', 'reasoning', 80, 80.046)
     phase('text-live', 'text', 82, None, state='active')
     phase('review-model', 'reasoning', 15, 36, thread='review', turn='review-turn')
     phase('review-tool', 'tool_execution', 36, 58, thread='review', turn='review-turn', label='审查文件')
     phase('review-result', 'text', 59, 69, thread='review', turn='review-turn')
+    phase('blocked-command', 'tool_execution', None, 78, thread='review', turn='review-turn',
+          label='需要审核的命令', state='declined')
     phase('search-model', 'tool_input', 44, 50, thread='search', turn='search-turn')
     phase('search-tool', 'tool_execution', 50, 74, thread='search', turn='search-turn', label='搜索相关资料')
     phase('search-result', 'text', 75, 86, thread='search', turn='search-turn')
@@ -74,6 +79,10 @@ def fixtures(base, now):
     details = {}
     for p in phases:
         kind = p['kind']; format = 'text'; title = '正文'
+        if p['status'] == 'declined':
+            details[p['id']] = {'version': 1, 'state': 'no_content', 'phase': p, 'sections': [],
+                                'attachments': [], 'source': 'synthetic'}
+            continue
         if kind == 'contextCompaction':
             details[p['id']] = {'version': 1, 'state': 'no_content', 'phase': p, 'sections': [],
                                 'attachments': [], 'source': 'synthetic'}
@@ -88,7 +97,8 @@ def fixtures(base, now):
             body = 'const result = await tools.exec_command({cmd: "python3 -B -c \'print(42)\'"});\ntext(result.output);'
             format = 'code'; title = '参数／代码'
         elif kind == 'tool_execution':
-            body = '验证完成：全部 25 项检查通过。\n未发现不匹配的活动身份。\n时间线保留独立的模型与工具阶段。'
+            body = ('合成失败记录：退出码 1，用于检查失败状态。' if p['status'] == 'failed' else
+                    '验证完成：全部 25 项检查通过。\n未发现不匹配的活动身份。\n时间线保留独立的模型与工具阶段。')
             format = 'code'; title = '输出'
         elif kind == 'reasoning':
             body = '先检查事件中提供的稳定身份和时间边界，再按来源类型组织轨道。对缺少开始时间的活动保留未知状态。'
@@ -107,7 +117,8 @@ def fixtures(base, now):
                 'changes': {'Monitor.swift': {'unified_diff': '@@\n- old()\n+ new()'}}})
         elif kind == 'tool_execution':
             sections, _ = item_content({'type': 'CommandExecution', 'command': ['python3', '-c', 'print(42)'],
-                'cwd': '/example/monitor', 'aggregated_output': body, 'exit_code': 0,
+                'cwd': '/example/monitor', 'aggregated_output': body, 'exit_code': 1 if p['status'] == 'failed' else 0,
+                'status': p['status'],
                 'duration': {'secs': 0, 'nanos': 1000000}})
         for s in sections:
             s.update(offset=0, total_chars=len(s['text']), next_offset=None)
