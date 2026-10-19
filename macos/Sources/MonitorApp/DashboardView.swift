@@ -12,7 +12,7 @@ struct DashboardView: View {
     @State private var restoreRequest: RestoreRequest?
     @State private var listHeight: CGFloat = 88
     @State private var topHeight: CGFloat = 44
-    @State private var bottomHeight: CGFloat = 30
+    @State private var bottomHeight: CGFloat = 0
     @State private var noticeExpanded = false
 
     var body: some View {
@@ -33,6 +33,12 @@ struct DashboardView: View {
             Divider()
             ScrollView {
                 VStack(spacing: 0) {
+                    HStack(spacing: 6) {
+                        Text(L("正在进行")).fontWeight(.medium)
+                        Text(store.fresh ? String(store.activeRows.count) : "—").foregroundStyle(.secondary)
+                        Spacer()
+                    }
+                    .font(.system(size: 11)).padding(.horizontal, 14).padding(.top, 12).padding(.bottom, 4)
                     if store.activeRows.isEmpty {
                         Text(L("当前没有活跃聊天"))
                             .font(.system(size: 12)).foregroundStyle(.secondary)
@@ -43,23 +49,22 @@ struct DashboardView: View {
                         Divider().padding(.horizontal, 14)
                     }
                     if !store.recentRoots.isEmpty {
-                        Button { store.showRecent.toggle() } label: {
+                        PanelDisclosureGroup(isExpanded: $store.showRecent) {
+                            ForEach(store.recentRows) { row in
+                                ChatRowView(chat: row.chat, depth: row.depth, store: store, horizontalPadding: 0)
+                                Divider()
+                            }
+                        } label: {
                             HStack(spacing: 8) {
-                                Image(systemName: store.showRecent ? "chevron.down" : "chevron.right")
-                                    .font(.system(size: 9, weight: .medium)).frame(width: 10)
                                 Text(L("最近完成"))
                                 Text("\(store.recentRoots.count)").foregroundStyle(.secondary)
                                 Spacer()
                             }
-                            .font(.system(size: 12)).padding(.horizontal, 14).padding(.vertical, 12)
+                            .font(.system(size: 11, weight: .medium)).padding(.vertical, 12)
                             .contentShape(Rectangle())
+                            .accessibilityIdentifier("monitor.recent")
                         }
-                        .buttonStyle(.plain).accessibilityIdentifier("monitor.recent")
-                        .accessibilityValue(store.showRecent ? L("已展开") : L("已折叠"))
-                        ForEach(store.recentRows) { row in
-                            ChatRowView(chat: row.chat, depth: row.depth, store: store)
-                            Divider().padding(.horizontal, 14)
-                        }
+                        .font(.system(size: 12)).padding(.horizontal, 14)
                     }
                 }
                 .frame(maxWidth: .infinity).fixedSize(horizontal: false, vertical: true)
@@ -67,8 +72,14 @@ struct DashboardView: View {
             }
             .frame(height: min(listHeight, max(64, store.panelMaxHeight - topHeight - bottomHeight - 2)))
             .scrollBounceBehavior(.basedOnSize)
-            Divider()
-            footer.padding(.horizontal, 14).padding(.vertical, 8)
+            // Reset the list position only for a newly opened panel, not a snapshot refresh.
+            .id(store.presentationID)
+            VStack(spacing: 0) {
+                if store.readOnly || store.testProfile != nil || store.busy {
+                    Divider()
+                    footer.padding(.horizontal, 14).padding(.vertical, 8)
+                }
+            }
                 .onGeometryChange(for: CGFloat.self) { $0.size.height } action: { bottomHeight = $0 }
         }
         .frame(width: 420)
@@ -84,13 +95,16 @@ struct DashboardView: View {
 
     private var header: some View {
         HStack(spacing: 8) {
+            Text(L("工作概览")).fontWeight(.semibold)
+            Spacer(minLength: 6)
+            if store.menuTitle != "—", let rate = store.snapshot?.overview?.generation_rate, rate > 0 {
+                Text(MetricFormat.compactSpeed(rate)).font(.system(size: 11)).monospacedDigit().fixedSize()
+                    .help(L("已接入聊天的生成总速度") + " " + store.menuTitle)
+            }
             Circle().fill(store.fresh && store.snapshot?.backends?.values.contains(where: { $0.connected == true }) == true ? .green : .secondary)
                 .frame(width: 6, height: 6).accessibilityHidden(true)
-            Text(store.compactConnectionLabel).lineLimit(1).help(store.connectionLabel)
-            Spacer(minLength: 6)
-            Text(store.menuTitle == "—" ? "—" : MetricFormat.compactSpeed(store.snapshot?.overview?.generation_rate)).fontWeight(.medium).monospacedDigit().fixedSize()
-                .help(L("已接入聊天的生成总速度") + " " + store.menuTitle)
-                .accessibilityLabel(L("已接入聊天的生成总速度") + " " + store.menuTitle)
+            Text(store.compactConnectionLabel).font(.system(size: 11)).foregroundStyle(.secondary)
+                .lineLimit(1).help(store.connectionLabel)
             settings
         }.font(.system(size: 12))
     }
@@ -152,10 +166,9 @@ struct DashboardView: View {
 
     private var footer: some View {
         HStack(spacing: 8) {
-            Text(store.fresh ? String(format: L("%d 个活动聊天"), store.snapshot?.activeConversationCount ?? 0) : L("活动聊天 —"))
-            Spacer()
             if store.readOnly { Text(String(localized: "ReadOnly", bundle: .module)) }
             if store.testProfile != nil { Text(L("隔离验证")) }
+            Spacer()
             if store.busy { ProgressView().controlSize(.mini).accessibilityLabel(L("正在处理")) }
         }.font(.system(size: 11)).foregroundStyle(.secondary)
     }

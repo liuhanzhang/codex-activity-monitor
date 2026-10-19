@@ -80,8 +80,10 @@ struct FixtureTimelineClient: TimelineReading {
     func timeline(scope: String, thread: String, turn: String?) async throws -> TimelineBundle {
         let data = try await fixture()
         let object = try JSONSerialization.jsonObject(with: data) as? [String: Any] ?? [:]
-        let bundles = object["bundles"] as? [String: Any] ?? [:]
-        guard let value = bundles[turn ?? "current"] ?? object["timeline"] else {
+        let threads = object["threads"] as? [String: [String: Any]] ?? [:]
+        let owner = threads[thread] ?? object
+        let bundles = owner["bundles"] as? [String: Any] ?? [:]
+        guard let value = bundles[turn ?? "current"] ?? owner["timeline"] else {
             throw BackendFailure(message: L("时间线暂不可用"))
         }
         return try TimelineBundle.decode(JSONSerialization.data(withJSONObject: value))

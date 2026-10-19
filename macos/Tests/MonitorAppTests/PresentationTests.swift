@@ -12,15 +12,16 @@ import MonitorModel
     }
     store.snapshot = try snapshot(["a", "b"])
     store.updatePresentation()
-    store.expanded = [store.snapshot!.threads[0].id]
+    store.setExpanded(true, for: store.snapshot!.threads[0])
+    store.setExpanded(false, for: store.snapshot!.threads[1])
     store.snapshot = try snapshot(["b", "c", "a"])
     store.updatePresentation()
     #expect(store.activeRows.map(\.chat.threadID) == ["a", "b", "c"])
-    #expect(store.expanded.count == 1)
+    #expect(store.expanded.count == 2)
     store.snapshot = try snapshot(["c", "b"])
     store.updatePresentation()
     #expect(store.activeRows.map(\.chat.threadID) == ["b", "c"])
-    #expect(store.expanded.isEmpty)
+    #expect(store.expanded == [store.snapshot!.threads[0].id])
 }
 
 @Test @MainActor func menuAnimationStopsOnUnavailableAndReducedMotion() {

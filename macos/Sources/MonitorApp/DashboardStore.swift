@@ -24,11 +24,21 @@ final class DashboardStore {
     var busy = false
     var loginEnabled = false
     var loginNeedsApproval = false
-    var expanded: Set<String> = []
+    private(set) var expanded: Set<String> = []
+    private var expansionOverrides: [String: Bool] = [:]
+    private(set) var presentationID = 0
     var showRecent = false
     var dismissPresentation = 0
     var panelMaxHeight: CGFloat = 520
-    var panelVisible = false
+    var panelVisible = false {
+        didSet {
+            guard panelVisible, !oldValue else { return }
+            presentationID += 1
+            expansionOverrides = [:]
+            showRecent = false
+            reconcileExpansion()
+        }
+    }
     private(set) var chatOrder: [String: Int] = [:]
     private var nextChatRank = 0
     let configuration: BackendConfiguration
@@ -108,11 +118,28 @@ final class DashboardStore {
         let chats = snapshot?.threads ?? []
         let ids = Set(chats.map(\.id))
         chatOrder = chatOrder.filter { ids.contains($0.key) }
-        expanded.formIntersection(ids)
+        reconcileExpansion()
         timelines = timelines.filter { ids.contains($0.key) }
         for chat in chats where chatOrder[chat.id] == nil {
             chatOrder[chat.id] = nextChatRank
             nextChatRank += 1
+        }
+    }
+
+    func setExpanded(_ value: Bool, for chat: Chat) {
+        expansionOverrides[chat.id] = value
+        if value { expanded.insert(chat.id) }
+        else { expanded.remove(chat.id) }
+    }
+
+    private func reconcileExpansion() {
+        guard let snapshot else { expanded = []; return }
+        let ids = Set(snapshot.threads.map(\.id))
+        expansionOverrides = expansionOverrides.filter { ids.contains($0.key) }
+        expanded = Set(snapshot.rootChats.filter { snapshot.hasActiveWork(in: $0) }.map(\.id))
+        for (id, value) in expansionOverrides {
+            if value { expanded.insert(id) }
+            else { expanded.remove(id) }
         }
     }
 

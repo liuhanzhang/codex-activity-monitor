@@ -1,0 +1,54 @@
+{
+  "version": 2,
+  "date": "2026-10-19",
+  "kind": "generated_design_concepts",
+  "native_validation": false,
+  "images": [
+    {
+      "file": "overview-concept.png",
+      "source_file": "exec-2715ed5e-1efd-42c6-aad5-83f2ab299542.png",
+      "sha256": "bcaa5257938270432bc0f4e33386738c5a712af754710023c4c686da8b8a982a",
+      "size_bytes": 1175758,
+      "width_px": 1149,
+      "height_px": 1369,
+      "scope": "archived_exploration_not_for_implementation"
+    },
+    {
+      "file": "chat-detail-concept.png",
+      "source_file": "exec-d28dc2b0-bd59-4d11-b557-78db722b308a.png",
+      "sha256": "379d9bf9b408a90a3235c6f021c2fc9f45f597e06c4951afaa28bdc2ca930f86",
+      "size_bytes": 1338323,
+      "width_px": 1149,
+      "height_px": 1369,
+      "scope": "statistics_layout_reference_only",
+      "use_region": "本轮统计：左输出及含推理，右推理均速；标签在上、主数值在下。",
+      "excluded_regions": [
+        "Separate chat-detail page and navigation",
+        "Large blue turn background"
+      ]
+    },
+    {
+      "file": "activity-detail-concept.png",
+      "source_file": "exec-2f6a2ff3-492d-40a0-ae83-9e0dc6e05ca2.png",
+      "sha256": "7249482fac82aa75f91f1c81b0f041d09422e3e6086302c91bf9c18f75295c88",
+      "size_bytes": 1262657,
+      "width_px": 1496,
+      "height_px": 1051,
+      "scope": "archived_exploration_not_for_implementation"
+    },
+    {
+      "file": "overview-neutral-v2.png",
+      "source_file": "exec-6e1669dc-1f09-4075-907f-9aed0a71dd3f.png",
+      "sha256": "7974126115d95ced07b84f40ab5b5b983dbbc7ead4ce5a842ef8d80d0280d8de",
+      "size_bytes": 1184241,
+      "width_px": 1149,
+      "height_px": 1369,
+      "scope": "current_expanded_panel_reference",
+      "deviations": [
+        "Remove the view-details navigation entry; no separate chat-detail page.",
+        "Use the two-column statistics layout in chat-detail-concept.png instead of vertically stacked statistics."
+      ]
+    }
+  ],
+  "current_scope": "expanded_panel_only"
+}

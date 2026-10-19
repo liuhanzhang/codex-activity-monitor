@@ -24,6 +24,8 @@
 
 展开面板的活动时间线已实现并完成本机针对性验证：每轮模型／工具双轨、四类模型颜色、子智能体汇总、独立活动查看器，复用 Codex 历史并补充阶段元数据。见 [活动时间线文档](docs/09_activity_timeline/README.md)及[实施结果与限制](docs/09_activity_timeline/implementation-results.md)。
 
+展开面板的信息结构与交互重设计已实现：运行聊天默认展开、最近完成默认收起，使用原生展开控件；聊天内先看时间线，再看两列轮次统计。见[第 10 章](docs/10_expanded_panel_ux/README.md)和[实施结果](docs/10_expanded_panel_ux/implementation-results.md)。本轮只改展开面板，独立活动窗口保持现状。
+
 ## 目录
 
 **日常开发主要看 `src/`、`tests/`、`bin/`、`pyproject.toml` 和 `docs/02_product_mvp/`。** 其余目录是实验资料或本机运行环境。
@@ -44,7 +46,8 @@ codex_progress_monitor/
 │   ├── 06_gui_app_options_and_decisions/       GUI 目标、技术与采集方案比较、安装 / 卸载决策
 │   ├── 07_remote_transport_repair/            Remote 路由修复与本机验证边界
 │   ├── 08_gui_ui_ux_redesign/                 紧凑 GUI 需求、设计稿、实施与原生验证
-│   └── 09_activity_timeline/                  展开面板时间线需求、设计、事件映射、技术方案与实施计划
+│   ├── 09_activity_timeline/                  展开面板时间线需求、设计、事件映射、技术方案与实施计划
+│   └── 10_expanded_panel_ux/                 展开面板信息结构、原生控件及实施验证结果
 ├── experiments/                    可复用实验脚本
 │   ├── desktop-isolation/          隔离 Desktop / WebSocket 实验
 │   │   └── runs/                   本机隔离 App 数据和原始记录，不提交

@@ -1,0 +1,48 @@
+{
+  "version": 1,
+  "date": "2026-10-19",
+  "scope": "expanded_panel_only",
+  "images": [
+    {
+      "file": "implemented-panel-light.jpg",
+      "kind": "native_read_only_preview",
+      "source": "handwritten_synthetic_snapshot_and_timeline",
+      "appearance": "Aqua",
+      "sha256": "5b9a9fc8fc15b9d009625e3a8c370ab97629cc41f9769973100a9087cdfd37d1",
+      "size_bytes": 91324,
+      "width_px": 892,
+      "height_px": 1090,
+      "source_build_id": "4e0eb21fae2addb4ab794cfdc538d7b2e84cddb72320b27b26f283506649127d",
+      "mime_type": "image/jpeg"
+    },
+    {
+      "file": "implemented-panel-dark.jpg",
+      "kind": "native_read_only_preview",
+      "source": "handwritten_synthetic_snapshot_and_timeline",
+      "appearance": "Dark Aqua",
+      "sha256": "45147cbb53d103b77e37e48310ce3427a2a270a2c60bc13442cdabccdc8dc810",
+      "size_bytes": 98144,
+      "width_px": 892,
+      "height_px": 1090,
+      "source_build_id": "59c10908dcc044f0504f2f367c08058af227fee05f0e7e63126e0b0096415c0f",
+      "mime_type": "image/jpeg"
+    },
+    {
+      "file": "implemented-completed-light.jpg",
+      "kind": "native_read_only_preview",
+      "source": "handwritten_synthetic_snapshot_and_timeline",
+      "appearance": "Aqua",
+      "sha256": "bf8be1c4b748fb22b97f30f1bfa879108e173c41b081dba3e454ff2e79174221",
+      "size_bytes": 71278,
+      "width_px": 892,
+      "height_px": 1090,
+      "source_build_id": "4e0eb21fae2addb4ab794cfdc538d7b2e84cddb72320b27b26f283506649127d",
+      "mime_type": "image/jpeg"
+    }
+  ],
+  "notes": [
+    "These are native app screenshots with synthetic data, separate from the generated concepts in manifest.json.",
+    "Light screenshots precede the final list-position reset; the visible layout did not change.",
+    "The final dark screenshot uses the final GUI source fingerprint."
+  ]
+}

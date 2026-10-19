@@ -17,6 +17,7 @@ public struct ReasoningRate: Decodable, Sendable {
 }
 
 public struct Usage: Decodable, Sendable {
+    public let turn_id: String?
     public let output_tokens: Int?
     public let reasoning_tokens: Int?
     public let latest_reasoning: ReasoningRate?

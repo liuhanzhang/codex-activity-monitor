@@ -5,77 +5,68 @@ struct ChatRowView: View {
     let chat: Chat
     let depth: Int
     @Bindable var store: DashboardStore
+    var horizontalPadding: CGFloat = 14
+    @State private var hovered = false
     private var expanded: Bool { store.expanded.contains(chat.id) }
     private var live: Bool { store.fresh && chat.connected != false }
+    private var working: Bool { store.snapshot?.hasActiveWork(in: chat) == true }
     private var actionLabel: String {
         if !live { return L("连接中断") }
-        if chat.has_active_work != true, store.snapshot?.hasActiveWork(in: chat) == true { return L("子代理工作中") }
-        return chat.display_label ?? L("状态暂不可用")
+        if working {
+            if chat.has_active_work != true { return L("子代理工作中") }
+            return chat.display_label ?? L("状态暂不可用")
+        }
+        switch chat.status {
+        case "completed": return L("已完成")
+        case "failed": return L("失败")
+        case "interrupted": return L("已停止")
+        default: return chat.display_label ?? L("暂无活动")
+        }
     }
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 0) {
-            Button {
-                if !store.expanded.insert(chat.id).inserted { store.expanded.remove(chat.id) }
-            } label: {
-                HStack(alignment: .top, spacing: 8) {
-                    Image(systemName: expanded ? "chevron.down" : "chevron.right")
-                        .font(.system(size: 9, weight: .medium)).foregroundStyle(.secondary)
-                        .frame(width: 10).padding(.top, 3)
-                    VStack(alignment: .leading, spacing: 5) {
-                        HStack(alignment: .firstTextBaseline, spacing: 10) {
-                            Text(chat.title).font(.system(size: 13, weight: .medium))
-                                .lineLimit(1).truncationMode(.tail).help(chat.title)
-                            Spacer(minLength: 0)
-                            Text(MetricFormat.compactSpeed(live ? chat.generation_rate : nil))
-                                .font(.system(size: 12, weight: .medium)).monospacedDigit().fixedSize()
-                                .help(MetricFormat.speed(live ? chat.generation_rate : nil) + " · " + L("生成是实时窗口估算，统计已接收的独立生成内容。"))
-                        }
-                        HStack(alignment: .firstTextBaseline, spacing: 6) {
-                            if !chat.project.isEmpty {
-                                Text(chat.project).lineLimit(1).truncationMode(.middle)
-                                    .layoutPriority(-1).help(chat.cwd ?? chat.project)
-                                Text("·")
-                            }
-                            Text(actionLabel).lineLimit(1).help(actionLabel)
-                            Spacer(minLength: 2)
-                            Text(live ? MetricFormat.duration(chat.display_seconds) : "—")
-                                .monospacedDigit().fixedSize()
-                        }.font(.system(size: 11)).foregroundStyle(.secondary)
+        PanelDisclosureGroup(isExpanded: Binding(get: { expanded }, set: { store.setExpanded($0, for: chat) })) {
+            ChatDetailsView(chat: chat, timeline: store.timeline(for: chat),
+                            pollingEnabled: store.panelVisible, presentationID: store.presentationID)
+                .padding(.top, 10).padding(.bottom, 14)
+        } label: {
+            VStack(alignment: .leading, spacing: 5) {
+                HStack(alignment: .firstTextBaseline, spacing: 8) {
+                    Text(chat.title).font(.system(size: 13, weight: .semibold))
+                        .lineLimit(2).truncationMode(.tail).help(chat.title)
+                    Spacer(minLength: 0)
+                    if live, working, let rate = chat.generation_rate, rate.isFinite, rate >= 0 {
+                        Text(MetricFormat.compactSpeed(rate)).font(.system(size: 11))
+                            .monospacedDigit().foregroundStyle(.secondary).fixedSize()
+                            .help(MetricFormat.speed(rate) + " · " + L("生成是实时窗口估算，统计已接收的独立生成内容。"))
                     }
-                }.contentShape(Rectangle())
+                }
+                if !chat.project.isEmpty {
+                    Text(chat.project).font(.system(size: 10)).foregroundStyle(.secondary)
+                        .lineLimit(1).truncationMode(.middle).help(chat.cwd ?? chat.project)
+                }
+                HStack(spacing: 5) {
+                    if working || chat.status == "failed" {
+                        Circle().fill(chat.status == "failed" ? Color.red : Color.primary.opacity(0.65))
+                            .frame(width: 5, height: 5).accessibilityHidden(true)
+                    }
+                    Text(actionLabel).lineLimit(1).help(actionLabel)
+                    if live, working, let seconds = chat.display_seconds, seconds.isFinite, seconds >= 1 {
+                        Text("·").accessibilityHidden(true)
+                        Text(MetricFormat.duration(seconds)).monospacedDigit()
+                    }
+                }.font(.system(size: 11)).foregroundStyle(.secondary)
             }
-            .buttonStyle(.plain).padding(.vertical, 12)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .padding(.vertical, 10)
+            .alignmentGuide(VerticalAlignment.center) { $0[.top] + 18 }
+            .background(hovered ? Color(nsColor: .controlColor).opacity(0.45) : .clear,
+                        in: RoundedRectangle(cornerRadius: 4))
+            .onHover { hovered = $0 }
+            .accessibilityElement(children: .combine)
             .accessibilityIdentifier("monitor.chat.\(chat.threadID)")
-            .accessibilityValue(expanded ? L("已展开") : L("已折叠"))
-            if expanded { details.padding(.leading, 18).padding(.bottom, 12) }
         }
-        .padding(.leading, CGFloat(min(depth, 2) * 12)).padding(.horizontal, 14)
+        .font(.system(size: 12))
+        .padding(.leading, CGFloat(min(depth, 2) * 12)).padding(.horizontal, horizontalPadding)
     }
-
-    private var details: some View {
-        VStack(alignment: .leading, spacing: 9) {
-            if let selected = store.timeline(for: chat).selectedTurn,
-               selected != (chat.turn_id ?? store.timeline(for: chat).bundle?.current_turn_id
-                   ?? store.timeline(for: chat).bundle?.turns.first?.id) {
-                Text(L("以下用量属于当前轮")).font(.system(size: 10)).foregroundStyle(.secondary)
-            }
-            HStack {
-                Text("Output  \(MetricFormat.count(chat.usage?.output_tokens))")
-                Spacer()
-                Text("Reasoning  \(MetricFormat.count(chat.usage?.reasoning_tokens))")
-            }.monospacedDigit().help(L("当前轮次的官方用量；Output 已包含 Reasoning。"))
-            HStack {
-                Text(L("推理均速"))
-                Text(MetricFormat.compactSpeed(chat.usage?.latest_reasoning?.tokens_per_second)).monospacedDigit()
-                    .help(MetricFormat.speed(chat.usage?.latest_reasoning?.tokens_per_second))
-            }.help(L("推理均速是最近一次接收窗口估算，并非服务端纯推理速度。"))
-            if let model = chat.model, model != "unknown", !model.isEmpty {
-                Text(model).font(.system(size: 11)).foregroundStyle(.secondary).textSelection(.enabled)
-            }
-            Divider()
-            TimelinePanelView(store: store.timeline(for: chat), pollingEnabled: store.panelVisible)
-        }.font(.system(size: 11))
-    }
-
 }

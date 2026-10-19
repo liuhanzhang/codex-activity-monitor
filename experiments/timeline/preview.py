@@ -76,8 +76,23 @@ def fixtures(base, now):
     old = phase('old-text', 'text', -180, -165, turn='turn-previous')
     previous = {**current, 'selected_turn_id': 'turn-previous', 'phases': [old], 'markers': [],
                 'agents': current['agents'][:1], 'origin_ms': base - 180000, 'end_ms': base - 165000}
+    thread_bundles = {}
+    for thread, turn, state, start, end in [('other', 'other-turn', 'active', 75, None),
+                                            ('recent', 'recent-turn', 'completed', -90, -60)]:
+        sample = phase(thread + '-thinking', 'reasoning', start, end, thread=thread, turn=turn, state=state)
+        single = {**current, 'thread_id': thread, 'selected_turn_id': turn,
+                  'current_turn_id': turn if state == 'active' else None,
+                  'turns': [{'thread_id': thread, 'turn_id': turn, 'status': state,
+                             'start_ms': sample['start_ms'], 'end_ms': sample['end_ms']}],
+                  'agents': [{'id': thread, 'thread_id': thread, 'name': '主智能体', 'quality': []}],
+                  'phases': [sample], 'markers': [], 'origin_ms': sample['start_ms'],
+                  'end_ms': sample['end_ms'] or now}
+        thread_bundles[thread] = {'bundles': {'current': single, turn: single}}
     details = {}
-    for p in phases:
+    detail_phases = phases + [old]
+    for owner in thread_bundles.values():
+        detail_phases.extend(owner['bundles']['current']['phases'])
+    for p in detail_phases:
         kind = p['kind']; format = 'text'; title = '正文'
         if p['status'] == 'declined':
             details[p['id']] = {'version': 1, 'state': 'no_content', 'phase': p, 'sections': [],
@@ -132,12 +147,15 @@ def fixtures(base, now):
                     {'id': 'root', 'backend': 'fixture', 'name': '项目检查与代码结构整理', 'cwd': '/example/monitor',
                      'turn_id': 'turn-current', 'status': 'inProgress', 'connected': True, 'has_active_work': True,
                      'display_label': '整理检查结果', 'display_seconds': 8, 'generation_rate': 48,
-                     'model': 'Codex', 'usage': {'output_tokens': 12400, 'reasoning_tokens': 8200, 'latest_reasoning': {'tokens_per_second': 42}}},
+                     'model': 'Codex', 'usage': {'turn_id': 'turn-current', 'output_tokens': 5214, 'reasoning_tokens': 1382,
+                         'latest_reasoning': {'turn_id': 'turn-current', 'tokens_per_second': 50, 'model': 'Codex'}}},
                     {'id': 'other', 'backend': 'fixture', 'name': '文档与资源检查', 'cwd': '/example/notes', 'status': 'inProgress',
+                     'turn_id': 'other-turn',
                      'connected': True, 'has_active_work': True, 'display_label': '思考中', 'display_seconds': 6, 'generation_rate': 0},
                     {'id': 'recent', 'backend': 'fixture', 'name': '上一次项目扫描', 'status': 'completed', 'connected': True,
                      'has_active_work': False, 'display_label': '已完成', 'last_progress_seconds': 60, 'generation_rate': 0}]}
-    return snapshot, {'bundles': {'current': current, 'turn-current': current, 'turn-previous': previous}, 'details': details}
+    return snapshot, {'bundles': {'current': current, 'turn-current': current, 'turn-previous': previous},
+                      'threads': thread_bundles, 'details': details}
 
 
 def main():
