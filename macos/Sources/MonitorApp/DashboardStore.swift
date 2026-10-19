@@ -28,6 +28,7 @@ final class DashboardStore {
     var showRecent = false
     var dismissPresentation = 0
     var panelMaxHeight: CGFloat = 520
+    var panelVisible = false
     private(set) var chatOrder: [String: Int] = [:]
     private var nextChatRank = 0
     let configuration: BackendConfiguration
@@ -43,6 +44,9 @@ final class DashboardStore {
     private var nextResume = Date.distantPast
     private var closing = false
     var onUpdate: (() -> Void)?
+    var onActivitySelected: ((TimelineStore, [TimelinePhase]) -> Void)?
+    @ObservationIgnored private var timelines: [String: TimelineStore] = [:]
+    private var timelineFixture: String?
     private var polling: Task<Void, Never>?
     private let injectedClient: (any BackendManaging)?
 
@@ -51,11 +55,15 @@ final class DashboardStore {
         injectedClient = client
         readOnly = arguments.contains("--read-only") || arguments.contains("--snapshot")
         snapshotOverride = arguments.firstIndex(of: "--snapshot").flatMap { i in i + 1 < arguments.count ? arguments[i + 1] : nil }
+        timelineFixture = arguments.firstIndex(of: "--timeline-fixture").flatMap { i in i + 1 < arguments.count ? arguments[i + 1] : nil }
         let profile = arguments.firstIndex(of: "--test-profile").flatMap { i in i + 1 < arguments.count ? arguments[i + 1] : nil }
         testProfile = profile
         dataRoot = profile.map { $0 + "/data" } ?? arguments.firstIndex(of: "--data-root").flatMap { i in i + 1 < arguments.count ? arguments[i + 1] : nil } ?? configuration.data_root
         runtimePath = configuration.runtime
         legacyUnset = arguments.contains("--legacy-unset")
+        if readOnly && timelineFixture == nil && FileManager.default.fileExists(atPath: configuration.runtime + "/timeline.json") {
+            timelineFixture = configuration.runtime + "/timeline.json"
+        }
     }
 
     private var client: any BackendManaging { injectedClient ?? BackendClient(configuration: configuration, dataRoot: dataRoot, testProfile: testProfile) }
@@ -101,6 +109,7 @@ final class DashboardStore {
         let ids = Set(chats.map(\.id))
         chatOrder = chatOrder.filter { ids.contains($0.key) }
         expanded.formIntersection(ids)
+        timelines = timelines.filter { ids.contains($0.key) }
         for chat in chats where chatOrder[chat.id] == nil {
             chatOrder[chat.id] = nextChatRank
             nextChatRank += 1
@@ -112,7 +121,7 @@ final class DashboardStore {
         let roots = snapshot.rootChats.filter { snapshot.hasActiveWork(in: $0) }.sorted {
             (chatOrder[$0.id] ?? Int.max) < (chatOrder[$1.id] ?? Int.max)
         }
-        return snapshot.rows(roots: roots, expanded: expanded, order: chatOrder)
+        return snapshot.rows(roots: roots, expanded: [], order: chatOrder)
     }
 
     var recentRoots: [Chat] {
@@ -122,7 +131,18 @@ final class DashboardStore {
 
     var recentRows: [ChatRow] {
         guard showRecent, let snapshot else { return [] }
-        return snapshot.rows(roots: recentRoots, expanded: expanded, order: chatOrder)
+        return snapshot.rows(roots: recentRoots, expanded: [], order: chatOrder)
+    }
+
+    func timeline(for chat: Chat) -> TimelineStore {
+        if let existing = timelines[chat.id] { return existing }
+        let client: any TimelineReading = readOnly
+            ? FixtureTimelineClient(path: timelineFixture)
+            : SystemTimelineClient(configuration: configuration, runtime: runtimePath)
+        let value = TimelineStore(scope: chat.scope, thread: chat.threadID, title: chat.title, client: client)
+        value.onOpen = { [weak self] timeline, phase in self?.onActivitySelected?(timeline, phase) }
+        timelines[chat.id] = value
+        return value
     }
 
     var connectionLabel: String {

@@ -124,6 +124,8 @@ def main(argv=None):
     p=subs.add_parser('replay')
     p.add_argument('path',type=Path)
     p.add_argument('--output',type=Path)
+    p=subs.add_parser('timeline-query', help='只读活动时间线接口')
+    p.add_argument('request', help=argparse.SUPPRESS)
     p=subs.add_parser('app', help='GUI 管理接口')
     p.add_argument('action', choices=('status','configure','resume','stop','restore','cleanup','preferences'))
     p.add_argument('--data-root', type=Path)
@@ -136,6 +138,17 @@ def main(argv=None):
     p.add_argument('--launch-at-login', choices=('on','off'))
     p.add_argument('--test-profile', type=Path, help=argparse.SUPPRESS)
     args=parser.parse_args(argv)
+    if args.command == 'timeline-query':
+        from .timeline_query import query_runtime
+        try:
+            # Deliberately bypass runtime_dir(): browsing cannot create or resume observation.
+            query_path=Path(args.runtime or os.environ.get('CODEX_PROGRESS_RUNTIME', ROOT/'.local/runtime')).expanduser().resolve()
+            value=query_runtime(query_path,json.loads(args.request))
+            print(json.dumps(value,ensure_ascii=False))
+            return 0
+        except (OSError,ValueError,TypeError,KeyError) as exc:
+            print(json.dumps({'version':1,'error':'query_unavailable'}))
+            return 1
     if args.command == 'app':
         from .app_control import AppController, ControlError, DATA_ROOT
         try:

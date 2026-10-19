@@ -55,6 +55,11 @@ struct ChatRowView: View {
 
     private var details: some View {
         VStack(alignment: .leading, spacing: 9) {
+            if let selected = store.timeline(for: chat).selectedTurn,
+               selected != (chat.turn_id ?? store.timeline(for: chat).bundle?.current_turn_id
+                   ?? store.timeline(for: chat).bundle?.turns.first?.id) {
+                Text(L("以下用量属于当前轮")).font(.system(size: 10)).foregroundStyle(.secondary)
+            }
             HStack {
                 Text("Output  \(MetricFormat.count(chat.usage?.output_tokens))")
                 Spacer()
@@ -68,32 +73,9 @@ struct ChatRowView: View {
             if let model = chat.model, model != "unknown", !model.isEmpty {
                 Text(model).font(.system(size: 11)).foregroundStyle(.secondary).textSelection(.enabled)
             }
-            let activities = (chat.activities ?? []).filter { $0.display_visible != false }
-            if !activities.isEmpty {
-                Divider()
-                ForEach(activities) { activity in
-                    HStack(alignment: .firstTextBaseline, spacing: 8) {
-                        Image(systemName: activity.active == true && live ? "circle.dotted" : "minus")
-                            .frame(width: 12).foregroundStyle(.secondary).accessibilityHidden(true)
-                        Text(activity.display_label ?? L("活动")).lineLimit(2)
-                            .frame(maxWidth: .infinity, alignment: .leading).help(activity.display_label ?? L("活动"))
-                        Text(activity.active == true ? (live ? L("进行中") : L("未知")) : result(activity.status))
-                            .foregroundStyle(.secondary).fixedSize()
-                        Text(activity.active == true && !live ? "—" : MetricFormat.duration(activity.start_known == false ? nil : activity.duration_seconds))
-                            .monospacedDigit().foregroundStyle(.secondary).fixedSize()
-                    }
-                }
-            }
+            Divider()
+            TimelinePanelView(store: store.timeline(for: chat), pollingEnabled: store.panelVisible)
         }.font(.system(size: 11))
     }
 
-    private func result(_ status: String?) -> String {
-        switch status {
-        case "completed": L("完成")
-        case "failed": L("失败")
-        case "interrupted": L("已停止")
-        case "declined": L("未执行")
-        default: L("未知")
-        }
-    }
 }

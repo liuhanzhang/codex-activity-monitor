@@ -46,6 +46,7 @@ import SwiftUI
     func show() {
         guard !popover.isShown, button.window != nil else { return }
         updateScreenLimit()
+        store.panelVisible = true
         popover.contentSize = measuredSize
         popover.show(relativeTo: button.bounds, of: button, preferredEdge: .minY)
         popover.contentViewController?.view.window?.makeKey()
@@ -161,7 +162,7 @@ import SwiftUI
     }
 
     func popoverShouldClose(_ popover: NSPopover) -> Bool { !modalShown }
-    func popoverDidClose(_ notification: Notification) { removeMonitors(); onTrace?("did-close") }
+    func popoverDidClose(_ notification: Notification) { store.panelVisible = false; removeMonitors(); onTrace?("did-close") }
 
     var diagnostics: [String: Any] {
         func rect(_ value: NSRect?) -> [CGFloat]? { value.map { [$0.minX, $0.minY, $0.width, $0.height] } }

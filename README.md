@@ -22,6 +22,8 @@
 
 紧凑面板、以三位数为基准并按需扩宽的菜单栏、整数 `T/s`、空闲沙滩图标、单会话三点依次明暗变化 / 敲击锤子及弹出交互已实现，并更新本机 App。沙滩图标先用静态版；小狗素材和开发预览保留，普通界面不提供切换选项。需求、设计原稿、原生预览和验证边界见 [GUI UI / UX 重设计](docs/08_gui_ui_ux_redesign/README.md)及[实施结果](docs/08_gui_ui_ux_redesign/implementation-results.md)。
 
+展开面板的活动时间线已实现并完成本机针对性验证：每轮模型／工具双轨、四类模型颜色、子智能体汇总、独立活动查看器，复用 Codex 历史并补充阶段元数据。见 [活动时间线文档](docs/09_activity_timeline/README.md)及[实施结果与限制](docs/09_activity_timeline/implementation-results.md)。
+
 ## 目录
 
 **日常开发主要看 `src/`、`tests/`、`bin/`、`pyproject.toml` 和 `docs/02_product_mvp/`。** 其余目录是实验资料或本机运行环境。
@@ -41,7 +43,8 @@ codex_progress_monitor/
 │   ├── 05_token_usage_and_reasoning_speed/      本回合用量与最近推理均速需求 / 计划 / 验收
 │   ├── 06_gui_app_options_and_decisions/       GUI 目标、技术与采集方案比较、安装 / 卸载决策
 │   ├── 07_remote_transport_repair/            Remote 路由修复与本机验证边界
-│   └── 08_gui_ui_ux_redesign/                 紧凑 GUI 需求、设计稿、实施与原生验证
+│   ├── 08_gui_ui_ux_redesign/                 紧凑 GUI 需求、设计稿、实施与原生验证
+│   └── 09_activity_timeline/                  展开面板时间线需求、设计、事件映射、技术方案与实施计划
 ├── experiments/                    可复用实验脚本
 │   ├── desktop-isolation/          隔离 Desktop / WebSocket 实验
 │   │   └── runs/                   本机隔离 App 数据和原始记录，不提交

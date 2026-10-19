@@ -1,0 +1,200 @@
+import Foundation
+import MonitorModel
+import Observation
+
+@MainActor @Observable
+final class TimelineStore {
+    let scope: String
+    let thread: String
+    let title: String
+    let client: any TimelineReading
+    var bundle: TimelineBundle?
+    var error: String?
+    var loading = false
+    var selectedTurn: String?
+    var followsCurrentTurn = true
+    var expandedAgents: Set<String> = []
+    var scrollOffset: Double = 0
+    var followsLatest = true
+    var selectedPhaseID: String?
+    var selectedPhaseIDs: Set<String> = []
+    var onOpen: ((TimelineStore, [TimelinePhase]) -> Void)?
+    private var serial = 0
+
+    init(scope: String, thread: String, title: String, client: any TimelineReading) {
+        self.scope = scope; self.thread = thread; self.title = title; self.client = client
+    }
+
+    func refresh() async {
+        serial += 1
+        let token = serial
+        loading = bundle == nil
+        defer { if token == serial { loading = false } }
+        do {
+            let next = try await client.timeline(scope: scope, thread: thread, turn: followsCurrentTurn ? nil : selectedTurn)
+            guard !Task.isCancelled, token == serial else { return }
+            guard next.scope_id == scope, next.thread_id == thread else {
+                throw BackendFailure(message: L("轨迹身份不匹配"))
+            }
+            bundle = next; selectedTurn = next.selected_turn_id; error = nil
+        } catch is CancellationError { }
+        catch {
+            guard !Task.isCancelled, token == serial else { return }
+            self.error = L("暂时无法读取轨迹")
+        }
+    }
+
+    func selectTurn(_ turn: String) {
+        guard selectedTurn != turn else { return }
+        serial += 1
+        selectedTurn = turn
+        followsCurrentTurn = turn == bundle?.current_turn_id
+        followsLatest = followsCurrentTurn
+        scrollOffset = 0
+        selectedPhaseID = nil; selectedPhaseIDs = []
+    }
+
+    func open(_ phase: TimelinePhase) { open([phase]) }
+
+    func open(_ phases: [TimelinePhase]) {
+        guard let first = phases.first else { return }
+        selectedPhaseID = first.id; selectedPhaseIDs = Set(phases.map(\.id))
+        followsLatest = false
+        onOpen?(self, phases)
+    }
+
+    func latest() {
+        followsCurrentTurn = true; followsLatest = true
+        selectedTurn = bundle?.current_turn_id ?? bundle?.turns.first?.id
+    }
+
+    var lanes: [TimelineLane] { bundle.map { TimelineLane.lanes(in: $0, expanded: expandedAgents) } ?? [] }
+    var switchingTurn: Bool { bundle != nil && selectedTurn != bundle?.selected_turn_id }
+    var layout: TimelineLayout? {
+        guard let bundle, let origin = bundle.origin_ms else { return nil }
+        return TimelineLayout(origin: origin, end: bundle.end_ms ?? origin, now: bundle.now_ms,
+                              lanes: lanes, activities: bundle.allActivities)
+    }
+}
+
+@MainActor @Observable
+final class ActivityViewerStore {
+    var phase: TimelinePhase
+    let timeline: TimelineStore
+    var detail: ActivityDetail?
+    var selectedSection: String?
+    var error: String?
+    var loadingMore = false
+    var followsContent = true
+    private var serial = 0
+
+    init(timeline: TimelineStore, phase: TimelinePhase) {
+        self.timeline = timeline; self.phase = phase; followsContent = phase.isActive
+    }
+
+    func select(_ phase: TimelinePhase) {
+        guard self.phase.id != phase.id else { return }
+        serial += 1; self.phase = phase; detail = nil; selectedSection = nil; error = nil
+        followsContent = phase.isActive; timeline.selectedPhaseID = phase.id; timeline.selectedPhaseIDs = [phase.id]
+    }
+
+    func refresh() async {
+        guard !loadingMore else { return }
+        serial += 1
+        let token = serial, selected = phase
+        do {
+            var next = try await timeline.client.detail(phase: selected, section: nil, offset: 0)
+            guard !Task.isCancelled, !loadingMore, token == serial, phase.id == selected.id else { return }
+            if let returned = next.phase {
+                guard returned.id == selected.id, returned.scope_id == selected.scope_id,
+                      returned.thread_id == selected.thread_id, returned.turn_id == selected.turn_id else {
+                    throw BackendFailure(message: L("活动身份不匹配"))
+                }
+            }
+            if let prior = detail, next.sections.isEmpty, !prior.sections.isEmpty,
+               ["not_retained", "missing", "unavailable", "pending"].contains(next.state) {
+                next = next.retainingContent(from: prior)
+            }
+            if let prior = detail, prior.source == next.source, selected.status != "active" {
+                for i in next.sections.indices {
+                    if let old = prior.sections.first(where: { $0.id == next.sections[i].id }),
+                       old.text.count > next.sections[i].text.count, old.text.hasPrefix(next.sections[i].text) {
+                        next.sections[i] = old
+                    }
+                }
+            }
+            detail = next; phase = next.phase ?? phase; error = nil
+            if !next.sections.contains(where: { $0.id == selectedSection }) { selectedSection = next.sections.first?.id }
+        } catch is CancellationError { }
+        catch {
+            guard !Task.isCancelled, token == serial else { return }
+            self.error = L("暂时无法读取活动内容")
+        }
+    }
+
+    func loadMore() async {
+        guard !loadingMore, let index = detail?.sections.firstIndex(where: { $0.id == selectedSection }),
+              let offset = detail?.sections[index].next_offset else { return }
+        loadingMore = true
+        let token = serial, selected = phase, sectionID = detail!.sections[index].id
+        defer { loadingMore = false }
+        do {
+            let next = try await timeline.client.detail(phase: selected, section: sectionID, offset: offset)
+            guard !Task.isCancelled, token == serial, phase.id == selected.id,
+                  let part = next.sections.first(where: { $0.id == sectionID }),
+                  let target = detail?.sections.firstIndex(where: { $0.id == sectionID }) else { return }
+            detail?.sections[target].text += part.text
+            detail?.sections[target].next_offset = part.next_offset
+        } catch is CancellationError { }
+        catch { self.error = L("暂时无法读取更多内容") }
+    }
+}
+
+// Selection membership is fixed by the click. Each member retains its own content,
+// paging, identity checks and request generation in ActivityViewerStore.
+@MainActor @Observable
+final class ActivityViewerGroupStore {
+    let timeline: TimelineStore
+    private(set) var entries: [ActivityViewerStore] = []
+    var phase: TimelinePhase { entries[0].phase }
+    var selectionID: String { entries.map { $0.phase.id }.joined(separator: ":") }
+
+    init(timeline: TimelineStore, phases: [TimelinePhase]) {
+        self.timeline = timeline
+        precondition(!phases.isEmpty)
+        select(phases)
+    }
+
+    func select(_ phases: [TimelinePhase]) {
+        guard !phases.isEmpty else { return }
+        var seen: Set<String> = []
+        let selected = phases.filter { seen.insert($0.id).inserted }
+            .sorted { ($0.anchor ?? 0, $0.id) < ($1.anchor ?? 0, $1.id) }
+        let prior = Dictionary(uniqueKeysWithValues: entries.map { ($0.phase.id, $0) })
+        entries = selected.map { prior[$0.id] ?? ActivityViewerStore(timeline: timeline, phase: $0) }
+        timeline.selectedPhaseID = entries.first?.phase.id
+        timeline.selectedPhaseIDs = Set(entries.map { $0.phase.id })
+        for entry in entries where entry.phase.thread_id != timeline.thread {
+            timeline.expandedAgents.insert(entry.phase.thread_id)
+        }
+    }
+
+    func refresh() async {
+        let pending = entries.filter {
+            $0.detail == nil || $0.phase.isActive || ["pending", "partial", "content_unavailable"].contains($0.detail?.state ?? "")
+        }
+        await withTaskGroup(of: Void.self) { group in
+            var next = 0
+            func enqueue() {
+                guard next < pending.count, !Task.isCancelled else { return }
+                let entry = pending[next]; next += 1
+                group.addTask { await entry.refresh() }
+            }
+            for _ in 0..<min(3, pending.count) { enqueue() }
+            while await group.next() != nil {
+                if Task.isCancelled { group.cancelAll(); break }
+                enqueue()
+            }
+        }
+    }
+}

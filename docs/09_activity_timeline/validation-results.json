@@ -1,0 +1,483 @@
+{
+  "schema_version": 1,
+  "date": "2026-10-17",
+  "status": "implemented_targeted_local_validation",
+  "base_commit": "20cc995",
+  "git_state": "uncommitted; initial staged docs preserved",
+  "tested_codex_cli": "0.163.0-alpha.10.2",
+  "codex_source_commit": "806d9732c974bc8a51b8317c1bd8985544fe627c",
+  "counts": {
+    "python_passed": 185,
+    "swift_model_passed": 21,
+    "swift_app_regular_passed": 17,
+    "swift_window_regular_skipped": 1,
+    "swift_window_graphics_passed": 1
+  },
+  "evidence_note": "Relative .local paths are private ignored evidence on this machine, not portable artifacts; committed screenshots contain only synthetic authored data. V4 images were captured from preview build 28b3af6393231ba3ad5548fc15bd4c787a41bf418c5eb57fc9aab21fede8778d; final runtime build recorded separately.",
+  "scenarios": [
+    {
+      "id": "T01",
+      "requirements": [
+        "R01",
+        "R02",
+        "R03",
+        "R06"
+      ],
+      "levels": [
+        "V3",
+        "V4"
+      ],
+      "result": "passed",
+      "outcome": "通过：默认收起、历史窗口、稳定选择。",
+      "evidence": [
+        "macos/Tests/MonitorAppTests/TimelineStoreTests.swift",
+        "macos/Tests/MonitorModelTests/SnapshotTests.swift",
+        "docs/09_activity_timeline/assets/native-panel-collapsed.jpg"
+      ],
+      "limits": null
+    },
+    {
+      "id": "T02",
+      "requirements": [
+        "R04",
+        "R29"
+      ],
+      "levels": [
+        "V1",
+        "V2",
+        "V5"
+      ],
+      "result": "passed_with_limits",
+      "outcome": "通过：接受 steering 不换 turn，错误目标拒绝，canonical 消息唯一输入来源。",
+      "evidence": [
+        "tests/test_timeline.py",
+        ".local/timeline-online-probe/result.json"
+      ],
+      "limits": "无活动轮与错误分支由合成检查补充。"
+    },
+    {
+      "id": "T03",
+      "requirements": [
+        "R07",
+        "R11",
+        "R12"
+      ],
+      "levels": [
+        "V2",
+        "V3",
+        "V4"
+      ],
+      "result": "passed",
+      "outcome": "通过：固定双轨、child 汇总/展开、实际鼠标重叠候选。",
+      "evidence": [
+        "tests/test_timeline.py",
+        "macos/Tests/MonitorModelTests/TimelineTests.swift",
+        "docs/09_activity_timeline/assets/native-overlap-selection.jpg",
+        "docs/09_activity_timeline/assets/native-child-tracks.jpg"
+      ],
+      "limits": null
+    },
+    {
+      "id": "T04",
+      "requirements": [
+        "R08",
+        "R09",
+        "R10"
+      ],
+      "levels": [
+        "V1",
+        "V2",
+        "V4"
+      ],
+      "result": "passed",
+      "outcome": "通过：四类模型生成与执行分离；动态/混合程序保守分类。",
+      "evidence": [
+        "tests/test_timeline.py",
+        "tests/test_file_editing.py",
+        "docs/09_activity_timeline/assets/native-panel-timeline.jpg"
+      ],
+      "limits": null
+    },
+    {
+      "id": "T05",
+      "requirements": [
+        "R05",
+        "R13"
+      ],
+      "levels": [
+        "V1",
+        "V2",
+        "V4",
+        "V5"
+      ],
+      "result": "passed_with_limits",
+      "outcome": "真实 process 跨两轮保持原 owner；child 源码/合成/原生预览通过。",
+      "evidence": [
+        "tests/test_timeline.py",
+        "tests/test_timeline_query.py",
+        ".local/timeline-cross-turn-probe/result.json"
+      ],
+      "limits": "本次未创建真实 child；自然复用和多层长期场景未全面验收。"
+    },
+    {
+      "id": "T06",
+      "requirements": [
+        "R14",
+        "R19"
+      ],
+      "levels": [
+        "V2",
+        "V4"
+      ],
+      "result": "passed_with_limits",
+      "outcome": "通过：等待、缺口、状态点和未知时间分离。",
+      "evidence": [
+        "tests/test_timeline.py",
+        "tests/test_progress_semantics.py",
+        "macos/Sources/MonitorApp/TimelinePanelView.swift"
+      ],
+      "limits": "各错误/审批分支未逐项人工原生操作。"
+    },
+    {
+      "id": "T07",
+      "requirements": [
+        "R15",
+        "R16",
+        "R17"
+      ],
+      "levels": [
+        "V3",
+        "V4"
+      ],
+      "result": "passed",
+      "outcome": "通过：共同线性比例、缩放/横向轴、1pt视觉与12pt命中分离。",
+      "evidence": [
+        "macos/Tests/MonitorModelTests/TimelineTests.swift",
+        "macos/Sources/MonitorApp/TimelineSurface.swift"
+      ],
+      "limits": null
+    },
+    {
+      "id": "T08",
+      "requirements": [
+        "R18",
+        "R20"
+      ],
+      "levels": [
+        "V2",
+        "V3",
+        "V4"
+      ],
+      "result": "passed",
+      "outcome": "通过：迟到切轮/详情请求不覆盖新选择，刷新保持原时间锚。",
+      "evidence": [
+        "macos/Tests/MonitorAppTests/TimelineStoreTests.swift",
+        "macos/Sources/MonitorApp/TimelineSurface.swift"
+      ],
+      "limits": null
+    },
+    {
+      "id": "T09",
+      "requirements": [
+        "R19",
+        "R20",
+        "R32"
+      ],
+      "levels": [
+        "V2",
+        "V3"
+      ],
+      "result": "passed",
+      "outcome": "通过：缺起点、乱序、wall时钟跳变、观察重启保守处理。",
+      "evidence": [
+        "tests/test_timeline.py",
+        "tests/test_timeline_storage.py",
+        "macos/Tests/MonitorModelTests/TimelineTests.swift"
+      ],
+      "limits": null
+    },
+    {
+      "id": "T10",
+      "requirements": [
+        "R21",
+        "R22",
+        "R23",
+        "R26"
+      ],
+      "levels": [
+        "V4",
+        "V5"
+      ],
+      "result": "passed",
+      "outcome": "通过：popover收起、普通单窗口、用户尺寸保持、上下文/选择稳定。",
+      "evidence": [
+        "docs/09_activity_timeline/assets/native-activity-viewer.jpg",
+        "macos/Tests/MonitorAppTests/TimelineStoreTests.swift",
+        ".local/timeline-window-tests.log"
+      ],
+      "limits": null
+    },
+    {
+      "id": "T11",
+      "requirements": [
+        "R24",
+        "R25",
+        "R27"
+      ],
+      "levels": [
+        "V1",
+        "V2",
+        "V4",
+        "V5"
+      ],
+      "result": "passed_with_limits",
+      "outcome": "通过：可用全文/分块、diff、代码、摘要、附件引用、来源截断/未保留状态；日常旧轮正文已读取。",
+      "evidence": [
+        "tests/test_history.py",
+        ".local/timeline-online-probe/reconciled_query.json",
+        "docs/09_activity_timeline/assets/native-activity-viewer.jpg"
+      ],
+      "limits": "图片可用引用与加载有实现/夹具，未声称验证所有图片来源。"
+    },
+    {
+      "id": "T12",
+      "requirements": [
+        "R28",
+        "R33"
+      ],
+      "levels": [
+        "V2",
+        "V4",
+        "V5"
+      ],
+      "result": "passed_with_limits",
+      "outcome": "通过：窗口关闭后同一collector继续；停止后只读不重启；窗口重开与退出路径有针对性检查。",
+      "evidence": [
+        "tests/test_timeline_query.py",
+        "tests/test_app_control.py",
+        "tests/test_app_session.py",
+        ".local/timeline-online-probe/reconciled_query.json",
+        ".local/timeline-runtime-check.json"
+      ],
+      "limits": "最小化和多显示器全流程未逐项人工操作。"
+    },
+    {
+      "id": "T13",
+      "requirements": [
+        "R29",
+        "R30",
+        "R31"
+      ],
+      "levels": [
+        "V1",
+        "V2",
+        "V5"
+      ],
+      "result": "passed",
+      "outcome": "通过：明确身份合流、镜像幂等、实际参数窗口→元数据→Codex内容。",
+      "evidence": [
+        "tests/test_timeline.py",
+        "tests/test_history.py",
+        ".local/timeline-source-probe/reconciliation.json",
+        ".local/timeline-online-probe/reconciled_query.json"
+      ],
+      "limits": null
+    },
+    {
+      "id": "T14",
+      "requirements": [
+        "R31",
+        "R35",
+        "R38"
+      ],
+      "levels": [
+        "V2",
+        "V3",
+        "manual"
+      ],
+      "result": "passed",
+      "outcome": "通过：字段白名单无正文、超过20活动、懒加载；仓库图与脚本为合成资料。",
+      "evidence": [
+        "tests/test_timeline_storage.py",
+        "tests/test_timeline_query.py",
+        "experiments/timeline/preview.py"
+      ],
+      "limits": null
+    },
+    {
+      "id": "T15",
+      "requirements": [
+        "R32",
+        "R34"
+      ],
+      "levels": [
+        "V2",
+        "V3"
+      ],
+      "result": "passed_with_limits",
+      "outcome": "通过：旧快照、legacy/新格式、未知kind、坏库、半行/替换降级。",
+      "evidence": [
+        "tests/test_history.py",
+        "tests/test_timeline_storage.py",
+        "macos/Tests/MonitorModelTests/TimelineTests.swift"
+      ],
+      "limits": "真实版本范围为0.163.0-alpha.10.2；其他格式主要为合成故障样本。"
+    },
+    {
+      "id": "T16",
+      "requirements": [
+        "R34"
+      ],
+      "levels": [
+        "regression"
+      ],
+      "result": "passed_with_limits",
+      "outcome": "通过：受影响的既有指标、生命周期、镜像与菜单栏相关回归。",
+      "evidence": [
+        "tests/test_engine.py",
+        "tests/test_usage.py",
+        "tests/test_overview.py",
+        "tests/test_menu_presentation.py",
+        "tests/test_progress_semantics.py"
+      ],
+      "limits": "不重复执行无关安装/Remote/发行全链路。"
+    },
+    {
+      "id": "T17",
+      "requirements": [
+        "R35"
+      ],
+      "levels": [
+        "V2",
+        "V3",
+        "V4",
+        "V5"
+      ],
+      "result": "passed_with_limits",
+      "outcome": "通过：大文件按需offset索引、后台解析、异步侧写、取消/晚到保护，视口绘制。",
+      "evidence": [
+        "tests/test_history.py",
+        "tests/test_timeline_storage.py",
+        "macos/Tests/MonitorAppTests/TimelineStoreTests.swift",
+        ".local/timeline-history-performance.json"
+      ],
+      "limits": "一次本机性能采样，未做全并发负载基准。"
+    },
+    {
+      "id": "T18",
+      "requirements": [
+        "R36",
+        "R37"
+      ],
+      "levels": [
+        "V3",
+        "V4"
+      ],
+      "result": "passed_with_limits",
+      "outcome": "通过：原生键盘切换、实际重叠菜单、稳定可访问元素、agent/类别/状态/耗时名称、深浅色基础对比度。",
+      "evidence": [
+        "macos/Tests/MonitorAppTests/TimelineStoreTests.swift",
+        "macos/Sources/MonitorApp/TimelineSurface.swift",
+        "docs/09_activity_timeline/assets/native-overlap-selection.jpg"
+      ],
+      "limits": "完整VoiceOver朗读、减少动态和长标题全组合未逐项人工验收；已有实现/静态与相关回归覆盖。"
+    },
+    {
+      "id": "T19",
+      "requirements": [
+        "R31",
+        "R38"
+      ],
+      "levels": [
+        "V2",
+        "V3"
+      ],
+      "result": "passed",
+      "outcome": "通过：pin/活跃/必要祖先保留与受控清理，不删Codex历史。",
+      "evidence": [
+        "tests/test_timeline_storage.py",
+        "tests/test_timeline_query.py",
+        "tests/test_app_control.py"
+      ],
+      "limits": null
+    }
+  ],
+  "engineering_gates": {
+    "E01": "actual camelCase producer timestamps verified",
+    "E02": "JSONL chosen; APIs verified only on owned isolated stdio, no Desktop writer injection",
+    "E03": "explicit model IDs/call IDs only; unmatched Code Mode remains independent",
+    "E04": "actual cross-turn process passed; child conservative scope from source and fixtures, no new live child probe",
+    "E05": "bounded selected stream; completed retained inputs restore, aborted input may be not_retained",
+    "E06": "specified paginated real sample; legacy/archive/replace/failure fixtures, no all-version claim",
+    "E07": "canonical userMessage as sole input marker; successful steering same turn; rejected not plotted",
+    "E08": "offset index and one read-only performance sample; no broad concurrency benchmark",
+    "E09": "native preview plus actual WindowServer test and daily historical reader/close continued collector"
+  },
+  "phases": {
+    "P0": {
+      "result": "completed",
+      "note": "fixed source decisions with explicit fallbacks"
+    },
+    "P1": {
+      "result": "completed",
+      "note": "independent phase projection and metadata sidecar"
+    },
+    "P2": {
+      "result": "completed",
+      "note": "read-only history/query and source states"
+    },
+    "P3": {
+      "result": "completed",
+      "note": "versioned contracts and final native visual states"
+    },
+    "P4": {
+      "result": "completed",
+      "note": "native panel timeline integration"
+    },
+    "P5": {
+      "result": "completed",
+      "note": "normal single activity viewer"
+    },
+    "P6": {
+      "result": "completed",
+      "note": "targeted checks, local build/runtime, documentation and evidence boundaries"
+    }
+  },
+  "not_claimed": [
+    "distribution/signing/notarization/fresh-machine acceptance",
+    "complete VoiceOver and multi-display/minimization manual walkthrough",
+    "long-term natural-use and all child reuse paths",
+    "all Codex versions or remote host history",
+    "recovery of omitted/aborted/truncated source content",
+    "Desktop bridge hot reload in existing process"
+  ],
+  "python_sources_sha256": {
+    "collector.py": "85c40e3734b2b0b3045900494e61362a209cf8fe97aafee67e63be2760172011",
+    "engine.py": "add832762002bf652c047929571fa33872fcd964f22b88df18285470b8f3e325",
+    "events.py": "f0519b23d381b5ee672aef954e021414c9e4d0178a4e4f29106eb5f32e49dca5",
+    "history.py": "553f61dc66cf32a0a6565bf3d9384339731df5777103622b776b59770dcae59d",
+    "timeline.py": "49acc7d494c43998f8890ab00bfea94b11b3b7d6a0e8101b148104410342bf1d",
+    "timeline_query.py": "380e3010ddb7cbb85fd673d79b7b56f4f608afcc268d205e49c1cdf43f0f33f8",
+    "timeline_storage.py": "8a90a4f3fba0cdf93f847258c9e7be602c9195d2c857f1f502875d4262d0fef9"
+  },
+  "final_gui_build_id": "7ff5a02e5d132c83937c6e7cbbb8002ac3f97525489e0a5625466b4337a5f6cc",
+  "local_runtime_summary": {
+    "scope": "final local GUI/collector reload and native historical reader",
+    "backup_and_installed_fields_unchanged": true,
+    "gui_build_id": "7ff5a02e5d132c83937c6e7cbbb8002ac3f97525489e0a5625466b4337a5f6cc",
+    "gui_build_matches_sources": true,
+    "running": true,
+    "timeline_available": true,
+    "timeline_socket": true,
+    "projection_errors": 0,
+    "history_reader_native_passed": true,
+    "viewer_closed_collector_continues": true,
+    "historical_current_usage_label_native_passed": true,
+    "accessibility_agent_name_and_press_native_passed": true,
+    "collector_modules_match_sources": true,
+    "metadata_private_modes": {
+      "directory": "0o700",
+      "file": "0o600"
+    }
+  }
+}

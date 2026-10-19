@@ -91,7 +91,8 @@ class Thread:
 
 
 class Engine:
-    def __init__(self, asynchronous_counts=True):
+    def __init__(self, asynchronous_counts=True, timeline=None):
+        self.timeline = timeline
         self.threads = OrderedDict()
         self.backends = {}
         self.turns = {}
@@ -223,6 +224,14 @@ class Engine:
             self._upstream(event)
         self._resolve(event.backend)
         self.usage.ingest(event,self)
+        self._observe_timeline(event)
+
+    def _observe_timeline(self,event):
+        if self.timeline is not None:
+            try:
+                self.timeline.observe(event,self)
+            except (ValueError,TypeError,KeyError,AttributeError):
+                self.counts['timeline_projection_error']+=1
 
     def _lifecycle(self,event):
         kind = event.data.get('type')
@@ -510,6 +519,7 @@ class Engine:
                     self._upstream(event)
                 else:
                     self._protocol(event)
+                self._observe_timeline(event)
                 if (event.data.get('type') in ('response.output_item.added','response.output_item.done')
                         or event.data.get('method') in ('item/started','item/completed')):
                     self.usage.item(event,self)

@@ -61,6 +61,7 @@ public struct Chat: Decodable, Identifiable, Sendable {
     public let activities: [Activity]?
     public let subagents: [String: String]?
     public let parent_thread_id: String?
+    public let turn_id: String?
 
     public var id: String { (home ?? backend ?? "") + "\u{0}" + threadID }
     public var scope: String { home ?? backend ?? "" }
@@ -72,7 +73,7 @@ public struct Chat: Decodable, Identifiable, Sendable {
         case threadID = "id"
         case home, backend, name, cwd, model, status, connected, visible, has_active_work
         case display_label, display_seconds, generation_rate, generation_estimated
-        case last_progress_seconds, usage, activities, subagents, parent_thread_id
+        case last_progress_seconds, usage, activities, subagents, parent_thread_id, turn_id
     }
 }
 
@@ -82,6 +83,7 @@ public struct Snapshot: Decodable, Sendable {
     public let running: Bool?
     public let overview: Overview?
     public let menu_presentation: MenuPresentation?
+    public let timeline_summary: TimelineSummary?
     public let threads: [Chat]
     public let backends: [String: Backend]?
 

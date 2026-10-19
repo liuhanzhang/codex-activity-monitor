@@ -76,7 +76,7 @@ def thread_metadata(value):
 def item_metadata(value):
     allowed = ('type','id','status','name','namespace','call_id','metadata','server','tool','command',
                'cwd','exitCode','durationMs','processId','source','receiverThreadIds',
-               'senderThreadId','agentThreadId','kind','durationMs','success','delivery')
+               'senderThreadId','agentThreadId','kind','durationMs','success','delivery','clientId')
     result = {k: value[k] for k in allowed if k in value}
     if 'command' in result:
         result['command_name'] = command_name(result['command'])
@@ -136,10 +136,11 @@ def filter_event(direction, event):
         method = event['method']
         params = event.get('params',{})
         if method not in ('initialize','initialized','thread/start','thread/resume','thread/read',
-                          'thread/name/set','turn/start','turn/interrupt','config/read','model/list'):
+                          'thread/name/set','turn/start','turn/steer','turn/interrupt','config/read','model/list'):
             return None
         return {'id':event.get('id'), 'method':method,
-                'params':{k:v for k,v in params.items() if k in ('threadId','turnId','model','cwd','name','ephemeral','threadSource')}}
+                'params':{k:v for k,v in params.items() if k in ('threadId','turnId','expectedTurnId','clientUserMessageId',
+                         'model','cwd','name','ephemeral','threadSource')}}
     if direction != 'protocol_out':
         return event
     method, params = event.get('method'), event.get('params',{})
@@ -147,12 +148,14 @@ def filter_event(direction, event):
         result = event.get('result',{})
         if not isinstance(result,dict):
             return None
-        safe = {k:result[k] for k in ('codexHome','model','reasoningEffort') if k in result}
+        safe = {k:result[k] for k in ('codexHome','model','reasoningEffort','turnId') if k in result}
         if isinstance(result.get('thread'),dict):
             safe['thread'] = thread_metadata(result['thread'])
             safe['thread']['turns'] = [{'id':t.get('id'),'status':t.get('status')} for t in result['thread'].get('turns',[])[-1:]]
         if isinstance(result.get('config'),dict):
             safe['config'] = {'model':result['config'].get('model')}
+        if 'error' in event:
+            return {'id':event.get('id'), 'error':{'code':event['error'].get('code')}}
         return {'id':event.get('id'), 'result':safe} if safe else None
     if method not in NOTIFICATION_KINDS and method not in SERVER_REQUESTS:
         return None
@@ -194,6 +197,9 @@ def filter_event(direction, event):
         safe['delta'] = params.get('delta','')
     elif method in ('item/commandExecution/outputDelta','item/fileChange/outputDelta'):
         safe['output_chars'] = len(params.get('delta',''))
+        # Only a selected viewer keeps this transient tail; never in snapshots or the sidecar.
+        safe['delta'] = params.get('delta','')[:65536]
+        safe['content_truncated'] = len(params.get('delta','')) > 65536
     elif method=='item/mcpToolCall/progress':
         safe['has_progress'] = bool(params.get('message'))
     if method=='model/verification':

@@ -7,6 +7,7 @@ import selectors
 import signal
 import socket
 import time
+import threading
 import uuid
 
 from .engine import Engine
@@ -14,6 +15,9 @@ from .events import Event
 from .runtime import atomic_json,read_snapshot,source_identity
 from .app_session import observing
 from .i18n import message, render_message
+from .timeline import TimelineBook
+from .timeline_storage import TimelineStorage, metadata_path
+from .timeline_query import TimelineQuery, QueryServer
 
 
 def serve(runtime):
@@ -36,8 +40,23 @@ def serve(runtime):
     selector.register(listener,selectors.EVENT_READ,None)
     clients={}
     owners={}
-    engine=Engine()
-    implementation=source_identity('collector','app_session','engine','overview','menu_presentation','progress_state','events','usage','metrics','runtime','tool_labels','i18n','messages_zh_cn')
+    timeline_store = None
+    timeline_error = None
+    try:
+        timeline_store = TimelineStorage(metadata_path(runtime))
+    except (OSError, ValueError):
+        timeline_error = 'metadata_unavailable'
+    timeline = TimelineBook(timeline_store)
+    engine=Engine(timeline=timeline)
+    query_server = None
+    try:
+        query_server = QueryServer(runtime/'tl.sock', TimelineQuery(timeline))
+        threading.Thread(target=query_server.serve_forever, kwargs={'poll_interval': .1}, daemon=True,
+                         name='timeline-queries').start()
+    except OSError:
+        timeline_error = 'query_unavailable'
+    implementation=source_identity('collector','app_session','engine','overview','menu_presentation','progress_state','events','usage','metrics','runtime','tool_labels','i18n','messages_zh_cn',
+                                   'timeline','timeline_storage','timeline_query','history')
     previous=read_snapshot(runtime)
     historical=previous.get('threads',[]) if time.time()-(previous.get('updated_at') or 0)<600 else []
     if historical:
@@ -108,7 +127,8 @@ def serve(runtime):
         state=clients.pop(conn,{})
         if state.get('backend') and owners.get(state['backend']) is conn:
             owners.pop(state['backend'],None)
-            engine.ingest(Event(state['backend'],'lifecycle',{'type':'bridge/disconnected'},time.monotonic(),time.time()))
+            with timeline.lock:
+                engine.ingest(Event(state['backend'],'lifecycle',{'type':'bridge/disconnected'},time.monotonic(),time.time()))
         selector.unregister(conn)
         conn.close()
     try:
@@ -165,19 +185,26 @@ def serve(runtime):
                         if owners.get(row['backend']) is not conn:
                             engine.counts['superseded_ipc_frames']+=1
                             continue
-                        engine.backends.setdefault(row['backend'],{})['connected']=True
-                        engine.ingest(row)
+                        with timeline.lock:
+                            engine.backends.setdefault(row['backend'],{})['connected']=True
+                            engine.ingest(row)
                     except (ValueError,TypeError,KeyError,AttributeError):
                         engine.counts['invalid_ipc']+=1
                         if state.get('backend') and owners.get(state['backend']) is conn:
-                            engine.ingest(Event(state['backend'],'lifecycle',{'type':'bridge/gap'},time.monotonic(),time.time()))
+                            with timeline.lock:
+                                engine.ingest(Event(state['backend'],'lifecycle',{'type':'bridge/gap'},time.monotonic(),time.time()))
             now=time.monotonic()
             for conn,state in list(clients.items()):
                 if now-state['last_seen']>10:
                     close_client(conn,'idle')
             if now>=next_snapshot:
-                engine.tick(now)
-                snapshot=engine.snapshot(now,time.time())
+                with timeline.lock:
+                    engine.tick(now)
+                    timeline.prune()
+                    snapshot=engine.snapshot(now,time.time())
+                    snapshot['timeline_summary']={'version':1,'revision':timeline.revision,
+                                                   'available':query_server is not None,
+                                                   'quality':[e for e in (timeline_error, timeline_store.error if timeline_store else None) if e]}
                 retain_history(snapshot)
                 snapshot['collector_pid']=os.getpid()
                 snapshot['implementation']=implementation
@@ -185,8 +212,17 @@ def serve(runtime):
                 atomic_json(runtime/'snapshot.json',snapshot)
                 next_snapshot=now+0.25
     finally:
+        if query_server:
+            query_server.shutdown()
+            query_server.server_close()
+            (runtime/'tl.sock').unlink(missing_ok=True)
         for conn in list(clients):
             close_client(conn)
+        with timeline.lock:
+            for backend in engine.backends.values():
+                timeline.gap(backend.get('home') or '', time.time()*1000)
+        if timeline_store:
+            timeline_store.close()
         engine.tick(time.monotonic())
         snapshot=engine.snapshot(time.monotonic(),time.time())
         retain_history(snapshot)

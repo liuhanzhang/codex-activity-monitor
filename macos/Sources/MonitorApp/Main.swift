@@ -60,6 +60,7 @@ enum MonitorApplication {
     private var store: DashboardStore!
     private var previewWindow: NSWindow?
     private var fullscreenObserver: NSObjectProtocol?
+    private var activityViewer: ActivityViewerWindowController?
 
     func applicationDidFinishLaunching(_ notification: Notification) {
         do {
@@ -119,8 +120,18 @@ enum MonitorApplication {
                 self.writeDiagnostics("tick")
             }
             store.onPurgeComplete = { NSApplication.shared.terminate(nil) }
+            store.onActivitySelected = { [weak self] timeline, phases in
+                guard let self else { return }
+                self.panel.close(reason: "activity-viewer")
+                if self.activityViewer == nil {
+                    self.activityViewer = ActivityViewerWindowController(preview: self.isPreview)
+                    self.activityViewer?.onTrace = { [weak self] in self?.writeDiagnostics($0) }
+                }
+                self.activityViewer?.show(timeline: timeline, phases: phases)
+            }
             store.start()
             if CommandLine.arguments.contains("--window") {
+                store.panelVisible = true
                 let window = NSWindow(contentRect: NSRect(x: 0, y: 0, width: 420, height: 300),
                                       styleMask: [.titled, .closable, .resizable], backing: .buffered, defer: false)
                 window.title = store.testProfile != nil ? L("Codex Monitor · 隔离验证") : (store.readOnly ? L("Codex Monitor · 只读验证") : "Codex Monitor")
@@ -158,11 +169,13 @@ enum MonitorApplication {
     }
 
     func applicationShouldHandleReopen(_ sender: NSApplication, hasVisibleWindows flag: Bool) -> Bool {
+        if activityViewer?.window?.isVisible == true { activityViewer?.window?.makeKeyAndOrderFront(nil); return true }
         if panel != nil && !panel.popover.isShown { panel.show() }
         return true
     }
 
     func applicationWillTerminate(_ notification: Notification) {
+        activityViewer?.close()
         panel?.stop(); statusContent?.stop()
         if let fullscreenObserver { NotificationCenter.default.removeObserver(fullscreenObserver) }
     }

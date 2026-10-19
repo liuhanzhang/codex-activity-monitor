@@ -475,7 +475,7 @@ class AppController:
         managed = runtime / 'app-managed.json'
         record = read_json(managed)
         if record.get('session_file') == str(self.session) or receipt.get('imported_legacy'):
-            for name in ('app-managed.json', 'snapshot.json', 'collector.json', 'events.sock',
+            for name in ('app-managed.json', 'snapshot.json', 'collector.json', 'events.sock', 'tl.sock',
                          'collector.log', 'collector.previous.log'):
                 (runtime / name).unlink(missing_ok=True)
         if receipt.get('imported_legacy'):
@@ -503,10 +503,13 @@ class AppController:
         # Root was created for this controller; foreign directories are never
         # recursively deleted based on an installation record.
         allowed = {'management.lock', '.monitor-owned', 'integration.json', 'app-state.json', 'codex-observed',
-                   'integration.enabled', 'observation.json', 'run'}
+                   'integration.enabled', 'observation.json', 'run', 'timeline'}
         unknown = [p.name for p in self.root.iterdir() if p.name not in allowed]
         if unknown:
             raise ControlError('unowned_data', '数据目录包含未登记文件，未执行全部清理。')
+        from .timeline_storage import owned_directory
+        if not owned_directory(self.root / 'timeline'):
+            raise ControlError('unowned_data', '轨迹目录包含未登记文件，未执行全部清理。')
         run = self.root / 'run'
         if run.exists() and (run.is_symlink() or any(p.name not in {'collector.lock', 'bridges'} for p in run.iterdir())):
             raise ControlError('unowned_data', '运行目录包含未清理或未登记文件，未删除。')
