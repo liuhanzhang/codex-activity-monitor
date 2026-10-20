@@ -1,6 +1,7 @@
 """Bounded identity and presentation metadata; never changes activity ownership."""
 
 from collections import Counter
+from .agent_relations import OPERATIONS, thread_identity
 
 
 def _mapping(value):
@@ -29,8 +30,21 @@ def agent_metadata(payload):
     path = _text(spawn.get('agent_path'), 512)
     if spawn.get('agent_path') is not None and path is None:
         quality.add('agent_metadata_invalid')
-    return {'nickname': candidates[0] if candidates and 'agent_name_conflict' not in quality else None,
-            'agent_path': path, 'quality': sorted(quality)}
+    result = {'nickname': candidates[0] if candidates and 'agent_name_conflict' not in quality else None,
+              'agent_path': path}
+    source = payload.get('source')
+    if isinstance(source, dict) and isinstance(source.get('subagent'), dict):
+        result['thread_source'] = 'subagent'
+        parent = spawn.get('parent_thread_id')
+        if parent is not None:
+            if thread_identity(parent) and parent != payload.get('id'):
+                result.update(parent_thread_id=parent, parent_source='session_header')
+            else:
+                quality.add('agent_parent_invalid')
+    elif isinstance(source, str) and source in ('vscode', 'cli', 'exec', 'appServer', 'user'):
+        result['thread_source'] = 'user'
+    result['quality'] = sorted(quality)
+    return result
 
 
 def short_ids(threads):
@@ -76,13 +90,20 @@ def present_agents(agents, indices, names):
 def scoped_status(turns, phases):
     if not turns:
         return 'unknown'
-    invalid = {'collector_restarted', 'observation_stopped', 'observation_gap', 'disconnected'}
+    invalid = {'collector_restarted', 'observation_stopped', 'observation_gap', 'disconnected',
+               'identity_conflict', 'history_identity_mismatch', 'lifecycle_conflict', 'multiple_active_backends'}
     reliable = [p for p in phases if not invalid.intersection(p.get('quality', []))]
     if any(p['status'] == 'active' for p in reliable):
         return 'active'
     if any(p['status'] == 'waiting' for p in reliable):
         return 'waiting'
-    if any(p['status'] in ('active', 'waiting', 'unknown') for p in phases if p.get('kind') != 'gap'):
+    unresolved = [p for p in phases if p.get('kind') != 'gap' and p['status'] in ('active', 'waiting', 'unknown')]
+    # A known round end does not recover a missing item boundary. Only this
+    # narrow absence may coexist with a terminal group; observation conflicts
+    # and actual ongoing work retain the previous conservative behaviour.
+    missing_only = all(p['status'] == 'unknown' and 'missing_item_end' in p.get('quality', []) and
+                       not invalid.intersection(p.get('quality', [])) for p in unresolved)
+    if unresolved and not missing_only:
         return 'unknown'
     terminal = {'completed', 'interrupted', 'failed'}
     if all(t['status'] in terminal and t.get('end_ms') is not None for t in turns):
@@ -91,26 +112,29 @@ def scoped_status(turns, phases):
     return 'unknown'
 
 
-OPERATIONS = {value: action for action, values in {
-    'spawn': ('spawnAgent', 'spawn_agent', 'spawn'),
-    'send': ('sendInput', 'send_input', 'send_message'),
-    'wait': ('wait', 'waitAgent', 'wait_agent'),
-    'close': ('closeAgent', 'close_agent'),
-    'resume': ('resumeAgent', 'resume_agent'),
-}.items() for value in values}
-
-
-def present_coordination(phases, relations, scope):
+def present_coordination(phases, relations, scope, evidence_phases=None):
     by_call = {}
     for relation in relations:
         if relation['scope_id'] == scope:
             key = (relation['parent_thread_id'], relation['parent_turn_id'], relation.get('call_id'))
             by_call.setdefault(key, []).append(relation)
+    raw_calls = {(p['thread_id'], p['turn_id'], p.get('call_id')): p for p in (evidence_phases or phases)
+                 if p.get('namespace') == 'input' and p.get('call_operation')}
     for phase in phases:
-        if phase.get('namespace') != 'canonical' or phase.get('item_type') != 'collabAgentToolCall':
+        canonical = phase.get('namespace') == 'canonical' and phase.get('item_type') == 'collabAgentToolCall'
+        raw = phase.get('namespace') == 'input' and phase.get('call_operation')
+        if not canonical and not raw:
             continue
-        matches = by_call.get((phase['thread_id'], phase['turn_id'], phase['item_id']), [])
-        actions = {OPERATIONS[r['operation']] for r in matches if r.get('operation') in OPERATIONS}
-        action = OPERATIONS.get(phase.get('tool_name')) or (next(iter(actions)) if len(actions) == 1 else 'coordination')
+        call = phase.get('call_id') if raw else phase['item_id']
+        key = (phase['thread_id'], phase['turn_id'], call)
+        matches = by_call.get(key, [])
+        evidence = phase if raw else raw_calls.get(key, {})
+        if raw and not matches and evidence.get('call_target_scope') != 'global':
+            continue
+        actions = {OPERATIONS[r['operation']] for r in matches
+                   if isinstance(r.get('operation'), str) and r['operation'] in OPERATIONS}
+        action = evidence.get('call_operation') or OPERATIONS.get(phase.get('tool_name')) or (next(iter(actions)) if len(actions) == 1 else 'coordination')
+        targets = list(dict.fromkeys(r['child_thread_id'] for r in matches))
         phase.update(coordination_action=action,
-                     related_agent_ids=list(dict.fromkeys(r['child_thread_id'] for r in matches)))
+                     related_agent_ids=targets,
+                     coordination_target_scope='specified' if targets else evidence.get('call_target_scope', 'unknown'))

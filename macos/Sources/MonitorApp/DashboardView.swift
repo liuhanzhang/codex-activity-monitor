@@ -66,6 +66,21 @@ struct DashboardView: View {
                         }
                         .font(.system(size: 12)).padding(.horizontal, 14)
                     }
+                    if let snapshot = store.snapshot, !snapshot.unassignedChats.isEmpty {
+                        PanelDisclosureGroup(isExpanded: $store.showUnassigned) {
+                            ForEach(store.unassignedRows) { row in
+                                ChatRowView(chat: row.chat, depth: 0, store: store, horizontalPadding: 0)
+                                Divider()
+                            }
+                        } label: {
+                            HStack(spacing: 8) {
+                                Text(L("归属待确认的子任务"))
+                                Text("\(snapshot.unassignedChats.count)").foregroundStyle(.secondary)
+                                Spacer()
+                            }.font(.system(size: 11, weight: .medium)).padding(.vertical, 12)
+                        }.font(.system(size: 12)).padding(.horizontal, 14)
+                            .accessibilityIdentifier("monitor.unassignedAgents")
+                    }
                 }
                 .frame(maxWidth: .infinity).fixedSize(horizontal: false, vertical: true)
                 .onGeometryChange(for: CGFloat.self) { $0.size.height } action: { listHeight = $0 }

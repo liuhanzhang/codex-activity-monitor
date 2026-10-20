@@ -57,7 +57,9 @@ private func hierarchy(_ rows: String) throws -> Snapshot {
     {"id":"a","has_active_work":true,"parent_thread_id":"b"},
     {"id":"b","has_active_work":true,"parent_thread_id":"a"}
     """)
-    #expect(cycle.rootChats.count == 2)
+    #expect(cycle.rootChats.isEmpty)
+    #expect(cycle.unassignedChats.count == 2)
+    #expect(cycle.displayedChats.count == 2)
     let ambiguous = try hierarchy("""
     {"id":"a","has_active_work":true,"subagents":{"c":"one"}},
     {"id":"b","has_active_work":true,"subagents":{"c":"two"}},

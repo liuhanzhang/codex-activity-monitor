@@ -29,6 +29,9 @@ public struct TimelineAgent: Decodable, Identifiable, Sendable {
     public let nickname: String?
     public let agent_path: String?
     public let status_scope: String?
+    public let activity_quality: [String]?
+
+    public var hasPartialInformation: Bool { !(quality ?? []).isEmpty || !(activity_quality ?? []).isEmpty }
 
     public var displayName: String {
         if let display_name { return display_name }
@@ -71,16 +74,22 @@ public struct TimelinePhase: Decodable, Identifiable, Sendable {
     public let related_phase_ids: [String]?
     public let coordination_action: String?
     public let related_agent_ids: [String]?
+    public let coordination_target_scope: String?
 
-    public var isCoordination: Bool { namespace == "canonical" && item_type == "collabAgentToolCall" }
+    public var isCoordination: Bool {
+        (namespace == "canonical" && item_type == "collabAgentToolCall") ||
+        (namespace == "input" && item_type == "function_call" && coordination_action != nil)
+    }
     public func coordinationTargets(in agents: [TimelineAgent]) -> String {
         let ids = related_agent_ids ?? []
-        if ids.count > 1 { return "\(ids.count) 个子智能体" }
+        if coordination_action == "wait" && coordination_target_scope == "global" { return "等待子智能体消息" }
+        if ids.count > 1 { return "\(ids.count) 个智能体" }
         guard let id = ids.first else { return "对象未知" }
         return agents.first { $0.thread_id == id }?.displayName ?? "智能体 · " + String(id.suffix(6))
     }
     public func presentationLabel(in agents: [TimelineAgent] = []) -> String {
-        isCoordination ? kindLabel + " · " + coordinationTargets(in: agents) : kindLabel + " · " + label
+        if isCoordination && coordination_action == "wait" && coordination_target_scope == "global" { return kindLabel }
+        return isCoordination ? kindLabel + " · " + coordinationTargets(in: agents) : kindLabel + " · " + label
     }
     public func coordinationTargetDetails(in agents: [TimelineAgent]) -> String {
         (related_agent_ids ?? []).map { id in
@@ -100,8 +109,10 @@ public struct TimelinePhase: Decodable, Identifiable, Sendable {
     }
     public var kindLabel: String {
         if isCoordination {
-            return ["spawn": "协作 · 派发", "send": "协作 · 发送消息", "wait": "协作 · 等待",
-                    "close": "协作 · 关闭", "resume": "协作 · 恢复"][coordination_action ?? ""] ?? "协作调用"
+            let action = coordination_action == "wait" && coordination_target_scope == "global" ? "协作 · 等待子智能体消息" :
+                (["spawn": "协作 · 派发", "send": "协作 · 发送消息", "followup": "协作 · 追加任务", "wait": "协作 · 等待",
+                  "close": "协作 · 关闭", "resume": "协作 · 恢复"][coordination_action ?? ""] ?? "协作调用")
+            return namespace == "input" ? "工具参数生成 · " + action : action
         }
         return switch kind {
         case "reasoning": "思考"

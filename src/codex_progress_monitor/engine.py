@@ -9,6 +9,7 @@ from .progress_state import handle_protocol, resolve_request, presentation
 from .metrics import TextStream, TokenCounter
 from .overview import overview, annotate_parents
 from .menu_presentation import menu_presentation
+from .agent_relations import raw_coordination, SPAWN_OPERATIONS, thread_identity
 from .usage import UsageBook
 from .i18n import PHASE_KEYS, phase_message, render_message, tr
 from .tool_labels import code_tool_names, command_name, command_previews, command_summary, file_edit_preview, is_code_exec, is_command_tool, is_patch_tool, tool_display, tool_label, tool_name
@@ -55,6 +56,7 @@ class Activity:
     target_item_id: str | None = None
     review_started_ms: int | None = None
     startup_pending: bool = False
+    coordination_action: str | None = None
 
     @property
     def active(self):
@@ -88,6 +90,10 @@ class Thread:
     subagents: dict = field(default_factory=dict)
     display_primary: str | None = None
     display_since: float = 0
+    parent_thread_id: str | None = None
+    parent_source: str | None = None
+    parent_quality: set = field(default_factory=set)
+    context_only: bool = False
 
 
 class Engine:
@@ -169,6 +175,7 @@ class Engine:
         return True
 
     def _activity(self, thread, item_id, turn_id, kind, label, at):
+        thread.context_only = False
         if item_id not in thread.activities:
             thread.activities[item_id] = Activity(item_id,turn_id,kind,label,at)
             thread.activities[item_id].last_progress_at = at or 0
@@ -177,6 +184,7 @@ class Engine:
         return thread.activities[item_id]
 
     def _tool_metadata(self, activity, item):
+        activity.coordination_action = raw_coordination(item).get('call_operation', activity.coordination_action)
         # Model input completion can arrive after canonical patch execution.
         if not (activity.item_type == 'fileChange' and item.get('type') in ('custom_tool_call','function_call')):
             activity.item_type = item.get('type',activity.item_type)
@@ -210,6 +218,17 @@ class Engine:
         elif activity.command_previews:
             label += tr('diagnostic.planned', commands=' | '.join(p['command'] for p in activity.command_previews))
         activity.label = label
+
+    def _assign_parent(self, parent, child_id):
+        if not thread_identity(child_id) or child_id == parent.id:
+            return
+        child = self._thread(parent.backend, child_id)
+        if child.thread_source == 'user' or (child.parent_thread_id and child.parent_thread_id != parent.id):
+            child.parent_quality.add('parent_identity_conflict')
+            return
+        child.parent_thread_id, child.parent_source = parent.id, 'spawn_call'
+        child.thread_source = 'subagent'
+        parent.subagents.setdefault(child_id, 'spawn_agent')
 
     def ingest(self, row):
         event = row if isinstance(row,Event) else Event.from_row(row)
@@ -439,8 +458,12 @@ class Engine:
                 thread.review_mode=kind=='enteredReviewMode'
             return
         if kind=='subAgentActivity':
-            if item.get('agentThreadId'):
-                thread.subagents[item['agentThreadId']]=item.get('kind','unknown')
+            child = item.get('agentThreadId')
+            if child and item.get('kind') == 'started' and any(a.turn_id == turn_id and
+                    a.call_id == item_id and a.coordination_action == 'spawn' for a in thread.activities.values()):
+                self._assign_parent(thread, child)
+            if child in thread.subagents:
+                thread.subagents[child] = item.get('kind', 'unknown')
             return
         if kind in ('agentMessage','reasoning','plan'):
             phase={'agentMessage':'text','reasoning':'reasoning','plan':'plan'}[kind]
@@ -449,6 +472,9 @@ class Engine:
             phase='compaction' if kind=='contextCompaction' else 'sleep'
             activity=self._activity(thread,item_id,turn_id,phase,PHASES[phase],known.get('started_at'))
         elif kind in TOOL_TYPES:
+            if kind == 'collabAgentToolCall' and item.get('tool') in SPAWN_OPERATIONS:
+                for child in item.get('receiverThreadIds', []):
+                    self._assign_parent(thread, child)
             label=item.get('command') or '/'.join(str(item.get(k,'')) for k in ('server','tool')).strip('/') or item.get('tool') or kind
             confirmed_process=(kind=='commandExecution' and bool(item.get('processId'))
                                and item.get('source') in ('unifiedExecStartup','unifiedExecInteraction'))
@@ -758,9 +784,20 @@ class Engine:
             else:
                 del self.pending[key]
         # Retain recent finished results, release old identity and text state.
+        needed = {(t.backend, t.parent_thread_id) for t in self.threads.values() if t.parent_thread_id and
+                  (t.status == 'inProgress' or any(a.active for a in t.activities.values()) or now-t.last_progress_at <= 600)}
+        for _ in range(len(self.threads)):
+            ancestors = {(t.backend, t.parent_thread_id) for t in self.threads.values() if (t.backend, t.id) in needed and t.parent_thread_id}
+            if ancestors <= needed:
+                break
+            needed.update(ancestors)
         for key,thread in list(self.threads.items()):
             if thread.status!='inProgress' and not any(a.active for a in thread.activities.values()) and now-thread.last_progress_at>600:
-                self.threads.pop(key)
+                if key in needed:
+                    thread.activities.clear()
+                    thread.context_only = True
+                else:
+                    self.threads.pop(key)
         alive_items={(t.backend,a.id) for t in self.threads.values() for a in t.activities.values()}
         for key in list(self.streams):
             if (key[0],key[1]) not in alive_items:
@@ -859,6 +896,9 @@ class Engine:
                             unavailable_rates.add(stream.kind)
             views.append({'backend':thread.backend,'id':thread.id,'name':thread.name or thread.id[:8],
                           'ephemeral':thread.ephemeral,'thread_source':thread.thread_source,
+                          'parent_thread_id':thread.parent_thread_id,'parent_source':thread.parent_source,
+                          'parent_quality':sorted(thread.parent_quality),'context_only':thread.context_only,
+                          'subagents':dict(thread.subagents),
                           'home':backend.get('home'),'host':'local',
                           'cwd':thread.cwd,'model':thread.model,'turn_id':thread.turn_id,'status':thread.status,
                           'phase':main_phase,'phase_label':PHASES.get(main_phase,main_phase),

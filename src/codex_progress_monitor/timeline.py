@@ -10,6 +10,7 @@ import time
 
 from .events import TOOL_TYPES, SERVER_REQUESTS
 from .tool_labels import code_tool_names, file_edit_preview, is_patch_tool, tool_name
+from .agent_relations import raw_coordination
 
 MODEL_TYPES = {'reasoning': 'reasoning', 'agentMessage': 'text', 'message': 'text', 'plan': 'text'}
 LABELS = {'reasoning': '思考', 'text': '正文输出', 'tool_input': '工具参数生成',
@@ -87,7 +88,7 @@ def item_phase(scope, thread, turn, item, start=None, end=None, source='producer
             'start_source': source if valid_ms(start) else None,
             'end_source': source if valid_ms(end) else None,
             'status': status(item.get('status', 'completed' if end is not None else 'inProgress')),
-            'quality': [], 'mirrored': item.get('delivery') == 'async'}
+            'quality': [], 'mirrored': item.get('delivery') == 'async', **raw_coordination(item)}
 
 
 def display_phase(phase):

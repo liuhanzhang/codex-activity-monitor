@@ -81,6 +81,25 @@ private func panelUsage(_ fields: [String: Any]) throws -> Usage {
     try JSONDecoder().decode(Usage.self, from: JSONSerialization.data(withJSONObject: fields))
 }
 
+@Test @MainActor func orphanDisclosurePreservesHistoryWithoutAddingARecentRoot() throws {
+    let rows: [[String: Any]] = [
+        ["id":"root", "home":"scope", "status":"completed", "last_progress_seconds":2],
+        ["id":"child", "home":"scope", "thread_source":"subagent", "status":"unknown", "last_progress_seconds":1]
+    ]
+    let store = try panelStore(rows)
+    store.showRecent = true; store.showUnassigned = true
+    #expect(store.recentRows.map { $0.chat.threadID } == ["root"])
+    #expect(store.unassignedRows.map { $0.chat.threadID } == ["child"])
+    let timeline = store.timeline(for: store.snapshot!.threads[1])
+    timeline.expandedAgents = ["grandchild"]
+    var associated = rows
+    associated[1]["parent_thread_id"] = "root"
+    try updatePanel(store, associated)
+    #expect(store.unassignedRows.isEmpty && store.recentRows.count == 1)
+    #expect(store.timeline(for: store.snapshot!.threads[1]) === timeline)
+    #expect(timeline.expandedAgents == ["grandchild"])
+}
+
 @Test func panelStatisticsRequireExplicitTurnOwnershipForEachMetric() throws {
     let usage = try panelUsage(["turn_id": "new", "output_tokens": 5214, "reasoning_tokens": 1382,
         "latest_reasoning": ["turn_id": "old", "tokens_per_second": 50]])

@@ -37,7 +37,8 @@ class HistoryTests(unittest.TestCase):
             'agent_nickname': 'Lorentz', 'agent_path': '/root/desktop_control', 'agent_role': None}}})
         self.write()
         index = self.index()
-        self.assertEqual(index.agent_metadata, {'nickname': 'Lorentz', 'agent_path': '/root/desktop_control', 'quality': []})
+        self.assertEqual(index.agent_metadata, {'nickname': 'Lorentz', 'agent_path': '/root/desktop_control',
+                                               'thread_source': 'subagent', 'quality': []})
         revision = index.revision
         self.index()
         self.assertEqual(index.revision, revision)

@@ -88,8 +88,8 @@ class OverviewTests(unittest.TestCase):
         self.assertEqual(self.result()['generation_rate'], 0)
 
     def test_parent_edges_reject_ambiguity_cycles_and_cross_home(self):
-        views = [{'id': 'a', 'backend': 'b', 'home': '/h', 'subagents': {'b': 'agent'}},
-                 {'id': 'b', 'backend': 'b', 'home': '/h', 'subagents': {'a': 'agent'}},
+        views = [{'id': 'a', 'backend': 'b', 'home': '/h', 'subagents': {'b': 'spawnAgent'}},
+                 {'id': 'b', 'backend': 'b', 'home': '/h', 'subagents': {'a': 'spawnAgent'}},
                  {'id': 'b', 'backend': 'x', 'home': '/other'}]
         annotate_parents(views)
         self.assertTrue(all('parent_thread_id' not in v for v in views))

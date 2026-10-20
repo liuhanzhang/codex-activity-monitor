@@ -14,7 +14,8 @@ FIELDS = frozenset(('id', 'scope_id', 'thread_id', 'turn_id', 'namespace', 'item
                     'track', 'kind', 'label', 'tool_name', 'call_id', 'client_id', 'process_id',
                     'start_ms', 'end_ms', 'start_source', 'end_source', 'status', 'quality',
                     'mirrored', 'observation_instance', 'observation_backend', 'observed_until_ms', 'updated_ms',
-                    'parent_thread_id', 'parent_turn_id', 'child_thread_id', 'operation', 'execution_confirmed'))
+                    'parent_thread_id', 'parent_turn_id', 'child_thread_id', 'operation', 'execution_confirmed',
+                    'call_operation', 'call_target_scope'))
 
 
 def metadata_path(runtime):

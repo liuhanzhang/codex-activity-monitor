@@ -70,6 +70,38 @@ def agent_fixtures(base, now, case='default'):
     elif case == 'single':
         current['agents'] = current['agents'][:1]
         current['phases'] = [p for p in current['phases'] if p['thread_id'] == 'root']
+    elif case == 'fixes':
+        current['current_turn_id'] = None
+        current['turns'][0].update(status='completed', end_ms=now)
+        for agent in current['agents']:
+            agent.update(status='completed')
+        current['agents'][0]['activity_quality'] = ['missing_item_end']
+        for phase in current['phases']:
+            if phase['status'] == 'active':
+                phase.update(status='completed', end_ms=now)
+        missing = next(p for p in current['phases'] if p['id'] == 'params-3')
+        missing.update(status='unknown', end_ms=None, quality=['missing_item_end'])
+        for key, action in [('params-1', 'spawn'), ('params-2', 'followup')]:
+            phase = next(p for p in current['phases'] if p['id'] == key)
+            phase.update(namespace='input', item_type='function_call', coordination_action=action,
+                         related_agent_ids=[current['agents'][1]['id']], coordination_target_scope='specified')
+            timeline['details'][key]['phase'] = phase
+        call.update(related_agent_ids=[], coordination_target_scope='global')
+        timeline['details'][call['id']]['sections'] = [
+            {'id':'input', 'title':'参数', 'format':'code', 'text':'{"timeout_ms":45000}', 'offset':0, 'total_chars':20, 'next_offset':None},
+            {'id':'output', 'title':'结果', 'format':'code', 'text':'{"message":"Wait completed."}', 'offset':0, 'total_chars':29, 'next_offset':None}]
+        snapshot['threads'][0].update(status='completed', has_active_work=False, last_progress_seconds=5,
+                                     display_label='已完成', thread_source='user')
+        for agent in current['agents'][1:]:
+            snapshot['threads'].append(dict(id=agent['id'], backend='fixture', name=agent['display_name'],
+                thread_source='subagent', parent_thread_id='root', parent_source='session_header',
+                status='completed', has_active_work=False, last_progress_seconds=10, connected=True))
+        snapshot['threads'].append(dict(id='orphan', backend='fixture', name='父身份尚未到达的子任务',
+            thread_source='subagent', status='completed', has_active_work=False, last_progress_seconds=15, connected=True))
+        orphan = {**current, 'thread_id':'orphan', 'selected_turn_id':'orphan-turn', 'turns':[],
+            'agents':[dict(id='orphan', thread_id='orphan', name='主智能体', status='unknown',
+                           status_scope='selected_parent_turn', quality=['turn_relation_unknown'])], 'phases':[], 'markers':[]}
+        timeline['threads']['orphan'] = {'bundles': {'current': orphan}}
     return snapshot, timeline
 
 
@@ -83,7 +115,7 @@ def main():
     while True:
         selector = args.output / 'case.txt'
         case = selector.read_text().strip() if selector.exists() else 'default'
-        if case not in ('default', 'long', 'nested', 'legacy', 'single'):
+        if case not in ('default', 'long', 'nested', 'legacy', 'single', 'fixes'):
             raise ValueError('Unknown agent preview case')
         snapshot, timeline = agent_fixtures(base, base+90000, case)
         snapshot['updated_at'] = time.time()

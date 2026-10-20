@@ -28,6 +28,7 @@ final class DashboardStore {
     private var expansionOverrides: [String: Bool] = [:]
     private(set) var presentationID = 0
     var showRecent = false
+    var showUnassigned = false
     var dismissPresentation = 0
     var panelMaxHeight: CGFloat = 520
     var panelVisible = false {
@@ -36,6 +37,7 @@ final class DashboardStore {
             presentationID += 1
             expansionOverrides = [:]
             showRecent = false
+            showUnassigned = false
             reconcileExpansion()
         }
     }
@@ -159,6 +161,11 @@ final class DashboardStore {
     var recentRows: [ChatRow] {
         guard showRecent, let snapshot else { return [] }
         return snapshot.rows(roots: recentRoots, expanded: [], order: chatOrder)
+    }
+
+    var unassignedRows: [ChatRow] {
+        guard showUnassigned, let snapshot else { return [] }
+        return snapshot.rows(roots: snapshot.unassignedChats, expanded: [], order: chatOrder)
     }
 
     func timeline(for chat: Chat) -> TimelineStore {

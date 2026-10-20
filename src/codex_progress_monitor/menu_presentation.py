@@ -20,13 +20,17 @@ def menu_presentation(engine, views, total):
         return (view.get('home') or view['backend'], view['id'])
 
     active = [v for v in views if v.get('has_active_work')]
-    count = len({root(v) for v in active})
+    roots = {root(v) for v in active}
+    unowned = {key for key in roots if by_id[key].get('thread_source') == 'subagent'}
+    count = len(roots - unowned)
 
     def result(mode, reason):
         return dict(version=1, mode=mode, reason=reason, active_conversation_count=count)
 
     if total['coverage'] != 'complete':
         return result('unavailable', 'coverage_incomplete')
+    if unowned:
+        return result('unavailable', 'parent_identity_unknown')
     if any(not v.get('connected') or CONFLICTS.intersection(v.get('quality', ())) or
            v.get('display_message', {}).get('key') in ('activity.unknown', 'activity.disconnected')
            for v in active):

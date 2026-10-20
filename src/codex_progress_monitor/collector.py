@@ -18,6 +18,8 @@ from .i18n import message, render_message
 from .timeline import TimelineBook
 from .timeline_storage import TimelineStorage, metadata_path
 from .timeline_query import TimelineQuery, QueryServer
+from .agent_identity import AgentIdentityCache
+from .menu_presentation import menu_presentation
 
 
 def serve(runtime):
@@ -48,6 +50,7 @@ def serve(runtime):
         timeline_error = 'metadata_unavailable'
     timeline = TimelineBook(timeline_store)
     engine=Engine(timeline=timeline)
+    identities = AgentIdentityCache()
     query_server = None
     try:
         query_server = QueryServer(runtime/'tl.sock', TimelineQuery(timeline))
@@ -56,12 +59,17 @@ def serve(runtime):
     except OSError:
         timeline_error = 'query_unavailable'
     implementation=source_identity('collector','app_session','engine','overview','menu_presentation','progress_state','events','usage','metrics','runtime','tool_labels','i18n','messages_zh_cn',
-                                   'timeline','timeline_storage','timeline_query','history','agent_presentation')
+                                   'timeline','timeline_storage','timeline_query','history','agent_presentation','agent_relations','agent_identity')
     previous=read_snapshot(runtime)
     historical=previous.get('threads',[]) if time.time()-(previous.get('updated_at') or 0)<600 else []
     if historical:
         engine.usage.restore(previous.get('usage_recovery'))
     for thread in historical:
+        # Old snapshots inferred these edges from communication. Re-verify them
+        # from session headers / new explicit live creation evidence.
+        if thread.get('parent_source') not in ('session_header', 'spawn_call'):
+            thread.pop('parent_thread_id', None)
+        thread['subagents'] = {}
         thread['connected']=False
         thread['token_rates']={'text':None,'tool_input':None}
         thread['generation_rate']=None
@@ -206,6 +214,8 @@ def serve(runtime):
                                                    'available':query_server is not None,
                                                    'quality':[e for e in (timeline_error, timeline_store.error if timeline_store else None) if e]}
                 retain_history(snapshot)
+                identities.enrich(snapshot['threads'])
+                snapshot['menu_presentation'] = menu_presentation(engine, snapshot['threads'], snapshot['overview'])
                 snapshot['collector_pid']=os.getpid()
                 snapshot['implementation']=implementation
                 snapshot['running']=True
@@ -226,6 +236,9 @@ def serve(runtime):
         engine.tick(time.monotonic())
         snapshot=engine.snapshot(time.monotonic(),time.time())
         retain_history(snapshot)
+        identities.enrich(snapshot['threads'])
+        identities.close()
+        snapshot['menu_presentation'] = menu_presentation(engine, snapshot['threads'], snapshot['overview'])
         snapshot['running']=False
         snapshot['implementation']=implementation
         atomic_json(runtime/'snapshot.json',snapshot)

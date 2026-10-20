@@ -163,19 +163,20 @@ struct TimelinePanelView: View {
         let expanded = store.expandedAgents.contains(lane.threadID)
         let label = lane.isChild ? L("子智能体") + " · " + (agent?.displayName ?? lane.label) : L("主智能体")
         let state = agent?.roundStatusLabel ?? "状态未知"
+        let accessibleState = L(state) + (agent?.hasPartialInformation == true ? " · " + L("部分活动记录不完整") : "")
         let description = [label, agent?.agent_path, lane.threadID].compactMap { $0 }.joined(separator: "\n")
         if lane.isChild {
             Button {
                 if !store.expandedAgents.insert(lane.threadID).inserted { store.expandedAgents.remove(lane.threadID) }
             } label: {
                 agentHeaderContent(lane, name: agent?.displayName ?? lane.label, state: state, expanded: expanded,
-                                   partial: !(agent?.quality ?? []).isEmpty)
+                                   partial: agent?.hasPartialInformation == true)
             }.buttonStyle(.plain).help(description)
-                .accessibilityLabel(label).accessibilityValue(L(state) + " · " + L(expanded ? "已展开" : "已折叠"))
+                .accessibilityLabel(label).accessibilityValue(accessibleState + " · " + L(expanded ? "已展开" : "已折叠"))
                 .accessibilityIdentifier("monitor.agent.\(lane.threadID)")
         } else {
-            agentHeaderContent(lane, name: "主智能体", state: state, expanded: false, partial: false)
-                .accessibilityElement(children: .ignore).accessibilityLabel(L("主智能体")).accessibilityValue(L(state))
+            agentHeaderContent(lane, name: "主智能体", state: state, expanded: false, partial: agent?.hasPartialInformation == true)
+                .accessibilityElement(children: .ignore).accessibilityLabel(L("主智能体")).accessibilityValue(accessibleState)
                 .accessibilityIdentifier("monitor.agent.root")
         }
     }
@@ -191,7 +192,7 @@ struct TimelinePanelView: View {
                 .layoutPriority(1)
             if partial {
                 Image(systemName: "questionmark.circle").font(.system(size: 9)).foregroundStyle(.secondary)
-                    .help(L("部分身份或活动信息不可用"))
+                    .help(L("部分身份或活动记录不完整"))
             }
             Spacer(minLength: 4)
             Text(L(state)).font(.system(size: 9)).foregroundStyle(.secondary).fixedSize()

@@ -87,7 +87,7 @@ class MenuPresentationTests(unittest.TestCase):
     def test_children_group_under_completed_hidden_parent(self):
         parent = self.thread('parent')
         parent.status, parent.visible = 'completed', False
-        parent.subagents = {'child': 'running', 'second': 'running'}
+        parent.subagents = {'child': 'spawnAgent', 'second': 'spawnAgent'}
         self.activity(self.thread('child'), 'reasoning')
         self.activity(self.thread('second'), 'tool')
         value = self.menu()

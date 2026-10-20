@@ -139,11 +139,11 @@ private struct ActivityDetailView: View {
                     Circle().fill(Color(nsColor: TimelinePalette.color(store.phase))).frame(width: 7, height: 7)
                 }
                 Text(L(store.phase.kindLabel)).fontWeight(.medium)
-                if store.phase.isCoordination {
+                if store.phase.isCoordination && store.phase.coordination_target_scope != "global" {
                     Text(store.phase.coordinationTargets(in: store.timeline.bundle?.agents ?? []))
                         .lineLimit(1).foregroundStyle(.secondary)
                         .help(store.phase.coordinationTargetDetails(in: store.timeline.bundle?.agents ?? []))
-                } else if store.phase.label != store.phase.kindLabel {
+                } else if !store.phase.isCoordination && store.phase.label != store.phase.kindLabel {
                     Text(store.phase.label).lineLimit(1).foregroundStyle(.secondary).help(store.phase.label)
                 }
                 Spacer(minLength: 8)

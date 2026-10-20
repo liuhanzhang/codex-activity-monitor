@@ -63,7 +63,7 @@ private func sample(_ extra: String = "", coverage: String = "complete", rate: S
 
 @Test func activeDescendantRetainsOldAncestorAndIdleIsNotRecentCompletion() throws {
     let value = try sample(threads: """
-    {"id":"parent","status":"completed","last_progress_seconds":700,"subagents":{"child":"agent"}},
+    {"id":"parent","status":"completed","last_progress_seconds":700,"subagents":{"child":"spawnAgent"}},
     {"id":"child","has_active_work":true,"parent_thread_id":"parent"},
     {"id":"idle","status":"idle","last_progress_seconds":1},
     {"id":"recent","status":"completed","last_progress_seconds":1}

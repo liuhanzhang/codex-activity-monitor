@@ -1,0 +1,95 @@
+{
+  "date": "2026-10-20",
+  "baseline_commit": "728af1e47d84",
+  "tests": {
+    "python_unique_passed": 141,
+    "swift_model_unique_passed": 39,
+    "swift_app_unique_passed": 39,
+    "swift_windowserver_skipped": 1,
+    "counts_exclude_repeated_runs": true
+  },
+  "source_comparison": {
+    "before_phases": 190,
+    "after_phases": 190,
+    "phase_identity_time_equal": true,
+    "cold_sec": 0.4067,
+    "warm_sec": [
+      0.049,
+      0.0662,
+      0.0499
+    ],
+    "child_view_groups": 1
+  },
+  "raw_detail_comparison": [
+    {
+      "item_type": "function_call",
+      "state": "available",
+      "raw_content_equal": true
+    },
+    {
+      "item_type": "collabAgentToolCall",
+      "state": "available",
+      "raw_content_equal": true
+    },
+    {
+      "item_type": "commandExecution",
+      "state": "available",
+      "raw_content_equal": true
+    },
+    {
+      "item_type": "custom_tool_call",
+      "state": "not_retained",
+      "raw_content_equal": true
+    }
+  ],
+  "natural_run": {
+    "child_count": 3,
+    "all_child_round_groups_completed": true,
+    "child_turn_counts": [
+      1,
+      1,
+      2
+    ],
+    "child_views_do_not_include_parent_group": true,
+    "each_child_replied_to_parent": true,
+    "projection_errors": 0,
+    "parent_quality": [
+      "observation_gap"
+    ],
+    "parent_transition_to_recent_naturally_verified": false
+  },
+  "daily": {
+    "running": true,
+    "snapshot_age_seconds": 0.066,
+    "loaded_module_count": 20,
+    "module_hashes_match": true,
+    "mismatched_modules": [],
+    "collector_source_sha256": "f00438ad1941c5e0504a4138dedd0de7fbf1d464c7331f40d6ccc4d33da861fc",
+    "gui_build_sha256": "debb7232cf90cd35a0d15f20bbab782505259b3d2ee5565b1c3987dc049ad56c",
+    "gui_build_matches": true,
+    "protected_integration_fields_match": {
+      "id": true,
+      "previous": true,
+      "legacy_backup": true,
+      "legacy_agent_backup": true,
+      "installed": true
+    },
+    "timeline_available": true,
+    "projection_errors": 0,
+    "title_restoration_count": 2
+  },
+  "native_screenshots": {
+    "data_source": "synthetic; native macOS app captures",
+    "files": [
+      "panel-light.png",
+      "panel-dark.png",
+      "wait-detail.png"
+    ]
+  },
+  "limitations": [
+    "Running parent chat has not ended; its natural transition to recent completed cannot yet be observed.",
+    "Reload during the parent turn creates an expected observation_gap; missing time and usage remain unknown.",
+    "No full VoiceOver, long-run CPU, fresh-machine or distribution validation.",
+    "No systematic filesystem scan/read-call benchmark."
+  ]
+}

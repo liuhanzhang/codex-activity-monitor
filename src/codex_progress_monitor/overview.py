@@ -1,6 +1,7 @@
 """Aggregate independently observed live streams; never sum presentation rows."""
 
 import math
+from .agent_relations import parent_edges
 
 LIVE_KINDS = frozenset(('text', 'plan', 'summary', 'tool_input'))
 CONFLICTS = frozenset(('multiple_active_backends', 'identity_conflict', 'system_error', 'observation_gap'))
@@ -56,19 +57,11 @@ def overview(engine, views, now):
 
 def annotate_parents(views):
     """Use explicit child identities only; ambiguous and cyclic edges stay ungrouped."""
-    by_id = {(v.get('home') or v['backend'], v['id']): v for v in views}
-    candidates = {}
-    for parent in views:
-        scope = parent.get('home') or parent['backend']
-        for child in parent.get('subagents', {}):
-            if (scope, child) in by_id and child != parent['id']:
-                candidates.setdefault((scope, child), set()).add(parent['id'])
-    edges = {key: next(iter(parents)) for key, parents in candidates.items() if len(parents) == 1}
-    for key, parent in edges.items():
-        visited = {key[1]}
-        cursor = parent
-        while cursor not in visited and (key[0], cursor) in edges:
-            visited.add(cursor)
-            cursor = edges[(key[0], cursor)]
-        if cursor not in visited:
-            by_id[key]['parent_thread_id'] = parent
+    edges = parent_edges(views)
+    for view in views:
+        key = (view.get('home') or view['backend'], view['id'])
+        previous = view.pop('parent_thread_id', None)
+        if key in edges:
+            view['parent_thread_id'] = edges[key]
+        elif previous:
+            view['parent_quality'] = sorted(set(view.get('parent_quality', [])) | {'parent_identity_conflict'})

@@ -12,6 +12,7 @@ from .history import HistoryProvider, raw_section
 from .timeline import display_phase, identity, merge_phase
 from .timeline_storage import metadata_path, read_records
 from .agent_presentation import present_agents, present_coordination, scoped_status
+from .agent_relations import SPAWN_OPERATIONS
 
 
 class TimelineQuery:
@@ -46,6 +47,8 @@ class TimelineQuery:
                 quality.add('projection_partial')
         revisions = [observed['revision']]
         loaded = {}
+        spawn_calls = {(p['thread_id'], p['turn_id'], p.get('call_id')) for p in phases.values()
+                       if p.get('call_operation') == 'spawn'}
 
         def load(owner):
             # Many relation records can refer to the same child. Refresh and
@@ -61,6 +64,8 @@ class TimelineQuery:
                 quality.update(index.quality)
                 for p in index.phases.values():
                     phases[p['id']] = merge_phase(phases.get(p['id']), p)
+                    if p.get('call_operation') == 'spawn':
+                        spawn_calls.add((p['thread_id'], p['turn_id'], p.get('call_id')))
                 for t in index.turns.values():
                     key = (owner, t['turn_id']); old = turns.get(key, {})
                     merged = {**old, **{k: v for k, v in t.items() if v is not None}}
@@ -75,6 +80,33 @@ class TimelineQuery:
                 return None
 
         root_index = load(thread)
+
+        def structural_parent(owner):
+            metadata = getattr(loaded.get(owner), 'agent_metadata', {})
+            if 'agent_parent_invalid' in metadata.get('quality', []):
+                return None
+            parents = {r['parent_thread_id'] for r in relations.values() if r['child_thread_id'] == owner and
+                       (r.get('operation') in SPAWN_OPERATIONS or
+                        (r['parent_thread_id'], r['parent_turn_id'], r.get('call_id')) in spawn_calls)}
+            if metadata.get('parent_thread_id'):
+                if parents - {metadata['parent_thread_id']}:
+                    quality.add('parent_identity_conflict')
+                    return None
+                return metadata['parent_thread_id']
+            if metadata.get('thread_source') == 'user':
+                if parents:
+                    quality.add('parent_identity_conflict')
+                return None
+            return next(iter(parents)) if len(parents) == 1 else None
+
+        def is_child(parent, child):
+            if structural_parent(child) != parent:
+                return False
+            seen = {child}
+            cursor = parent
+            while cursor and cursor not in seen:
+                seen.add(cursor); cursor = structural_parent(cursor)
+            return cursor is None
         root_turns = sorted((t for t in turns.values() if t['thread_id'] == thread),
                             key=lambda t: t.get('start_ms') or t.get('updated_ms') or 0, reverse=True)
         current = next((t['turn_id'] for t in root_turns if t['status'] == 'active'), None)
@@ -91,12 +123,15 @@ class TimelineQuery:
             for child in dict.fromkeys(r['child_thread_id'] for r in candidates):
                 if child in visited:
                     continue
-                visited.add(child)
                 index = load(child)
+                if not is_child(parent, child):
+                    continue
+                visited.add(child)
                 child_turns = [t for t in turns.values() if t['thread_id'] == child]
                 linked = [t for t in child_turns if t.get('parent_turn_id') == parent_turn]
                 # A newly spawned thread's initial turn is the spawn's work. Reuse needs explicit attribution.
-                spawned = any(r['child_thread_id'] == child and r.get('operation') in ('spawnAgent', 'spawn_agent', 'spawn') for r in candidates)
+                spawned = any(r['child_thread_id'] == child and (r.get('operation') in SPAWN_OPERATIONS or
+                    (parent, parent_turn, r.get('call_id')) in spawn_calls) for r in candidates)
                 if not linked and spawned and child_turns:
                     linked = [min(child_turns, key=lambda t: t.get('start_ms') or t.get('updated_ms') or 0)]
                 agent_quality = [] if linked else ['turn_relation_unknown']
@@ -122,7 +157,9 @@ class TimelineQuery:
         for phase in owned:
             by_agent.setdefault(phase['thread_id'], []).append(phase)
         for agent in agents:
-            agent['status'] = scoped_status(agent_turns.get(agent['thread_id'], []), by_agent.get(agent['thread_id'], []))
+            activity = by_agent.get(agent['thread_id'], [])
+            agent['status'] = scoped_status(agent_turns.get(agent['thread_id'], []), activity)
+            agent['activity_quality'] = sorted({q for p in activity for q in p.get('quality', [])})
             agent['status_scope'] = 'selected_parent_turn'
         if any(p.get('kind') == 'gap' for p in owned):
             quality.add('observation_gap')
@@ -159,6 +196,8 @@ class TimelineQuery:
             earlier_relations.setdefault(relation['child_thread_id'], []).append(relation)
         for child, candidates in earlier_relations.items():
             load(child)
+            if not is_child(thread, child):
+                continue
             child_turns = [t for t in turns.values() if t['thread_id'] == child]
             first = min(child_turns, key=lambda t: t.get('start_ms') or t.get('updated_ms') or 0) if child_turns else None
             active = [p for p in phases.values() if p['thread_id'] == child and p['status'] == 'active']
@@ -166,7 +205,9 @@ class TimelineQuery:
                 owned = turns.get((child, p['turn_id']), {})
                 for relation in candidates:
                     linked = owned.get('parent_turn_id') == relation['parent_turn_id'] or (
-                        relation.get('operation') in ('spawnAgent', 'spawn_agent', 'spawn') and first and p['turn_id'] == first['turn_id'])
+                        (relation.get('operation') in SPAWN_OPERATIONS or
+                         (thread, relation['parent_turn_id'], relation.get('call_id')) in spawn_calls) and
+                        first and p['turn_id'] == first['turn_id'])
                     if linked:
                         earlier.append(relation['parent_turn_id'])
         earlier = sorted(set(earlier))
@@ -202,7 +243,8 @@ class TimelineQuery:
         relations = {r['id']: r for r in observed['relations']}
         if index:
             relations.update(index.relations)
-        present_coordination([phase], relations.values(), scope)
+        evidence = list(observed['phases']) + (list(index.phases.values()) if index else [])
+        present_coordination([phase], relations.values(), scope, evidence)
         if phase.get('call_id') and phase.get('namespace') == 'input':
             related = next((p['id'] for p in observed['phases'] if p['thread_id'] == thread and
                             p['turn_id'] == turn and p['namespace'] == 'canonical' and p['item_id'] == phase['call_id']), None)

@@ -81,7 +81,7 @@ class QueryTests(unittest.TestCase):
         self.assertEqual(scoped_status(turns, [phase]), 'unknown')
         self.assertEqual(scoped_status([{'status': 'active', 'end_ms': None}], []), 'unknown')
 
-    def test_scoped_status_does_not_claim_completion_with_missing_item_end(self):
+    def test_terminal_round_reports_missing_item_end_separately(self):
         self.book._turn(self.scope, 'root', 'turn', 1000, 'active', start=1000)
         self.book._turn(self.scope, 'child', 'own', 1100, 'completed', start=1100, end=5000)
         self.book._relation(self.scope, 'root', 'turn', 'child', 'spawn', 'spawnAgent')
@@ -89,7 +89,10 @@ class QueryTests(unittest.TestCase):
         p.update(status='unknown', quality=['missing_item_end'])
         self.book._put(p)
         query = TimelineQuery(self.book)
-        self.assertEqual(query.bundle(self.scope, 'root')['agents'][1]['status'], 'unknown')
+        agent = query.bundle(self.scope, 'root')['agents'][1]
+        self.assertEqual(agent['status'], 'completed')
+        self.assertIn('missing_item_end', agent['activity_quality'])
+        self.assertEqual(self.book.phases[p['id']]['status'], 'unknown')
         p.update(status='completed', end_ms=4000, end_source='producer', quality=[])
         self.book._put(p)
         agent = query.bundle(self.scope, 'root')['agents'][1]
