@@ -3,6 +3,7 @@ import tempfile
 import threading
 import unittest
 import json
+from unittest.mock import patch
 
 from codex_progress_monitor.timeline import TimelineBook, item_phase
 from codex_progress_monitor.timeline_query import TimelineQuery, QueryServer, query_runtime
@@ -38,6 +39,52 @@ class QueryTests(unittest.TestCase):
         result = TimelineQuery(self.book).bundle(self.scope, 'root')
         self.assertEqual(len(result['phases']), 1)
         self.assertEqual(result['phases'][0]['scope_id'], self.scope)
+
+    def test_repeated_relations_load_each_history_once_and_refresh_on_next_query(self):
+        self.book._turn(self.scope, 'root', 'old', 1000, 'completed', start=1000, end=2000)
+        self.book._turn(self.scope, 'root', 'new', 3000, 'active', start=3000)
+        sessions = Path(self.scope) / 'sessions'
+        sessions.mkdir(parents=True)
+        child_path = sessions / 'rollout-child.jsonl'
+        child_path.write_text(''.join(json.dumps(row) + '\n' for row in [
+            {'type': 'session_meta', 'payload': {'id': 'child', 'history_mode': 'paginated'}},
+            {'type': 'event_msg', 'payload': {'type': 'task_started', 'turn_id': 'child-own', 'started_at': 1.5}},
+            {'type': 'event_msg', 'payload': {'type': 'item_completed', 'thread_id': 'child', 'turn_id': 'child-own',
+             'started_at_ms': 1600, 'completed_at_ms': 1700, 'item': {'id': 'reason', 'type': 'Reasoning'}}},
+        ]))
+        for i in range(60):
+            self.book._relation(self.scope, 'root', 'old', 'child', str(i), 'spawnAgent' if i == 0 else 'interacted')
+            self.book._relation(self.scope, 'root', 'old', 'missing-child', str(i), 'interacted')
+        query = TimelineQuery(self.book)
+        with patch.object(query.history, 'index', wraps=query.history.index) as read:
+            current = query.query({'action': 'timeline', 'scope_id': self.scope, 'thread_id': 'root'})
+            self.assertEqual([call.args[1] for call in read.call_args_list], ['root', 'child', 'missing-child'])
+        self.assertEqual(current['earlier_active_turns'], [])
+        with child_path.open('a') as stream:
+            stream.write(json.dumps({'type': 'event_msg', 'payload': {'type': 'item_completed',
+                'thread_id': 'child', 'turn_id': 'child-own', 'started_at_ms': 1800, 'completed_at_ms': 1900,
+                'item': {'id': 'text', 'type': 'AgentMessage'}}}) + '\n')
+        with patch.object(query.history, 'index', wraps=query.history.index) as read:
+            previous = query.query({'action': 'timeline', 'scope_id': self.scope, 'thread_id': 'root', 'turn_id': 'old'})
+            self.assertEqual([call.args[1] for call in read.call_args_list], ['root', 'child', 'missing-child'])
+        self.assertEqual({p['item_id'] for p in previous['phases']}, {'reason', 'text'})
+        self.assertTrue(all(p['turn_id'] == 'child-own' for p in previous['phases']))
+
+    def test_reused_child_only_keeps_its_explicit_active_parent_in_earlier_turns(self):
+        for n, turn in enumerate(('old', 'reused', 'new')):
+            self.book._turn(self.scope, 'root', turn, 1000+n*1000, 'active' if turn == 'new' else 'completed',
+                            start=1000+n*1000)
+        self.book._turn(self.scope, 'child', 'initial', 1100, 'completed', start=1100, end=1900)
+        self.book._turn(self.scope, 'child', 'followup', 2100, 'active', start=2100)
+        followup = next(t for t in self.book.turns.values() if t['turn_id'] == 'followup')
+        followup['parent_turn_id'] = 'reused'
+        self.book._relation(self.scope, 'root', 'old', 'child', 'spawn', 'spawnAgent')
+        for n in range(3):
+            self.book._relation(self.scope, 'root', 'reused', 'child', str(n), 'interacted')
+        self.book._put(item_phase(self.scope, 'child', 'followup', {'id': 'reason', 'type': 'reasoning'}, 2200))
+        current = TimelineQuery(self.book).bundle(self.scope, 'root', 'new')
+        self.assertEqual(current['earlier_active_turns'], ['reused'])
+        self.assertEqual(current['phases'], [])
 
     def test_old_sidecar_hides_non_input_markers_and_migrates_compaction_only_in_projection(self):
         path = self.root / 'metadata.sqlite3'

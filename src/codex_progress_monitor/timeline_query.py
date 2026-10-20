@@ -44,8 +44,14 @@ class TimelineQuery:
             if self.book.engine and self.book.engine.counts.get('timeline_projection_error', 0):
                 quality.add('projection_partial')
         revisions = [observed['revision']]
+        loaded = {}
 
         def load(owner):
+            # Many relation records can refer to the same child. Refresh and
+            # merge each history once per query, including unavailable history.
+            if owner in loaded:
+                return loaded[owner]
+            loaded[owner] = None
             try:
                 index = self.history.index(scope, owner)
                 if not index:
@@ -61,6 +67,7 @@ class TimelineQuery:
                         merged['status'] = 'unknown'
                     turns[key] = merged
                 relations.update(index.relations)
+                loaded[owner] = index
                 return index
             except (OSError, ValueError, TypeError):
                 quality.add('history_unavailable')
@@ -136,19 +143,23 @@ class TimelineQuery:
             quality.add('history_pending' if any(p['status'] == 'active' for p in visible) else 'history_unavailable')
         earlier = sorted({p['turn_id'] for p in phases.values() if p['thread_id'] == thread and
                           p['turn_id'] != selected and p['status'] == 'active'})
+        earlier_relations = {}
         for relation in list(relations.values()):
             if relation['parent_thread_id'] != thread or relation['parent_turn_id'] == selected:
                 continue
-            child = relation['child_thread_id']
+            earlier_relations.setdefault(relation['child_thread_id'], []).append(relation)
+        for child, candidates in earlier_relations.items():
             load(child)
             child_turns = [t for t in turns.values() if t['thread_id'] == child]
             first = min(child_turns, key=lambda t: t.get('start_ms') or t.get('updated_ms') or 0) if child_turns else None
-            for p in list(phases.values()):
+            active = [p for p in phases.values() if p['thread_id'] == child and p['status'] == 'active']
+            for p in active:
                 owned = turns.get((child, p['turn_id']), {})
-                linked = owned.get('parent_turn_id') == relation['parent_turn_id'] or (
-                    relation.get('operation') in ('spawnAgent', 'spawn_agent', 'spawn') and first and p['turn_id'] == first['turn_id'])
-                if p['thread_id'] == child and p['status'] == 'active' and linked:
-                    earlier.append(relation['parent_turn_id'])
+                for relation in candidates:
+                    linked = owned.get('parent_turn_id') == relation['parent_turn_id'] or (
+                        relation.get('operation') in ('spawnAgent', 'spawn_agent', 'spawn') and first and p['turn_id'] == first['turn_id'])
+                    if linked:
+                        earlier.append(relation['parent_turn_id'])
         earlier = sorted(set(earlier))
         recent = root_turns[:6]
         for t in root_turns[6:]:
