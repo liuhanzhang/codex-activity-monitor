@@ -129,6 +129,8 @@ def serve(runtime):
     token=uuid.uuid4().hex
     atomic_json(runtime/'collector.json',{'pid':os.getpid(),'started_at':time.time(),'token':token,
                                         'implementation':implementation})
+    # Keep token sampling responsive without publishing every tick to disk.
+    next_tick=0
     next_snapshot=0
     def close_client(conn,reason='shutdown'):
         engine.counts['ipc_close_'+reason]+=1
@@ -205,10 +207,13 @@ def serve(runtime):
             for conn,state in list(clients.items()):
                 if now-state['last_seen']>10:
                     close_client(conn,'idle')
-            if now>=next_snapshot:
+            if now>=next_tick:
                 with timeline.lock:
                     engine.tick(now)
                     timeline.prune()
+                next_tick=now+0.25
+            if now>=next_snapshot:
+                with timeline.lock:
                     snapshot=engine.snapshot(now,time.time())
                     snapshot['timeline_summary']={'version':1,'revision':timeline.revision,
                                                    'available':query_server is not None,
@@ -220,7 +225,7 @@ def serve(runtime):
                 snapshot['implementation']=implementation
                 snapshot['running']=True
                 atomic_json(runtime/'snapshot.json',snapshot)
-                next_snapshot=now+0.25
+                next_snapshot=now+1
     finally:
         if query_server:
             query_server.shutdown()

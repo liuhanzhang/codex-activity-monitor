@@ -12,6 +12,8 @@
 
 接入 Monitor 后的前后端通信、监听位置和指标计算见 [产品架构与工作方式](/Users/bytedance/personal/codex_progress_monitor/docs/02_product_mvp/architecture.md)。
 
+后续改进见 [待办清单](docs/TODO.md)，包括将 GUI 实时同步从磁盘快照轮询迁移到本地 IPC。
+
 文案统一、命令名简化、1Hz 看板与多语言准备见 [易用性需求](docs/04_usability_and_localization/requirements.md)、[实现计划](docs/04_usability_and_localization/implementation-plan.md) 和 [实施结果](docs/04_usability_and_localization/implementation-results.md)。
 
 本回合 Output / Reasoning 用量与最近推理均速已实现并完成隔离运行验证；规则见 [需求文档](docs/05_token_usage_and_reasoning_speed/requirements.md)，步骤见 [实现计划](docs/05_token_usage_and_reasoning_speed/implementation-plan.md)，验收与日常进程加载边界见 [实现结果](docs/05_token_usage_and_reasoning_speed/implementation-results.md)。

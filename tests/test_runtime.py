@@ -33,6 +33,15 @@ class RuntimeTests(unittest.TestCase):
     def command(self,actual,*args):
         return [sys.executable,'-m','codex_progress_monitor.cli','--runtime',str(self.runtime),'bridge','--real-cli',str(actual),'--',*args]
 
+    def wait_snapshot(self, predicate, timeout=3):
+        deadline=time.monotonic()+timeout
+        while time.monotonic()<deadline:
+            snapshot=read_snapshot(self.runtime)
+            if predicate(snapshot):
+                return snapshot
+            time.sleep(.05)
+        self.fail('Expected state was not published to the snapshot')
+
     def test_transport_exit_stderr_and_absent_collector(self):
         actual=self.fake('import sys,json\nraw=sys.stdin.buffer.read()\nsys.stdout.buffer.write(raw)\nsys.stdout.flush()\nprint(json.dumps({"target":"tungstenite::protocol", "level":"TRACE", "fields":{"message":"Received message {}"}}),file=sys.stderr)\nprint("normal diagnostic",file=sys.stderr)\nsys.exit(7)\n')
         payload=b'{"id":1,"method":"test"}\n'+bytes(range(256))*2048
@@ -72,12 +81,13 @@ class RuntimeTests(unittest.TestCase):
             second.connect(str(self.runtime/'events.sock'))
             send(second,{'type':'bridge/started'})
             time.sleep(.3)
+            closed_at=time.time()
             first.close()
-            time.sleep(.4)
-            self.assertTrue(read_snapshot(self.runtime)['backends']['b']['connected'])
+            snapshot=self.wait_snapshot(lambda s: s.get('updated_at',0)>closed_at and 'b' in s.get('backends',{}))
+            self.assertTrue(snapshot['backends']['b']['connected'])
             second.close()
-            time.sleep(.4)
-            self.assertFalse(read_snapshot(self.runtime)['backends']['b']['connected'])
+            snapshot=self.wait_snapshot(lambda s: s.get('backends',{}).get('b',{}).get('connected') is False)
+            self.assertFalse(snapshot['backends']['b']['connected'])
         finally:
             first.close();second.close()
 
@@ -265,13 +275,12 @@ protocol('turn/completed',{'threadId':'t','turn':{'id':'u','status':'completed'}
                   {'backend':'test','direction':'upstream','observed_ns':now,'event':{'type':'response.output_item.added','item':{'id':'i','type':'message','metadata':{'turn_id':'u'}}}},
                   {'backend':'test','direction':'upstream','observed_ns':now,'event':{'type':'response.output_text.delta','item_id':'i','delta':'PRIVATE_BODY','sequence_number':1}}]
             sock.sendall(b''.join(json.dumps(r).encode()+b'\n' for r in rows))
-            time.sleep(.8)
-            snapshot=read_snapshot(self.runtime)
+            snapshot=self.wait_snapshot(lambda s: any(t['phase']=='text' for t in s['threads']))
             self.assertEqual(snapshot['threads'][0]['phase'],'text')
             self.assertNotIn('PRIVATE_BODY',(self.runtime/'snapshot.json').read_text())
             self.assertEqual((self.runtime/'events.sock').stat().st_mode&0o777,0o600)
-        time.sleep(.4)
-        self.assertEqual(read_snapshot(self.runtime)['threads'][0]['phase'],'unknown')
+        snapshot=self.wait_snapshot(lambda s: any(t['phase']=='unknown' for t in s['threads']))
+        self.assertEqual(snapshot['threads'][0]['phase'],'unknown')
         stop(self.runtime)
         start(self.runtime)
         restored=read_snapshot(self.runtime)['threads'][0]
@@ -282,15 +291,13 @@ protocol('turn/completed',{'threadId':'t','turn':{'id':'u','status':'completed'}
             def send(value):
                 sock.sendall(json.dumps({'backend':'test','direction':'protocol_out','observed_ns':time.monotonic_ns(),'event':value}).encode()+b'\n')
             send({'method':'turn/started','params':{'threadId':'t','turn':{'id':'v'}}})
-            time.sleep(.5)
-            fresh=read_snapshot(self.runtime)['threads'][0]
+            fresh=self.wait_snapshot(lambda s: any(t.get('turn_id')=='v' for t in s['threads']))['threads'][0]
             self.assertEqual(fresh['name'],'Known chat')
             self.assertEqual(fresh['cwd'],'/tmp/owned-project')
             self.assertEqual(fresh['turn_id'],'v')
             self.assertIsNone(fresh['generation_rate'])
             send({'method':'thread/started','params':{'thread':{'id':'t','name':'Updated chat','cwd':'/tmp/new-project'}}})
-            time.sleep(.5)
-            renamed=read_snapshot(self.runtime)['threads'][0]
+            renamed=self.wait_snapshot(lambda s: any(t['name']=='Updated chat' for t in s['threads']))['threads'][0]
             self.assertEqual(renamed['name'],'Updated chat')
             self.assertEqual(renamed['cwd'],'/tmp/new-project')
 
@@ -304,16 +311,16 @@ protocol('turn/completed',{'threadId':'t','turn':{'id':'u','status':'completed'}
             send(sock,'protocol_out',{'method':'turn/started','params':{'threadId':'t','turn':{'id':'u'}}})
             send(sock,'upstream',{'type':'response.output_item.done','item':{'id':'i','type':'message','metadata':{'turn_id':'u'},'content':[{'type':'output_text','text':'completed metrics'}]}})
             send(sock,'protocol_out',{'method':'turn/completed','params':{'threadId':'t','turn':{'id':'u','status':'completed'}}})
-            time.sleep(1)
-            before=read_snapshot(self.runtime)['threads'][0]
+            before=self.wait_snapshot(lambda s: any(t['phase']=='completed' and any(
+                stream['tokens'] is not None for a in t['activities'] for stream in a['streams'])
+                for t in s['threads']))['threads'][0]
         stop(self.runtime)
         start(self.runtime)
         with socket.socket(socket.AF_UNIX,socket.SOCK_STREAM) as sock:
             sock.connect(str(self.runtime/'events.sock'))
             send(sock,'lifecycle',{'type':'bridge/started','home':'/tmp/owned'})
             send(sock,'protocol_out',{'method':'thread/started','params':{'thread':{'id':'t','name':'replayed','ephemeral':True}}})
-            time.sleep(.5)
-            after=read_snapshot(self.runtime)['threads'][0]
+            after=self.wait_snapshot(lambda s: any(t['name']=='replayed' for t in s['threads']))['threads'][0]
             self.assertEqual(after['phase'],'completed')
             self.assertTrue(after['ephemeral'])
             self.assertEqual(after['name'],'replayed')

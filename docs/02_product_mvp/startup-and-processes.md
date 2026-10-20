@@ -24,7 +24,7 @@ flowchart LR
     A -->|"stderr 日志"| W
     W -->|"筛选后的诊断"| D
     W -->|"Unix socket：事件 JSONL"| C
-    C -->|"每约 250 ms 更新"| S["指标快照"]
+    C -->|"每约 1 秒更新"| S["指标快照"]
     S -->|"读取"| V["终端看板 watch"]
 ```
 
