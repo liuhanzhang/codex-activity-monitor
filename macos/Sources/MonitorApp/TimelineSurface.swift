@@ -79,6 +79,7 @@ struct TimelineSurface: NSViewRepresentable {
     let store: TimelineStore
     let layout: TimelineLayout
     let activities: [TimelinePhase]
+    var agents: [TimelineAgent] = []
     var onSelect: ([TimelinePhase]) -> Void
 
     func makeCoordinator() -> Coordinator { Coordinator(store: store) }
@@ -113,6 +114,7 @@ struct TimelineSurface: NSViewRepresentable {
         let resized = abs(document.viewportWidth - viewport) > 0.5
         let oldOffset = resized ? store.scrollOffset : scroll.contentView.bounds.minX
         document.layout = layout; document.activities = activities; document.viewportWidth = viewport
+        document.agents = agents
         document.selectedIDs = store.selectedPhaseIDs; document.turn = store.selectedTurn
         document.onSelect = { [weak scroll] phase in
             if let scroll { store.scrollOffset = scroll.contentView.bounds.minX }
@@ -203,6 +205,7 @@ final class TimelineAccessibleElement: NSAccessibilityElement, @unchecked Sendab
 @MainActor final class TimelineDocumentView: NSView {
     var layout: TimelineLayout?
     var activities: [TimelinePhase] = []
+    var agents: [TimelineAgent] = []
     var selectedIDs: Set<String> = [] {
         didSet { if oldValue != selectedIDs { keyboardID = nil } }
     }
@@ -225,7 +228,9 @@ final class TimelineAccessibleElement: NSAccessibilityElement, @unchecked Sendab
             $0.threadID == phase.thread_id && ($0.track == "header" || $0.track == "summary")
         }?.label ?? L("主智能体")
         let partial = phase.start_ms == nil || !(phase.quality ?? []).isEmpty
-        return agent + " · " + phase.accessibleLabel(at: layout?.now ?? 0) + (partial ? " · " + L("部分观测") : "")
+        let targets = phase.isCoordination ? phase.coordinationTargetDetails(in: agents) : ""
+        return agent + " · " + phase.accessibleLabel(at: layout?.now ?? 0, agents: agents)
+            + (partial ? " · " + L("部分观测") : "") + (targets.isEmpty ? "" : "\n" + targets)
     }
 
     override func draw(_ dirtyRect: NSRect) {
@@ -237,7 +242,16 @@ final class TimelineAccessibleElement: NSAccessibilityElement, @unchecked Sendab
         for second in stride(from: max(0, lower), through: max(0, upper), by: tick) {
             let x = layout.x(at: layout.origin + second * 1000)
             NSColor.separatorColor.withAlphaComponent(0.25).setStroke()
-            let line = NSBezierPath(); line.move(to: NSPoint(x: x, y: 17)); line.line(to: NSPoint(x: x, y: frame.height)); line.stroke()
+            let line = NSBezierPath()
+            line.move(to: NSPoint(x: x, y: 17)); line.line(to: NSPoint(x: x, y: TimelineLayout.axisHeight))
+            var y = TimelineLayout.axisHeight
+            for lane in layout.lanes {
+                if lane.track != "header" {
+                    line.move(to: NSPoint(x: x, y: y)); line.line(to: NSPoint(x: x, y: y + lane.height))
+                }
+                y += lane.height
+            }
+            line.stroke()
             let text = second >= 60 ? "\(Int(second / 60)):\(String(format: "%02d", Int(second) % 60))" : "\(Int(second))s"
             (text as NSString).draw(at: NSPoint(x: x + 3, y: 1), withAttributes: [
                 .font: NSFont.monospacedDigitSystemFont(ofSize: 9, weight: .regular), .foregroundColor: NSColor.secondaryLabelColor])
@@ -258,6 +272,13 @@ final class TimelineAccessibleElement: NSAccessibilityElement, @unchecked Sendab
             path(for: phase, in: rect).fill()
         }
         for phase in phases {
+            if phase.isCoordination, let rect = layout.rect(for: phase), rect.width >= 16 {
+                let configuration = NSImage.SymbolConfiguration(pointSize: 7, weight: .medium)
+                    .applying(NSImage.SymbolConfiguration(paletteColors: [NSColor.labelColor]))
+                NSImage(systemSymbolName: "person.2", accessibilityDescription: nil)?.withSymbolConfiguration(configuration)?
+                    .draw(in: CGRect(x: rect.minX + 2, y: rect.midY - 4, width: 11, height: 8), from: .zero,
+                          operation: .sourceOver, fraction: 1, respectFlipped: true, hints: nil)
+            }
             guard let name = TimelineDecoration.statusSymbol(for: phase),
                   let rect = TimelineDecoration.statusRect(for: phase, layout: layout, viewport: visibleRect) else { continue }
             let configuration = NSImage.SymbolConfiguration(pointSize: 8, weight: .semibold)

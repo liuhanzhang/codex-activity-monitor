@@ -24,6 +24,29 @@ public struct TimelineAgent: Decodable, Identifiable, Sendable {
     public let parent_thread_id: String?
     public let quality: [String]?
     public let status: String?
+    public let display_name: String?
+    public let name_source: String?
+    public let nickname: String?
+    public let agent_path: String?
+    public let status_scope: String?
+
+    public var displayName: String {
+        if let display_name { return display_name }
+        let prefix = "子智能体 · "
+        let legacy = name.hasPrefix(prefix) ? String(name.dropFirst(prefix.count)) : name
+        return legacy == String(thread_id.prefix(8)) || legacy == thread_id ? String(thread_id.suffix(8)) : legacy
+    }
+    public var roundStatusLabel: String {
+        guard status_scope == "selected_parent_turn" else { return "状态未知" }
+        switch status {
+        case "active": return "本轮活动中"
+        case "waiting": return "本轮等待中"
+        case "completed": return "本轮已结束"
+        case "interrupted": return "本轮已停止"
+        case "failed": return "本轮失败"
+        default: return "状态未知"
+        }
+    }
 }
 
 public struct TimelinePhase: Decodable, Identifiable, Sendable {
@@ -46,6 +69,24 @@ public struct TimelinePhase: Decodable, Identifiable, Sendable {
     public let quality: [String]?
     public let is_initial: Bool?
     public let related_phase_ids: [String]?
+    public let coordination_action: String?
+    public let related_agent_ids: [String]?
+
+    public var isCoordination: Bool { namespace == "canonical" && item_type == "collabAgentToolCall" }
+    public func coordinationTargets(in agents: [TimelineAgent]) -> String {
+        let ids = related_agent_ids ?? []
+        if ids.count > 1 { return "\(ids.count) 个子智能体" }
+        guard let id = ids.first else { return "对象未知" }
+        return agents.first { $0.thread_id == id }?.displayName ?? "智能体 · " + String(id.suffix(6))
+    }
+    public func presentationLabel(in agents: [TimelineAgent] = []) -> String {
+        isCoordination ? kindLabel + " · " + coordinationTargets(in: agents) : kindLabel + " · " + label
+    }
+    public func coordinationTargetDetails(in agents: [TimelineAgent]) -> String {
+        (related_agent_ids ?? []).map { id in
+            (agents.first { $0.thread_id == id }?.displayName ?? "智能体") + " · " + id
+        }.joined(separator: "\n")
+    }
 
     public var anchor: Double? { start_ms ?? end_ms ?? observed_until_ms }
     public var isActive: Bool { status == "active" }
@@ -58,7 +99,11 @@ public struct TimelinePhase: Decodable, Identifiable, Sendable {
         return (end - start_ms) / 1000
     }
     public var kindLabel: String {
-        switch kind {
+        if isCoordination {
+            return ["spawn": "协作 · 派发", "send": "协作 · 发送消息", "wait": "协作 · 等待",
+                    "close": "协作 · 关闭", "resume": "协作 · 恢复"][coordination_action ?? ""] ?? "协作调用"
+        }
+        return switch kind {
         case "reasoning": "思考"
         case "text": "正文输出"
         case "tool_input": "工具参数生成"
@@ -80,9 +125,9 @@ public struct TimelinePhase: Decodable, Identifiable, Sendable {
         default: "部分观测"
         }
     }
-    public func accessibleLabel(at now: Double) -> String {
+    public func accessibleLabel(at now: Double, agents: [TimelineAgent] = []) -> String {
         let length = duration(at: now).map { $0 < 1 ? String(format: "%.0f 毫秒", $0 * 1000) : String(format: "%.1f 秒", $0) } ?? "耗时未知"
-        return "\(kindLabel) · \(label) · \(statusLabel) · \(length)"
+        return "\(presentationLabel(in: agents)) · \(statusLabel) · \(length)"
     }
 }
 
@@ -136,6 +181,10 @@ public struct ActivityDetail: Decodable, Sendable {
     }
 }
 
+public enum TimelinePresentation: Sendable, Equatable {
+    case panelGrouped, activityViewer
+}
+
 public struct TimelineLane: Identifiable, Sendable, Equatable {
     public let id: String
     public let threadID: String
@@ -143,15 +192,38 @@ public struct TimelineLane: Identifiable, Sendable, Equatable {
     public let label: String
     public let height: Double
     public let isChild: Bool
+    public let depth: Int
 
-    public init(id: String, threadID: String, track: String, label: String, height: Double, isChild: Bool) {
+    public init(id: String, threadID: String, track: String, label: String, height: Double, isChild: Bool, depth: Int = 0) {
         self.id = id; self.threadID = threadID; self.track = track; self.label = label
         self.height = height; self.isChild = isChild
+        self.depth = depth
     }
 
-    public static func lanes(in bundle: TimelineBundle, expanded: Set<String>) -> [Self] {
+    public static func lanes(in bundle: TimelineBundle, expanded: Set<String>, presentation: TimelinePresentation = .activityViewer) -> [Self] {
         var lanes = [Self(id: "root-model", threadID: bundle.thread_id, track: "model", label: "模型", height: 21, isChild: false),
                      Self(id: "root-tool", threadID: bundle.thread_id, track: "tool", label: "工具", height: 21, isChild: false)]
+        if presentation == .panelGrouped, bundle.agents.contains(where: { $0.thread_id != bundle.thread_id }) {
+            lanes.insert(Self(id: "root-header", threadID: bundle.thread_id, track: "header", label: "主智能体", height: 22, isChild: false), at: 0)
+            var visited: Set<String> = [bundle.thread_id]
+            func append(_ agent: TimelineAgent, depth: Int) {
+                guard visited.insert(agent.thread_id).inserted else { return }
+                let indent = min(2, depth)
+                lanes.append(Self(id: agent.id, threadID: agent.thread_id, track: "header", label: agent.name, height: 24, isChild: true, depth: indent))
+                if expanded.contains(agent.thread_id) {
+                    for track in ["model", "tool"] {
+                        lanes.append(Self(id: agent.id + "-" + track, threadID: agent.thread_id, track: track,
+                                          label: track == "model" ? "模型" : "工具", height: 20, isChild: true, depth: indent))
+                    }
+                } else {
+                    lanes.append(Self(id: agent.id + "-summary", threadID: agent.thread_id, track: "summary", label: "活动", height: 16, isChild: true, depth: indent))
+                }
+                for child in bundle.agents where child.parent_thread_id == agent.thread_id { append(child, depth: depth + 1) }
+            }
+            for agent in bundle.agents where agent.parent_thread_id == bundle.thread_id { append(agent, depth: 1) }
+            for agent in bundle.agents where !visited.contains(agent.thread_id) { append(agent, depth: 1) }
+            return lanes
+        }
         for agent in bundle.agents where agent.thread_id != bundle.thread_id {
             lanes.append(Self(id: agent.id, threadID: agent.thread_id, track: expanded.contains(agent.id) ? "header" : "summary",
                               label: agent.name, height: 25, isChild: true))
@@ -203,6 +275,9 @@ public struct TimelineLayout: Sendable {
     }
 
     public var height: Double { Self.axisHeight + lanes.reduce(0) { $0 + $1.height } + 8 }
+    public func laneY(_ id: String) -> Double {
+        Self.axisHeight + lanes.prefix { $0.id != id }.reduce(0) { $0 + $1.height }
+    }
     public func width(viewport: Double) -> Double {
         max(viewport, (end - origin) / 1000 * pointsPerSecond + 8, (rectangles.values.map(\.maxX).max() ?? 0) + 4)
     }

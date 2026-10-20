@@ -44,6 +44,33 @@ private func phase(_ id: String) throws -> TimelinePhase {
     return try JSONDecoder().decode(TimelinePhase.self, from: JSONSerialization.data(withJSONObject: value))
 }
 
+@Test @MainActor func agentNameRefreshAndPresentationModesKeepSelectionAndExpansion() async throws {
+    func namedBundle(_ name: String) throws -> TimelineBundle {
+        try TimelineBundle.decode(JSONSerialization.data(withJSONObject: ["version": 1, "scope_id": "scope", "thread_id": "root",
+            "selected_turn_id": "new", "current_turn_id": "new", "turns": [],
+            "agents": [["id": "root", "thread_id": "root", "name": "主智能体"],
+                       ["id": "child", "thread_id": "child", "name": "子智能体 · " + name, "parent_thread_id": "root"]],
+            "phases": [], "markers": [], "origin_ms": 1000, "end_ms": 5000, "now_ms": 5000,
+            "revision": name, "quality": [], "earlier_active_turns": []]))
+    }
+    let client = ControlledTimelineClient()
+    let store = TimelineStore(scope: "scope", thread: "root", title: "test", client: client)
+    store.bundle = try namedBundle("first"); store.selectedTurn = "new"
+    store.expandedAgents = ["child"]; store.selectedPhaseID = "selected"; store.selectedPhaseIDs = ["selected"]
+    store.followsLatest = false; store.scrollOffset = 40
+    let viewer = try #require(store.layout(for: .activityViewer))
+    let panel = try #require(store.layout(for: .panelGrouped))
+    #expect(viewer.lanes.first?.track == "model" && panel.lanes.first?.track == "header")
+    let pending = Task { await store.refresh() }
+    await client.waitFor("current")
+    await client.resolve("current", bundle: try namedBundle("Lorentz"))
+    await pending.value
+    #expect(store.expandedAgents == ["child"] && store.selectedPhaseIDs == ["selected"])
+    #expect(store.scrollOffset == 40 && !store.followsLatest)
+    #expect(store.layout(for: .activityViewer)?.lanes.map(\.track) == viewer.lanes.map(\.track))
+    #expect(store.layout(for: .panelGrouped)?.lanes.map(\.track) == panel.lanes.map(\.track))
+}
+
 @MainActor private func overlappingDocument() throws -> TimelineDocumentView {
     let view = TimelineDocumentView()
     view.activities = try [("a", 1000, 31000), ("b", 1000, 21000), ("later", 32000, 33000)].map { id, start, end in

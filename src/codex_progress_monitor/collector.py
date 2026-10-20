@@ -56,7 +56,7 @@ def serve(runtime):
     except OSError:
         timeline_error = 'query_unavailable'
     implementation=source_identity('collector','app_session','engine','overview','menu_presentation','progress_state','events','usage','metrics','runtime','tool_labels','i18n','messages_zh_cn',
-                                   'timeline','timeline_storage','timeline_query','history')
+                                   'timeline','timeline_storage','timeline_query','history','agent_presentation')
     previous=read_snapshot(runtime)
     historical=previous.get('threads',[]) if time.time()-(previous.get('updated_at') or 0)<600 else []
     if historical:

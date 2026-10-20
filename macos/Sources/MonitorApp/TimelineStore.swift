@@ -83,9 +83,13 @@ final class TimelineStore {
     var lanes: [TimelineLane] { bundle.map { TimelineLane.lanes(in: $0, expanded: expandedAgents) } ?? [] }
     var switchingTurn: Bool { bundle != nil && selectedTurn != bundle?.selected_turn_id }
     var layout: TimelineLayout? {
+        layout(for: .activityViewer)
+    }
+    func layout(for presentation: TimelinePresentation) -> TimelineLayout? {
         guard let bundle, let origin = bundle.origin_ms else { return nil }
         return TimelineLayout(origin: origin, end: bundle.end_ms ?? origin, now: bundle.now_ms,
-                              lanes: lanes, activities: bundle.allActivities, zoom: zoom)
+                              lanes: TimelineLane.lanes(in: bundle, expanded: expandedAgents, presentation: presentation),
+                              activities: bundle.allActivities, zoom: zoom)
     }
 }
 

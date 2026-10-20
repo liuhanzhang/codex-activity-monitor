@@ -11,6 +11,7 @@ import time
 from .history import HistoryProvider, raw_section
 from .timeline import display_phase, identity, merge_phase
 from .timeline_storage import metadata_path, read_records
+from .agent_presentation import present_agents, present_coordination, scoped_status
 
 
 class TimelineQuery:
@@ -81,6 +82,7 @@ class TimelineQuery:
         agents = [{'id': thread, 'thread_id': thread, 'name': '主智能体', 'parent_thread_id': None,
                    'quality': []}]
         owners = {(thread, selected)}
+        agent_turns = {thread: [t for t in root_turns if t['turn_id'] == selected]}
         visited = {thread}
         pending = [(thread, selected)]
         while pending:
@@ -98,30 +100,37 @@ class TimelineQuery:
                 if not linked and spawned and child_turns:
                     linked = [min(child_turns, key=lambda t: t.get('start_ms') or t.get('updated_ms') or 0)]
                 agent_quality = [] if linked else ['turn_relation_unknown']
-                child_active = any(p['thread_id'] == child and p['turn_id'] in {t['turn_id'] for t in linked} and
-                                   p['status'] == 'active' for p in phases.values())
+                agent_turns[child] = linked
                 agents.append({'id': child, 'thread_id': child, 'name': '子智能体 · ' + child[:8],
-                               'parent_thread_id': parent, 'quality': agent_quality,
-                               'status': 'active' if child_active else linked[-1]['status'] if linked else 'unknown'})
+                               'parent_thread_id': parent, 'quality': agent_quality})
                 for child_turn in linked:
                     owners.add((child, child_turn['turn_id']))
                     pending.append((child, child_turn['turn_id']))
                 if index is None:
                     agent_quality.append('history_unavailable')
+        engine_names = {}
         if self.book and self.book.engine:
             with self.book.lock:
                 for agent in agents[1:]:
                     matches = [t for t in self.book.engine.threads.values() if t.id == agent['thread_id'] and
                                (self.book.engine.backends.get(t.backend, {}).get('home') or t.backend) == scope]
                     if matches:
-                        agent['name'] = '子智能体 · ' + (matches[0].name or agent['thread_id'][:8])
+                        engine_names[agent['thread_id']] = matches[0].name
+        present_agents(agents, loaded, engine_names)
         owned = [p for p in phases.values() if (p['thread_id'], p['turn_id']) in owners and not p.get('mirrored')]
+        by_agent = {}
+        for phase in owned:
+            by_agent.setdefault(phase['thread_id'], []).append(phase)
+        for agent in agents:
+            agent['status'] = scoped_status(agent_turns.get(agent['thread_id'], []), by_agent.get(agent['thread_id'], []))
+            agent['status_scope'] = 'selected_parent_turn'
         if any(p.get('kind') == 'gap' for p in owned):
             quality.add('observation_gap')
         if any('wall_clock_changed' in p.get('quality', []) for p in owned):
             quality.add('clock_unreliable')
         visible = [projected for p in owned if (projected := display_phase(p)) is not None]
         visible.sort(key=lambda p: (p.get('start_ms') or p.get('end_ms') or p.get('observed_until_ms') or 0, p['id']))
+        present_coordination(visible, relations.values(), scope)
         input_phases = [p for p in visible if p['thread_id'] == thread and p['kind'] == 'input']
         for i, p in enumerate(input_phases):
             p['is_initial'] = i == 0
@@ -190,6 +199,10 @@ class TimelineQuery:
         phase = display_phase(phase) if phase else None
         if not phase:
             return {'version': 1, 'state': 'content_unavailable', 'sections': [], 'attachments': []}
+        relations = {r['id']: r for r in observed['relations']}
+        if index:
+            relations.update(index.relations)
+        present_coordination([phase], relations.values(), scope)
         if phase.get('call_id') and phase.get('namespace') == 'input':
             related = next((p['id'] for p in observed['phases'] if p['thread_id'] == thread and
                             p['turn_id'] == turn and p['namespace'] == 'canonical' and p['item_id'] == phase['call_id']), None)

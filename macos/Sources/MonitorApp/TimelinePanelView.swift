@@ -4,6 +4,7 @@ import MonitorModel
 struct TimelinePanelView: View {
     @Bindable var store: TimelineStore
     var compact = true
+    var presentation: TimelinePresentation = .activityViewer
     var pollingEnabled = true
     var onSelect: (([TimelinePhase]) -> Void)?
     @State private var viewportWidth = TimelineLayout.menuViewportWidth
@@ -11,14 +12,29 @@ struct TimelinePanelView: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
             header
-            if let bundle = store.bundle, let layout = store.layout {
+            if let bundle = store.bundle, let layout = store.layout(for: presentation) {
                 HStack(alignment: .top, spacing: 5) {
-                    labels(lanes: store.lanes).frame(width: compact ? 78 : 116)
-                    TimelineSurface(store: store, layout: layout, activities: bundle.allActivities,
+                    labels(lanes: layout.lanes).frame(width: compact ? 78 : 116)
+                    TimelineSurface(store: store, layout: layout, activities: bundle.allActivities, agents: bundle.agents,
                                     onSelect: onSelect ?? { store.open($0) })
                         .frame(height: layout.height + 2)
                         .onGeometryChange(for: Double.self) { Double($0.size.width) } action: { viewportWidth = $0 }
                         .accessibilityIdentifier("monitor.timeline.surface")
+                }
+                .overlay(alignment: .topLeading) {
+                    if presentation == .panelGrouped {
+                        VStack(spacing: 0) {
+                            Color.clear.frame(height: TimelineLayout.axisHeight).allowsHitTesting(false)
+                            ForEach(layout.lanes) { lane in
+                                if lane.track == "header" {
+                                    agentHeader(lane, in: bundle).frame(height: lane.height)
+                                } else {
+                                    Color.clear.frame(height: lane.height).allowsHitTesting(false)
+                                }
+                            }
+                            Spacer(minLength: 0)
+                        }
+                    }
                 }
                 .opacity(store.switchingTurn ? 0.35 : 1)
                 .allowsHitTesting(!store.switchingTurn)
@@ -113,14 +129,16 @@ struct TimelinePanelView: View {
         VStack(alignment: .leading, spacing: 0) {
             Color.clear.frame(height: TimelineLayout.axisHeight)
             ForEach(lanes) { lane in
-                if lane.track == "summary" || lane.track == "header" {
+                if presentation == .panelGrouped && lane.track == "header" {
+                    Color.clear.frame(height: lane.height)
+                } else if presentation == .activityViewer && (lane.track == "summary" || lane.track == "header") {
                     Button {
                         if !store.expandedAgents.insert(lane.threadID).inserted { store.expandedAgents.remove(lane.threadID) }
                     } label: {
                         HStack(spacing: 3) {
                             Image(systemName: store.expandedAgents.contains(lane.threadID) ? "chevron.down" : "chevron.right")
                                 .font(.system(size: 8, weight: .medium))
-                            Text(lane.label.replacingOccurrences(of: "子智能体 · ", with: "")).lineLimit(1)
+                            Text(store.bundle?.agents.first(where: { $0.thread_id == lane.threadID })?.displayName ?? lane.label).lineLimit(1)
                             if let agent = store.bundle?.agents.first(where: { $0.thread_id == lane.threadID }), !(agent.quality ?? []).isEmpty {
                                 Image(systemName: "questionmark.circle").font(.system(size: 9))
                                     .help(L("子智能体轨迹尚未完整关联"))
@@ -140,6 +158,49 @@ struct TimelinePanelView: View {
         }.font(.system(size: 10))
     }
 
+    @ViewBuilder private func agentHeader(_ lane: TimelineLane, in bundle: TimelineBundle) -> some View {
+        let agent = bundle.agents.first { $0.thread_id == lane.threadID }
+        let expanded = store.expandedAgents.contains(lane.threadID)
+        let label = lane.isChild ? L("子智能体") + " · " + (agent?.displayName ?? lane.label) : L("主智能体")
+        let state = agent?.roundStatusLabel ?? "状态未知"
+        let description = [label, agent?.agent_path, lane.threadID].compactMap { $0 }.joined(separator: "\n")
+        if lane.isChild {
+            Button {
+                if !store.expandedAgents.insert(lane.threadID).inserted { store.expandedAgents.remove(lane.threadID) }
+            } label: {
+                agentHeaderContent(lane, name: agent?.displayName ?? lane.label, state: state, expanded: expanded,
+                                   partial: !(agent?.quality ?? []).isEmpty)
+            }.buttonStyle(.plain).help(description)
+                .accessibilityLabel(label).accessibilityValue(L(state) + " · " + L(expanded ? "已展开" : "已折叠"))
+                .accessibilityIdentifier("monitor.agent.\(lane.threadID)")
+        } else {
+            agentHeaderContent(lane, name: "主智能体", state: state, expanded: false, partial: false)
+                .accessibilityElement(children: .ignore).accessibilityLabel(L("主智能体")).accessibilityValue(L(state))
+                .accessibilityIdentifier("monitor.agent.root")
+        }
+    }
+
+    private func agentHeaderContent(_ lane: TimelineLane, name: String, state: String, expanded: Bool, partial: Bool) -> some View {
+        HStack(spacing: 5) {
+            if lane.isChild {
+                Image(systemName: expanded ? "chevron.down" : "chevron.right").font(.system(size: 8, weight: .medium)).frame(width: 9)
+                Text(L("子智能体")).foregroundStyle(.secondary).font(.system(size: 10))
+                    .fixedSize(horizontal: true, vertical: false)
+            }
+            Text(lane.isChild ? name : L(name)).font(.system(size: 11, weight: .medium)).lineLimit(1).truncationMode(.middle)
+                .layoutPriority(1)
+            if partial {
+                Image(systemName: "questionmark.circle").font(.system(size: 9)).foregroundStyle(.secondary)
+                    .help(L("部分身份或活动信息不可用"))
+            }
+            Spacer(minLength: 4)
+            Text(L(state)).font(.system(size: 9)).foregroundStyle(.secondary).fixedSize()
+        }
+        .padding(.leading, CGFloat(max(0, lane.depth - 1) * 8))
+        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .leading).contentShape(Rectangle())
+        .overlay(alignment: .top) { if lane.isChild { Divider().opacity(0.5) } }
+    }
+
     private func footer(_ bundle: TimelineBundle) -> some View {
         HStack(spacing: 5) {
             ForEach([("reasoning", "思考"), ("text", "正文"), ("tool_input", "参数"), ("file_edit_input", "编辑"),
@@ -148,6 +209,9 @@ struct TimelinePanelView: View {
                     Circle().fill(legendColor(kind)).frame(width: 5, height: 5)
                     Text(L(title))
                 }
+            }
+            if bundle.phases.contains(where: \.isCoordination) {
+                HStack(spacing: 3) { Image(systemName: "person.2"); Text(L("协作")) }
             }
             Spacer(minLength: 1)
             if !bundle.quality.isEmpty || bundle.phases.contains(where: { !($0.quality ?? []).isEmpty }) {

@@ -32,6 +32,45 @@ class HistoryTests(unittest.TestCase):
     def index(self):
         return self.provider.index(str(self.home), 't')
 
+    def test_agent_identity_is_verified_bounded_and_invalidated_with_history(self):
+        self.rows[0]['payload'].update(agent_nickname='Lorentz', source={'subagent': {'thread_spawn': {
+            'agent_nickname': 'Lorentz', 'agent_path': '/root/desktop_control', 'agent_role': None}}})
+        self.write()
+        index = self.index()
+        self.assertEqual(index.agent_metadata, {'nickname': 'Lorentz', 'agent_path': '/root/desktop_control', 'quality': []})
+        revision = index.revision
+        self.index()
+        self.assertEqual(index.revision, revision)
+        self.rows[0]['payload']['agent_nickname'] = 'Parfit'
+        self.write()
+        self.index()
+        self.assertIsNone(index.agent_metadata['nickname'])
+        self.assertIn('agent_name_conflict', index.agent_metadata['quality'])
+        self.assertGreater(index.revision, revision)
+        self.rows[0]['payload'].update(id='other')
+        self.write()
+        with self.assertRaises(ValueError):
+            index.refresh()
+        self.assertEqual(index.agent_metadata, {})
+        self.rows[0]['payload'] = {'id': 't', 'history_mode': 'paginated', 'agent_nickname': ['bad'],
+                                   'source': {'subagent': {'thread_spawn': {'agent_path': 'x'*513}}}}
+        self.write()
+        index.refresh()
+        self.assertIsNone(index.agent_metadata['nickname'])
+        self.assertIsNone(index.agent_metadata['agent_path'])
+        self.assertIn('agent_metadata_invalid', index.agent_metadata['quality'])
+
+    def test_replaced_and_legacy_history_do_not_retain_an_old_agent_name(self):
+        self.rows[0]['payload']['agent_nickname'] = 'Lorentz'
+        self.write()
+        index = self.index()
+        replacement = self.path.with_suffix('.new')
+        replacement.write_text(json.dumps(self.row('session_meta', {'id': 't'}))+'\n')
+        replacement.replace(self.path)
+        self.index()
+        self.assertIsNone(index.agent_metadata['nickname'])
+        self.assertEqual(index.phases, {})
+
     def test_canonical_interval_and_raw_parameters_use_distinct_timings(self):
         self.rows += [self.row('response_item', {'type': 'function_call', 'id': 'raw', 'call_id': 'cmd',
                        'name': 'exec_command', 'arguments': '{"command":"echo probe"}'}),

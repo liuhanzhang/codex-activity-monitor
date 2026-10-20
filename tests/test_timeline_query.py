@@ -8,6 +8,7 @@ from unittest.mock import patch
 from codex_progress_monitor.timeline import TimelineBook, item_phase
 from codex_progress_monitor.timeline_query import TimelineQuery, QueryServer, query_runtime
 from codex_progress_monitor.timeline_storage import TimelineStorage
+from codex_progress_monitor.agent_presentation import agent_metadata, present_agents, scoped_status
 
 
 class QueryTests(unittest.TestCase):
@@ -40,6 +41,77 @@ class QueryTests(unittest.TestCase):
         self.assertEqual(len(result['phases']), 1)
         self.assertEqual(result['phases'][0]['scope_id'], self.scope)
 
+    def test_names_use_verified_metadata_and_remain_unique_without_changing_identity(self):
+        sessions = Path(self.scope) / 'sessions'
+        sessions.mkdir(parents=True)
+        self.book._turn(self.scope, 'root', 'turn', 1000, 'active', start=1000)
+        children = ['01a15451-first-abc123', '01a15451-second-abc123', '01a15451-third-xyz789']
+        for n, child in enumerate(children):
+            self.book._relation(self.scope, 'root', 'turn', child, str(n), 'spawnAgent')
+            (sessions / ('rollout-'+child+'.jsonl')).write_text(json.dumps({'type': 'session_meta', 'payload': {
+                'id': child, 'agent_nickname': 'Lorentz' if n < 2 else 'Sagan'}})+'\n')
+        query = TimelineQuery(self.book)
+        result = query.bundle(self.scope, 'root')
+        agents = result['agents'][1:]
+        self.assertEqual([a['id'] for a in agents], children)
+        self.assertEqual(len({a['display_name'] for a in agents}), 3)
+        self.assertTrue(all(a['display_name'].startswith('Lorentz · ') for a in agents[:2]))
+        self.assertEqual(agents[2]['display_name'], 'Sagan')
+        self.assertTrue(all(a['name_source'] == 'history_nickname' for a in agents))
+        self.assertTrue(all(a['status'] == 'unknown' for a in agents))
+
+    def test_names_fall_back_and_explicit_thread_names_take_priority(self):
+        from types import SimpleNamespace
+        agents = [{'thread_id': 'root', 'quality': []}] + [
+            {'thread_id': thread, 'quality': []} for thread in ('sameprefix-a-abc123', 'sameprefix-b-abc123', 'path-child')]
+        indices = {'sameprefix-a-abc123': SimpleNamespace(agent_metadata=agent_metadata({'agent_nickname': 'Nickname'})),
+                   'path-child': SimpleNamespace(agent_metadata=agent_metadata({'source': {'subagent': {
+                       'thread_spawn': {'agent_path': '/root/native_storage'}}}}))}
+        present_agents(agents, indices, {'sameprefix-a-abc123': 'Named task', 'sameprefix-b-abc123': 'samepref'})
+        self.assertEqual([a['name_source'] for a in agents[1:]], ['thread_name', 'thread_id', 'history_path'])
+        self.assertEqual(agents[1]['display_name'], 'Named task')
+        self.assertEqual(agents[3]['display_name'], 'native_storage')
+        self.assertNotEqual(agents[1]['display_name'], agents[2]['display_name'])
+
+    def test_waiting_and_observation_gaps_are_not_reported_as_completion(self):
+        turns = [{'status': 'completed', 'end_ms': 5000}]
+        phase = {'status': 'waiting', 'quality': []}
+        self.assertEqual(scoped_status(turns, [phase]), 'waiting')
+        phase.update(status='active', quality=['observation_stopped'])
+        self.assertEqual(scoped_status(turns, [phase]), 'unknown')
+        self.assertEqual(scoped_status([{'status': 'active', 'end_ms': None}], []), 'unknown')
+
+    def test_scoped_status_does_not_claim_completion_with_missing_item_end(self):
+        self.book._turn(self.scope, 'root', 'turn', 1000, 'active', start=1000)
+        self.book._turn(self.scope, 'child', 'own', 1100, 'completed', start=1100, end=5000)
+        self.book._relation(self.scope, 'root', 'turn', 'child', 'spawn', 'spawnAgent')
+        p = item_phase(self.scope, 'child', 'own', {'id': 'reason', 'type': 'reasoning'}, 1200)
+        p.update(status='unknown', quality=['missing_item_end'])
+        self.book._put(p)
+        query = TimelineQuery(self.book)
+        self.assertEqual(query.bundle(self.scope, 'root')['agents'][1]['status'], 'unknown')
+        p.update(status='completed', end_ms=4000, end_source='producer', quality=[])
+        self.book._put(p)
+        agent = query.bundle(self.scope, 'root')['agents'][1]
+        self.assertEqual((agent['status'], agent['status_scope']), ('completed', 'selected_parent_turn'))
+
+    def test_coordination_only_uses_explicit_call_scope_and_turn_in_bundle_and_detail(self):
+        self.book._turn(self.scope, 'root', 'turn', 1000, 'active', start=1000)
+        call = item_phase(self.scope, 'root', 'turn', {'id': 'call', 'type': 'collabAgentToolCall', 'tool': 'wait'}, 1100, 1200)
+        code = item_phase(self.scope, 'root', 'turn', {'id': 'code', 'type': 'dynamicToolCall', 'tool': 'wait'}, 1100, 1200)
+        self.book._put(call); self.book._put(code)
+        self.book._relation(self.scope, 'root', 'turn', 'child', 'call', 'wait')
+        self.book._relation(self.scope, 'root', 'other-turn', 'wrong-turn', 'call', 'wait')
+        self.book._relation('/other', 'root', 'turn', 'wrong-scope', 'call', 'wait')
+        query = TimelineQuery(self.book)
+        result = query.bundle(self.scope, 'root')
+        projected = next(p for p in result['phases'] if p['id'] == call['id'])
+        self.assertEqual((projected['coordination_action'], projected['related_agent_ids']), ('wait', ['child']))
+        self.assertNotIn('coordination_action', next(p for p in result['phases'] if p['id'] == code['id']))
+        self.assertNotIn('coordination_action', self.book.phases[call['id']])
+        detail = query.detail(self.scope, 'root', 'turn', call['id'])
+        self.assertEqual(detail['phase']['related_agent_ids'], ['child'])
+
     def test_repeated_relations_load_each_history_once_and_refresh_on_next_query(self):
         self.book._turn(self.scope, 'root', 'old', 1000, 'completed', start=1000, end=2000)
         self.book._turn(self.scope, 'root', 'new', 3000, 'active', start=3000)
@@ -52,7 +124,7 @@ class QueryTests(unittest.TestCase):
             {'type': 'event_msg', 'payload': {'type': 'item_completed', 'thread_id': 'child', 'turn_id': 'child-own',
              'started_at_ms': 1600, 'completed_at_ms': 1700, 'item': {'id': 'reason', 'type': 'Reasoning'}}},
         ]))
-        for i in range(60):
+        for i in range(528):
             self.book._relation(self.scope, 'root', 'old', 'child', str(i), 'spawnAgent' if i == 0 else 'interacted')
             self.book._relation(self.scope, 'root', 'old', 'missing-child', str(i), 'interacted')
         query = TimelineQuery(self.book)
@@ -85,6 +157,8 @@ class QueryTests(unittest.TestCase):
         current = TimelineQuery(self.book).bundle(self.scope, 'root', 'new')
         self.assertEqual(current['earlier_active_turns'], ['reused'])
         self.assertEqual(current['phases'], [])
+        previous = TimelineQuery(self.book).bundle(self.scope, 'root', 'old')
+        self.assertEqual(previous['agents'][1]['status'], 'completed')
 
     def test_old_sidecar_hides_non_input_markers_and_migrates_compaction_only_in_projection(self):
         path = self.root / 'metadata.sqlite3'

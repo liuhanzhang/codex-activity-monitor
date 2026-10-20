@@ -16,7 +16,7 @@ struct ChatDetailsView: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
-            TimelinePanelView(store: timeline, pollingEnabled: pollingEnabled)
+            TimelinePanelView(store: timeline, presentation: .panelGrouped, pollingEnabled: pollingEnabled)
             Divider()
             statisticsView
             PanelDisclosureGroup(isExpanded: $explanationsExpanded) {

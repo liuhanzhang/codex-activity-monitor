@@ -11,6 +11,7 @@ import time
 
 from .timeline import identity, item_phase, merge_phase, status, valid_ms
 from .events import TOOL_TYPES
+from .agent_presentation import agent_metadata
 
 CANONICAL_TYPES = {'UserMessage': 'userMessage', 'AgentMessage': 'agentMessage', 'Reasoning': 'reasoning',
                    'Plan': 'plan', 'CommandExecution': 'commandExecution', 'McpToolCall': 'mcpToolCall',
@@ -61,8 +62,10 @@ class RolloutIndex:
         self.mode = None
         self.quality = set()
         self.revision = 0
+        self.agent_metadata = {}
 
     def refresh(self):
+        previous_metadata, self.agent_metadata = self.agent_metadata, {}
         stat = self.path.stat()
         signature = (stat.st_dev, stat.st_ino)
         with self.path.open('rb') as stream:
@@ -71,9 +74,12 @@ class RolloutIndex:
                 meta = json.loads(first)
             except ValueError:
                 raise ValueError('history_header_invalid') from None
-            if meta.get('type') != 'session_meta' or meta.get('payload', {}).get('id') != self.thread:
+            if not isinstance(meta, dict) or not isinstance(meta.get('payload'), dict) or meta.get('type') != 'session_meta' or meta['payload'].get('id') != self.thread:
                 raise ValueError('history_identity_mismatch')
             self.mode = meta['payload'].get('history_mode', 'legacy')
+            self.agent_metadata = agent_metadata(meta['payload'])
+            if previous_metadata != self.agent_metadata:
+                self.revision += 1
             stream.seek(max(0, self.offset - 256))
             anchor = hashlib.sha256(stream.read(min(self.offset, 256))).digest()
             if self.fingerprint != signature or stat.st_size < self.offset or (self.anchor is not None and self.anchor != anchor):

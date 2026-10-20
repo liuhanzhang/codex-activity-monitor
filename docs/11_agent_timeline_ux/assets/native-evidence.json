@@ -1,0 +1,118 @@
+{
+  "date": "2026-10-20",
+  "base_commit": "d2b0986",
+  "build_id": "f5650d76d994ae2fef15483f1f5b4b3dea1857be89fd1f772b00b076ac20171b",
+  "tests": {
+    "python_timeline": 39,
+    "python_history": 21,
+    "swift_model": 34,
+    "swift_app_regular_passed": 38,
+    "swift_native_window_passed": 1,
+    "swift_total_passed": 73
+  },
+  "native": {
+    "content_width_points": 420,
+    "content_height_points": 519,
+    "appearances": [
+      "light",
+      "dark"
+    ],
+    "checked": [
+      "mouse_header_toggle",
+      "tab_space_header_toggle",
+      "name_refresh_retains_expansion",
+      "nested_group_order",
+      "coordination_raw_input_output_tabs",
+      "viewer_layout_isolation",
+      "real_history_metadata_replay"
+    ]
+  },
+  "history": {
+    "phase_count": 2092,
+    "loaded_threads": 4,
+    "maximum_loads_per_thread": 1,
+    "unchanged_identity_time_phases_turns_relations": true,
+    "core_sha256": "edd31d74b88fdc84604f03f24179cfa6822ca9f8489fc9cc84821b7101ba4cb2",
+    "raw_detail_comparisons": 2,
+    "cold_seconds": 2.599,
+    "warm_seconds": [
+      0.1,
+      0.142,
+      0.088,
+      0.08,
+      0.091
+    ]
+  },
+  "runtime": {
+    "gui_source_matches": true,
+    "collector_modules_match": true,
+    "helper_loaded": true,
+    "integration_marker_unchanged": true,
+    "restore_backup_unchanged": true,
+    "bridge_pids_preserved": true,
+    "timeline_summary": {
+      "version": 1,
+      "revision": 146,
+      "available": true,
+      "quality": []
+    },
+    "projection_errors": 0,
+    "history_query_seconds": [
+      2.444,
+      0.088
+    ]
+  },
+  "screenshots": [
+    {
+      "file": "panel-light.jpg",
+      "sha256": "e3b9ae47ef5656d6d297c901918562d821998bcda26a6743bbacd59c5112059c",
+      "pixels": [
+        892,
+        1090
+      ],
+      "data": "synthetic",
+      "capture_build_id": "62dea4b549c4fc80947ab3ec29b9e490151bf5181ed039f891756e45a6bff4c0"
+    },
+    {
+      "file": "panel-dark.jpg",
+      "sha256": "f13b3f2f6b2ad33b651e634a1c84427d7d03bf2c7fded6dccef546732190a504",
+      "pixels": [
+        892,
+        1090
+      ],
+      "data": "synthetic",
+      "capture_build_id": "62dea4b549c4fc80947ab3ec29b9e490151bf5181ed039f891756e45a6bff4c0"
+    },
+    {
+      "file": "panel-long-light.jpg",
+      "sha256": "59a7e86692e0765dc194de2dd3213fed34d7a66ed80d29fb0d6a2ed598ba7e87",
+      "pixels": [
+        892,
+        1090
+      ],
+      "data": "synthetic",
+      "capture_build_id": "62dea4b549c4fc80947ab3ec29b9e490151bf5181ed039f891756e45a6bff4c0"
+    },
+    {
+      "file": "viewer-dark.jpg",
+      "sha256": "fd28d40d1c57124605612326ea753826f821a7aa7cb906110ea7b1bb83f2138b",
+      "pixels": [
+        1280,
+        1402
+      ],
+      "data": "synthetic",
+      "capture_build_id": "62dea4b549c4fc80947ab3ec29b9e490151bf5181ed039f891756e45a6bff4c0"
+    }
+  ],
+  "limits": [
+    "No long-run natural subagent lifecycle validation",
+    "No full VoiceOver or release validation",
+    "Real metadata replay stays local"
+  ],
+  "capture_build_id": "62dea4b549c4fc80947ab3ec29b9e490151bf5181ed039f891756e45a6bff4c0",
+  "resource_cleanup": {
+    "removed_duplicate_key": "活动",
+    "effective_localizations_identical": true,
+    "unique_key_count": 133
+  }
+}

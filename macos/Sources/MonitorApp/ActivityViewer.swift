@@ -79,7 +79,7 @@ struct ActivityViewerView: View {
             }.font(.system(size: 12, weight: .medium)).padding(.horizontal, 20).padding(.vertical, 14)
             Divider()
             ScrollView(.vertical) {
-                TimelinePanelView(store: store.timeline, compact: false, onSelect: { store.select($0) })
+                TimelinePanelView(store: store.timeline, compact: false, presentation: .activityViewer, onSelect: { store.select($0) })
                     .padding(.horizontal, 20).padding(.vertical, 10)
             }.frame(maxHeight: 190)
             Divider()
@@ -133,9 +133,17 @@ private struct ActivityDetailView: View {
                 Spacer()
             }.font(.system(size: 12))
             HStack(spacing: 8) {
-                Circle().fill(Color(nsColor: TimelinePalette.color(store.phase))).frame(width: 7, height: 7)
+                if store.phase.isCoordination {
+                    Image(systemName: "person.2").foregroundStyle(.secondary)
+                } else {
+                    Circle().fill(Color(nsColor: TimelinePalette.color(store.phase))).frame(width: 7, height: 7)
+                }
                 Text(L(store.phase.kindLabel)).fontWeight(.medium)
-                if store.phase.label != store.phase.kindLabel {
+                if store.phase.isCoordination {
+                    Text(store.phase.coordinationTargets(in: store.timeline.bundle?.agents ?? []))
+                        .lineLimit(1).foregroundStyle(.secondary)
+                        .help(store.phase.coordinationTargetDetails(in: store.timeline.bundle?.agents ?? []))
+                } else if store.phase.label != store.phase.kindLabel {
                     Text(store.phase.label).lineLimit(1).foregroundStyle(.secondary).help(store.phase.label)
                 }
                 Spacer(minLength: 8)
