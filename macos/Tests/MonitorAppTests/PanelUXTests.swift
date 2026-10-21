@@ -16,65 +16,104 @@ import MonitorModel
     store.updatePresentation()
 }
 
-@Test @MainActor func panelDefaultsExpandWorkingRootsAcrossScopesAndChildWork() throws {
+@Test @MainActor func panelSelectsOneWorkingRootAcrossScopesAndChildWork() throws {
     let store = try panelStore([
         ["id": "same", "home": "a", "has_active_work": false],
         ["id": "child", "home": "a", "parent_thread_id": "same", "has_active_work": true],
         ["id": "same", "home": "b", "has_active_work": true],
-        ["id": "done", "home": "a", "status": "completed", "has_active_work": false]
+        ["id": "done", "home": "a", "status": "completed", "last_progress_seconds": 1]
     ])
     store.panelVisible = true
     #expect(store.activeRows.count == 2)
-    #expect(store.expanded == Set(store.activeRows.map { $0.chat.id }))
+    #expect(store.selectedChatKey == store.activeRows[0].chat.id)
+    #expect(store.visibleChats.map(\.id) == store.activeRows.map { $0.chat.id })
     #expect(!store.showRecent && store.recentRows.isEmpty)
-    #expect(!store.expanded.contains(store.snapshot!.threads[1].id))
+    #expect(store.activeRows.map { $0.chat.scope } == ["a", "b"])
 }
 
-@Test @MainActor func manualPanelChoicesSurviveRefreshWhileNewWorkExpands() throws {
+@Test @MainActor func selectionAndStableOrderSurviveRefreshAndNewWork() throws {
     let a: [String: Any] = ["id": "a", "has_active_work": true]
     let b: [String: Any] = ["id": "b", "has_active_work": true]
-    let done: [String: Any] = ["id": "done", "status": "completed", "has_active_work": false]
+    let done: [String: Any] = ["id": "done", "status": "failed", "last_progress_seconds": 1]
     let store = try panelStore([a, b, done])
     store.panelVisible = true
-    let first = store.snapshot!.threads[0], recent = store.snapshot!.threads[2]
-    store.setExpanded(false, for: first)
-    store.setExpanded(true, for: recent)
+    store.selectChat(store.snapshot!.threads[1])
+    let key = store.selectedChatKey
     store.showRecent = true
     try updatePanel(store, [b, ["id": "c", "has_active_work": true], a, done])
     #expect(store.activeRows.map { $0.chat.threadID } == ["a", "b", "c"])
-    #expect(!store.expanded.contains(first.id))
-    #expect(store.expanded.contains(recent.id) && store.showRecent)
-    #expect(store.expanded.contains(store.snapshot!.threads[1].id))
-    try updatePanel(store, [b, done])
-    try updatePanel(store, [a, b, done])
-    #expect(store.expanded.contains(first.id)) // Removed identities discard obsolete overrides.
+    #expect(store.selectedChatKey == key)
+    #expect(store.visibleChats.map(\.threadID) == ["a", "b", "c", "done"])
+    #expect(store.visibleChats.last?.status == "failed")
 }
 
-@Test @MainActor func reopeningPanelRestoresDefaultsWithoutReplacingTimelineState() throws {
-    let store = try panelStore([["id": "a", "has_active_work": true], ["id": "done", "status": "completed"]])
+@Test @MainActor func reopeningRestoresLastActiveSelectionAndPerChatReadingState() throws {
+    let store = try panelStore([["id": "a", "has_active_work": true], ["id": "b", "has_active_work": true],
+        ["id": "done", "status": "completed", "last_progress_seconds": 1]])
     store.panelVisible = true
-    let chat = store.snapshot!.threads[0], timeline = store.timeline(for: chat)
-    timeline.zoom = .overview
-    store.setExpanded(false, for: chat); store.showRecent = true
+    let chat = store.snapshot!.threads[1], timeline = store.timeline(for: chat)
+    timeline.zoom = .overview; timeline.scrollOffset = 120; timeline.followsLatest = false
+    store.selectChat(chat); store.showRecent = true
+    store.selectChat(store.recentRoots[0])
     let presentation = store.presentationID
     store.panelVisible = true
-    #expect(store.presentationID == presentation && !store.expanded.contains(chat.id))
+    #expect(store.presentationID == presentation && store.selectedChat?.threadID == "done")
     store.panelVisible = false; store.panelVisible = true
     #expect(store.presentationID == presentation + 1)
-    #expect(store.expanded.contains(chat.id) && !store.showRecent)
-    #expect(store.timeline(for: chat) === timeline && timeline.zoom == .overview)
+    #expect(store.selectedChatKey == chat.id && !store.showRecent)
+    #expect(store.timeline(for: chat) === timeline && timeline.zoom == .overview && timeline.scrollOffset == 120)
 }
 
-@Test @MainActor func startingAndFinishingWorkDoNotOverrideExplicitPanelChoices() throws {
-    let store = try panelStore([["id": "a", "has_active_work": false]])
-    let chat = store.snapshot!.threads[0]
-    store.setExpanded(false, for: chat)
-    try updatePanel(store, [["id": "a", "has_active_work": true]])
-    #expect(!store.expanded.contains(chat.id))
-    store.setExpanded(true, for: store.snapshot!.threads[0])
-    try updatePanel(store, [["id": "a", "status": "completed", "has_active_work": false]])
-    #expect(store.expanded.contains(chat.id))
-    #expect(store.activeRows.isEmpty)
+@Test @MainActor func finishingOrLosingSourceRetainsReadingUntilExplicitSelection() throws {
+    let store = try panelStore([["id": "a", "has_active_work": true], ["id": "b", "has_active_work": true]])
+    store.panelVisible = true
+    let key = store.selectedChatKey
+    try updatePanel(store, [["id": "b", "has_active_work": true],
+        ["id": "a", "status": "completed", "last_progress_seconds": 1]])
+    #expect(store.selectedChatKey == key && store.selectedChat?.status == "completed")
+    #expect(store.visibleChats.map(\.threadID) == ["b", "a"])
+    store.showRecent = true
+    #expect(store.visibleChats.map(\.threadID) == ["b", "a"]) // Retained + recent is deduplicated.
+    try updatePanel(store, [["id": "b", "has_active_work": true]])
+    #expect(store.selectedChatKey == key && !store.sourceAvailable(for: store.selectedChat!))
+    store.showRecent = false
+    #expect(store.selectedChat?.threadID == "b" && store.visibleChats.count == 1)
+}
+
+@Test @MainActor func emptyPanelSelectsArrivingWorkAndRecentCollapseReturnsToEmpty() throws {
+    let store = try panelStore([])
+    store.panelVisible = true
+    #expect(store.selectedChat == nil && store.visibleChats.isEmpty)
+    try updatePanel(store, [["id": "done", "status": "completed", "last_progress_seconds": 1]])
+    #expect(store.selectedChat == nil)
+    store.showRecent = true
+    #expect(store.selectedChat?.threadID == "done")
+    store.showRecent = false
+    #expect(store.selectedChat == nil && store.visibleChats.isEmpty)
+    try updatePanel(store, [["id": "new", "has_active_work": true]])
+    #expect(store.selectedChat?.threadID == "new")
+}
+
+@Test func listFitsContentThroughFiveRowsAndSharesSmallScreenBudget() {
+    for count in [1, 3, 5, 6, 12] {
+        let budget = PanelLayoutBudget(maximum: 720, chrome: 90, chatCount: count, hasSelection: true)
+        #expect(budget.listHeight == CGFloat(min(count, 5)) * PanelLayoutBudget.rowHeight)
+        #expect(budget.listHeight + budget.detailHeight <= 630)
+    }
+    let small = PanelLayoutBudget(maximum: 340, chrome: 90, chatCount: 12, hasSelection: true)
+    #expect(small.listHeight < 5 * PanelLayoutBudget.rowHeight)
+    #expect(small.listHeight + small.detailHeight == 250)
+    let empty = PanelLayoutBudget(maximum: 720, chrome: 44, chatCount: 0, hasSelection: false)
+    #expect(empty.listHeight == 48 && empty.detailHeight == 0)
+}
+
+@Test @MainActor func previewHeightOverrideIsReadOnlyAndRejectsInvalidSizes() {
+    let configuration = BackendConfiguration(python: "/unused", source_root: "/unused", runtime: "/unused", data_root: "/unused", build_id: "test")
+    #expect(DashboardStore(configuration: configuration, arguments: ["--read-only", "--preview-max-height", "420"]).previewMaxHeight == 420)
+    #expect(DashboardStore(configuration: configuration, arguments: ["--preview-max-height", "420"]).previewMaxHeight == nil)
+    for value in ["nan", "inf", "-1", "80", "bad"] {
+        #expect(DashboardStore(configuration: configuration, arguments: ["--read-only", "--preview-max-height", value]).previewMaxHeight == nil)
+    }
 }
 
 private func panelUsage(_ fields: [String: Any]) throws -> Usage {
@@ -98,6 +137,57 @@ private func panelUsage(_ fields: [String: Any]) throws -> Usage {
     #expect(store.unassignedRows.isEmpty && store.recentRows.count == 1)
     #expect(store.timeline(for: store.snapshot!.threads[1]) === timeline)
     #expect(timeline.expandedAgents == ["grandchild"])
+}
+
+@Test @MainActor func hidingRecentDoesNotHideASelectedUnassignedTask() throws {
+    let store = try panelStore([
+        ["id": "root", "has_active_work": true],
+        ["id": "child", "thread_source": "subagent", "has_active_work": true],
+        ["id": "done", "status": "completed", "last_progress_seconds": 1]
+    ])
+    store.panelVisible = true; store.showRecent = true; store.showUnassigned = true
+    store.selectChat(store.unassignedRows[0].chat)
+    store.showRecent = false
+    #expect(store.selectedChat?.threadID == "child")
+    #expect(store.visibleChats.map(\.threadID) == ["root", "child"])
+    #expect(store.activeRows.count == 1)
+    store.showUnassigned = false
+    #expect(store.selectedChat?.threadID == "root")
+}
+
+@Test @MainActor func confirmedParentKeepsSelectedChildAsARetainedReadingEntryUntilSwitching() throws {
+    let rows: [[String: Any]] = [
+        ["id": "root", "home": "scope", "has_active_work": true],
+        ["id": "child", "home": "scope", "thread_source": "subagent", "has_active_work": true]
+    ]
+    let store = try panelStore(rows)
+    store.panelVisible = true; store.showUnassigned = true
+    store.selectChat(store.unassignedRows[0].chat)
+    let childKey = store.selectedChatKey
+    var associated = rows
+    associated[1]["parent_thread_id"] = "root"
+    try updatePanel(store, associated)
+    #expect(store.selectedChatKey == childKey && store.unassignedRows.isEmpty)
+    #expect(store.visibleChats.map(\.threadID) == ["root", "child"])
+    #expect(store.visibleChats[1].isKnownSubagent && store.activeRows.count == 1)
+    store.selectChat(store.activeRows[0].chat)
+    #expect(store.visibleChats.map(\.threadID) == ["root"])
+}
+
+@Test @MainActor func selectingRecentOrUnassignedDoesNotMoveItAheadOfItsPeers() throws {
+    let store = try panelStore([
+        ["id": "root", "has_active_work": true],
+        ["id": "done-a", "status": "completed", "last_progress_seconds": 1],
+        ["id": "done-b", "status": "failed", "last_progress_seconds": 2],
+        ["id": "orphan-a", "thread_source": "subagent", "has_active_work": true],
+        ["id": "orphan-b", "thread_source": "subagent", "has_active_work": true]
+    ])
+    store.panelVisible = true; store.showRecent = true; store.showUnassigned = true
+    let order = store.visibleChats.map(\.id)
+    store.selectChat(store.recentRoots[1])
+    #expect(store.visibleChats.map(\.id) == order)
+    store.selectChat(store.unassignedRows[1].chat)
+    #expect(store.visibleChats.map(\.id) == order)
 }
 
 @Test func panelStatisticsRequireExplicitTurnOwnershipForEachMetric() throws {

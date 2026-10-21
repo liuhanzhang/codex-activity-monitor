@@ -177,6 +177,11 @@ public struct ActivitySection: Decodable, Identifiable, Sendable {
     public let total_chars: Int?
     public var next_offset: Int?
     public let notice: String?
+
+    public func appendingPage(_ part: Self) -> Self {
+        Self(id: id, title: title, format: format, text: text + part.text, offset: offset,
+             total_chars: part.total_chars ?? total_chars, next_offset: part.next_offset, notice: part.notice ?? notice)
+    }
 }
 
 public struct ActivityDetail: Decodable, Sendable {
@@ -193,7 +198,7 @@ public struct ActivityDetail: Decodable, Sendable {
 }
 
 public enum TimelinePresentation: Sendable, Equatable {
-    case panelGrouped, activityViewer
+    case panelCompact, panelGrouped, activityViewer
 }
 
 public struct TimelineLane: Identifiable, Sendable, Equatable {
@@ -212,6 +217,26 @@ public struct TimelineLane: Identifiable, Sendable, Equatable {
     }
 
     public static func lanes(in bundle: TimelineBundle, expanded: Set<String>, presentation: TimelinePresentation = .activityViewer) -> [Self] {
+        if presentation == .panelCompact {
+            var result: [Self] = []
+            var visited: Set<String> = []
+            func append(thread: String, depth: Int) {
+                guard visited.insert(thread).inserted else { return }
+                for track in ["model", "tool"] {
+                    result.append(Self(id: thread + "-" + track, threadID: thread, track: track,
+                        label: track == "model" ? "模型" : "工具", height: 18,
+                        isChild: thread != bundle.thread_id, depth: min(2, depth)))
+                }
+                for child in bundle.agents where child.parent_thread_id == thread {
+                    append(thread: child.thread_id, depth: depth + 1)
+                }
+            }
+            append(thread: bundle.thread_id, depth: 0)
+            for agent in bundle.agents where !visited.contains(agent.thread_id) {
+                append(thread: agent.thread_id, depth: 1)
+            }
+            return result
+        }
         var lanes = [Self(id: "root-model", threadID: bundle.thread_id, track: "model", label: "模型", height: 21, isChild: false),
                      Self(id: "root-tool", threadID: bundle.thread_id, track: "tool", label: "工具", height: 21, isChild: false)]
         if presentation == .panelGrouped, bundle.agents.contains(where: { $0.thread_id != bundle.thread_id }) {

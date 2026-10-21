@@ -4,7 +4,7 @@ import Testing
 import MonitorModel
 @testable import MonitorApp
 
-@Test @MainActor func refreshedMetricsDoNotReorderRowsOrResetExpansion() throws {
+@Test @MainActor func refreshedMetricsDoNotReorderRowsOrResetSelection() throws {
     let store = DashboardStore(configuration: BackendConfiguration(python: "/unused", source_root: "/unused", runtime: "/unused", data_root: "/unused", build_id: "test"), arguments: ["--read-only"])
     func snapshot(_ ids: [String]) throws -> Snapshot {
         let rows = ids.map { "{\"id\":\"\($0)\",\"has_active_work\":true}" }.joined(separator: ",")
@@ -12,16 +12,17 @@ import MonitorModel
     }
     store.snapshot = try snapshot(["a", "b"])
     store.updatePresentation()
-    store.setExpanded(true, for: store.snapshot!.threads[0])
-    store.setExpanded(false, for: store.snapshot!.threads[1])
+    store.panelVisible = true
+    store.selectChat(store.snapshot!.threads[0])
+    let selected = store.selectedChatKey
     store.snapshot = try snapshot(["b", "c", "a"])
     store.updatePresentation()
     #expect(store.activeRows.map(\.chat.threadID) == ["a", "b", "c"])
-    #expect(store.expanded.count == 2)
+    #expect(store.selectedChatKey == selected)
     store.snapshot = try snapshot(["c", "b"])
     store.updatePresentation()
     #expect(store.activeRows.map(\.chat.threadID) == ["b", "c"])
-    #expect(store.expanded == [store.snapshot!.threads[0].id])
+    #expect(store.selectedChatKey == selected && store.selectedChat?.threadID == "a")
 }
 
 @Test @MainActor func menuAnimationStopsOnUnavailableAndReducedMotion() {

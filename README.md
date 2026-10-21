@@ -28,6 +28,8 @@
 
 展开面板的信息结构与交互重设计已实现：运行聊天默认展开、最近完成默认收起，使用原生展开控件；聊天内先看时间线，再看两列轮次统计。见[第 10 章](docs/10_expanded_panel_ux/README.md)和[实施结果](docs/10_expanded_panel_ux/implementation-results.md)。本轮只改展开面板，独立活动窗口保持现状。
 
+第三轮展开面板已实现并载入日常 GUI：统一聊天列表、最多 5 行、单选查看区、主子智能体固定紧凑双轨、标题轮次入口和原生加减缩放。71 项定向测试及关键原生交互、有限来源核对已完成；日常重载触发的既有采集器租约重启及验证边界见[实施结果](docs/13_expanded_panel_round3/implementation-results.md)。设计与[最终交互线框](docs/13_expanded_panel_round3/assets/wireframe.html)见[第 13 章](docs/13_expanded_panel_round3/README.md)。
+
 ## 目录
 
 **日常开发主要看 `src/`、`tests/`、`bin/`、`pyproject.toml` 和 `docs/02_product_mvp/`。** 其余目录是实验资料或本机运行环境。
@@ -49,7 +51,10 @@ codex_progress_monitor/
 │   ├── 07_remote_transport_repair/            Remote 路由修复与本机验证边界
 │   ├── 08_gui_ui_ux_redesign/                 紧凑 GUI 需求、设计稿、实施与原生验证
 │   ├── 09_activity_timeline/                  展开面板时间线需求、设计、事件映射、技术方案与实施计划
-│   └── 10_expanded_panel_ux/                 展开面板信息结构、原生控件及实施验证结果
+│   ├── 10_expanded_panel_ux/                 展开面板信息结构、原生控件及实施验证结果
+│   ├── 11_agent_timeline_ux/                 子智能体时间轴设计与实施
+│   ├── 12_subagent_monitoring_fixes/         子智能体归属、状态与历史加载修复
+│   └── 13_expanded_panel_round3/             第三轮展开面板设计、实施计划、最终线框与实施验证
 ├── experiments/                    可复用实验脚本
 │   ├── desktop-isolation/          隔离 Desktop / WebSocket 实验
 │   │   └── runs/                   本机隔离 App 数据和原始记录，不提交

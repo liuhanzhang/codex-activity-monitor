@@ -1,0 +1,22 @@
+{
+  "case": "five",
+  "build_id": "30ca3fe8e899cb436f9d71d1f8d3685b71ffbcd1b472f22f2b6b44001a438602",
+  "pid": 46799,
+  "content_size": [
+    420,
+    560
+  ],
+  "window_frame": [
+    758,
+    490,
+    446,
+    586
+  ],
+  "visible_frame": [
+    67,
+    0,
+    1661,
+    1084
+  ],
+  "trace_at": 1792508331.764292
+}

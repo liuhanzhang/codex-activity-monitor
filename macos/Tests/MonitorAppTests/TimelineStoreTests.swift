@@ -71,6 +71,60 @@ private func phase(_ id: String) throws -> TimelinePhase {
     #expect(store.layout(for: .panelGrouped)?.lanes.map(\.track) == panel.lanes.map(\.track))
 }
 
+@Test @MainActor func panelSwitchBackWithinPresentationKeepsHistoricalReadingPosition() throws {
+    let store = TimelineStore(scope: "scope", thread: "root", title: "test", client: ControlledTimelineClient())
+    store.bundle = try bundle("new"); store.selectedTurn = "new"
+    store.prepareForPresentation(1)
+    store.selectTurn("old"); store.scrollOffset = 42; store.zoom = .overview
+    store.prepareForPresentation(1)
+    #expect(store.selectedTurn == "old" && store.scrollOffset == 42 && store.zoom == .overview)
+    store.prepareForPresentation(2)
+    #expect(store.followsCurrentTurn && store.selectedTurn == "new" && store.zoom == .overview)
+}
+
+@Test @MainActor func historicalRequestRejectsReturnedWrongTurnAndLatestInvalidatesOldRequest() async throws {
+    let client = ControlledTimelineClient()
+    let store = TimelineStore(scope: "scope", thread: "root", title: "test", client: client)
+    store.bundle = try bundle("new"); store.selectedTurn = "new"
+    store.selectTurn("old")
+    let wrong = Task { await store.refresh() }
+    await client.waitFor("old"); await client.resolve("old", bundle: try bundle("unrelated")); await wrong.value
+    #expect(store.bundle?.selected_turn_id == "new" && store.error != nil)
+    let old = Task { await store.refresh() }
+    await client.waitFor("old")
+    store.latest()
+    await client.resolve("old", bundle: try bundle("old")); await old.value
+    #expect(store.bundle?.selected_turn_id == "new" && store.selectedTurn == "new")
+}
+
+@Test @MainActor func incomingHistoricalTurnResetsViewportAfterLoadingOldBundle() throws {
+    let store = TimelineStore(scope: "scope", thread: "root", title: "test", client: ControlledTimelineClient())
+    store.bundle = try bundle("new"); store.selectedTurn = "new"
+    let currentPhase = try JSONDecoder().decode(TimelinePhase.self, from: JSONSerialization.data(withJSONObject: [
+        "id": "current", "scope_id": "scope", "thread_id": "root", "turn_id": "new", "item_id": "current",
+        "namespace": "model", "track": "model", "kind": "text", "label": "正文", "status": "completed",
+        "start_ms": 200000, "end_ms": 210000]))
+    let oldPhase = try JSONDecoder().decode(TimelinePhase.self, from: JSONSerialization.data(withJSONObject: [
+        "id": "old", "scope_id": "scope", "thread_id": "root", "turn_id": "old", "item_id": "old",
+        "namespace": "model", "track": "model", "kind": "text", "label": "正文", "status": "completed",
+        "start_ms": 1000, "end_ms": 5000]))
+    let lanes = [TimelineLane(id: "model", threadID: "root", track: "model", label: "模型", height: 18, isChild: false)]
+    let current = TimelineLayout(origin: 200000, end: 210000, now: 210000, lanes: lanes, activities: [currentPhase])
+    let historic = TimelineLayout(origin: 1000, end: 5000, now: 210000, lanes: lanes, activities: [oldPhase])
+    let scroll = TimelineScrollView(frame: NSRect(x: 0, y: 0, width: 291, height: 80))
+    let document = TimelineDocumentView(); scroll.documentView = document
+    let coordinator = TimelineSurface.Coordinator(store: store)
+    coordinator.update(scroll, layout: current, activities: [currentPhase], agents: [], onSelect: { _ in })
+    store.selectTurn("old")
+    coordinator.update(scroll, layout: current, activities: [currentPhase], agents: [], onSelect: { _ in })
+    #expect(document.turn == "new") // A hidden loading frame is still the old source bundle.
+    store.bundle = try bundle("old")
+    coordinator.update(scroll, layout: historic, activities: [oldPhase], agents: [], onSelect: { _ in })
+    #expect(document.turn == "old" && scroll.contentView.bounds.minX == 0)
+    let rect = try #require(document.layout?.rect(for: oldPhase))
+    #expect(rect.intersects(scroll.contentView.bounds))
+}
+
 @MainActor private func overlappingDocument() throws -> TimelineDocumentView {
     let view = TimelineDocumentView()
     view.activities = try [("a", 1000, 31000), ("b", 1000, 21000), ("later", 32000, 33000)].map { id, start, end in

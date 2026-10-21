@@ -21,6 +21,7 @@ final class TimelineStore {
     var selectedPhaseIDs: Set<String> = []
     var onOpen: ((TimelineStore, [TimelinePhase]) -> Void)?
     private var serial = 0
+    private var panelPresentationID: Int?
 
     init(scope: String, thread: String, title: String, client: any TimelineReading) {
         self.scope = scope; self.thread = thread; self.title = title; self.client = client
@@ -29,12 +30,14 @@ final class TimelineStore {
     func refresh() async {
         serial += 1
         let token = serial
+        let requestedTurn = followsCurrentTurn ? nil : selectedTurn
         loading = bundle == nil
         defer { if token == serial { loading = false } }
         do {
-            let next = try await client.timeline(scope: scope, thread: thread, turn: followsCurrentTurn ? nil : selectedTurn)
+            let next = try await client.timeline(scope: scope, thread: thread, turn: requestedTurn)
             guard !Task.isCancelled, token == serial else { return }
-            guard next.scope_id == scope, next.thread_id == thread else {
+            guard next.scope_id == scope, next.thread_id == thread,
+                  requestedTurn == nil || next.selected_turn_id == requestedTurn else {
                 throw BackendFailure(message: L("轨迹身份不匹配"))
             }
             if followsCurrentTurn, selectedTurn != next.selected_turn_id {
@@ -53,6 +56,7 @@ final class TimelineStore {
         guard selectedTurn != turn else { return }
         serial += 1
         selectedTurn = turn
+        error = nil
         followsCurrentTurn = turn == bundle?.current_turn_id
         followsLatest = followsCurrentTurn
         scrollOffset = 0
@@ -69,6 +73,7 @@ final class TimelineStore {
     }
 
     func latest() {
+        serial += 1
         followsCurrentTurn = true; followsLatest = true
         selectedTurn = bundle?.current_turn_id ?? bundle?.turns.first?.id
     }
@@ -78,6 +83,12 @@ final class TimelineStore {
               bundle.turns.contains(where: { $0.turn_id == bundle.current_turn_id && $0.status == "active" })
                 || bundle.phases.contains(where: \.isActive) else { return }
         latest()
+    }
+
+    func prepareForPresentation(_ id: Int) {
+        guard panelPresentationID != id else { return }
+        panelPresentationID = id
+        prepareForPresentation()
     }
 
     var lanes: [TimelineLane] { bundle.map { TimelineLane.lanes(in: $0, expanded: expandedAgents) } ?? [] }

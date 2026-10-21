@@ -1,0 +1,415 @@
+{
+  "schema_version": 2,
+  "recorded_at": "2026-10-21T00:45:27+08:00",
+  "status": "implemented_and_targeted_acceptance_complete",
+  "source_baseline": "768aa6e",
+  "source_and_loaded_build_id": "30ca3fe8e899cb436f9d71d1f8d3685b71ffbcd1b472f22f2b6b44001a438602",
+  "targeted_tests": {
+    "model_passed": 24,
+    "app_passed": 46,
+    "total_passed": 70,
+    "window_gated_passed": 1,
+    "total_unique_passed": 71,
+    "final_log_sha256": "e88aef5bca8b6e5fd01d31ea5c839dd5f4d5cf4e3f6719a61a1647bc61703383",
+    "window_log_sha256": "8fa3d6d7840277c3d2e84d5fa8998721adc8fb1b0ba7cdb842bae6995cb9b69c"
+  },
+  "synthetic_fixture_cases": [
+    {
+      "case": "single",
+      "snapshot_threads": 3,
+      "detail_identity_check": true,
+      "phases_checked": 99
+    },
+    {
+      "case": "three",
+      "snapshot_threads": 5,
+      "detail_identity_check": true,
+      "phases_checked": 185
+    },
+    {
+      "case": "five",
+      "snapshot_threads": 7,
+      "detail_identity_check": true,
+      "phases_checked": 271
+    },
+    {
+      "case": "six",
+      "snapshot_threads": 8,
+      "detail_identity_check": true,
+      "phases_checked": 314
+    },
+    {
+      "case": "many",
+      "snapshot_threads": 14,
+      "detail_identity_check": true,
+      "phases_checked": 572
+    },
+    {
+      "case": "agents",
+      "snapshot_threads": 3,
+      "detail_identity_check": true,
+      "phases_checked": 119
+    },
+    {
+      "case": "nested",
+      "snapshot_threads": 3,
+      "detail_identity_check": true,
+      "phases_checked": 119
+    },
+    {
+      "case": "many-agents",
+      "snapshot_threads": 3,
+      "detail_identity_check": true,
+      "phases_checked": 135
+    },
+    {
+      "case": "empty",
+      "snapshot_threads": 0,
+      "detail_identity_check": true,
+      "phases_checked": 97
+    },
+    {
+      "case": "recent",
+      "snapshot_threads": 2,
+      "detail_identity_check": true,
+      "phases_checked": 99
+    },
+    {
+      "case": "orphans",
+      "snapshot_threads": 4,
+      "detail_identity_check": true,
+      "phases_checked": 99
+    },
+    {
+      "case": "long-input",
+      "snapshot_threads": 3,
+      "detail_identity_check": true,
+      "phases_checked": 99
+    },
+    {
+      "case": "partial-input",
+      "snapshot_threads": 3,
+      "detail_identity_check": true,
+      "phases_checked": 99
+    },
+    {
+      "case": "missing-input",
+      "snapshot_threads": 3,
+      "detail_identity_check": true,
+      "phases_checked": 97
+    },
+    {
+      "case": "zero",
+      "snapshot_threads": 3,
+      "detail_identity_check": true,
+      "phases_checked": 99
+    },
+    {
+      "case": "unknown",
+      "snapshot_threads": 3,
+      "detail_identity_check": true,
+      "phases_checked": 99
+    },
+    {
+      "case": "finished",
+      "snapshot_threads": 3,
+      "detail_identity_check": true,
+      "phases_checked": 99
+    },
+    {
+      "case": "lost-source",
+      "snapshot_threads": 2,
+      "detail_identity_check": true,
+      "phases_checked": 99
+    },
+    {
+      "case": "long-title",
+      "snapshot_threads": 3,
+      "detail_identity_check": true,
+      "phases_checked": 99
+    },
+    {
+      "case": "failed-input",
+      "snapshot_threads": 3,
+      "detail_identity_check": true,
+      "phases_checked": 97
+    },
+    {
+      "case": "associated",
+      "snapshot_threads": 4,
+      "detail_identity_check": true,
+      "phases_checked": 102
+    }
+  ],
+  "native_acceptance": {
+    "final_build": [
+      "1 and 5 row sizing",
+      "stable recent selection order",
+      "orphan association retains tagged child selection",
+      "historical turn viewport and native menu",
+      "zoom 37 to 74 seconds and latest return",
+      "4 member fixed pairs",
+      "420 point budget with 12 chats",
+      "420 point budget with 12 members and synchronized vertical scroll",
+      "45 line input scrolling and copy keeps parent",
+      "input source truncated, failed and missing",
+      "Esc child then parent",
+      "actual app deactivation closes child and parent",
+      "completion retention and reopen empty",
+      "known zero versus unknown stats",
+      "light and dark appearance"
+    ],
+    "reused_previous_build": {
+      "build_id_prefix": "669d058dce7f",
+      "checks": [
+        "3, 6 and 12 normal-height chat views",
+        "three close-outside event records"
+      ],
+      "reason": "Later changes do not modify normal row budget or external event handling."
+    },
+    "automated_contracts": [
+      "nested member geometry",
+      "short and overlapping activity hits",
+      "multi-page and not-retained input",
+      "late response scope/thread/turn/phase identity",
+      "window reuse and resize"
+    ],
+    "synthetic_screenshot_metadata": {
+      "final-agents": {
+        "case": "agents",
+        "build_id": "30ca3fe8e899cb436f9d71d1f8d3685b71ffbcd1b472f22f2b6b44001a438602",
+        "pid": 46799,
+        "content_size": [
+          420,
+          444
+        ],
+        "window_frame": [
+          758,
+          606,
+          446,
+          470
+        ],
+        "visible_frame": [
+          67,
+          0,
+          1661,
+          1084
+        ],
+        "trace_at": 1792508410.435327
+      },
+      "final-five": {
+        "case": "five",
+        "build_id": "30ca3fe8e899cb436f9d71d1f8d3685b71ffbcd1b472f22f2b6b44001a438602",
+        "pid": 46799,
+        "content_size": [
+          420,
+          560
+        ],
+        "window_frame": [
+          758,
+          490,
+          446,
+          586
+        ],
+        "visible_frame": [
+          67,
+          0,
+          1661,
+          1084
+        ],
+        "trace_at": 1792508331.764292
+      },
+      "final-dark": {
+        "case": "long-input",
+        "build_id": "30ca3fe8e899cb436f9d71d1f8d3685b71ffbcd1b472f22f2b6b44001a438602",
+        "pid": 84182,
+        "content_size": [
+          420,
+          336
+        ],
+        "window_frame": [
+          760,
+          714,
+          446,
+          362
+        ],
+        "visible_frame": [
+          67,
+          0,
+          1661,
+          1084
+        ],
+        "trace_at": 1792514274.0946999
+      },
+      "final-single": {
+        "case": "single",
+        "build_id": "30ca3fe8e899cb436f9d71d1f8d3685b71ffbcd1b472f22f2b6b44001a438602",
+        "pid": 46799,
+        "content_size": [
+          420,
+          336
+        ],
+        "window_frame": [
+          759,
+          714,
+          446,
+          362
+        ],
+        "visible_frame": [
+          67,
+          0,
+          1661,
+          1084
+        ],
+        "trace_at": 1792508317.987675
+      },
+      "final-small-many": {
+        "case": "many",
+        "build_id": "30ca3fe8e899cb436f9d71d1f8d3685b71ffbcd1b472f22f2b6b44001a438602",
+        "pid": 49108,
+        "content_size": [
+          420,
+          417
+        ],
+        "window_frame": [
+          759,
+          633,
+          446,
+          443
+        ],
+        "visible_frame": [
+          67,
+          0,
+          1661,
+          1084
+        ],
+        "trace_at": 1792508509.5911012
+      },
+      "final-small-agents-bottom": {
+        "case": "many-agents",
+        "build_id": "30ca3fe8e899cb436f9d71d1f8d3685b71ffbcd1b472f22f2b6b44001a438602",
+        "pid": 49108,
+        "content_size": [
+          420,
+          417
+        ],
+        "window_frame": [
+          758,
+          633,
+          446,
+          443
+        ],
+        "visible_frame": [
+          67,
+          0,
+          1661,
+          1084
+        ],
+        "trace_at": 1792508549.895683
+      }
+    },
+    "not_claimed": [
+      "full VoiceOver narration",
+      "all UI font sizes",
+      "actual cross-display movement",
+      "full input selection highlight screenshot",
+      "long-term natural use",
+      "fresh-machine installation",
+      "distribution build"
+    ]
+  },
+  "actual_source_reads": [
+    {
+      "query_ok": true,
+      "scope_matches": true,
+      "thread_matches": true,
+      "agent_count": 1,
+      "phase_count": 170,
+      "input_marker_count": 0,
+      "quality": [],
+      "sha256": "193b52fa69b3a902234c15425a3849566fed1e83fa757e31999963de08c4caa6"
+    },
+    {
+      "query_ok": true,
+      "scope_matches": true,
+      "thread_matches": true,
+      "agent_count": 3,
+      "phase_count": 253,
+      "input_marker_count": 0,
+      "quality": [
+        "observation_gap"
+      ],
+      "sha256": "df9f77ad8aa19a0e932759c06947043e0d4c08c34c7c401ac163d383b292bab0"
+    },
+    {
+      "query_ok": true,
+      "scope_matches": true,
+      "thread_matches": true,
+      "agent_count": 1,
+      "phase_count": 0,
+      "input_marker_count": 0,
+      "quality": [
+        "history_unavailable"
+      ],
+      "sha256": "0260a0bb4d8752360f4867379af113916d2d48237c0ae7b8a1c029185dcf2227"
+    }
+  ],
+  "actual_source_native_comparison": {
+    "date": "2026-10-21",
+    "samples": [
+      {
+        "sample": 0,
+        "bundle_unchanged": true,
+        "agents": 1,
+        "phases": 170,
+        "source_sha256": "193b52fa69b3a902234c15425a3849566fed1e83fa757e31999963de08c4caa6",
+        "native_visible_identity_match": true
+      },
+      {
+        "sample": 1,
+        "bundle_unchanged": true,
+        "agents": 3,
+        "phases": 253,
+        "source_sha256": "df9f77ad8aa19a0e932759c06947043e0d4c08c34c7c401ac163d383b292bab0",
+        "native_visible_identity_match": true
+      }
+    ],
+    "single_raw_input_prefix_match": true,
+    "single_raw_result_prefix_match": true,
+    "explicit_child_duration_match": true,
+    "explicit_child_owner_match": true,
+    "child_raw_input_prefix_match": true,
+    "child_raw_result_prefix_match": true,
+    "statistics_unknown": true,
+    "privacy": "raw JSON, AX and screenshots stay in .local; frozen samples do not establish current natural-use state"
+  },
+  "daily_app": {
+    "build_id": "30ca3fe8e899cb436f9d71d1f8d3685b71ffbcd1b472f22f2b6b44001a438602",
+    "packaged_build_matches_loaded": true,
+    "new_gui_pid": 84687,
+    "old_gui_pid": 19992,
+    "collector_pids_before": [
+      62022
+    ],
+    "collector_identity_unchanged": false,
+    "collector_restarted": true,
+    "collector_reconfigured": false,
+    "collector_pids_after": [
+      84710
+    ],
+    "collector_restart_reason": "Existing GUI observation lease ended when the old GUI exited; new GUI resumed collection via existing lifecycle.",
+    "snapshot_fresh_after_reload": true
+  },
+  "resolved_blocker": "User manually unlocked macOS; native checks resumed and completed.",
+  "cleanup": {
+    "own_preview_stopped": true,
+    "own_fixture_writers_stopped": true,
+    "daily_gui_left_running": true
+  },
+  "git": {
+    "committed": false,
+    "pushed": false,
+    "recorded_before_requested_commit": true
+  },
+  "completion_claimed": true
+}

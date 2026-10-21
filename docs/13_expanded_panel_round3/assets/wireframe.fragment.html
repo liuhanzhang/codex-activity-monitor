@@ -1,0 +1,271 @@
+<div id="monitor-wireframe-review">
+  <div class="mw-preview-head">
+    <div class="mw-scenarios" role="group" aria-label="预览工作场景">
+      <button type="button" class="cursor-interaction" data-scenario="single" aria-pressed="false">单聊</button>
+      <button type="button" class="cursor-interaction" data-scenario="multiple" aria-pressed="true">三聊</button>
+      <button type="button" class="cursor-interaction" data-scenario="many" aria-pressed="false">12 聊</button>
+      <button type="button" class="cursor-interaction" data-scenario="agents" aria-pressed="false">子智能体</button>
+    </div>
+    <span class="mw-caption">线框草图 · 示例数据</span>
+    <span class="mw-caption">聊天列表最多 5 行</span>
+  </div>
+  <div class="mw-stage viz-dotted-background">
+    <section class="mw-monitor" aria-label="Monitor 展开面板线框草图">
+      <header class="mw-header">
+        <div class="mw-heading">工作概览 <span class="mw-count"></span></div>
+        <button type="button" class="mw-health cursor-interaction" aria-expanded="false">已连接</button>
+        <span class="mw-gear" aria-label="设置入口"><i data-lucide="settings" aria-hidden="true"></i></span>
+      </header>
+      <div class="mw-notice" hidden></div>
+      <nav class="mw-chat-list" aria-label="聊天列表">
+        <div class="mw-list-rows"></div>
+        <button type="button" class="mw-show-recent cursor-interaction" aria-expanded="false">显示最近完成（2）</button>
+      </nav>
+      <section class="mw-inspector" aria-label="选中聊天的活动">
+        <header class="mw-detail-header">
+          <div class="mw-detail-identity">
+            <div class="mw-activity-controls">
+              <select aria-label="查看轮次" class="mw-turn cursor-interaction"><option value="current">本轮活动</option><option value="previous">上一轮活动</option></select>
+              <button class="mw-input-button mw-icon-button cursor-interaction" type="button" aria-label="查看本轮用户输入" aria-expanded="false"><i data-lucide="message-square" aria-hidden="true"></i></button>
+            </div>
+            <span class="mw-selected-name"></span>
+            <button class="mw-return-current cursor-interaction" type="button" hidden>回到当前轮</button>
+          </div>
+          <div class="mw-range-control" role="group" aria-label="时间轴缩放">
+            <button class="mw-zoom-out mw-zoom-button cursor-interaction" type="button" aria-label="缩小时间轴，显示 60 秒"><i data-lucide="minus" aria-hidden="true"></i></button>
+            <span class="mw-zoom-value" aria-live="polite">30s</span>
+            <button class="mw-zoom-in mw-zoom-button cursor-interaction" type="button" aria-label="放大时间轴，显示 30 秒"><i data-lucide="plus" aria-hidden="true"></i></button>
+          </div>
+        </header>
+        <section class="mw-input-popover" role="dialog" aria-labelledby="mw-input-title" hidden>
+          <header><span id="mw-input-title">本轮用户输入</span><button type="button" class="mw-close-input mw-icon-button cursor-interaction" aria-label="关闭用户输入"><i data-lucide="x" aria-hidden="true"></i></button></header>
+          <div class="mw-input-copy"></div>
+        </section>
+        <div class="mw-timeline" aria-label="所选轮次的活动轨迹"></div>
+        <div class="mw-agents" aria-label="主智能体与子智能体的共同时间线" hidden></div>
+        <div class="mw-legend" aria-label="时间轴图例">
+          <span><span class="mw-legend-key mw-legend-model" aria-hidden="true"></span><span class="mw-legend-model-label">模型</span></span>
+          <span><span class="mw-legend-key mw-legend-tool" aria-hidden="true"></span><span class="mw-legend-tool-label">工具</span></span>
+        </div>
+        <div class="mw-statistics">
+          <div class="mw-stat-line"><span class="mw-stat-summary"></span><span class="mw-stat-rate"></span><button type="button" class="mw-stat-info mw-icon-button cursor-interaction" aria-label="统计口径" data-tooltip="输出已包含推理。推理均速是接收窗口估算，并非服务端纯计算速度；只显示可确认属于所选轮次的统计。"><i data-lucide="info" aria-hidden="true"></i></button></div>
+        </div>
+      </section>
+    </section>
+  </div>
+  <div class="mw-preview-foot"><span>面板参考宽度 420 pt</span><span class="mw-selection-announcement" aria-live="polite">正在查看：改进 Monitor 面板</span></div>
+</div>
+<style>
+  #monitor-wireframe-review {color-scheme:light dark;--mw-paper:light-dark(#fbfbfa,#252525);--mw-ink:light-dark(#242424,#ebebeb);--mw-secondary:light-dark(#696969,#b0b0b0);--mw-line:light-dark(#dededc,#444);--mw-selected:light-dark(#eeeeeb,#343434);--mw-strong:light-dark(#6a6a67,#c3c3be);--mw-soft:light-dark(#b6b6b0,#777773);--mw-focus:light-dark(#53534e,#e1e1d9);font-family:-apple-system,BlinkMacSystemFont,"PingFang SC",sans-serif;color:var(--mw-ink);font-size:13px;line-height:1.45;width:100%;--mw-row-pad:10px;}
+  #monitor-wireframe-review * {box-sizing:border-box;}
+  #monitor-wireframe-review [hidden] {display:none!important;}
+  #monitor-wireframe-review button,#monitor-wireframe-review select {font:inherit;color:inherit;}
+  #monitor-wireframe-review button {background:none;border:0;}
+  #monitor-wireframe-review button:focus-visible,#monitor-wireframe-review select:focus-visible,#monitor-wireframe-review summary:focus-visible {outline:2px solid var(--mw-focus);outline-offset:3px;}
+  #monitor-wireframe-review .mw-preview-head {display:flex;gap:12px;align-items:center;flex-wrap:wrap;padding:2px 100px 14px 0;}
+  #monitor-wireframe-review .mw-scenarios {display:flex;gap:3px;border:1px solid var(--mw-line);padding:3px;border-radius:7px;}
+  #monitor-wireframe-review .mw-scenarios button {padding:5px 12px;border-radius:4px;font-size:12px;}
+  #monitor-wireframe-review .mw-scenarios button[aria-pressed=true] {background:var(--mw-selected);font-weight:500;}
+  #monitor-wireframe-review .mw-caption {font-size:11px;color:var(--mw-secondary);}
+  #monitor-wireframe-review .mw-stage {padding:24px 12px;display:flex;justify-content:center;align-items:flex-start;}
+  #monitor-wireframe-review .mw-monitor {width:420px;max-width:100%;background:var(--mw-paper);border:1px solid var(--mw-line);border-radius:14px;position:relative;--mw-row-height:60px;--mw-list-rows:5;}
+  #monitor-wireframe-review .mw-header {display:flex;align-items:center;gap:12px;padding:15px 16px 12px;}
+  #monitor-wireframe-review .mw-heading {font-weight:500;flex:1;font-size:14px;}
+  #monitor-wireframe-review .mw-count {font-size:11px;font-weight:400;color:var(--mw-secondary);margin-left:7px;white-space:nowrap;}
+  #monitor-wireframe-review .mw-health {color:var(--mw-secondary);padding:3px 0;font-size:11px;white-space:nowrap;}
+  #monitor-wireframe-review .mw-gear {display:flex;align-items:center;color:var(--mw-secondary);}
+  #monitor-wireframe-review .mw-gear svg {width:15px;height:15px;}
+  #monitor-wireframe-review .mw-notice {margin:0 16px 10px;font-size:11px;color:var(--mw-secondary);}
+  #monitor-wireframe-review .mw-chat-list {padding:0 8px;}
+  #monitor-wireframe-review .mw-list-rows {max-height:calc(var(--mw-row-height) * var(--mw-list-rows));overflow-y:auto;overscroll-behavior:contain;scrollbar-width:thin;}
+  #monitor-wireframe-review .mw-chat {display:flex;flex-direction:column;justify-content:center;text-align:left;width:100%;height:var(--mw-row-height);padding:5px 10px;border-radius:5px;border-left:2px solid transparent;}
+  #monitor-wireframe-review .mw-chat[aria-pressed=true] {background:var(--mw-selected);border-left-color:var(--mw-strong);}
+  #monitor-wireframe-review .mw-chat-top {display:flex;align-items:baseline;gap:14px;width:100%;}
+  #monitor-wireframe-review .mw-chat-name {font-size:13px;font-weight:500;flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  #monitor-wireframe-review .mw-chat-rate {font-size:13px;font-weight:500;white-space:nowrap;font-variant-numeric:tabular-nums;}
+  #monitor-wireframe-review .mw-chat-sub {font-size:11px;color:var(--mw-secondary);display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%;margin-top:4px;}
+  #monitor-wireframe-review .mw-chat-completed .mw-chat-name {font-weight:400;color:var(--mw-secondary);}
+  #monitor-wireframe-review .mw-chat-completed .mw-chat-rate {font-size:11px;font-weight:400;color:var(--mw-secondary);}
+  #monitor-wireframe-review .mw-show-recent {display:block;width:100%;text-align:left;padding:8px 12px 10px;color:var(--mw-secondary);font-size:11px;}
+  #monitor-wireframe-review .mw-cap-label {display:flex;align-items:center;gap:6px;font-size:11px;color:var(--mw-secondary);}
+  #monitor-wireframe-review .mw-inspector {position:relative;border-top:1px solid var(--mw-line);padding:15px 16px 0;}
+  #monitor-wireframe-review .mw-detail-header {display:flex;align-items:flex-start;gap:10px;margin-bottom:12px;}
+  #monitor-wireframe-review .mw-detail-identity {flex:1;min-width:0;display:flex;flex-direction:column;gap:3px;}
+  #monitor-wireframe-review .mw-selected-name {font-size:12px;font-weight:500;overflow-wrap:anywhere;}
+  #monitor-wireframe-review .mw-activity-controls {display:flex;gap:5px;align-items:center;}
+  #monitor-wireframe-review .mw-range-control {display:flex;gap:5px;align-items:center;white-space:nowrap;font-size:11px;color:var(--mw-secondary);padding-top:1px;}
+  #monitor-wireframe-review .mw-zoom-button {display:flex;align-items:center;justify-content:center;width:22px;height:22px;padding:3px;border:1px solid var(--mw-line);border-radius:4px;}
+  #monitor-wireframe-review .mw-zoom-button svg {width:12px;height:12px;}
+  #monitor-wireframe-review .mw-zoom-button:disabled {opacity:.35;}
+  #monitor-wireframe-review .mw-zoom-value {min-width:31px;text-align:center;font-variant-numeric:tabular-nums;}
+  #monitor-wireframe-review select {background:var(--mw-paper);border:1px solid var(--mw-line);border-radius:4px;padding:3px 4px;font-size:11px;max-width:125px;}
+  #monitor-wireframe-review .mw-icon-button {display:flex;align-items:center;padding:5px;}
+  #monitor-wireframe-review .mw-icon-button svg {width:14px;height:14px;}
+  #monitor-wireframe-review .mw-input-popover {position:absolute;z-index:10;top:45px;left:12px;width:min(350px,calc(100% - 24px));background:var(--mw-paper);border:1px solid var(--mw-line);border-radius:8px;box-shadow:0 6px 18px light-dark(#00000018,#00000050);}
+  #monitor-wireframe-review .mw-input-popover header {display:flex;align-items:center;justify-content:space-between;padding:8px 10px 5px;font-size:11px;font-weight:500;}
+  #monitor-wireframe-review .mw-input-copy {font-size:12px;line-height:1.65;white-space:pre-wrap;overflow-wrap:anywhere;color:var(--mw-ink);padding:0 12px 12px;max-height:130px;overflow-y:auto;overscroll-behavior:contain;user-select:text;}
+  #monitor-wireframe-review .mw-return-current {font-size:11px;color:var(--mw-secondary);padding:3px 0;text-align:left;align-self:flex-start;}
+  #monitor-wireframe-review .mw-axis {display:grid;grid-template-columns:38px 1fr;margin-bottom:5px;}
+  #monitor-wireframe-review .mw-axis-ticks {display:flex;justify-content:space-between;color:var(--mw-secondary);font-size:11px;font-variant-numeric:tabular-nums;}
+  #monitor-wireframe-review .mw-lane {display:grid;grid-template-columns:38px 1fr;align-items:center;min-height:18px;}
+  #monitor-wireframe-review .mw-lane-label {font-size:11px;color:var(--mw-secondary);}
+  #monitor-wireframe-review .mw-track {height:18px;position:relative;background:repeating-linear-gradient(to right,transparent 0,transparent calc(33.333% - 1px),var(--mw-line) calc(33.333% - 1px),var(--mw-line) 33.333%);}
+  #monitor-wireframe-review .mw-mark {position:absolute;top:6px;height:5px;border-radius:2px;min-width:3px;background:var(--mw-soft);}
+  #monitor-wireframe-review .mw-mark[data-track=tool] {background:var(--mw-strong);}
+  #monitor-wireframe-review .mw-legend {display:flex;gap:14px;align-items:center;flex-wrap:wrap;margin:9px 0 10px;color:var(--mw-secondary);font-size:11px;}
+  #monitor-wireframe-review .mw-legend>span {display:flex;gap:5px;align-items:center;}
+  #monitor-wireframe-review .mw-legend-key {width:10px;height:4px;border-radius:1px;}
+  #monitor-wireframe-review .mw-legend-model {background:var(--mw-soft);}
+  #monitor-wireframe-review .mw-legend-tool {background:var(--mw-strong);}
+  #monitor-wireframe-review .mw-agents {--mw-team-label:120px;}
+  #monitor-wireframe-review .mw-agents .mw-axis {grid-template-columns:var(--mw-team-label) 1fr;margin-bottom:5px;}
+  #monitor-wireframe-review .mw-team-axis-label {font-size:11px;color:var(--mw-secondary);}
+  #monitor-wireframe-review .mw-team-member {border-bottom:1px solid var(--mw-line);}
+  #monitor-wireframe-review .mw-team-member:last-child {border-bottom:0;}
+  #monitor-wireframe-review .mw-team-row {display:grid;grid-template-columns:var(--mw-team-label) 1fr;align-items:center;width:100%;min-height:48px;}
+  #monitor-wireframe-review .mw-team-identity {padding:7px 7px 7px 0;min-width:0;}
+  #monitor-wireframe-review .mw-team-name {display:flex;align-items:center;gap:4px;font-size:11px;font-weight:500;min-width:0;}
+  #monitor-wireframe-review .mw-team-name span {white-space:nowrap;text-overflow:ellipsis;overflow:hidden;}
+  #monitor-wireframe-review .mw-team-child .mw-team-identity {padding-left:10px;}
+  #monitor-wireframe-review .mw-team-state {display:block;color:var(--mw-secondary);font-size:11px;padding:3px 0 0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  #monitor-wireframe-review .mw-team-mini {display:block;min-width:0;}
+  #monitor-wireframe-review .mw-team-mini .mw-track {display:block;height:15px;}
+  #monitor-wireframe-review .mw-team-mini .mw-mark {top:5px;height:5px;}
+  #monitor-wireframe-review .mw-team-completed .mw-team-name {font-weight:400;color:var(--mw-secondary);}
+  #monitor-wireframe-review .mw-team-completed .mw-team-mini {opacity:.58;}
+  #monitor-wireframe-review .mw-statistics {border-top:1px solid var(--mw-line);margin-top:12px;padding:8px 0 11px;}
+  #monitor-wireframe-review .mw-stat-line {display:flex;align-items:center;gap:6px;flex-wrap:wrap;font-size:11px;color:var(--mw-secondary);font-variant-numeric:tabular-nums;}
+  #monitor-wireframe-review .mw-stat-summary {flex:1;white-space:nowrap;}
+  #monitor-wireframe-review .mw-stat-rate {white-space:nowrap;}
+  #monitor-wireframe-review .mw-stat-info {padding:3px;}
+  #monitor-wireframe-review .mw-stat-info svg {width:12px;height:12px;}
+  #monitor-wireframe-review .mw-footer {border-top:1px solid var(--mw-line);padding:3px 16px 5px;}
+  #monitor-wireframe-review .mw-recent-toggle {display:flex;gap:7px;align-items:center;padding:9px 0;font-size:11px;color:var(--mw-secondary);width:100%;text-align:left;}
+  #monitor-wireframe-review .mw-recent-toggle svg {width:12px;height:12px;}
+  #monitor-wireframe-review .mw-recent-toggle[aria-expanded=true] svg {transform:rotate(90deg);}
+  #monitor-wireframe-review .mw-recent-count {margin-left:auto;}
+  #monitor-wireframe-review .mw-recent {font-size:11px;padding-bottom:6px;}
+  #monitor-wireframe-review .mw-recent>div {display:flex;justify-content:space-between;gap:10px;padding:6px 0;}
+  #monitor-wireframe-review .mw-recent>div>span:last-child {color:var(--mw-secondary);white-space:nowrap;}
+  #monitor-wireframe-review .mw-preview-foot {display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap;padding:10px 0 0;font-size:11px;color:var(--mw-secondary);}
+  @media(max-width:420px) {#monitor-wireframe-review .mw-preview-head{padding-right:0;}#monitor-wireframe-review .mw-stage{padding:18px 0;}#monitor-wireframe-review .mw-header{gap:8px;padding:13px 12px 10px;}#monitor-wireframe-review .mw-heading{font-size:13px;}#monitor-wireframe-review .mw-inspector{padding:13px 12px 0;}#monitor-wireframe-review .mw-chat-sub{column-gap:4px;}#monitor-wireframe-review .mw-project{max-width:140px;}#monitor-wireframe-review .mw-agent-summary{flex-wrap:wrap;}}
+  @media(pointer:coarse) {#monitor-wireframe-review button,#monitor-wireframe-review select,#monitor-wireframe-review summary{min-height:44px;}#monitor-wireframe-review .mw-turn-controls{gap:2px;}#monitor-wireframe-review select{font-size:16px;}}
+  @media(prefers-reduced-motion:reduce){#monitor-wireframe-review *{transition:none!important;}}
+</style>
+<script>
+(() => {
+  const root = document.getElementById('monitor-wireframe-review');
+  const qs = selector => root.querySelector(selector);
+  const chats = [
+    {id:'monitor',name:'改进 Monitor 面板',project:'codex_progress_monitor',action:'思考中',duration:'12s',rate:'34 T/s',output:'2.5k',reasoning:'550',reasonRate:'34 T/s',input:'优化展开面板的信息层级，让多个聊天的当前状态更容易扫读。'},
+    {id:'capture',name:'验证采集能力',project:'codex-cua',action:'运行 python3',duration:'18s',rate:'0 T/s',output:null,reasoning:null,reasonRate:null,input:'验证采集器在真实应用中的行为，并记录已验证与未验证的边界。'},
+    {id:'docs',name:'整理时间线文档',project:'codex_progress_monitor',action:'生成中',duration:'6s',rate:'24 T/s',output:'1.8k',reasoning:'320',reasonRate:'21 T/s',input:'整理时间线的来源、活动身份及数据缺失时的展示规则。'}
+  ];
+  const agents = [{id:'curie',name:'Curie',state:'思考中 · 8s'},{id:'turing',name:'Turing',state:'运行命令 · 16s'},{id:'noether',name:'Noether',state:'本轮已结束'}];
+  const extraTitles=['检查历史读取','验证窗口行为','整理设计决策','检查采集权限','比较活动轨迹','核对统计归属','优化菜单布局','记录验证结果','整理接口说明'];
+  extraTitles.forEach((name,index)=>chats.push({...chats[index%3],id:`extra-${index}`,name}));
+  const recentChats=[
+    {...chats[0],id:'recent-timeline',name:'检查时间线记录',completed:true,ended:'2 分钟前',output:'4.2k',reasoning:'700',reasonRate:'37 T/s',input:'核对活动记录、轮次归属和原始详情之间的对应关系。'},
+    {...chats[0],id:'recent-docs',name:'整理项目说明',completed:true,ended:'8 分钟前',output:'1.2k',reasoning:'210',reasonRate:'26 T/s',input:'更新项目说明中的使用方法与已知限制。'}
+  ];
+  const allChats=[...chats,...recentChats];
+  const options = {rowHeight:60,listRows:5};
+  const state = {scenario:'agents',selected:'monitor',turn:'current',zoom:30,recent:false,health:false,input:false};
+  function activeChats(){return state.scenario==='many'?chats:state.scenario==='multiple'?chats.slice(0,3):[chats[0]];}
+  function applySaved(saved) {
+    const value = saved?.modelContent?.monitorWireframe;
+    if (!value || !['single','multiple','many','agents'].includes(value.scenario)) return;
+    state.scenario=value.scenario;
+    const detail=saved?.privateContent||{};
+    state.recent=detail.recent===true;
+    const visible=[...activeChats(),...(state.recent?recentChats:[])];
+    state.selected=visible.some(chat=>chat.id===value.selected)?value.selected:'monitor';
+  }
+  applySaved(window.openai?.widgetState);
+  function save() {
+    const api=window.openai;
+    if(api?.setWidgetState)Promise.resolve(api.setWidgetState({modelContent:{monitorWireframe:{scenario:state.scenario,selected:state.selected}},privateContent:{recent:state.recent,listRows:options.listRows}})).catch(()=>{});
+  }
+  function marks(track,seed) {
+    const sets=track==='model'?[[[-29,-22],[-19,-15],[-12,-3],[-2,0]],[[-29,-25],[-20,-18],[-9,-7]],[[-29,-26],[-21,-17],[-11,0]]]:[[[-23,-18],[-14,-10]],[[-24,0]],[[-25,-22],[-16,-13],[-5,-2]]];
+    const phases=seed===3?(track==='model'?[[-28,-23],[-19,-14],[-11,-6]]:[[-23,-19],[-14,-9]]):sets[seed%sets.length];
+    const older=state.zoom===60?[[-57,-49],[-44,-35]]:[];
+    return [...older,...phases].map(([start,end])=>`<span class="mw-mark" data-track="${track}" style="left:${(start+state.zoom)/state.zoom*100}%;width:${(end-start)/state.zoom*100}%"></span>`).join('');
+  }
+  function timeline(seed,axis=true) {
+    return `<div role="img" aria-label="示例活动轨迹，最近 ${state.zoom} 秒，模型和工具共用时间轴">${axis?`<div class="mw-axis"><span></span><div class="mw-axis-ticks"><span>−${state.zoom}s</span><span>−${state.zoom*2/3}s</span><span>−${state.zoom/3}s</span><span>现在</span></div></div>`:''}<div class="mw-lane"><span class="mw-lane-label">模型</span><div class="mw-track">${marks('model',seed)}</div></div><div class="mw-lane"><span class="mw-lane-label">工具</span><div class="mw-track">${marks('tool',seed)}</div></div></div>`;
+  }
+  function teamTimeline(chat) {
+    const members=[{id:'root',name:'主智能体',state:`${chat.action} · ${chat.duration}`,seed:0},
+      {...agents[0],seed:2,child:true},{...agents[1],seed:1,child:true},{...agents[2],seed:3,child:true,completed:true}];
+    return `<div class="mw-axis"><span class="mw-team-axis-label">智能体</span><div class="mw-axis-ticks"><span>−${state.zoom}s</span><span>−${state.zoom*2/3}s</span><span>−${state.zoom/3}s</span><span>现在</span></div></div>${members.map(member=>{
+      return `<div class="mw-team-member ${member.child?'mw-team-child ':''}${member.completed?'mw-team-completed':''}" role="group" aria-label="${member.name}，${member.state}"><div class="mw-team-row"><div class="mw-team-identity"><span class="mw-team-name"><span>${member.name}</span></span><span class="mw-team-state">${member.state}</span></div><div class="mw-team-mini" role="img" aria-label="${member.name}的活动轨迹，上方模型、下方工具"><span class="mw-track">${marks('model',member.seed)}</span><span class="mw-track">${marks('tool',member.seed)}</span></div></div></div>`;
+    }).join('')}`;
+  }
+  function render(preserveScroll=true) {
+    const list=qs('.mw-list-rows');
+    const scrollTop=preserveScroll?list.scrollTop:0;
+    const active=activeChats();
+    const visible=[...active,...(state.recent?recentChats:[])];
+    const chat=allChats.find(item=>item.id===state.selected)||chats[0];
+    const children=state.scenario==='agents'&&chat.id==='monitor'&&state.turn==='current';
+    const unavailable=state.turn==='previous'||!chat.output;
+    qs('.mw-monitor').style.setProperty('--mw-row-height',`${options.rowHeight}px`);
+    qs('.mw-monitor').style.setProperty('--mw-list-rows',String(options.listRows));
+    root.querySelectorAll('[data-scenario]').forEach(button=>button.setAttribute('aria-pressed',String(button.dataset.scenario===state.scenario)));
+    qs('.mw-count').textContent=`${active.length} 个进行中`;
+    qs('.mw-health').textContent=state.scenario==='agents'?'部分观测':'已连接';
+    qs('.mw-health').setAttribute('aria-expanded',String(state.health));
+    qs('.mw-notice').hidden=!state.health;
+    qs('.mw-notice').textContent=state.scenario==='agents'?'部分回合缺少连续观测，受影响的统计显示为 —。':'连接正常，当前正在接收聊天活动。';
+    list.innerHTML=visible.map(item=>`<button class="mw-chat ${item.completed?'mw-chat-completed ':''}cursor-interaction" type="button" data-chat="${item.id}" aria-pressed="${item.id===chat.id}" data-tooltip="${item.name}"><span class="mw-chat-top"><span class="mw-chat-name">${item.name}</span><span class="mw-chat-rate">${item.completed?'已完成':item.rate}</span></span><span class="mw-chat-sub"><span class="mw-project">${item.project}</span> · ${item.completed?item.ended:`${item.action} · ${item.duration}`}${state.scenario==='agents'&&item.id==='monitor'?' · 子智能体 3':''}</span></button>`).join('');
+    list.scrollTop=scrollTop;
+    qs('.mw-show-recent').textContent=state.recent?'收起已完成':'显示最近完成（2）';
+    qs('.mw-show-recent').setAttribute('aria-expanded',String(state.recent));
+    qs('.mw-selected-name').hidden=visible.length===1;
+    qs('.mw-selected-name').textContent=chat.name;
+    qs('.mw-return-current').hidden=state.turn==='current';
+    qs('.mw-return-current').textContent=chat.completed?'回到最近一轮':'回到当前轮';
+    qs('.mw-turn').value=state.turn;
+    qs('.mw-turn').options[0].textContent=chat.completed?'最近一轮活动':'本轮活动';
+    qs('.mw-input-button').setAttribute('aria-expanded',String(state.input));
+    qs('.mw-input-popover').hidden=!state.input;
+    qs('#mw-input-title').textContent=state.turn==='previous'?'上一轮用户输入':chat.completed?'最近一轮用户输入':'本轮用户输入';
+    qs('.mw-input-copy').textContent=state.turn==='previous'?'检查面板中已有信息的呈现方式。':chat.input+(state.scenario==='agents'?'\n\n请分别检查布局、信息归属和实际交互。\n\n保留每个子智能体的身份与真实状态，缺失的记录明确显示为未知。\n\n请记录已验证的结果和需要后续验证的边界。\n\n完成后整理发现，并说明下一步建议。':'');
+    qs('.mw-timeline').hidden=children;
+    qs('.mw-timeline').innerHTML=timeline(allChats.indexOf(chat)+(state.turn==='previous'?1:0));
+    qs('.mw-zoom-value').textContent=`${state.zoom}s`;
+    qs('.mw-zoom-out').disabled=state.zoom===60;
+    qs('.mw-zoom-in').disabled=state.zoom===30;
+    qs('.mw-agents').hidden=!children;
+    qs('.mw-agents').innerHTML=children?teamTimeline(chat):'';
+    qs('.mw-stat-summary').textContent=unavailable?'输出 —（含推理 —）':`输出 ${chat.output}（含推理 ${chat.reasoning}）`;
+    qs('.mw-stat-rate').textContent=`推理均速 ${unavailable?'—':chat.reasonRate}`;
+    qs('.mw-selection-announcement').textContent=`正在查看：${chat.name}`;
+    if(globalThis.lucide)lucide.createIcons({root,attrs:{width:16,height:16}});
+  }
+  root.addEventListener('click',event=>{
+    const closesInput=state.input&&!event.target.closest('.mw-input-popover,.mw-input-button');
+    if(closesInput)state.input=false;
+    const scenario=event.target.closest('[data-scenario]');
+    const chat=event.target.closest('[data-chat]');
+    if(scenario){state.scenario=scenario.dataset.scenario;state.selected='monitor';state.turn='current';state.health=false;state.input=false;render(false);save();return;}
+    if(chat){state.selected=chat.dataset.chat;state.turn='current';state.input=false;render();save();return;}
+    if(event.target.closest('.mw-zoom-out')){state.zoom=60;render();save();return;}
+    if(event.target.closest('.mw-zoom-in')){state.zoom=30;render();save();return;}
+    if(event.target.closest('.mw-health'))state.health=!state.health;
+    else if(event.target.closest('.mw-input-button')){state.input=!state.input;render();if(state.input)qs('.mw-close-input').focus();save();return;}
+    else if(event.target.closest('.mw-close-input')){state.input=false;render();qs('.mw-input-button').focus();save();return;}
+    else if(event.target.closest('.mw-return-current'))state.turn='current';
+    else if(event.target.closest('.mw-show-recent')){state.recent=!state.recent;if(!state.recent&&recentChats.some(chat=>chat.id===state.selected)){state.selected='monitor';state.turn='current';}}
+    else if(!closesInput)return;
+    render();save();
+  });
+  qs('.mw-turn').addEventListener('change',event=>{state.turn=event.target.value;state.input=false;render();save();});
+  root.addEventListener('keydown',event=>{if(event.key==='Escape'&&state.input){state.input=false;render();qs('.mw-input-button').focus();event.preventDefault();}});
+  document.addEventListener('click',event=>{if(state.input&&!event.composedPath().includes(root)){state.input=false;render();}});
+  window.addEventListener('openai:set_globals',event=>{const saved=event.detail?.globals?.widgetState;if(saved){applySaved(saved);render();}});
+  render();
+  if(globalThis.Tweak){const tweak=new Tweak({container:root,onChange:render});tweak.addSlider(options,'rowHeight',{label:'聊天行高度',min:52,max:64,step:2,unit:'px'});}
+})();
+</script>

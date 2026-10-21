@@ -10,10 +10,17 @@ struct DashboardView: View {
     var onSizeChange: (CGSize) -> Void = { _ in }
     var onModalChange: (Bool) -> Void = { _ in }
     @State private var restoreRequest: RestoreRequest?
-    @State private var listHeight: CGFloat = 88
     @State private var topHeight: CGFloat = 44
     @State private var bottomHeight: CGFloat = 0
+    @State private var controlsHeight: CGFloat = 0
+    @State private var detailHeight: CGFloat = 180
     @State private var noticeExpanded = false
+
+    private var budget: PanelLayoutBudget {
+        PanelLayoutBudget(maximum: store.panelMaxHeight,
+            chrome: topHeight + bottomHeight + controlsHeight + 2,
+            chatCount: store.visibleChats.count, hasSelection: store.selectedChat != nil)
+    }
 
     var body: some View {
         VStack(spacing: 0) {
@@ -31,73 +38,46 @@ struct DashboardView: View {
             }
             .onGeometryChange(for: CGFloat.self) { $0.size.height } action: { topHeight = $0 }
             Divider()
-            ScrollView {
-                VStack(spacing: 0) {
-                    HStack(spacing: 6) {
-                        Text(L("正在进行")).fontWeight(.medium)
-                        Text(store.fresh ? String(store.activeRows.count) : "—").foregroundStyle(.secondary)
-                        Spacer()
+            ScrollView(.vertical) {
+                LazyVStack(spacing: 0) {
+                    if store.visibleChats.isEmpty {
+                        Text(L("当前没有活跃聊天")).font(.system(size: 12)).foregroundStyle(.secondary)
+                            .frame(maxWidth: .infinity).frame(height: 48)
                     }
-                    .font(.system(size: 11)).padding(.horizontal, 14).padding(.top, 12).padding(.bottom, 4)
-                    if store.activeRows.isEmpty {
-                        Text(L("当前没有活跃聊天"))
-                            .font(.system(size: 12)).foregroundStyle(.secondary)
-                            .frame(maxWidth: .infinity).padding(.vertical, 24)
-                    }
-                    ForEach(store.activeRows) { row in
-                        ChatRowView(chat: row.chat, depth: row.depth, store: store)
-                        Divider().padding(.horizontal, 14)
-                    }
-                    if !store.recentRoots.isEmpty {
-                        PanelDisclosureGroup(isExpanded: $store.showRecent) {
-                            ForEach(store.recentRows) { row in
-                                ChatRowView(chat: row.chat, depth: row.depth, store: store, horizontalPadding: 0)
-                                Divider()
-                            }
-                        } label: {
-                            HStack(spacing: 8) {
-                                Text(L("最近完成"))
-                                Text("\(store.recentRoots.count)").foregroundStyle(.secondary)
-                                Spacer()
-                            }
-                            .font(.system(size: 11, weight: .medium)).padding(.vertical, 12)
-                            .contentShape(Rectangle())
-                            .accessibilityIdentifier("monitor.recent")
-                        }
-                        .font(.system(size: 12)).padding(.horizontal, 14)
-                    }
-                    if let snapshot = store.snapshot, !snapshot.unassignedChats.isEmpty {
-                        PanelDisclosureGroup(isExpanded: $store.showUnassigned) {
-                            ForEach(store.unassignedRows) { row in
-                                ChatRowView(chat: row.chat, depth: 0, store: store, horizontalPadding: 0)
-                                Divider()
-                            }
-                        } label: {
-                            HStack(spacing: 8) {
-                                Text(L("归属待确认的子任务"))
-                                Text("\(snapshot.unassignedChats.count)").foregroundStyle(.secondary)
-                                Spacer()
-                            }.font(.system(size: 11, weight: .medium)).padding(.vertical, 12)
-                        }.font(.system(size: 12)).padding(.horizontal, 14)
-                            .accessibilityIdentifier("monitor.unassignedAgents")
-                    }
-                }
-                .frame(maxWidth: .infinity).fixedSize(horizontal: false, vertical: true)
-                .onGeometryChange(for: CGFloat.self) { $0.size.height } action: { listHeight = $0 }
+                    ForEach(store.visibleChats) { chat in ChatRowView(chat: chat, store: store) }
+                }.padding(.horizontal, 8)
             }
-            .frame(height: min(listHeight, max(64, store.panelMaxHeight - topHeight - bottomHeight - 2)))
+            .frame(height: budget.listHeight)
             .scrollBounceBehavior(.basedOnSize)
-            // Reset the list position only for a newly opened panel, not a snapshot refresh.
+            .accessibilityIdentifier("monitor.chatList")
             .id(store.presentationID)
+            listControls
+                .onGeometryChange(for: CGFloat.self) { $0.size.height } action: { controlsHeight = $0 }
+            if let chat = store.selectedChat {
+                Divider()
+                ScrollView(.vertical) {
+                    ChatDetailsView(chat: chat, timeline: store.timeline(for: chat),
+                        pollingEnabled: store.panelVisible, presentationID: store.presentationID,
+                        dismissPresentation: store.dismissPresentation, maxTimelineHeight: budget.timelineHeight,
+                        sourceAvailable: store.sourceAvailable(for: chat))
+                        .padding(14)
+                        .frame(maxWidth: .infinity)
+                        .fixedSize(horizontal: false, vertical: true)
+                        .onGeometryChange(for: CGFloat.self) { $0.size.height } action: { detailHeight = $0 }
+                }
+                .frame(height: min(detailHeight, budget.detailHeight))
+                .scrollBounceBehavior(.basedOnSize)
+                .id(chat.id)
+            }
             VStack(spacing: 0) {
                 if store.readOnly || store.testProfile != nil || store.busy {
                     Divider()
                     footer.padding(.horizontal, 14).padding(.vertical, 8)
                 }
-            }
-                .onGeometryChange(for: CGFloat.self) { $0.size.height } action: { bottomHeight = $0 }
+            }.onGeometryChange(for: CGFloat.self) { $0.size.height } action: { bottomHeight = $0 }
         }
         .frame(width: 420)
+        .environment(store.auxiliary)
         .background(.background)
         .onChange(of: store.dismissPresentation) { restoreRequest = nil }
         .onGeometryChange(for: CGSize.self) { $0.size } action: { onSizeChange($0) }
@@ -108,9 +88,36 @@ struct DashboardView: View {
         }
     }
 
+    private var listControls: some View {
+        VStack(alignment: .leading, spacing: 6) {
+            if !store.recentRoots.isEmpty {
+                Button {
+                    store.showRecent.toggle()
+                } label: {
+                    Text(store.showRecent ? L("收起已完成") : String(format: L("显示最近完成（%d）"), store.recentRoots.count))
+                        .frame(maxWidth: .infinity, alignment: .leading).contentShape(Rectangle())
+                }.accessibilityIdentifier("monitor.recent")
+            }
+            if let snapshot = store.snapshot, !snapshot.unassignedChats.isEmpty {
+                Button {
+                    store.showUnassigned.toggle()
+                } label: {
+                    Label(String(format: L("归属待确认的子任务（%d）"), snapshot.unassignedChats.count),
+                          systemImage: store.showUnassigned ? "chevron.up" : "questionmark.circle")
+                        .frame(maxWidth: .infinity, alignment: .leading).contentShape(Rectangle())
+                }.accessibilityIdentifier("monitor.unassignedAgents")
+            }
+        }
+        .buttonStyle(.plain).font(.system(size: 10)).foregroundStyle(.secondary)
+        .padding(.horizontal, 18)
+        .padding(.vertical, (!store.recentRoots.isEmpty || store.snapshot?.unassignedChats.isEmpty == false) ? 8 : 0)
+    }
+
     private var header: some View {
         HStack(spacing: 8) {
             Text(L("工作概览")).fontWeight(.semibold)
+            Text(store.fresh ? String(format: L("%d 个活跃聊天"), store.activeRows.count) : "—")
+                .font(.system(size: 10)).foregroundStyle(.secondary).fixedSize()
             Spacer(minLength: 6)
             if store.menuTitle != "—", let rate = store.snapshot?.overview?.generation_rate, rate > 0 {
                 Text(MetricFormat.compactSpeed(rate)).font(.system(size: 11)).monospacedDigit().fixedSize()

@@ -58,6 +58,7 @@ import SwiftUI
 
     func close(reason: String) {
         guard popover.isShown else { return }
+        store.auxiliary.dismiss()
         if modalShown {
             pendingClose = reason
             store.dismissPresentation += 1
@@ -67,7 +68,7 @@ import SwiftUI
         onTrace?("close-" + reason)
     }
 
-    func stop() { removeMonitors(); popover.close() }
+    func stop() { store.auxiliary.dismiss(); removeMonitors(); popover.close() }
 
     func statusItemDidResize() {
         guard popover.isShown else { return }
@@ -92,8 +93,14 @@ import SwiftUI
     }
 
     private func updateScreenLimit() {
-        guard let screen = button.window?.screen else { return }
-        store.panelMaxHeight = min(520, max(140, screen.visibleFrame.height * 0.6))
+        guard let screen = button.window?.screen, let anchor else { return }
+        let available = Self.availableContentHeight(anchor: anchor, visibleFrame: screen.visibleFrame)
+        store.panelMaxHeight = min(available, store.previewMaxHeight ?? available)
+    }
+
+    static func availableContentHeight(anchor: NSRect, visibleFrame: NSRect) -> CGFloat {
+        // Account for native popover arrow/frame in addition to the screen margin.
+        max(0, min(anchor.minY - 2, visibleFrame.maxY - 8) - (visibleFrame.minY + 8) - 26)
     }
 
     private func constrainPosition() {
@@ -126,12 +133,14 @@ import SwiftUI
                 guard let self else { return false }
                 if event.type == .keyDown {
                     if event.keyCode == 53 && !self.modalShown && !self.menuTracking {
+                        if self.store.auxiliary.dismiss() { return true }
                         self.close(reason: "escape"); return true
                     }
                     return false
                 }
                 if self.menuTracking || self.modalShown { return false }
                 if event.window === self.host.view.window { return false }
+                if self.store.auxiliary.owns(event.window) { return false }
                 if let anchor = self.anchor, anchor.contains(NSEvent.mouseLocation) { return false }
                 self.close(reason: "local-outside")
                 return false
@@ -161,7 +170,7 @@ import SwiftUI
         menuTracking = false
     }
 
-    func popoverShouldClose(_ popover: NSPopover) -> Bool { !modalShown }
+    func popoverShouldClose(_ popover: NSPopover) -> Bool { !modalShown && store.auxiliary.activeID == nil }
     func popoverDidClose(_ notification: Notification) { store.panelVisible = false; removeMonitors(); onTrace?("did-close") }
 
     var diagnostics: [String: Any] {

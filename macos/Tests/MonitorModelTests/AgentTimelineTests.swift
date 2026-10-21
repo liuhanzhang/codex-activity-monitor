@@ -64,3 +64,25 @@ private func agentPhase(_ owner: String, type: String = "reasoning", extra: [Str
     let ordinary = try agentPhase("root", type: "dynamicToolCall", extra: ["coordination_action": "wait", "related_agent_ids": ["child"]])
     #expect(!ordinary.isCoordination && ordinary.kindLabel == "工具执行")
 }
+
+@Test func compactMembersAlwaysHaveTwoAlignedTracksWithoutExpansion() throws {
+    let bundle = try agentBundle()
+    let lanes = TimelineLane.lanes(in: bundle, expanded: [], presentation: .panelCompact)
+    #expect(lanes.map(\.track) == ["model", "tool", "model", "tool", "model", "tool"])
+    #expect(lanes == TimelineLane.lanes(in: bundle, expanded: ["child", "nested"], presentation: .panelCompact))
+    #expect(lanes.first { $0.threadID == "nested" }?.depth == 2)
+    let phases = try [agentPhase("root"), agentPhase("child"), agentPhase("nested"),
+                      agentPhase("child", type: "commandExecution", extra: ["id": "child-tool"])]
+    let compact = TimelineLayout(origin: 1000, end: 5000, now: 5000, lanes: lanes, activities: phases)
+    let ordinary = TimelineLayout(origin: 1000, end: 5000, now: 5000,
+        lanes: TimelineLane.lanes(in: bundle, expanded: ["child", "nested"]), activities: phases)
+    for phase in phases {
+        let rect = try #require(compact.rect(for: phase))
+        #expect(rect.minX == ordinary.rect(for: phase)?.minX && rect.width == ordinary.rect(for: phase)?.width)
+        #expect(rect.height == 11)
+        #expect(compact.hitTest(CGPoint(x: rect.midX, y: rect.midY), phases: phases).map(\.id) == [phase.id])
+    }
+    let single = try agentBundle(children: false)
+    #expect(TimelineLane.lanes(in: single, expanded: [], presentation: .panelCompact).map(\.track) == ["model", "tool"])
+    #expect(compact.height < ordinary.height)
+}

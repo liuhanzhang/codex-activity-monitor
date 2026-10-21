@@ -6,40 +6,23 @@ struct TimelinePanelView: View {
     var compact = true
     var presentation: TimelinePresentation = .activityViewer
     var pollingEnabled = true
+    var presentationID = 0
+    var dismissPresentation = 0
+    var maxTimelineHeight: CGFloat = 250
     var onSelect: (([TimelinePhase]) -> Void)?
+    @State private var inputRequest: InputPopoverRequest?
     @State private var viewportWidth = TimelineLayout.menuViewportWidth
 
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
             header
             if let bundle = store.bundle, let layout = store.layout(for: presentation) {
-                HStack(alignment: .top, spacing: 5) {
-                    labels(lanes: layout.lanes).frame(width: compact ? 78 : 116)
-                    TimelineSurface(store: store, layout: layout, activities: bundle.allActivities, agents: bundle.agents,
-                                    onSelect: onSelect ?? { store.open($0) })
-                        .frame(height: layout.height + 2)
-                        .onGeometryChange(for: Double.self) { Double($0.size.width) } action: { viewportWidth = $0 }
-                        .accessibilityIdentifier("monitor.timeline.surface")
-                }
-                .overlay(alignment: .topLeading) {
-                    if presentation == .panelGrouped {
-                        VStack(spacing: 0) {
-                            Color.clear.frame(height: TimelineLayout.axisHeight).allowsHitTesting(false)
-                            ForEach(layout.lanes) { lane in
-                                if lane.track == "header" {
-                                    agentHeader(lane, in: bundle).frame(height: lane.height)
-                                } else {
-                                    Color.clear.frame(height: lane.height).allowsHitTesting(false)
-                                }
-                            }
-                            Spacer(minLength: 0)
-                        }
-                    }
-                }
-                .opacity(store.switchingTurn ? 0.35 : 1)
-                .allowsHitTesting(!store.switchingTurn)
-                .overlay { if store.switchingTurn { ProgressView(L("读取所选轮次…")).controlSize(.small) } }
-                footer(bundle)
+                if presentation == .panelCompact {
+                    ScrollView(.vertical) { plot(bundle, layout: layout) }
+                        .frame(height: min(layout.height + 2, maxTimelineHeight))
+                        .scrollBounceBehavior(.basedOnSize)
+                } else { plot(bundle, layout: layout) }
+                footer(bundle).opacity(store.switchingTurn ? 0 : 1).allowsHitTesting(!store.switchingTurn)
                 if let error = store.error {
                     HStack { Text(error); Spacer(); Button(L("重试")) { Task { await store.refresh() } }.buttonStyle(.plain) }
                         .font(.system(size: 10)).foregroundStyle(.secondary)
@@ -81,9 +64,13 @@ struct TimelinePanelView: View {
                 }.font(.system(size: 11))
             }
         }
-        .task(id: pollingEnabled) {
+        .onChange(of: store.selectedTurn) { inputRequest = nil }
+        .onChange(of: dismissPresentation) { inputRequest = nil }
+        .onChange(of: pollingEnabled) { if !pollingEnabled { inputRequest = nil } }
+        .onDisappear { inputRequest = nil }
+        .task(id: pollingKey) {
             guard pollingEnabled else { return }
-            if compact { store.prepareForPresentation() }
+            if presentation == .panelCompact { store.prepareForPresentation(presentationID) }
             while !Task.isCancelled {
                 await store.refresh()
                 do { try await Task.sleep(for: .seconds(1)) } catch { break }
@@ -91,7 +78,126 @@ struct TimelinePanelView: View {
         }
     }
 
-    private var header: some View {
+    private var pollingKey: String {
+        "\(pollingEnabled):\(presentationID):\(store.followsCurrentTurn ? "current" : store.selectedTurn ?? "")"
+    }
+
+    private var visibleRange: String {
+        "\(Int(TimelineLayout.visibleSeconds(in: viewportWidth, zoom: store.zoom).rounded()))s"
+    }
+
+    @ViewBuilder private var header: some View {
+        if presentation == .panelCompact { compactHeader } else { legacyHeader }
+    }
+
+    private var compactHeader: some View {
+        HStack(spacing: 5) {
+            if let bundle = store.bundle, !bundle.turns.isEmpty {
+                Picker(L("轮次"), selection: Binding(get: { store.selectedTurn ?? "" }, set: { changeTurn($0) })) {
+                    ForEach(bundle.turns) { turn in Text(turnLabel(turn.id, in: bundle)).tag(turn.id) }
+                }.labelsHidden().pickerStyle(.menu).controlSize(.small).fixedSize()
+                    .disabled(bundle.turns.count < 2)
+                    .accessibilityIdentifier("monitor.timeline.turn")
+            } else { Text(L("本轮活动")).foregroundStyle(.secondary) }
+            Button {
+                guard !store.switchingTurn, let input = store.bundle?.initialInput else { return }
+                inputRequest = InputPopoverRequest(phase: input)
+            } label: { Image(systemName: "text.bubble") }
+                .buttonStyle(.borderless).controlSize(.small)
+                .disabled(store.switchingTurn || store.bundle?.initialInput == nil)
+                .help(L(store.bundle?.initialInput == nil ? "所选轮次没有可读取的初始输入" : "查看本轮用户输入"))
+                .accessibilityLabel(L("查看本轮用户输入")).accessibilityIdentifier("monitor.timeline.input")
+                .popover(item: $inputRequest, arrowEdge: .bottom) { request in
+                    PanelAuxiliaryContent(id: request.id, close: { inputRequest = nil }) {
+                        InputPopoverView(phase: request.phase, client: store.client, close: { inputRequest = nil })
+                            .id(request.id)
+                    }
+                }
+            Spacer(minLength: 0)
+            HStack(spacing: 5) {
+                Button { store.zoom = .overview } label: { Image(systemName: "minus").frame(width: 14, height: 14) }
+                    .disabled(store.zoom == .overview)
+                    .help(L("缩小时间线")).accessibilityLabel(L("缩小时间线"))
+                    .accessibilityIdentifier("monitor.timeline.zoom.out")
+                Text(visibleRange)
+                    .monospacedDigit().foregroundStyle(.secondary)
+                    .accessibilityLabel(L("可见时间范围")).accessibilityValue(visibleRange)
+                Button { store.zoom = .detail } label: { Image(systemName: "plus").frame(width: 14, height: 14) }
+                    .disabled(store.zoom == .detail)
+                    .help(L("放大时间线")).accessibilityLabel(L("放大时间线"))
+                    .accessibilityIdentifier("monitor.timeline.zoom.in")
+            }.buttonStyle(.bordered).controlSize(.mini).fixedSize()
+        }.font(.system(size: 11))
+    }
+
+    private func compactLabels(_ layout: TimelineLayout, bundle: TimelineBundle) -> some View {
+        let members = layout.lanes.filter { $0.track == "model" }
+        return VStack(alignment: .leading, spacing: 0) {
+            Color.clear.frame(height: TimelineLayout.axisHeight)
+            ForEach(members) { lane in
+                let agent = bundle.agents.first { $0.thread_id == lane.threadID }
+                let name = lane.isChild ? agent?.displayName ?? String(lane.threadID.suffix(8)) : L("主智能体")
+                if members.count > 1 {
+                    VStack(alignment: .leading, spacing: 3) {
+                        HStack(spacing: 3) {
+                            Text(name).fontWeight(.medium).lineLimit(1).truncationMode(.middle)
+                            if agent?.hasPartialInformation == true {
+                                Image(systemName: "questionmark.circle").font(.system(size: 8))
+                            }
+                        }
+                        Text(L(agent?.roundStatusLabel ?? "状态未知")).font(.system(size: 9))
+                            .foregroundStyle(.secondary).lineLimit(1)
+                    }
+                    .padding(.leading, CGFloat(lane.depth * 5))
+                    .frame(maxWidth: .infinity, minHeight: lane.height * 2, maxHeight: lane.height * 2, alignment: .leading)
+                    .accessibilityElement(children: .ignore).accessibilityLabel(name)
+                    .accessibilityValue(L(agent?.roundStatusLabel ?? "状态未知") + (agent?.hasPartialInformation == true ? " · " + L("部分观测") : ""))
+                    .accessibilityIdentifier("monitor.agent.\(lane.threadID)")
+                    .help([name, L(agent?.roundStatusLabel ?? "状态未知"), agent?.agent_path, lane.threadID,
+                           L("模型在上，工具在下")].compactMap { $0 }.joined(separator: "\n"))
+                } else {
+                    VStack(alignment: .leading, spacing: 0) {
+                        Text(L("模型")).frame(height: lane.height)
+                        Text(L("工具")).frame(height: lane.height)
+                    }.foregroundStyle(.secondary)
+                }
+            }
+        }.font(.system(size: 10))
+    }
+
+    private func plot(_ bundle: TimelineBundle, layout: TimelineLayout) -> some View {
+        HStack(alignment: .top, spacing: 5) {
+            Group {
+                if presentation == .panelCompact { compactLabels(layout, bundle: bundle) }
+                else { labels(lanes: layout.lanes) }
+            }.frame(width: presentation == .panelCompact ? (layout.lanes.contains(where: \.isChild) ? 104 : 32) : compact ? 78 : 116)
+            TimelineSurface(store: store, layout: layout, activities: bundle.allActivities, agents: bundle.agents,
+                            onSelect: onSelect ?? { store.open($0) })
+                .frame(height: layout.height + 2)
+                .onGeometryChange(for: Double.self) { Double($0.size.width) } action: { viewportWidth = $0 }
+                .accessibilityIdentifier("monitor.timeline.surface")
+        }
+        .overlay(alignment: .topLeading) {
+            if presentation == .panelGrouped {
+                VStack(spacing: 0) {
+                    Color.clear.frame(height: TimelineLayout.axisHeight).allowsHitTesting(false)
+                    ForEach(layout.lanes) { lane in
+                        if lane.track == "header" {
+                            agentHeader(lane, in: bundle).frame(height: lane.height)
+                        } else {
+                            Color.clear.frame(height: lane.height).allowsHitTesting(false)
+                        }
+                    }
+                    Spacer(minLength: 0)
+                }
+            }
+        }
+        .opacity(store.switchingTurn ? 0 : 1)
+        .allowsHitTesting(!store.switchingTurn)
+        .overlay { if store.switchingTurn { ProgressView(L("读取所选轮次…")).controlSize(.small) } }
+    }
+
+    private var legacyHeader: some View {
         HStack(spacing: 6) {
             if let bundle = store.bundle, !bundle.turns.isEmpty {
                 Picker(L("轮次"), selection: Binding(get: { store.selectedTurn ?? "" }, set: { changeTurn($0) })) {
@@ -219,18 +325,27 @@ struct TimelinePanelView: View {
                 Image(systemName: "info.circle").help(L("部分耗时或内容未被完整观测，点击活动查看可用记录。"))
                     .accessibilityLabel(L("部分观测"))
             }
-            Button(L("回到最新")) { store.latest(); Task { await store.refresh() } }
-                .buttonStyle(.plain).disabled(store.followsLatest && store.followsCurrentTurn)
+            if presentation != .panelCompact || !store.followsLatest || !store.followsCurrentTurn {
+                Button(L("回到最新")) { store.latest() }
+                    .buttonStyle(.plain).disabled(store.followsLatest && store.followsCurrentTurn)
+            }
         }.font(.system(size: 9)).foregroundStyle(.secondary)
     }
     private func legendColor(_ kind: String) -> Color {
         Color(nsColor: TimelinePalette.color(for: kind))
     }
-    private func changeTurn(_ turn: String) { store.selectTurn(turn); Task { await store.refresh() } }
+    private func changeTurn(_ turn: String) { store.selectTurn(turn) }
     private func turnLabel(_ turn: String, in bundle: TimelineBundle) -> String {
         guard let index = bundle.turns.firstIndex(where: { $0.id == turn }) else { return L("前轮活动") }
-        if turn == bundle.current_turn_id { return L("当前轮") }
-        if index == 0 { return L("最近一轮") }
+        if presentation == .panelCompact {
+            if turn == bundle.current_turn_id {
+                return L(bundle.turns[index].status == "active" ? "本轮活动" : "最近一轮活动")
+            }
+            if index == 0 { return L("最近一轮活动") }
+        } else {
+            if turn == bundle.current_turn_id { return L("当前轮") }
+            if index == 0 { return L("最近一轮") }
+        }
         let date = bundle.turns[index].start_ms.map { Date(timeIntervalSince1970: $0 / 1000).formatted(date: .omitted, time: .shortened) } ?? "—"
         return "\(L("前")) \(index) \(L("轮")) · \(date)"
     }

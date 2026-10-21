@@ -104,36 +104,7 @@ struct TimelineSurface: NSViewRepresentable {
     }
 
     func updateNSView(_ scroll: NSScrollView, context: Context) {
-        guard let document = scroll.documentView as? TimelineDocumentView else { return }
-        let coordinator = context.coordinator
-        coordinator.updating = true
-        defer { coordinator.updating = false }
-        let old = document.layout
-        let changedTurn = document.turn != store.selectedTurn
-        let viewport = scroll.contentSize.width > 1 ? scroll.contentSize.width : document.viewportWidth
-        let resized = abs(document.viewportWidth - viewport) > 0.5
-        let oldOffset = resized ? store.scrollOffset : scroll.contentView.bounds.minX
-        document.layout = layout; document.activities = activities; document.viewportWidth = viewport
-        document.agents = agents
-        document.selectedIDs = store.selectedPhaseIDs; document.turn = store.selectedTurn
-        document.onSelect = { [weak scroll] phase in
-            if let scroll { store.scrollOffset = scroll.contentView.bounds.minX }
-            onSelect(phase)
-        }
-        document.onInteraction = { [weak scroll] in
-            if let scroll { store.scrollOffset = scroll.contentView.bounds.minX }
-            store.followsLatest = false
-        }
-        var offset = changedTurn ? store.scrollOffset : oldOffset
-        if !store.followsLatest, !changedTurn, let old {
-            offset = layout.readingOffset(from: old, offset: oldOffset, selectedID: store.selectedPhaseID, viewport: viewport)
-        }
-        document.resizeDocument(preservingOffset: store.followsLatest ? 0 : offset)
-        let maximum = max(0, document.frame.width - viewport)
-        if store.followsLatest { offset = maximum }
-        scroll.contentView.scroll(to: NSPoint(x: min(maximum, max(0, offset)), y: 0))
-        scroll.reflectScrolledClipView(scroll.contentView)
-        document.needsDisplay = true; document.refreshAccessibility()
+        context.coordinator.update(scroll, layout: layout, activities: activities, agents: agents, onSelect: onSelect)
     }
 
     static func dismantleNSView(_ nsView: NSScrollView, coordinator: Coordinator) {
@@ -148,6 +119,41 @@ struct TimelineSurface: NSViewRepresentable {
         var updating = false
         var observation: NSObjectProtocol?
         init(store: TimelineStore) { self.store = store }
+        func update(_ scroll: NSScrollView, layout: TimelineLayout, activities: [TimelinePhase],
+                    agents: [TimelineAgent], onSelect: @escaping ([TimelinePhase]) -> Void) {
+            guard let document = scroll.documentView as? TimelineDocumentView else { return }
+            updating = true
+            defer { updating = false }
+            let old = document.layout
+            let store = self.store
+            let displayedTurn = store.bundle?.selected_turn_id
+            let changedTurn = document.turn != displayedTurn
+            let viewport = scroll.contentSize.width > 1 ? scroll.contentSize.width : document.viewportWidth
+            let resized = abs(document.viewportWidth - viewport) > 0.5
+            let oldOffset = resized ? store.scrollOffset : scroll.contentView.bounds.minX
+            document.layout = layout; document.activities = activities; document.viewportWidth = viewport
+            document.agents = agents
+            document.selectedIDs = store.selectedPhaseIDs; document.turn = displayedTurn
+            document.onSelect = { [weak scroll] phase in
+                if let scroll { store.scrollOffset = scroll.contentView.bounds.minX }
+                onSelect(phase)
+            }
+            document.onInteraction = { [weak scroll] in
+                if let scroll { store.scrollOffset = scroll.contentView.bounds.minX }
+                store.followsLatest = false
+            }
+            var offset = changedTurn ? store.scrollOffset : oldOffset
+            if !store.followsLatest, !changedTurn, let old {
+                offset = layout.readingOffset(from: old, offset: oldOffset, selectedID: store.selectedPhaseID, viewport: viewport)
+            }
+            document.resizeDocument(preservingOffset: store.followsLatest ? 0 : offset)
+            let maximum = max(0, document.frame.width - viewport)
+            if store.followsLatest { offset = maximum }
+            scroll.contentView.scroll(to: NSPoint(x: min(maximum, max(0, offset)), y: 0))
+            scroll.reflectScrolledClipView(scroll.contentView)
+            document.needsDisplay = true; document.refreshAccessibility()
+        }
+
         func resize(_ scroll: NSScrollView, viewport: Double) {
             guard !updating, let document = scroll.documentView as? TimelineDocumentView, document.layout != nil else { return }
             guard abs(document.viewportWidth - viewport) > 0.5 else { document.refreshAccessibility(); return }
@@ -223,10 +229,10 @@ final class TimelineAccessibleElement: NSAccessibilityElement, @unchecked Sendab
     override var acceptsFirstResponder: Bool { true }
     var highlightedIDs: Set<String> { keyboardID.map { Set([$0]) } ?? selectedIDs }
 
-    private func activityLabel(_ phase: TimelinePhase) -> String {
-        let agent = layout?.lanes.first {
-            $0.threadID == phase.thread_id && ($0.track == "header" || $0.track == "summary")
-        }?.label ?? L("主智能体")
+    func activityLabel(_ phase: TimelinePhase) -> String {
+        let owner = agents.first { $0.thread_id == phase.thread_id }
+        let isChild = layout?.lanes.first { $0.threadID == phase.thread_id }?.isChild == true
+        let agent = isChild ? (owner?.displayName ?? L("子智能体") + " · " + String(phase.thread_id.suffix(8))) : L("主智能体")
         let partial = phase.start_ms == nil || !(phase.quality ?? []).isEmpty
         let targets = phase.isCoordination ? phase.coordinationTargetDetails(in: agents) : ""
         return agent + " · " + phase.accessibleLabel(at: layout?.now ?? 0, agents: agents)

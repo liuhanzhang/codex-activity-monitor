@@ -1,0 +1,148 @@
+{
+  "schema_version": 1,
+  "title": "Monitor 展开面板第三轮设计与最终线框",
+  "design_date": "2026-10-20",
+  "recorded_at": "2026-10-21T00:45:27+08:00",
+  "delivery": "design_wireframe_product_implementation_and_targeted_validation",
+  "product_implementation": "completed; see ../implementation-results.md",
+  "source_baseline": "768aa6e",
+  "wireframe_provenance": {
+    "source": "monitor-wireframe-v5.html",
+    "conversation_asset_id": "01a15950-953b-70b1-ac75-edec34c6ef86",
+    "saved_fragment": "wireframe.fragment.html",
+    "standalone_export": "wireframe.html",
+    "data": "synthetic_only",
+    "product_data_connections": false,
+    "exporter": "visualize 1.0.50 scripts/render.py",
+    "export_warning": "Fragment references window.openai. Static inspection finds widgetState/setWidgetState; export supplies a local fallback. Browser runtime of saved export was not checked.",
+    "optional_tweak": "Guarded by globalThis.Tweak; no Tweak library bundled."
+  },
+  "dependencies": {
+    "external_script_urls": [
+      "https://unpkg.com/@floating-ui/core@1.7.3/dist/floating-ui.core.umd.min.js",
+      "https://unpkg.com/@floating-ui/dom@1.7.4/dist/floating-ui.dom.umd.min.js",
+      "https://unpkg.com/lucide@1.17.0/dist/umd/lucide.js"
+    ],
+    "fully_offline": false,
+    "third_party_libraries_vendored": false,
+    "remote_dependency_availability_checked": false
+  },
+  "completed_static_checks": {
+    "final_source_byte_identical": true,
+    "export_embeds_fragment_intact": true,
+    "export_sandbox": "allow-scripts",
+    "inline_scripts_syntax_checked": 8,
+    "relative_document_links_checked_excluding_manifest": 60,
+    "missing_document_links": [],
+    "markdown_trailing_whitespace": [],
+    "node_version": "v22.22.2"
+  },
+  "verification_limits": {
+    "saved_export_browser_runtime": "not_verified",
+    "reason": "Built-in browser rejected file:// under its HTTP/HTTPS-only security policy. No server or alternate browser workaround used.",
+    "saved_export_screenshots": "not_generated",
+    "native_app_build_and_tests": "70 targeted tests plus 1 gated native window test passed",
+    "native_ui_acceptance": "key native interactions plus finite source comparison complete; precise boundaries in implementation-results.md",
+    "daily_app_or_collector_reload": "Daily GUI loaded; existing lease lifecycle automatically restarted collector once. See implementation-validation.json."
+  },
+  "checksums": {
+    "algorithm": "sha256",
+    "paths_relative_to": "docs/13_expanded_panel_round3/",
+    "manifest_self_checksum": "omitted",
+    "files": {
+      "README.md": {
+        "bytes": 7021,
+        "sha256": "8667675649dda5850696d9c33f541c20309d50a4af582fa8dcc1d772e1af4ddc"
+      },
+      "assets/README.md": {
+        "bytes": 3437,
+        "sha256": "94dcfd4821202f3d7e95239c9af485a5f62769020d8ab9abdb86ce1f403ea10f"
+      },
+      "assets/implementation-validation.json": {
+        "bytes": 10731,
+        "sha256": "597ac60d6af3ae00e6828187b28a408ab4e768303cdfebca25edc4a2f2fd4e99"
+      },
+      "assets/native/README.md": {
+        "bytes": 1655,
+        "sha256": "338557511c48ad30df80e2f9c73a67e60d919dcbdad301e700ca42e72b18d3d0"
+      },
+      "assets/native/final-agents.json": {
+        "bytes": 315,
+        "sha256": "4663900add55bce1986b575b7d938333552d34e50a8998319f34cb183b610ee8"
+      },
+      "assets/native/final-agents.png": {
+        "bytes": 93010,
+        "sha256": "a451f86d8fd14df7a78fce588807e4b8d8af3c2078e351e9ecee3115a0d37ff2"
+      },
+      "assets/native/final-dark.json": {
+        "bytes": 320,
+        "sha256": "a09ab3ee1aac2948f930ef7943d1bcc1818a1d6ee0b3d8f080a1e84e18e10cad"
+      },
+      "assets/native/final-dark.png": {
+        "bytes": 79502,
+        "sha256": "03e3165d095515fd5a27a2385e9834de8d7b8a5acc64676b19132c32cb1b5f00"
+      },
+      "assets/native/final-five.json": {
+        "bytes": 313,
+        "sha256": "30706d0bba359e41b3b5a297cd493e99314bc94a34384da4f67165c0c794af92"
+      },
+      "assets/native/final-five.png": {
+        "bytes": 113344,
+        "sha256": "d9009852ef0cc7668d797060da6344f4b06f0aa72854465a69e783296abd8c93"
+      },
+      "assets/native/final-single.json": {
+        "bytes": 315,
+        "sha256": "28732e90b51cda1a3b3c635346601ed213c6cc0158080222041c4676ca34ad41"
+      },
+      "assets/native/final-single.png": {
+        "bytes": 72356,
+        "sha256": "f6f6f069e0769a751cff00749c3fc7548af3c44b8a3d6b814ca83b30542f2f1f"
+      },
+      "assets/native/final-small-agents-bottom.json": {
+        "bytes": 320,
+        "sha256": "bcc02ccfb4edd81787500e5b73f5f3a29c95b5940f247653b93d0905e39b9968"
+      },
+      "assets/native/final-small-agents-bottom.png": {
+        "bytes": 79317,
+        "sha256": "b370465bcb1c2ba0774ee7eab7ff752b73856173afe07a4feb37ae9675c47345"
+      },
+      "assets/native/final-small-many.json": {
+        "bytes": 314,
+        "sha256": "07f753cc9db7e5f5419003c0609259c70937d5fe71285eada114659a2ae7a387"
+      },
+      "assets/native/final-small-many.png": {
+        "bytes": 88700,
+        "sha256": "4af76f24da092d194ed854796b2226989c41f8c110622da76e4c429dba0a2c3a"
+      },
+      "assets/wireframe.fragment.html": {
+        "bytes": 27886,
+        "sha256": "d3c7adbcb62332786e77a2f44a891bdd138108cd6802dbb172f56a8d3bde1af0"
+      },
+      "assets/wireframe.html": {
+        "bytes": 113617,
+        "sha256": "3cf5d33baee5f6a524f4dd6f641cb347fb5c882b195e92e473fcbd2b990a2410"
+      },
+      "design-spec.md": {
+        "bytes": 12190,
+        "sha256": "28c8f2cc721566eb36f78c5573f974b208635b22240da3c43c1be3bb38f14ad1"
+      },
+      "implementation-plan.md": {
+        "bytes": 6169,
+        "sha256": "493fb1a0c2bd0b8eb8047c4650584fffc369343a5d90e16dc06e72da464dfb05"
+      },
+      "implementation-results.md": {
+        "bytes": 8509,
+        "sha256": "e73c1c77622b51a5a1c61dbda53cd9190e16c4b11e15c85ff6d5fe687385688c"
+      },
+      "technical-design.md": {
+        "bytes": 14047,
+        "sha256": "3c64b1437e869e2a9ffa8499700ace72ea523bed420bcd932343327f00297fff"
+      },
+      "validation-plan.md": {
+        "bytes": 8937,
+        "sha256": "4ccf8daeb58a8b8ebf8c63571166a29549abad94c472a946bf30f273fc1d8dc7"
+      }
+    }
+  },
+  "build_id": "30ca3fe8e899cb436f9d71d1f8d3685b71ffbcd1b472f22f2b6b44001a438602"
+}

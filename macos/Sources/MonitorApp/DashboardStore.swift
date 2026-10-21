@@ -24,27 +24,45 @@ final class DashboardStore {
     var busy = false
     var loginEnabled = false
     var loginNeedsApproval = false
-    private(set) var expanded: Set<String> = []
-    private var expansionOverrides: [String: Bool] = [:]
+    private(set) var selectedChatKey: String?
+    private var retainedSelection: Chat?
+    private var lastActiveSelectionKey: String?
     private(set) var presentationID = 0
-    var showRecent = false
-    var showUnassigned = false
-    var dismissPresentation = 0
-    var panelMaxHeight: CGFloat = 520
+    let auxiliary = PanelAuxiliaryState()
+    var showRecent = false {
+        didSet {
+            guard oldValue != showRecent else { return }
+            if !showRecent, let chat = selectedChat, !activeRows.contains(where: { $0.chat.id == chat.id }),
+               !(showUnassigned && snapshot?.unassignedChats.contains(where: { $0.id == chat.id }) == true) {
+                selectChat(activeRows.first?.chat)
+            } else { reconcileSelection() }
+        }
+    }
+    var showUnassigned = false {
+        didSet {
+            if oldValue && !showUnassigned, selectedChat?.isKnownSubagent == true { selectChat(activeRows.first?.chat) }
+        }
+    }
+    var dismissPresentation = 0 { didSet { auxiliary.dismiss() } }
+    var panelMaxHeight: CGFloat = 720
     var panelVisible = false {
         didSet {
-            guard panelVisible, !oldValue else { return }
+            guard panelVisible != oldValue else { return }
+            guard panelVisible else { dismissPresentation += 1; return }
             presentationID += 1
-            expansionOverrides = [:]
+            let preferred = lastActiveSelectionKey
+            selectedChatKey = nil; retainedSelection = nil
             showRecent = false
             showUnassigned = false
-            reconcileExpansion()
+            let active = activeRows.map(\.chat)
+            selectChat(active.first { $0.id == preferred } ?? active.first)
         }
     }
     private(set) var chatOrder: [String: Int] = [:]
     private var nextChatRank = 0
     let configuration: BackendConfiguration
     let readOnly: Bool
+    let previewMaxHeight: CGFloat?
     let dataRoot: String
     let snapshotOverride: String?
     let legacyUnset: Bool
@@ -66,6 +84,10 @@ final class DashboardStore {
         self.configuration = configuration
         injectedClient = client
         readOnly = arguments.contains("--read-only") || arguments.contains("--snapshot")
+        if readOnly, let index = arguments.firstIndex(of: "--preview-max-height"), index + 1 < arguments.count,
+           let height = Double(arguments[index + 1]), height.isFinite, height >= 140 {
+            previewMaxHeight = CGFloat(height)
+        } else { previewMaxHeight = nil }
         snapshotOverride = arguments.firstIndex(of: "--snapshot").flatMap { i in i + 1 < arguments.count ? arguments[i + 1] : nil }
         timelineFixture = arguments.firstIndex(of: "--timeline-fixture").flatMap { i in i + 1 < arguments.count ? arguments[i + 1] : nil }
         let profile = arguments.firstIndex(of: "--test-profile").flatMap { i in i + 1 < arguments.count ? arguments[i + 1] : nil }
@@ -120,29 +142,49 @@ final class DashboardStore {
         let chats = snapshot?.threads ?? []
         let ids = Set(chats.map(\.id))
         chatOrder = chatOrder.filter { ids.contains($0.key) }
-        reconcileExpansion()
-        timelines = timelines.filter { ids.contains($0.key) }
         for chat in chats where chatOrder[chat.id] == nil {
             chatOrder[chat.id] = nextChatRank
             nextChatRank += 1
         }
+        reconcileSelection()
+        timelines = timelines.filter { ids.contains($0.key) || $0.key == selectedChatKey }
     }
 
-    func setExpanded(_ value: Bool, for chat: Chat) {
-        expansionOverrides[chat.id] = value
-        if value { expanded.insert(chat.id) }
-        else { expanded.remove(chat.id) }
+    var selectedChat: Chat? {
+        snapshot?.threads.first { $0.id == selectedChatKey } ?? retainedSelection
     }
 
-    private func reconcileExpansion() {
-        guard let snapshot else { expanded = []; return }
-        let ids = Set(snapshot.threads.map(\.id))
-        expansionOverrides = expansionOverrides.filter { ids.contains($0.key) }
-        expanded = Set(snapshot.rootChats.filter { snapshot.hasActiveWork(in: $0) }.map(\.id))
-        for (id, value) in expansionOverrides {
-            if value { expanded.insert(id) }
-            else { expanded.remove(id) }
+    func selectChat(_ chat: Chat?) {
+        if selectedChatKey != chat?.id { dismissPresentation += 1 }
+        selectedChatKey = chat?.id
+        retainedSelection = chat
+        if let chat, activeRows.contains(where: { $0.chat.id == chat.id }) { lastActiveSelectionKey = chat.id }
+    }
+
+    private func reconcileSelection() {
+        guard panelVisible else { return }
+        if let current = selectedChat {
+            retainedSelection = current
+            if activeRows.contains(where: { $0.chat.id == current.id }) { lastActiveSelectionKey = current.id }
+            return
         }
+        selectChat(activeRows.first?.chat ?? (showRecent ? recentRoots.first : nil))
+    }
+
+    var visibleChats: [Chat] {
+        var rows = activeRows.map(\.chat)
+        let recent = showRecent ? recentRoots : []
+        let unassigned = unassignedRows.map(\.chat)
+        if let selected = selectedChat, !rows.contains(where: { $0.id == selected.id }),
+           !recent.contains(where: { $0.id == selected.id }), !unassigned.contains(where: { $0.id == selected.id }),
+           !selected.isKnownSubagent || showUnassigned { rows.append(selected) }
+        rows += recent + unassigned
+        var seen: Set<String> = []
+        return rows.filter { seen.insert($0.id).inserted }
+    }
+
+    func sourceAvailable(for chat: Chat) -> Bool {
+        fresh && chat.connected != false && snapshot?.threads.contains(where: { $0.id == chat.id }) == true
     }
 
     var activeRows: [ChatRow] {
