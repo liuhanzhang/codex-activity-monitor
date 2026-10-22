@@ -53,6 +53,13 @@ import MonitorModel
 
 @MainActor final class TimelineScrollView: NSScrollView {
     var onViewportChange: ((Double) -> Void)?
+    var onInteraction: (() -> Void)?
+    var onDetach: (() -> Void)?
+    var viewportDiagnostics: (() -> [String: Any])?
+    override func viewDidMoveToWindow() {
+        super.viewDidMoveToWindow()
+        if window == nil { onDetach?() }
+    }
     override func layout() {
         super.layout()
         if contentSize.width > 1 { onViewportChange?(contentSize.width) }
@@ -70,6 +77,7 @@ import MonitorModel
             nextResponder?.scrollWheel(with: event)
             return
         }
+        onInteraction?()
         super.scrollWheel(with: event)
     }
 }
@@ -80,9 +88,11 @@ struct TimelineSurface: NSViewRepresentable {
     let layout: TimelineLayout
     let activities: [TimelinePhase]
     var agents: [TimelineAgent] = []
+    var pagedFollowing = false
+    var animationsEnabled = true
     var onSelect: ([TimelinePhase]) -> Void
 
-    func makeCoordinator() -> Coordinator { Coordinator(store: store) }
+    func makeCoordinator() -> Coordinator { Coordinator(store: store, pagedFollowing: pagedFollowing) }
     func makeNSView(context: Context) -> NSScrollView {
         let scroll = TimelineScrollView()
         scroll.drawsBackground = false
@@ -97,6 +107,20 @@ struct TimelineSurface: NSViewRepresentable {
         scroll.documentView = document
         scroll.contentView.postsBoundsChangedNotifications = true
         context.coordinator.observe(scroll)
+        scroll.onInteraction = { [weak scroll, weak coordinator = context.coordinator] in
+            if let scroll { coordinator?.pause(scroll) }
+        }
+        scroll.onDetach = { [weak coordinator = context.coordinator] in coordinator?.cancelAnimation() }
+        scroll.viewportDiagnostics = { [weak scroll, weak coordinator = context.coordinator] in
+            guard let scroll, let coordinator else { return [:] }
+            return ["width": scroll.contentSize.width, "offset": scroll.contentView.bounds.minX,
+                    "document_width": scroll.documentView?.frame.width ?? 0,
+                    "page_index": coordinator.page?.index ?? -1,
+                    "seconds": coordinator.page?.seconds ?? -1,
+                    "points_per_second": coordinator.store.zoom.pointsPerSecond,
+                    "follows_latest": coordinator.store.followsLatest,
+                    "animating": coordinator.animationTask != nil]
+        }
         scroll.onViewportChange = { [weak scroll, weak coordinator = context.coordinator] width in
             if let scroll { coordinator?.resize(scroll, viewport: width) }
         }
@@ -104,11 +128,16 @@ struct TimelineSurface: NSViewRepresentable {
     }
 
     func updateNSView(_ scroll: NSScrollView, context: Context) {
+        context.coordinator.animationsEnabled = animationsEnabled
         context.coordinator.update(scroll, layout: layout, activities: activities, agents: agents, onSelect: onSelect)
     }
 
     static func dismantleNSView(_ nsView: NSScrollView, coordinator: Coordinator) {
         coordinator.stop()
+        if let scroll = nsView as? TimelineScrollView {
+            scroll.onViewportChange = nil; scroll.onInteraction = nil; scroll.onDetach = nil
+            scroll.viewportDiagnostics = nil
+        }
         if let document = nsView.documentView as? TimelineDocumentView {
             document.onSelect = nil; document.onInteraction = nil
         }
@@ -116,58 +145,164 @@ struct TimelineSurface: NSViewRepresentable {
 
     @MainActor final class Coordinator {
         let store: TimelineStore
+        let pagedFollowing: Bool
         var updating = false
         var observation: NSObjectProtocol?
-        init(store: TimelineStore) { self.store = store }
+        private var mouseMonitor: Any?
+        var animationsEnabled = true { didSet { if !animationsEnabled { cancelAnimation() } } }
+        var reduceMotion: () -> Bool = { NSWorkspace.shared.accessibilityDisplayShouldReduceMotion }
+        private(set) var page: TimelineViewport?
+        private(set) var animationTask: Task<Void, Never>?
+        private var readingOffset: Double?
+        private var lastRevision: Int?
+        private var wasFollowing = false
+        private var lastUpdate: ContinuousClock.Instant?
+
+        init(store: TimelineStore, pagedFollowing: Bool = false) {
+            self.store = store; self.pagedFollowing = pagedFollowing
+        }
+
         func update(_ scroll: NSScrollView, layout: TimelineLayout, activities: [TimelinePhase],
                     agents: [TimelineAgent], onSelect: @escaping ([TimelinePhase]) -> Void) {
             guard let document = scroll.documentView as? TimelineDocumentView else { return }
             updating = true
             defer { updating = false }
             let old = document.layout
-            let store = self.store
-            let displayedTurn = store.bundle?.selected_turn_id
-            let changedTurn = document.turn != displayedTurn
+            let changedTurn = document.turn != store.bundle?.selected_turn_id
             let viewport = scroll.contentSize.width > 1 ? scroll.contentSize.width : document.viewportWidth
             let resized = abs(document.viewportWidth - viewport) > 0.5
-            let oldOffset = resized ? store.scrollOffset : scroll.contentView.bounds.minX
+            let changedGeometry = resized || old?.origin != layout.origin || old?.pointsPerSecond != layout.pointsPerSecond
+            let reset = changedTurn || lastRevision != store.viewportRevision
+            let clock = ContinuousClock.now
+            let delayed = lastUpdate.map { $0.duration(to: clock) > .seconds(2.5) } ?? true
+            lastUpdate = clock
+            let oldOffset = resized ? (readingOffset ?? store.scrollOffset) : scroll.contentView.bounds.minX
+            if reset || changedGeometry || !store.followsLatest { cancelAnimation() }
+            if reset || changedGeometry { page = nil }
             document.layout = layout; document.activities = activities; document.viewportWidth = viewport
-            document.agents = agents
-            document.selectedIDs = store.selectedPhaseIDs; document.turn = displayedTurn
-            document.onSelect = { [weak scroll] phase in
-                if let scroll { store.scrollOffset = scroll.contentView.bounds.minX }
-                onSelect(phase)
+            document.agents = agents; document.selectedIDs = store.selectedPhaseIDs
+            document.turn = store.bundle?.selected_turn_id
+            document.onSelect = { [weak scroll, weak self] phases in
+                if let scroll { self?.pause(scroll) }
+                onSelect(phases)
             }
-            document.onInteraction = { [weak scroll] in
-                if let scroll { store.scrollOffset = scroll.contentView.bounds.minX }
-                store.followsLatest = false
+            document.onInteraction = { [weak scroll, weak self] in
+                if let scroll { self?.pause(scroll) }
             }
             var offset = changedTurn ? store.scrollOffset : oldOffset
-            if !store.followsLatest, !changedTurn, let old {
-                offset = layout.readingOffset(from: old, offset: oldOffset, selectedID: store.selectedPhaseID, viewport: viewport)
+            var animate = false
+            let priorPage = page
+            if store.followsLatest, pagedFollowing {
+                if let time = store.bundle?.viewportFollowTime {
+                    page = TimelineViewport(origin: layout.origin, time: time, viewport: viewport,
+                                            pointsPerSecond: layout.pointsPerSecond, previous: page)
+                }
+                if let page {
+                    offset = page.offset
+                    document.minimumTimelineWidth = offset + viewport
+                    animate = !reset && !changedGeometry && !delayed && wasFollowing &&
+                        priorPage.map { page.hasSameGeometry(as: $0) && page.index == $0.index + 1 } == true
+                } else {
+                    // Unreliable/missing time never falls back to the continuously moving history edge.
+                    document.minimumTimelineWidth = max(viewport, offset + viewport)
+                }
+            } else {
+                if !store.followsLatest, !changedTurn, let old {
+                    offset = layout.readingOffset(from: old, offset: oldOffset,
+                                                  selectedID: store.selectedPhaseID, viewport: viewport)
+                }
+                if reset { document.minimumTimelineWidth = 0 }
             }
             document.resizeDocument(preservingOffset: store.followsLatest ? 0 : offset)
             let maximum = max(0, document.frame.width - viewport)
-            if store.followsLatest { offset = maximum }
-            scroll.contentView.scroll(to: NSPoint(x: min(maximum, max(0, offset)), y: 0))
-            scroll.reflectScrolledClipView(scroll.contentView)
+            if store.followsLatest && !pagedFollowing { offset = maximum }
+            offset = min(maximum, max(0, offset))
+            // A same-page refresh must neither restart nor jump ahead of an in-flight animation.
+            if animationTask == nil || animate || priorPage != page {
+                move(scroll, to: offset, animated: animate)
+            }
+            lastRevision = store.viewportRevision; wasFollowing = store.followsLatest
             document.needsDisplay = true; document.refreshAccessibility()
         }
 
         func resize(_ scroll: NSScrollView, viewport: Double) {
-            guard !updating, let document = scroll.documentView as? TimelineDocumentView, document.layout != nil else { return }
-            guard abs(document.viewportWidth - viewport) > 0.5 else { document.refreshAccessibility(); return }
+            guard !updating, let document = scroll.documentView as? TimelineDocumentView,
+                  let layout = document.layout, viewport > 8, viewport.isFinite else { return }
+            guard abs(document.viewportWidth - viewport) > 0.5 else { return }
             updating = true
             defer { updating = false }
-            let readingOffset = store.followsLatest ? 0 : store.scrollOffset
-            document.viewportWidth = viewport; document.resizeDocument(preservingOffset: readingOffset)
+            cancelAnimation()
+            var offset = readingOffset ?? store.scrollOffset
+            document.viewportWidth = viewport
+            if store.followsLatest && pagedFollowing {
+                page = store.bundle?.viewportFollowTime.flatMap {
+                    TimelineViewport(origin: layout.origin, time: $0, viewport: viewport,
+                                     pointsPerSecond: layout.pointsPerSecond)
+                }
+                if let page { offset = page.offset }
+                document.minimumTimelineWidth = offset + viewport
+            }
+            document.resizeDocument(preservingOffset: store.followsLatest ? 0 : offset)
             let maximum = max(0, document.frame.width - viewport)
-            let offset = store.followsLatest ? maximum : readingOffset
-            scroll.contentView.scroll(to: CGPoint(x: min(maximum, max(0, offset)), y: 0))
-            scroll.reflectScrolledClipView(scroll.contentView)
-            document.needsDisplay = true; document.refreshAccessibility()
+            if store.followsLatest && !pagedFollowing { offset = maximum }
+            setOffset(scroll, min(maximum, max(0, offset)))
         }
+
+        func pause(_ scroll: NSScrollView) {
+            cancelAnimation()
+            readingOffset = scroll.contentView.bounds.minX
+            store.scrollOffset = scroll.contentView.bounds.minX
+            store.followsLatest = false; wasFollowing = false
+        }
+
+        private func setOffset(_ scroll: NSScrollView, _ offset: Double) {
+            let prior = updating; updating = true
+            defer { updating = prior }
+            scroll.contentView.scroll(to: NSPoint(x: offset, y: 0))
+            scroll.reflectScrolledClipView(scroll.contentView)
+            readingOffset = scroll.contentView.bounds.minX
+            if let document = scroll.documentView as? TimelineDocumentView {
+                document.needsDisplay = true; document.refreshAccessibility()
+            }
+        }
+
+        private func move(_ scroll: NSScrollView, to offset: Double, animated: Bool) {
+            cancelAnimation()
+            guard animated, animationsEnabled, !reduceMotion(), scroll.window?.isVisible == true,
+                  abs(scroll.contentView.bounds.minX - offset) > 0.5 else {
+                setOffset(scroll, offset); return
+            }
+            let start = ContinuousClock.now
+            let from = scroll.contentView.bounds.minX
+            animationTask = Task { @MainActor [weak self, weak scroll] in
+                while !Task.isCancelled {
+                    guard let self, let scroll else { return }
+                    guard scroll.window?.isVisible == true else { self.cancelAnimation(); return }
+                    let elapsed = start.duration(to: .now)
+                    let seconds = Double(elapsed.components.seconds) + Double(elapsed.components.attoseconds) / 1e18
+                    let progress = min(1, seconds / 0.18)
+                    let eased = 1 - pow(1 - progress, 3)
+                    self.setOffset(scroll, self.reduceMotion() ? offset : from + (offset - from) * eased)
+                    if progress >= 1 || self.reduceMotion() { self.animationTask = nil; return }
+                    do { try await Task.sleep(for: .milliseconds(16)) } catch { return }
+                }
+            }
+        }
+
+        func cancelAnimation() { animationTask?.cancel(); animationTask = nil }
+
         func observe(_ scroll: NSScrollView) {
+            // Observe the press before AppKit's native scroller enters its tracking loop.
+            // No NSScroller subclass: native overlay metrics, hover and drawing remain intact.
+            mouseMonitor = NSEvent.addLocalMonitorForEvents(matching: .leftMouseDown) { [weak self, weak scroll] event in
+                MainActor.assumeIsolated {
+                    if let self, let scroll, let window = scroll.window, window.isVisible, event.window === window,
+                       scroll.bounds.contains(scroll.convert(event.locationInWindow, from: nil)) {
+                        self.pause(scroll)
+                    }
+                }
+                return event
+            }
             observation = NotificationCenter.default.addObserver(forName: NSView.boundsDidChangeNotification,
                 object: scroll.contentView, queue: .main) { [weak self, weak scroll] _ in
                     MainActor.assumeIsolated {
@@ -176,15 +311,21 @@ struct TimelineSurface: NSViewRepresentable {
                         document?.needsDisplay = true; document?.refreshAccessibility()
                         guard !self.updating, let document,
                               abs(document.viewportWidth - scroll.contentSize.width) <= 0.5 else { return }
-                        self.store.scrollOffset = scroll.contentView.bounds.minX
-                        let maximum = max(0, document.frame.width - scroll.contentSize.width)
-                        // Our layout changes are guarded by `updating`; external scrolling,
-                        // including accessibility actions, preserves the reading position.
-                        if self.store.scrollOffset < maximum - 3 { self.store.followsLatest = false }
+                        if let offset = self.readingOffset,
+                           abs(scroll.contentView.bounds.minX - offset) <= 0.5 { return }
+                        // Every programmatic frame is guarded synchronously by setOffset.
+                        // An external bounds change, including accessibility scrolling, is user takeover.
+                        self.pause(scroll)
                     }
                 }
         }
-        func stop() { if let observation { NotificationCenter.default.removeObserver(observation) }; observation = nil }
+        func stop() {
+            cancelAnimation()
+            if let observation { NotificationCenter.default.removeObserver(observation) }
+            observation = nil
+            if let mouseMonitor { NSEvent.removeMonitor(mouseMonitor) }
+            mouseMonitor = nil
+        }
     }
 }
 
@@ -221,6 +362,7 @@ final class TimelineAccessibleElement: NSAccessibilityElement, @unchecked Sendab
     var onSelect: (([TimelinePhase]) -> Void)?
     var onInteraction: (() -> Void)?
     var viewportWidth = TimelineLayout.menuViewportWidth
+    var minimumTimelineWidth: Double = 0
     private var readingOffset: Double = 0
     private var keyboardID: String?
     private var tracking: NSTrackingArea?
@@ -341,7 +483,7 @@ final class TimelineAccessibleElement: NSAccessibilityElement, @unchecked Sendab
     func resizeDocument(preservingOffset offset: Double? = nil) {
         guard let layout else { return }
         if let offset { readingOffset = max(0, offset) }
-        setFrameSize(NSSize(width: max(layout.width(viewport: viewportWidth), readingOffset + viewportWidth), height: layout.height))
+        setFrameSize(NSSize(width: max(layout.width(viewport: viewportWidth), readingOffset + viewportWidth, minimumTimelineWidth), height: layout.height))
     }
     override func viewDidMoveToWindow() { super.viewDidMoveToWindow(); refreshAccessibility() }
     override func keyDown(with event: NSEvent) {

@@ -12,6 +12,8 @@
 
 接入 Monitor 后的前后端通信、监听位置和指标计算见 [产品架构与工作方式](/Users/bytedance/personal/codex_progress_monitor/docs/02_product_mvp/architecture.md)。
 
+时间线三档缩放与分段跟随已实现并完成定向验证：默认 60 秒参考比例，可切换 30／120 秒；视窗每次保留 25% 上下文向前切换，原生滚动条保持现状。日常 App 已构建并重载，采集已恢复。见[第 15 章](docs/15_timeline_viewport_paging/README.md)与[实施结果](docs/15_timeline_viewport_paging/implementation-results.md)。
+
 后续改进见 [待办清单](docs/TODO.md)，包括将 GUI 实时同步从磁盘快照轮询迁移到本地 IPC。
 
 文案统一、命令名简化、1Hz 看板与多语言准备见 [易用性需求](docs/04_usability_and_localization/requirements.md)、[实现计划](docs/04_usability_and_localization/implementation-plan.md) 和 [实施结果](docs/04_usability_and_localization/implementation-results.md)。

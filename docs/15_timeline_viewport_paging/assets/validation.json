@@ -1,0 +1,88 @@
+{
+  "date": "2026-10-22",
+  "final_build_id": "4c336b878254e355dd8576dfe37e2509415b60742346b14948d113d707429f66",
+  "reference_viewport_pt": 355,
+  "time_padding_pt": 8,
+  "points_per_second": {
+    "30": 11.566666666666666,
+    "60": 5.783333333333333,
+    "120": 2.8916666666666666
+  },
+  "validation": {
+    "distinct_executed_tests": 67,
+    "base_model": 23,
+    "base_app_executed": 40,
+    "base_window_skipped": 4,
+    "additional_bounds_regression": 1,
+    "native_viewport_tests": 3,
+    "preview_build": true,
+    "daily_app_build": true,
+    "daily_gui_reloaded": true,
+    "collector_restarted": true
+  },
+  "live_observation": {
+    "source": "readonly local query sampling",
+    "page_transition": [
+      19,
+      20
+    ],
+    "offset_transition_pt": [
+      4944.75,
+      5205
+    ],
+    "reading_offset_pt": 5202,
+    "reading_held_seconds": 22.458,
+    "restored_following": true,
+    "collector_pid_before": 96011,
+    "collector_pid_after": 96011
+  },
+  "screenshots": [
+    {
+      "file": "agents-dark.png",
+      "source": "synthetic",
+      "build_id": "4c336b878254e355dd8576dfe37e2509415b60742346b14948d113d707429f66",
+      "sha256": "c738a14a5ad3191e5ad252cdeb081b663c1cc6a5d8ce1e356e6eb02363759708"
+    },
+    {
+      "file": "agents-light.png",
+      "source": "synthetic",
+      "build_id": "5d1a3a491ccc80c289375bf1f8eca8b20c5b6d53f0545ef69c9c63708338d1f2",
+      "sha256": "5b9b8b72e396a001c24f57ca99d5dbb456ad3e579c0c475c77e86212ee290f0e"
+    },
+    {
+      "file": "detail-30-light.png",
+      "source": "synthetic",
+      "build_id": "5d1a3a491ccc80c289375bf1f8eca8b20c5b6d53f0545ef69c9c63708338d1f2",
+      "sha256": "91c4e29bb99e8058e50e17acd20a80a46598d9d3d9b2fc666b401f0354e3db27"
+    },
+    {
+      "file": "overview-120-light.png",
+      "source": "synthetic",
+      "build_id": "5d1a3a491ccc80c289375bf1f8eca8b20c5b6d53f0545ef69c9c63708338d1f2",
+      "sha256": "72beb6f0a066e32c3411ed8dcfce499023600359f6d56a8aa24c252c8d523640"
+    },
+    {
+      "file": "paged-60-light.png",
+      "source": "synthetic",
+      "build_id": "5d1a3a491ccc80c289375bf1f8eca8b20c5b6d53f0545ef69c9c63708338d1f2",
+      "sha256": "fe36bc438675531241111612da90724906eb9748868484aa81fa47d1c39c8911"
+    }
+  ],
+  "daily_reload": {
+    "date": "2026-10-22",
+    "build_id": "4c336b878254e355dd8576dfe37e2509415b60742346b14948d113d707429f66",
+    "gui_pid_before": 95992,
+    "gui_pid_after": 31568,
+    "collector_pid_before": 96011,
+    "collector_pid_after": 31588,
+    "collector_restarted": true,
+    "snapshot_running": true,
+    "snapshot_age_seconds": 0.257,
+    "daily_ui_zoom_checked_seconds": [
+      60,
+      120,
+      60
+    ],
+    "partial_turn_usage_preserved": true
+  }
+}

@@ -189,7 +189,7 @@ private func phase(_ id: String) throws -> TimelinePhase {
     #expect(view.layout!.pointsPerSecond == TimelineLayout.defaultScale)
     #expect(view.activities.map { view.layout!.rect(for: $0) } == before)
     coordinator.resize(scroll, viewport: 291)
-    #expect(abs(view.layout!.pointsPerSecond - 283.0 / 30) < 0.000001)
+    #expect(abs(view.layout!.pointsPerSecond - 347.0 / 60) < 0.000001)
     #expect(view.viewportWidth == 291)
     #expect(view.layout?.rect(for: view.activities[2]).map { Double($0.minX) } == view.layout?.x(at: 32000))
 }
@@ -272,6 +272,7 @@ private func phase(_ id: String) throws -> TimelinePhase {
     let coordinator = TimelineSurface.Coordinator(store: store)
     let scroll = TimelineScrollView(frame: NSRect(x: 0, y: 0, width: 291, height: 80))
     scroll.documentView = view
+    view.viewportWidth = scroll.contentSize.width
     coordinator.observe(scroll)
     defer { coordinator.stop() }
     scroll.contentView.postsBoundsChangedNotifications = true

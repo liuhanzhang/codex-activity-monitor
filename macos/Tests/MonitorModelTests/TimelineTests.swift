@@ -173,10 +173,10 @@ private func toolsLayout(_ phases: [TimelinePhase], now: Double = 5000,
     let longer = TimelineLayout(origin: 1000, end: 31001, now: 31001, lanes: [lane], activities: [])
     let hour = TimelineLayout(origin: 1000, end: 3601000, now: 3601000, lanes: [lane], activities: [])
     #expect(short.width(viewport: 291) == 291)
-    #expect(abs(short.pointsPerSecond - 283.0 / 30) < 0.00001)
+    #expect(abs(short.pointsPerSecond - 347.0 / 60) < 0.00001)
     #expect(short.pointsPerSecond == longer.pointsPerSecond && longer.pointsPerSecond == hour.pointsPerSecond)
-    #expect(TimelineLayout.visibleSeconds(in: 291) == 30)
-    #expect(TimelineLayout.visibleSeconds(in: 574) == 60)
+    #expect(TimelineLayout.visibleSeconds(in: 355) == 60)
+    #expect(TimelineLayout.visibleSeconds(in: 702) == 120)
     #expect(hour.width(viewport: 291) > 16000)
     let p = try timelinePhase()
     #expect(short.rect(for: p) == hour.rect(for: p))
@@ -210,12 +210,12 @@ private func toolsLayout(_ phases: [TimelinePhase], now: Double = 5000,
     #expect(compaction.namespace == "canonical")
 }
 
-@Test func twoZoomLevelsPreserveSourceTimeAndReadingFocus() throws {
+@Test func zoomLevelsPreserveSourceTimeAndReadingFocus() throws {
     let phase = try timelinePhase(["start_ms": 40000, "end_ms": 42000])
     let lanes = [TimelineLane(id: "model", threadID: "root", track: "model", label: "模型", height: 21, isChild: false)]
     let overview = TimelineLayout(origin: 0, end: 90000, now: 90000, lanes: lanes, activities: [phase], zoom: .overview)
     let detail = TimelineLayout(origin: 0, end: 90000, now: 90000, lanes: lanes, activities: [phase], zoom: .detail)
-    #expect(TimelineLayout.visibleSeconds(in: 291, zoom: .overview) == 60)
+    #expect(TimelineLayout.visibleSeconds(in: 355, zoom: .overview) == 60)
     #expect(detail.rect(for: phase)!.width == 2 * overview.rect(for: phase)!.width)
     #expect(phase.duration(at: 90000) == 2)
     let offset = 90.0, viewport = 291.0

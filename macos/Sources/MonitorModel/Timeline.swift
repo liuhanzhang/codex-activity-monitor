@@ -161,6 +161,18 @@ public struct TimelineBundle: Decodable, Sendable {
 
     public var initialInput: TimelinePhase? { markers.first { $0.kind == "input" && $0.is_initial == true } }
     public var allActivities: [TimelinePhase] { (phases + markers).filter(\.isTimelineVisible) }
+    /// A completed turn must never follow today's clock, including with an unfinished child phase.
+    public var viewportFollowTime: Double? {
+        guard !quality.contains("clock_unreliable"),
+              let turn = turns.first(where: { $0.id == selected_turn_id }) else { return nil }
+        let time: Double?
+        switch turn.status {
+        case "active": time = now_ms
+        case "completed", "failed", "interrupted": time = turn.end_ms ?? end_ms
+        default: time = nil
+        }
+        return time.flatMap { $0.isFinite ? $0 : nil }
+    }
     public static func decode(_ data: Data) throws -> Self {
         let value = try JSONDecoder().decode(Self.self, from: data)
         guard value.version == 1 else { throw SnapshotError.unsupportedVersion }
@@ -275,8 +287,11 @@ public struct TimelineLane: Identifiable, Sendable, Equatable {
 public enum TimelineZoom: Double, CaseIterable, Sendable {
     case detail = 30
     case overview = 60
+    case wide = 120
 
     public var pointsPerSecond: Double { (TimelineLayout.menuViewportWidth - 8) / rawValue }
+    public var zoomedOut: Self { self == .detail ? .overview : .wide }
+    public var zoomedIn: Self { self == .wide ? .overview : .detail }
 }
 
 public struct TimelineLayout: Sendable {
@@ -289,15 +304,16 @@ public struct TimelineLayout: Sendable {
     public static let axisHeight: Double = 25
     public static let shortActivityWidth: Double = 3
 
-    public static let menuViewportWidth: Double = 291
-    public static let defaultScale: Double = TimelineZoom.detail.pointsPerSecond
+    // Measured in the 420 pt compact panel, with 28 pt padding, 32 pt labels and a 5 pt gap.
+    public static let menuViewportWidth: Double = 355
+    public static let defaultScale: Double = TimelineZoom.overview.pointsPerSecond
 
-    public static func visibleSeconds(in viewport: Double, zoom: TimelineZoom = .detail) -> Double {
+    public static func visibleSeconds(in viewport: Double, zoom: TimelineZoom = .overview) -> Double {
         max(0, viewport - 8) / zoom.pointsPerSecond
     }
 
     public init(origin: Double, end: Double, now: Double, lanes: [TimelineLane],
-                activities: [TimelinePhase] = [], zoom: TimelineZoom = .detail) {
+                activities: [TimelinePhase] = [], zoom: TimelineZoom = .overview) {
         self.origin = origin; self.end = max(origin, end); self.now = now
         let points = zoom.pointsPerSecond
         self.pointsPerSecond = points; self.lanes = lanes

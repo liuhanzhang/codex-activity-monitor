@@ -115,14 +115,14 @@ struct TimelinePanelView: View {
                 }
             Spacer(minLength: 0)
             HStack(spacing: 5) {
-                Button { store.zoom = .overview } label: { Image(systemName: "minus").frame(width: 14, height: 14) }
-                    .disabled(store.zoom == .overview)
+                Button { store.zoom = store.zoom.zoomedOut } label: { Image(systemName: "minus").frame(width: 14, height: 14) }
+                    .disabled(store.zoom == .wide)
                     .help(L("缩小时间线")).accessibilityLabel(L("缩小时间线"))
                     .accessibilityIdentifier("monitor.timeline.zoom.out")
                 Text(visibleRange)
                     .monospacedDigit().foregroundStyle(.secondary)
                     .accessibilityLabel(L("可见时间范围")).accessibilityValue(visibleRange)
-                Button { store.zoom = .detail } label: { Image(systemName: "plus").frame(width: 14, height: 14) }
+                Button { store.zoom = store.zoom.zoomedIn } label: { Image(systemName: "plus").frame(width: 14, height: 14) }
                     .disabled(store.zoom == .detail)
                     .help(L("放大时间线")).accessibilityLabel(L("放大时间线"))
                     .accessibilityIdentifier("monitor.timeline.zoom.in")
@@ -172,6 +172,7 @@ struct TimelinePanelView: View {
                 else { labels(lanes: layout.lanes) }
             }.frame(width: presentation == .panelCompact ? (layout.lanes.contains(where: \.isChild) ? 104 : 32) : compact ? 78 : 116)
             TimelineSurface(store: store, layout: layout, activities: bundle.allActivities, agents: bundle.agents,
+                            pagedFollowing: presentation == .panelCompact, animationsEnabled: pollingEnabled,
                             onSelect: onSelect ?? { store.open($0) })
                 .frame(height: layout.height + 2)
                 .onGeometryChange(for: Double.self) { Double($0.size.width) } action: { viewportWidth = $0 }
@@ -211,20 +212,20 @@ struct TimelinePanelView: View {
             } else { Text(L("活动轨迹")).foregroundStyle(.secondary) }
             Spacer(minLength: 0)
             HStack(spacing: 5) {
-                Button { store.zoom = .overview } label: {
+                Button { store.zoom = store.zoom.zoomedOut } label: {
                     Image(systemName: "minus").frame(width: 18, height: 18).contentShape(Rectangle())
                 }
-                    .disabled(store.zoom == .overview)
-                    .help(L("缩小时间线：菜单宽度显示 60 秒"))
+                    .disabled(store.zoom == .wide)
+                    .help(L("缩小时间线"))
                     .accessibilityLabel(L("缩小时间线"))
                     .accessibilityIdentifier("monitor.timeline.zoom.out")
                 Text(String(format: L("每屏 %d 秒"), Int(TimelineLayout.visibleSeconds(in: viewportWidth, zoom: store.zoom).rounded())))
                     .monospacedDigit().foregroundStyle(.secondary)
-                Button { store.zoom = .detail } label: {
+                Button { store.zoom = store.zoom.zoomedIn } label: {
                     Image(systemName: "plus").frame(width: 18, height: 18).contentShape(Rectangle())
                 }
                     .disabled(store.zoom == .detail)
-                    .help(L("放大时间线：菜单宽度显示 30 秒"))
+                    .help(L("放大时间线"))
                     .accessibilityLabel(L("放大时间线"))
                     .accessibilityIdentifier("monitor.timeline.zoom.in")
             }.font(.system(size: 10)).controlSize(.mini)

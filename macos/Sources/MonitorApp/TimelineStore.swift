@@ -16,7 +16,8 @@ final class TimelineStore {
     var expandedAgents: Set<String> = []
     var scrollOffset: Double = 0
     var followsLatest = true
-    var zoom: TimelineZoom = .detail
+    var zoom: TimelineZoom = .overview
+    private(set) var viewportRevision = 0
     var selectedPhaseID: String?
     var selectedPhaseIDs: Set<String> = []
     var onOpen: ((TimelineStore, [TimelinePhase]) -> Void)?
@@ -41,6 +42,7 @@ final class TimelineStore {
                 throw BackendFailure(message: L("轨迹身份不匹配"))
             }
             if followsCurrentTurn, selectedTurn != next.selected_turn_id {
+                viewportRevision += 1
                 followsLatest = true; scrollOffset = 0
                 selectedPhaseID = nil; selectedPhaseIDs = []
             }
@@ -54,6 +56,7 @@ final class TimelineStore {
 
     func selectTurn(_ turn: String) {
         guard selectedTurn != turn else { return }
+        viewportRevision += 1
         serial += 1
         selectedTurn = turn
         error = nil
@@ -73,6 +76,7 @@ final class TimelineStore {
     }
 
     func latest() {
+        viewportRevision += 1
         serial += 1
         followsCurrentTurn = true; followsLatest = true
         selectedTurn = bundle?.current_turn_id ?? bundle?.turns.first?.id

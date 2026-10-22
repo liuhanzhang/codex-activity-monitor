@@ -191,6 +191,13 @@ enum MonitorApplication {
         value["build_id"] = store.configuration.build_id
         value["pid"] = ProcessInfo.processInfo.processIdentifier
         value["fullscreen"] = previewWindow?.styleMask.contains(.fullScreen) ?? false
+        func viewports(_ view: NSView) -> [[String: Any]] {
+            if let scroll = view as? TimelineScrollView { return [scroll.viewportDiagnostics?() ?? [:]] }
+            return view.subviews.flatMap { viewports($0) }
+        }
+        value["timeline_viewports"] = NSApplication.shared.windows.filter(\.isVisible).flatMap {
+            $0.contentView.map { viewports($0) } ?? []
+        }
         if let data = try? JSONSerialization.data(withJSONObject: value, options: [.sortedKeys]),
            let line = (String(data: data, encoding: .utf8).map { $0 + "\n" })?.data(using: .utf8) {
             let url = URL(fileURLWithPath: CommandLine.arguments[i + 1])
