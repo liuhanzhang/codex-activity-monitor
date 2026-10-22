@@ -6,6 +6,17 @@
 
 每个启动步骤做什么、环境变量保存在哪里、如何暂停采集器并恢复，见 [启动步骤与进程管理](/Users/bytedance/personal/codex_progress_monitor/docs/02_product_mvp/startup-and-processes.md)。
 
+## 界面语言
+
+```sh
+bin/codex-progress watch --lang en
+bin/codex-progress --lang en --help
+```
+
+默认中文。终端优先级为显式 `--lang` ＞ 运行目录 `ui-settings.json` 中的偏好 ＞ 中文；显式参数仅覆盖本次启动。交互看板按 `l` 在中英文之间切换并保存，`--once` 同样支持英语；`--json` 保持机器数据原样。
+
+GUI 在顶部设置中独立选择语言，保存到其应用数据目录，互不改写终端偏好。用户输入、聊天标题、命令、路径及原始结果不自动翻译；无效保存偏好回退中文，显式不支持的语言代码报错。实现及加载边界见[第 16 章](../16_english_localization/README.md)。
+
 ## 当前机器：隔离试用（主 App 还有任务时）
 
 本机隔离 App 的真实界面提交到实时指标路径已通过：正文持续正速度、工具完整执行时间、临时标题任务隐藏，任务期间没有丢弃或解析错误。无需重复已完成的有限任务；主 App 保持运行。其他机器或后续复查可以使用隔离实例。以下命令使用已有独立登录的测试 home 与产品测试 profile，创建额外实例：

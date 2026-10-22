@@ -5,6 +5,8 @@ from copy import copy, deepcopy
 from datetime import datetime
 import hashlib
 import json
+
+from .i18n import message
 import re
 from pathlib import Path
 import threading
@@ -245,10 +247,11 @@ def text_content(value):
     return '' if value is None else str(value)
 
 
-def section(key, title, value, format=None):
+def section(key, title, value, format=None, title_key=None, text_key=None):
     if format is None:
         format = 'json' if isinstance(value, (dict, list)) else 'text'
-    return {'id': key, 'title': title, 'format': format,
+    return {'id': key, 'title': title, 'title_message': message(title_key) if title_key else None,
+            'text_message': message(text_key) if text_key else None, 'format': format,
             'text': json.dumps(value, ensure_ascii=False, indent=2) if format == 'json' else text_content(value)}
 
 
@@ -256,8 +259,10 @@ def raw_section(key, title, value=ABSENT):
     """Keep strings verbatim, containers/scalars as JSON, and absence explicit."""
     if value is ABSENT:
         return {'id': key, 'title': title, 'format': 'text', 'text': '',
+                'title_message': message('detail.' + key),
+                'notice_message': message('detail.missing_input' if key == 'input' else 'detail.missing_output'),
                 'notice': '源记录未提供独立参数。' if key == 'input' else '来源中尚无这次调用的结果。'}
-    return {'id': key, 'title': title, 'format': 'code' if isinstance(value, str) else 'json',
+    return {'id': key, 'title': title, 'title_message': message('detail.' + key), 'format': 'code' if isinstance(value, str) else 'json',
             'text': value if isinstance(value, str) else json.dumps(value, ensure_ascii=False, indent=2)}
 
 
@@ -347,18 +352,18 @@ def item_content(item):
                     attachments.append(path)
             else:
                 body.append(part)
-        sections.append(section('body', '用户输入' if kind == 'userMessage' else '正文', body, 'text'))
+        sections.append(section('body', '用户输入' if kind == 'userMessage' else '正文', body, 'text', title_key='detail.user' if kind == 'userMessage' else 'detail.body'))
         if attachments and not text_content(body):
-            sections.append(section('attachments', '图片附件', '此条输入包含图片，预览见下方。', 'text'))
+            sections.append(section('attachments', '图片附件', '此条输入包含图片，预览见下方。', 'text', title_key='detail.attachments', text_key='detail.image_notice'))
     elif kind == 'reasoning':
         value = item.get('summary_text', item.get('summary', []))
-        sections.append(section('body', '可见思考摘要', value, 'text'))
+        sections.append(section('body', '可见思考摘要', value, 'text', title_key='detail.reasoning'))
     elif kind in TOOL_TYPES or kind in ('function_call', 'custom_tool_call'):
         return tool_content(item, kind)
     elif kind == 'contextCompaction':
         return [], []
     else:
-        sections.append(section('body', '活动内容', item, 'json'))
+        sections.append(section('body', '活动内容', item, 'json', title_key='detail.content'))
     return [s for s in sections if s['text']], attachments
 
 

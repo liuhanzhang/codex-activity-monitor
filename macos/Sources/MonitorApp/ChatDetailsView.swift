@@ -4,7 +4,8 @@ import MonitorModel
 private struct StatisticsInfo: Identifiable { let id = UUID() }
 
 /// Panel-only hierarchy; the independent activity window keeps its own layout.
-struct ChatDetailsView: View {
+struct ChatDetailsView: LocalizedView {
+    @Environment(\.monitorLanguage) var language
     let chat: Chat
     @Bindable var timeline: TimelineStore
     let pollingEnabled: Bool

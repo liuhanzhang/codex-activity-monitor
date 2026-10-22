@@ -11,6 +11,7 @@ import time
 from .events import TOOL_TYPES, SERVER_REQUESTS
 from .tool_labels import code_tool_names, file_edit_preview, is_patch_tool, tool_name
 from .agent_relations import raw_coordination
+from .i18n import message
 
 MODEL_TYPES = {'reasoning': 'reasoning', 'agentMessage': 'text', 'message': 'text', 'plan': 'text'}
 LABELS = {'reasoning': '思考', 'text': '正文输出', 'tool_input': '工具参数生成',
@@ -81,6 +82,9 @@ def item_phase(scope, thread, turn, item, start=None, end=None, source='producer
             'item_type': kind, 'track': track, 'kind': subtype,
             'label': (name or {'fileChange': '应用文件改动', 'commandExecution': '运行命令',
                               'collabAgentToolCall': '子智能体调用'}.get(kind, LABELS.get(subtype, '其他活动')))[:160],
+            'label_message': message('activity.named', name=name) if name else
+                message('activity.command' if kind == 'commandExecution' else 'activity.file_change')
+                if kind in ('commandExecution', 'fileChange') else None,
             'tool_name': name or None, 'call_id': item.get('call_id', item.get('callId')),
             'client_id': item.get('clientId', item.get('client_id')),
             'process_id': item.get('processId', item.get('process_id')),
@@ -122,6 +126,10 @@ def apply_model_membership(phase, settled):
 def display_phase(phase):
     """Project old sidecars and fresh events with the same visibility policy."""
     phase = dict(phase)
+    if phase.get('tool_name'):
+        phase['label_message'] = message('activity.named', name=phase['tool_name'])
+    elif phase.get('item_type') in ('commandExecution', 'fileChange'):
+        phase['label_message'] = message('activity.command' if phase['item_type'] == 'commandExecution' else 'activity.file_change')
     if phase.get('item_type') == 'contextCompaction':
         phase.update(track='model', kind='contextCompaction', label=LABELS['contextCompaction'])
     if phase.get('history_retired') or (phase.get('track') == 'marker' and phase.get('kind') != 'input'):

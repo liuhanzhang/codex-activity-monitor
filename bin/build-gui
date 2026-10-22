@@ -8,6 +8,7 @@ case "${1-}" in
   *) echo "Usage: bin/build-gui [--preview]" >&2; exit 2 ;;
 esac
 cd "$task_root"
+"$task_root/.local/venv/bin/python" "$task_root/bin/export-localizations"
 export CLANG_MODULE_CACHE_PATH="$task_root/.local/clang-module-cache"
 swift build --disable-sandbox --cache-path "$task_root/.local/swift-cache" --package-path macos --configuration debug
 task_binary_dir=$(swift build --disable-sandbox --cache-path "$task_root/.local/swift-cache" --package-path macos --configuration debug --show-bin-path)
@@ -18,7 +19,12 @@ mkdir -p "$task_app/Contents/MacOS" "$task_app/Contents/Resources"
 # atomically avoids truncating code pages during an ordinary local rebuild.
 cp "$task_binary_dir/MonitorApp" "$task_app/Contents/MacOS/MonitorApp.new"
 mv -f "$task_app/Contents/MacOS/MonitorApp.new" "$task_app/Contents/MacOS/MonitorApp"
+# Test-only resource bundles are never part of the product.
+for task_resource in "$task_app/Contents/Resources/"*Tests.bundle; do
+  if [ -d "$task_resource" ]; then rm -rf "$task_resource"; fi
+done
 for task_resource in "$task_binary_dir"/*.bundle; do
+  case "$task_resource" in *Tests.bundle) continue ;; esac
   if [ -d "$task_resource" ]; then cp -R "$task_resource" "$task_app/Contents/Resources/"; fi
 done
 "$task_root/.local/venv/bin/python" - "$task_root" "$task_app" "$task_preview" <<'PY'

@@ -20,7 +20,39 @@ final class DashboardStore {
     var menuMode: MenuMode = .unavailable
     var fresh = false
     var management: ManagementState?
-    var operationError: String?
+    private(set) var language: MonitorLanguage = .chinese
+    private var operationFailure: PresentationFailure?
+    var operationError: String? {
+        get { operationFailure?.rendered(language) }
+        set { operationFailure = newValue.map { PresentationFailure(key: $0) } }
+    }
+    @ObservationIgnored private var languageSaveTask: Task<Void, Never>?
+    private var pendingLanguage: MonitorLanguage?
+    private func L(_ key: String) -> String { localizedText(key, language: language) }
+    func setLanguage(_ value: MonitorLanguage) {
+        guard !closing, !busy, management?.waitingForCleanup != true, management?.state != "purged" else { return }
+        language = value
+        onUpdate?()
+        guard !readOnly else { return }
+        pendingLanguage = value
+        guard languageSaveTask == nil else { return }
+        languageSaveTask = Task {
+            while let next = pendingLanguage {
+                pendingLanguage = nil
+                do {
+                    _ = try await client.command("preferences", extra: ["--ui-language", next.rawValue])
+                    if pendingLanguage == nil && operationFailure?.key == "语言已切换，本次选择未能保存。" { operationFailure = nil }
+                } catch {
+                    if pendingLanguage == nil { operationFailure = PresentationFailure(key: "语言已切换，本次选择未能保存。") }
+                }
+            }
+            languageSaveTask = nil
+        }
+    }
+    func waitForLanguageSave() async { await languageSaveTask?.value }
+    private func recordError(_ error: any Error, prefix: String? = nil) {
+        operationFailure = PresentationFailure(error: error, prefix: prefix)
+    }
     var busy = false
     var loginEnabled = false
     var loginNeedsApproval = false
@@ -63,6 +95,7 @@ final class DashboardStore {
     let configuration: BackendConfiguration
     let readOnly: Bool
     let previewMaxHeight: CGFloat?
+    let previewRestore: Bool
     let dataRoot: String
     let snapshotOverride: String?
     let legacyUnset: Bool
@@ -84,6 +117,7 @@ final class DashboardStore {
         self.configuration = configuration
         injectedClient = client
         readOnly = arguments.contains("--read-only") || arguments.contains("--snapshot")
+        previewRestore = readOnly && arguments.contains("--preview-restore")
         if readOnly, let index = arguments.firstIndex(of: "--preview-max-height"), index + 1 < arguments.count,
            let height = Double(arguments[index + 1]), height.isFinite, height >= 140 {
             previewMaxHeight = CGFloat(height)
@@ -93,11 +127,24 @@ final class DashboardStore {
         let profile = arguments.firstIndex(of: "--test-profile").flatMap { i in i + 1 < arguments.count ? arguments[i + 1] : nil }
         testProfile = profile
         dataRoot = profile.map { $0 + "/data" } ?? arguments.firstIndex(of: "--data-root").flatMap { i in i + 1 < arguments.count ? arguments[i + 1] : nil } ?? configuration.data_root
+        if readOnly, let index = arguments.firstIndex(of: "--lang"), index + 1 < arguments.count {
+            language = MonitorLanguage(rawValue: arguments[index + 1]) ?? .chinese
+        } else if !readOnly {
+            language = Self.savedLanguage(at: dataRoot)
+        }
         runtimePath = configuration.runtime
         legacyUnset = arguments.contains("--legacy-unset")
         if readOnly && timelineFixture == nil && FileManager.default.fileExists(atPath: configuration.runtime + "/timeline.json") {
             timelineFixture = configuration.runtime + "/timeline.json"
         }
+    }
+
+    static func savedLanguage(at root: String) -> MonitorLanguage {
+        struct Preferences: Decodable { let version: Int; let language: MonitorLanguage }
+        guard let data = try? Data(contentsOf: URL(fileURLWithPath: root + "/app-state.json")),
+              let value = try? JSONDecoder().decode(Preferences.self, from: data),
+              value.version == 1 else { return .chinese }
+        return value.language
     }
 
     private var client: any BackendManaging { injectedClient ?? BackendClient(configuration: configuration, dataRoot: dataRoot, testProfile: testProfile) }
@@ -119,14 +166,14 @@ final class DashboardStore {
                 }.value
                 switch result {
                 case .success(let value): snapshot = value; readError = nil
-                case .failure: readError = L("暂时无法读取采集数据")
+                case .failure: readError = "暂时无法读取采集数据"
                 }
                 updatePresentation()
                 if !readOnly && management?.configured == true && !fresh && !busy && !closing && Date() >= nextResume {
                     nextResume = Date().addingTimeInterval(5)
                     busy = true
                     do { try await resume() }
-                    catch { operationError = error.localizedDescription }
+                    catch { recordError(error) }
                     busy = false
                 }
                 onUpdate?()
@@ -216,22 +263,22 @@ final class DashboardStore {
         let client: any TimelineReading = readOnly
             ? FixtureTimelineClient(path: timelineFixture)
             : SystemTimelineClient(configuration: configuration, runtime: runtimePath)
-        let value = TimelineStore(scope: chat.scope, thread: chat.threadID, title: chat.title, client: client)
+        let value = TimelineStore(scope: chat.scope, thread: chat.threadID, title: chat.name ?? "", client: client)
         value.onOpen = { [weak self] timeline, phase in self?.onActivitySelected?(timeline, phase) }
         timelines[chat.id] = value
         return value
     }
 
     var connectionLabel: String {
-        if !readOnly, let management, !management.configured { return L(management.label) }
-        if readError != nil { return readError! }
-        if !fresh { return String(localized: "Stale", bundle: .module) }
+        if !readOnly, let management, !management.configured { return management.localizedLabel(language) }
+        if readError != nil { return L(readError!) }
+        if !fresh { return L("Stale") }
         if snapshot?.overview?.coverage == "partial" { return L("部分观测") }
         if snapshot?.overview?.coverage == "complete" { return L("已连接") }
         if snapshot?.backends?.values.contains(where: { $0.connected == true }) == true {
             return L("已连接 · 总速度暂不可用")
         }
-        return String(localized: "NoConnection", bundle: .module)
+        return L("NoConnection")
     }
 
     var bridgeNeedsRestart: Bool {
@@ -248,7 +295,7 @@ final class DashboardStore {
 
     var connectionDetail: String? {
         if bridgeNeedsRestart { return L("旧接入仍在运行；任务结束后重开 Codex，以启用退出暂停采集。") }
-        if !readOnly, let management, !management.configured { return L(management.label) }
+        if !readOnly, let management, !management.configured { return management.localizedLabel(language) }
         if !fresh { return connectionLabel }
         if let notice = snapshot?.observationNotice { return L(notice.rawValue) }
         return nil
@@ -265,7 +312,7 @@ final class DashboardStore {
             else if management?.waitingForCleanup == true { await cleanup() }
             loginEnabled = SMAppService.mainApp.status == .enabled
             loginNeedsApproval = SMAppService.mainApp.status == .requiresApproval
-        } catch { operationError = error.localizedDescription }
+        } catch { recordError(error) }
     }
 
     func configure() async {
@@ -283,9 +330,9 @@ final class DashboardStore {
             let object = preferences.flatMap { try? JSONSerialization.jsonObject(with: $0) as? [String: Any] }
             if testProfile == nil && object?["launch_at_login"] as? Bool != false {
                 do { try await updateLogin(true) }
-                catch { operationError = L("登录启动未完成：") + error.localizedDescription }
+                catch { recordError(error, prefix: "登录启动未完成：") }
             }
-        } catch { operationError = error.localizedDescription }
+        } catch { recordError(error) }
     }
 
     private func resume() async throws {
@@ -301,11 +348,12 @@ final class DashboardStore {
         busy = true
         defer { busy = false }
         do {
+            await waitForLanguageSave()
             lease = nil
             management = try await client.command("restore", extra: purge ? ["--purge"] : [])
             if management?.state == "purged" { finishPurge() }
             operationError = nil
-        } catch { operationError = error.localizedDescription }
+        } catch { recordError(error) }
     }
 
     private func cleanup() async {
@@ -313,9 +361,10 @@ final class DashboardStore {
         busy = true
         defer { busy = false }
         do {
+            await waitForLanguageSave()
             management = try await client.command("cleanup")
             if management?.state == "purged" { finishPurge() }
-        } catch { operationError = error.localizedDescription }
+        } catch { recordError(error) }
     }
 
     private func finishPurge() {
@@ -326,9 +375,10 @@ final class DashboardStore {
     }
 
     func prepareQuit() async -> Bool {
-        guard !busy else { operationError = L("管理操作仍在完成，请稍后退出。"); return false }
+        guard !busy else { operationError = "管理操作仍在完成，请稍后退出。"; return false }
         let ownedSession = lease != nil
         closing = true
+        await waitForLanguageSave()
         guard !readOnly, management?.state != "purged" else { return true }
         do {
             if ownedSession { _ = try await client.command("stop", extra: ["--owner-pid", String(ProcessInfo.processInfo.processIdentifier)]) }
@@ -336,7 +386,7 @@ final class DashboardStore {
             lease = nil
             return true
         }
-        catch { closing = false; operationError = error.localizedDescription; return false }
+        catch { closing = false; recordError(error); return false }
     }
 
     func setLogin(_ enabled: Bool) async {
@@ -345,7 +395,7 @@ final class DashboardStore {
         defer { busy = false }
         do {
             try await updateLogin(enabled)
-        } catch { operationError = L("登录启动未完成：") + error.localizedDescription }
+        } catch { recordError(error, prefix: "登录启动未完成：") }
     }
 
     private func updateLogin(_ enabled: Bool) async throws {

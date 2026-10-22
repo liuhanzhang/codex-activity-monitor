@@ -7,9 +7,9 @@ let package = Package(
     platforms: [.macOS("26.0")],
     products: [.executable(name: "MonitorApp", targets: ["MonitorApp"])],
     targets: [
-        .target(name: "MonitorModel"),
+        .target(name: "MonitorModel", resources: [.process("Resources")]),
         .executableTarget(name: "MonitorApp", dependencies: ["MonitorModel"], resources: [.process("Resources")]),
-        .testTarget(name: "MonitorModelTests", dependencies: ["MonitorModel"]),
+        .testTarget(name: "MonitorModelTests", dependencies: ["MonitorModel"], resources: [.process("Fixtures")]),
         .testTarget(name: "MonitorAppTests", dependencies: ["MonitorApp"])
     ]
 )

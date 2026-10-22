@@ -39,7 +39,7 @@ struct BackendClient: BackendManaging {
             process.waitUntilExit()
             let result = try JSONDecoder().decode(ManagementState.self, from: data)
             if result.ok == false || process.terminationStatus != 0 {
-                throw BackendFailure(message: result.error ?? L("管理操作失败，请重试。"))
+                throw BackendFailure(message: result.error ?? "", displayMessage: result.display_message)
             }
             return result
         }.value
@@ -66,5 +66,6 @@ struct BackendClient: BackendManaging {
 
 struct BackendFailure: LocalizedError {
     let message: String
+    var displayMessage: DisplayMessage? = nil
     var errorDescription: String? { message }
 }

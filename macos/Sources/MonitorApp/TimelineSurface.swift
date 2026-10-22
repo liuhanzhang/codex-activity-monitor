@@ -83,7 +83,8 @@ import MonitorModel
 }
 
 @MainActor
-struct TimelineSurface: NSViewRepresentable {
+struct TimelineSurface: NSViewRepresentable, LocalizedView {
+    @Environment(\.monitorLanguage) var language
     let store: TimelineStore
     let layout: TimelineLayout
     let activities: [TimelinePhase]
@@ -128,6 +129,10 @@ struct TimelineSurface: NSViewRepresentable {
     }
 
     func updateNSView(_ scroll: NSScrollView, context: Context) {
+        if let document = scroll.documentView as? TimelineDocumentView {
+            document.language = language
+            document.setAccessibilityLabel(L("活动时间线，左右方向键选择活动，回车打开"))
+        }
         context.coordinator.animationsEnabled = animationsEnabled
         context.coordinator.update(scroll, layout: layout, activities: activities, agents: agents, onSelect: onSelect)
     }
@@ -350,6 +355,8 @@ final class TimelineAccessibleElement: NSAccessibilityElement, @unchecked Sendab
 }
 
 @MainActor final class TimelineDocumentView: NSView {
+    var language: MonitorLanguage = .chinese
+    private func L(_ key: String) -> String { localizedText(key, language: language) }
     var layout: TimelineLayout?
     var activities: [TimelinePhase] = []
     var agents: [TimelineAgent] = []
@@ -376,8 +383,8 @@ final class TimelineAccessibleElement: NSAccessibilityElement, @unchecked Sendab
         let isChild = layout?.lanes.first { $0.threadID == phase.thread_id }?.isChild == true
         let agent = isChild ? (owner?.displayName ?? L("子智能体") + " · " + String(phase.thread_id.suffix(8))) : L("主智能体")
         let partial = phase.start_ms == nil || !(phase.quality ?? []).isEmpty
-        let targets = phase.isCoordination ? phase.coordinationTargetDetails(in: agents) : ""
-        return agent + " · " + phase.accessibleLabel(at: layout?.now ?? 0, agents: agents)
+        let targets = phase.isCoordination ? phase.coordinationTargetDetails(in: agents, language: language) : ""
+        return agent + " · " + phase.accessibleLabel(at: layout?.now ?? 0, agents: agents, language: language)
             + (partial ? " · " + L("部分观测") : "") + (targets.isEmpty ? "" : "\n" + targets)
     }
 

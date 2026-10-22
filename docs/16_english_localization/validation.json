@@ -1,0 +1,101 @@
+{
+  "date": "2026-10-22",
+  "baseline": "5b3c0d3",
+  "core_message_keys": 153,
+  "app_resource_keys": 234,
+  "model_resource_keys": 55,
+  "cross_language_examples": 332,
+  "python": {
+    "affected_first_pass": 109,
+    "english": 6,
+    "integration": 6,
+    "final_batch": {
+      "total": 121,
+      "passed": 120,
+      "failures": [
+        "test_bridge_preserves_protocol_across_pause_and_reconnect"
+      ]
+    },
+    "session_recheck": 6,
+    "failed_case_consecutive_passes": 3,
+    "final_settings_and_rendering_recheck": 35
+  },
+  "swift": {
+    "baseline_model_summary": 49,
+    "baseline_app_summary": 72,
+    "baseline_app_window_skips": 5,
+    "final_targeted_model_summary": 3,
+    "final_targeted_app_summary": 10,
+    "final_targeted_window_skips": 2,
+    "native_serial": 2
+  },
+  "preview_build_id": "553a7c1e6fb0b5fc46240e442d25ebab948af763c92f39d6b0f7eafbb78bf9e8",
+  "daily_gui_reloaded": true,
+  "daily_build_updated": true,
+  "collector_restart_requested": false,
+  "git_committed": true,
+  "git_pushed": false,
+  "evidence_limits": [
+    "One non-reproduced bridge reconnect timeout is retained in the record.",
+    "Synthetic isolated native acceptance, not a distribution or long-term natural-use claim."
+  ],
+  "native_observed_build_id": "1086b203fe3f087fd9e9af281296f13cf17dbbbe93598e75f2d97d98654d1279",
+  "collector_restarted_during_gui_reload": true,
+  "daily_reload": {
+    "build_id": "553a7c1e6fb0b5fc46240e442d25ebab948af763c92f39d6b0f7eafbb78bf9e8",
+    "previous_gui_pid": 31568,
+    "gui_pid": 81029,
+    "previous_collector_pid": 31588,
+    "collector_pid": 81053,
+    "connected_backends": 2,
+    "lease_owner_pid": 81029,
+    "lease_active": true,
+    "language_preference_changed": false,
+    "language_switch_retested": false,
+    "settings_menu_automation": "Timed out; dismissed with Escape.",
+    "observation_gap_preserved": true
+  },
+  "language_menu_fix": {
+    "build_id": "31bd9a4c9e72bbe3743e8f3c0a8bfd35a07544eedb367e3a2096ab094336b1af",
+    "baseline_reproduced_in_daily_and_polling_preview": true,
+    "preview_language_round_trip": [
+      "zh-CN",
+      "en",
+      "zh-CN"
+    ],
+    "preview_submenus_observed_open_during_polling": true,
+    "diagnostic_polling_ticks": 12,
+    "diagnostic_polling_span_seconds": 11.67,
+    "targeted_swift_tests_passed": 7,
+    "resource_check_passed": true,
+    "daily_gui_reloaded": true,
+    "gui_pid": 96528,
+    "collector_pid": 96547,
+    "connected_backends": 2,
+    "lease_active": true,
+    "daily_language_preference_changed": false,
+    "daily_language_switch_retested": false,
+    "preview_processes_closed": true
+  },
+  "initial_focus_fix": {
+    "build_id": "ade77f7c118f264f361568422ecfa77b1b021e86d109de06a8674a9360886120",
+    "matches_source": true,
+    "gui_pid": 14541,
+    "collector_pid": 14560,
+    "connected_backends": 2,
+    "snapshot_age_seconds": 0.61,
+    "lease_active": true,
+    "language": "en",
+    "preview_default_control_focus_cleared": true,
+    "preview_tab_navigation_and_native_ring_observed": true,
+    "preview_keyboard_menu_and_language_selection_observed": true,
+    "preview_escape_close_observed_in_diagnostics": true,
+    "preview_reopen_without_control_focus_observed": true,
+    "existing_targeted_regression_passes": 3,
+    "native_unit_harness_attempt": "Could not reliably show the status-item popover; not counted as passed; attempted test removed.",
+    "daily_gui_reloaded": true,
+    "daily_no_default_blue_ring_observed": true,
+    "daily_language_preference_changed": false,
+    "preview_processes_closed": true
+  }
+}

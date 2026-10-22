@@ -285,7 +285,7 @@ class TimelineQuery:
                                 if phase['namespace'] == 'input' else
                                 [raw_section('input', '参数'), raw_section('output', '结果', live['text'])]
                                 if phase['track'] == 'tool' else
-                                [{'id': 'live', 'title': '实时内容', 'format': 'code', 'text': live['text']}])
+                                [{'id': 'live', 'title': '实时内容', 'title_message': {'key': 'detail.live', 'params': {}}, 'format': 'code', 'text': live['text']}])
                     result = {'state': 'partial', 'sections': sections,
                               'attachments': [], 'source': 'observed_stream'}
         fallback = ('pending' if phase['status'] in ('active', 'waiting') else

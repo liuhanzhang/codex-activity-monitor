@@ -1,0 +1,2896 @@
+[
+  {
+    "expected": "工具名未知",
+    "language": "zh-CN",
+    "message": {
+      "key": "diagnostic.tool_unknown",
+      "params": {}
+    }
+  },
+  {
+    "expected": " · 拟执行: 原始内容.py",
+    "language": "zh-CN",
+    "message": {
+      "key": "diagnostic.planned",
+      "params": {
+        "commands": "原始内容.py"
+      }
+    }
+  },
+  {
+    "expected": "原始内容.py（Code Mode）",
+    "language": "zh-CN",
+    "message": {
+      "key": "diagnostic.code_mode",
+      "params": {
+        "name": "原始内容.py"
+      }
+    }
+  },
+  {
+    "expected": "准备中 · 原始内容.py",
+    "language": "zh-CN",
+    "message": {
+      "key": "activity.preparing",
+      "params": {
+        "target": "原始内容.py"
+      }
+    }
+  },
+  {
+    "expected": "运行中 · 原始内容.py",
+    "language": "zh-CN",
+    "message": {
+      "key": "activity.running",
+      "params": {
+        "target": "原始内容.py"
+      }
+    }
+  },
+  {
+    "expected": "处理中 · 原始内容.py",
+    "language": "zh-CN",
+    "message": {
+      "key": "activity.processing",
+      "params": {
+        "target": "原始内容.py"
+      }
+    }
+  },
+  {
+    "expected": "原始内容.py",
+    "language": "zh-CN",
+    "message": {
+      "key": "activity.named",
+      "params": {
+        "name": "原始内容.py"
+      }
+    }
+  },
+  {
+    "expected": "命令",
+    "language": "zh-CN",
+    "message": {
+      "key": "activity.command",
+      "params": {}
+    }
+  },
+  {
+    "expected": "工具",
+    "language": "zh-CN",
+    "message": {
+      "key": "activity.tool",
+      "params": {}
+    }
+  },
+  {
+    "expected": "刚完成 · 原始内容.py",
+    "language": "zh-CN",
+    "message": {
+      "key": "activity.recent",
+      "params": {
+        "activity": "原始内容.py"
+      }
+    }
+  },
+  {
+    "expected": "修改文件 · 原始内容.py",
+    "language": "zh-CN",
+    "message": {
+      "key": "activity.file_change",
+      "params": {
+        "target": "原始内容.py"
+      }
+    }
+  },
+  {
+    "expected": "修改文件 · 原始内容.py（另 0 个）",
+    "language": "zh-CN",
+    "message": {
+      "key": "activity.file_change_more",
+      "params": {
+        "count": 0,
+        "target": "原始内容.py"
+      }
+    }
+  },
+  {
+    "expected": "修改文件 · 原始内容.py（另 1 个）",
+    "language": "zh-CN",
+    "message": {
+      "key": "activity.file_change_more",
+      "params": {
+        "count": 1,
+        "target": "原始内容.py"
+      }
+    }
+  },
+  {
+    "expected": "修改文件 · 原始内容.py（另 2 个）",
+    "language": "zh-CN",
+    "message": {
+      "key": "activity.file_change_more",
+      "params": {
+        "count": 2,
+        "target": "原始内容.py"
+      }
+    }
+  },
+  {
+    "expected": "编辑中 · 原始内容.py",
+    "language": "zh-CN",
+    "message": {
+      "key": "activity.file_editing",
+      "params": {
+        "target": "原始内容.py"
+      }
+    }
+  },
+  {
+    "expected": "编辑中 · 原始内容.py（另 0 个）",
+    "language": "zh-CN",
+    "message": {
+      "key": "activity.file_editing_more",
+      "params": {
+        "count": 0,
+        "target": "原始内容.py"
+      }
+    }
+  },
+  {
+    "expected": "编辑中 · 原始内容.py（另 1 个）",
+    "language": "zh-CN",
+    "message": {
+      "key": "activity.file_editing_more",
+      "params": {
+        "count": 1,
+        "target": "原始内容.py"
+      }
+    }
+  },
+  {
+    "expected": "编辑中 · 原始内容.py（另 2 个）",
+    "language": "zh-CN",
+    "message": {
+      "key": "activity.file_editing_more",
+      "params": {
+        "count": 2,
+        "target": "原始内容.py"
+      }
+    }
+  },
+  {
+    "expected": "编辑文件 · 原始内容.py",
+    "language": "zh-CN",
+    "message": {
+      "key": "activity.file_edited",
+      "params": {
+        "target": "原始内容.py"
+      }
+    }
+  },
+  {
+    "expected": "编辑文件 · 原始内容.py（另 0 个）",
+    "language": "zh-CN",
+    "message": {
+      "key": "activity.file_edited_more",
+      "params": {
+        "count": 0,
+        "target": "原始内容.py"
+      }
+    }
+  },
+  {
+    "expected": "编辑文件 · 原始内容.py（另 1 个）",
+    "language": "zh-CN",
+    "message": {
+      "key": "activity.file_edited_more",
+      "params": {
+        "count": 1,
+        "target": "原始内容.py"
+      }
+    }
+  },
+  {
+    "expected": "编辑文件 · 原始内容.py（另 2 个）",
+    "language": "zh-CN",
+    "message": {
+      "key": "activity.file_edited_more",
+      "params": {
+        "count": 2,
+        "target": "原始内容.py"
+      }
+    }
+  },
+  {
+    "expected": "搜索网页",
+    "language": "zh-CN",
+    "message": {
+      "key": "activity.web",
+      "params": {}
+    }
+  },
+  {
+    "expected": "查看图片",
+    "language": "zh-CN",
+    "message": {
+      "key": "activity.image_view",
+      "params": {}
+    }
+  },
+  {
+    "expected": "生成图片",
+    "language": "zh-CN",
+    "message": {
+      "key": "activity.image_generation",
+      "params": {}
+    }
+  },
+  {
+    "expected": "等待子任务",
+    "language": "zh-CN",
+    "message": {
+      "key": "activity.agent_wait",
+      "params": {}
+    }
+  },
+  {
+    "expected": "分配子任务",
+    "language": "zh-CN",
+    "message": {
+      "key": "activity.agent_spawn",
+      "params": {}
+    }
+  },
+  {
+    "expected": "更新子任务",
+    "language": "zh-CN",
+    "message": {
+      "key": "activity.agent_update",
+      "params": {}
+    }
+  },
+  {
+    "expected": "恢复子任务",
+    "language": "zh-CN",
+    "message": {
+      "key": "activity.agent_resume",
+      "params": {}
+    }
+  },
+  {
+    "expected": "结束子任务",
+    "language": "zh-CN",
+    "message": {
+      "key": "activity.agent_close",
+      "params": {}
+    }
+  },
+  {
+    "expected": "暂停子任务",
+    "language": "zh-CN",
+    "message": {
+      "key": "activity.agent_interrupt",
+      "params": {}
+    }
+  },
+  {
+    "expected": "查看子任务",
+    "language": "zh-CN",
+    "message": {
+      "key": "activity.agent_list",
+      "params": {}
+    }
+  },
+  {
+    "expected": "处理子任务",
+    "language": "zh-CN",
+    "message": {
+      "key": "activity.agent_work",
+      "params": {}
+    }
+  },
+  {
+    "expected": "生成回答",
+    "language": "zh-CN",
+    "message": {
+      "key": "activity.text",
+      "params": {}
+    }
+  },
+  {
+    "expected": "整理计划",
+    "language": "zh-CN",
+    "message": {
+      "key": "activity.plan",
+      "params": {}
+    }
+  },
+  {
+    "expected": "思考中",
+    "language": "zh-CN",
+    "message": {
+      "key": "activity.reasoning",
+      "params": {}
+    }
+  },
+  {
+    "expected": "自动审核中",
+    "language": "zh-CN",
+    "message": {
+      "key": "activity.review",
+      "params": {}
+    }
+  },
+  {
+    "expected": "压缩上下文",
+    "language": "zh-CN",
+    "message": {
+      "key": "activity.compaction",
+      "params": {}
+    }
+  },
+  {
+    "expected": "等待中",
+    "language": "zh-CN",
+    "message": {
+      "key": "activity.sleep",
+      "params": {}
+    }
+  },
+  {
+    "expected": "连接服务",
+    "language": "zh-CN",
+    "message": {
+      "key": "activity.auth",
+      "params": {}
+    }
+  },
+  {
+    "expected": "正在重试",
+    "language": "zh-CN",
+    "message": {
+      "key": "activity.retry",
+      "params": {}
+    }
+  },
+  {
+    "expected": "等待输出",
+    "language": "zh-CN",
+    "message": {
+      "key": "activity.buffering",
+      "params": {}
+    }
+  },
+  {
+    "expected": "准备开始",
+    "language": "zh-CN",
+    "message": {
+      "key": "activity.waiting",
+      "params": {}
+    }
+  },
+  {
+    "expected": "已暂停",
+    "language": "zh-CN",
+    "message": {
+      "key": "activity.paused",
+      "params": {}
+    }
+  },
+  {
+    "expected": "状态暂不可用",
+    "language": "zh-CN",
+    "message": {
+      "key": "activity.unknown",
+      "params": {}
+    }
+  },
+  {
+    "expected": "连接中断",
+    "language": "zh-CN",
+    "message": {
+      "key": "activity.disconnected",
+      "params": {}
+    }
+  },
+  {
+    "expected": "任务完成",
+    "language": "zh-CN",
+    "message": {
+      "key": "activity.completed",
+      "params": {}
+    }
+  },
+  {
+    "expected": "本轮完成",
+    "language": "zh-CN",
+    "message": {
+      "key": "activity.turn_completed",
+      "params": {}
+    }
+  },
+  {
+    "expected": "已停止",
+    "language": "zh-CN",
+    "message": {
+      "key": "activity.stopped",
+      "params": {}
+    }
+  },
+  {
+    "expected": "任务失败",
+    "language": "zh-CN",
+    "message": {
+      "key": "activity.failed",
+      "params": {}
+    }
+  },
+  {
+    "expected": "空闲",
+    "language": "zh-CN",
+    "message": {
+      "key": "activity.idle",
+      "params": {}
+    }
+  },
+  {
+    "expected": "进行中",
+    "language": "zh-CN",
+    "message": {
+      "key": "status.active",
+      "params": {}
+    }
+  },
+  {
+    "expected": "完成",
+    "language": "zh-CN",
+    "message": {
+      "key": "status.completed",
+      "params": {}
+    }
+  },
+  {
+    "expected": "失败",
+    "language": "zh-CN",
+    "message": {
+      "key": "status.failed",
+      "params": {}
+    }
+  },
+  {
+    "expected": "未执行",
+    "language": "zh-CN",
+    "message": {
+      "key": "status.declined",
+      "params": {}
+    }
+  },
+  {
+    "expected": "审核通过",
+    "language": "zh-CN",
+    "message": {
+      "key": "status.approved",
+      "params": {}
+    }
+  },
+  {
+    "expected": "审核未通过",
+    "language": "zh-CN",
+    "message": {
+      "key": "status.denied",
+      "params": {}
+    }
+  },
+  {
+    "expected": "审核超时",
+    "language": "zh-CN",
+    "message": {
+      "key": "status.timedOut",
+      "params": {}
+    }
+  },
+  {
+    "expected": "已停止",
+    "language": "zh-CN",
+    "message": {
+      "key": "status.stopped",
+      "params": {}
+    }
+  },
+  {
+    "expected": "状态暂不可用",
+    "language": "zh-CN",
+    "message": {
+      "key": "status.unknown",
+      "params": {}
+    }
+  },
+  {
+    "expected": "已结束",
+    "language": "zh-CN",
+    "message": {
+      "key": "status.ended",
+      "params": {}
+    }
+  },
+  {
+    "expected": "命令失败",
+    "language": "zh-CN",
+    "message": {
+      "key": "status.command_failed",
+      "params": {}
+    }
+  },
+  {
+    "expected": "聊天 / 项目",
+    "language": "zh-CN",
+    "message": {
+      "key": "table.chat",
+      "params": {}
+    }
+  },
+  {
+    "expected": "当前活动",
+    "language": "zh-CN",
+    "message": {
+      "key": "table.activity",
+      "params": {}
+    }
+  },
+  {
+    "expected": "耗时",
+    "language": "zh-CN",
+    "message": {
+      "key": "table.duration",
+      "params": {}
+    }
+  },
+  {
+    "expected": "速度",
+    "language": "zh-CN",
+    "message": {
+      "key": "table.speed",
+      "params": {}
+    }
+  },
+  {
+    "expected": "本回合 Token",
+    "language": "zh-CN",
+    "message": {
+      "key": "table.tokens",
+      "params": {}
+    }
+  },
+  {
+    "expected": "生成",
+    "language": "zh-CN",
+    "message": {
+      "key": "usage.generation",
+      "params": {}
+    }
+  },
+  {
+    "expected": "活动",
+    "language": "zh-CN",
+    "message": {
+      "key": "table.detail_activity",
+      "params": {}
+    }
+  },
+  {
+    "expected": "状态",
+    "language": "zh-CN",
+    "message": {
+      "key": "table.status",
+      "params": {}
+    }
+  },
+  {
+    "expected": "未命名聊天",
+    "language": "zh-CN",
+    "message": {
+      "key": "view.unnamed",
+      "params": {}
+    }
+  },
+  {
+    "expected": "本机进度",
+    "language": "zh-CN",
+    "message": {
+      "key": "view.local",
+      "params": {}
+    }
+  },
+  {
+    "expected": "Codex Progress · 原始内容.py · 0 条聊天",
+    "language": "zh-CN",
+    "message": {
+      "key": "view.header",
+      "params": {
+        "count": 0,
+        "state": "原始内容.py"
+      }
+    }
+  },
+  {
+    "expected": "Codex Progress · 原始内容.py · 1 条聊天",
+    "language": "zh-CN",
+    "message": {
+      "key": "view.header",
+      "params": {
+        "count": 1,
+        "state": "原始内容.py"
+      }
+    }
+  },
+  {
+    "expected": "Codex Progress · 原始内容.py · 2 条聊天",
+    "language": "zh-CN",
+    "message": {
+      "key": "view.header",
+      "params": {
+        "count": 2,
+        "state": "原始内容.py"
+      }
+    }
+  },
+  {
+    "expected": "等待 Codex 任务。",
+    "language": "zh-CN",
+    "message": {
+      "key": "view.empty",
+      "params": {}
+    }
+  },
+  {
+    "expected": " · 回合已完成",
+    "language": "zh-CN",
+    "message": {
+      "key": "view.turn_finished",
+      "params": {}
+    }
+  },
+  {
+    "expected": " · 另 0 项进行中",
+    "language": "zh-CN",
+    "message": {
+      "key": "view.parallel",
+      "params": {
+        "count": 0
+      }
+    }
+  },
+  {
+    "expected": " · 另 1 项进行中",
+    "language": "zh-CN",
+    "message": {
+      "key": "view.parallel",
+      "params": {
+        "count": 1
+      }
+    }
+  },
+  {
+    "expected": " · 另 2 项进行中",
+    "language": "zh-CN",
+    "message": {
+      "key": "view.parallel",
+      "params": {
+        "count": 2
+      }
+    }
+  },
+  {
+    "expected": "j/k 或 ↑/↓ 选择 · Enter 展开活动原始内容.py · q 退出 | Output 包含 Reasoning · 用量分批更新 · ≈ 估算 · — 暂无可靠数据",
+    "language": "zh-CN",
+    "message": {
+      "key": "view.footer",
+      "params": {
+        "language_hint": "原始内容.py"
+      }
+    }
+  },
+  {
+    "expected": " · l 切换语言",
+    "language": "zh-CN",
+    "message": {
+      "key": "view.language_hint",
+      "params": {}
+    }
+  },
+  {
+    "expected": "语言已切换，本次选择未能保存。",
+    "language": "zh-CN",
+    "message": {
+      "key": "view.settings_failed",
+      "params": {}
+    }
+  },
+  {
+    "expected": "模型 · 原始内容.py",
+    "language": "zh-CN",
+    "message": {
+      "key": "context.model",
+      "params": {
+        "name": "原始内容.py"
+      }
+    }
+  },
+  {
+    "expected": "计划 2/2 · 原始内容.py",
+    "language": "zh-CN",
+    "message": {
+      "key": "context.plan",
+      "params": {
+        "completed": 2,
+        "target": "原始内容.py",
+        "total": 2
+      }
+    }
+  },
+  {
+    "expected": "子任务 0 项 · 2 项完成",
+    "language": "zh-CN",
+    "message": {
+      "key": "context.agents",
+      "params": {
+        "completed": 2,
+        "count": 0
+      }
+    }
+  },
+  {
+    "expected": "子任务 1 项 · 2 项完成",
+    "language": "zh-CN",
+    "message": {
+      "key": "context.agents",
+      "params": {
+        "completed": 2,
+        "count": 1
+      }
+    }
+  },
+  {
+    "expected": "子任务 2 项 · 2 项完成",
+    "language": "zh-CN",
+    "message": {
+      "key": "context.agents",
+      "params": {
+        "completed": 2,
+        "count": 2
+      }
+    }
+  },
+  {
+    "expected": "审阅代码",
+    "language": "zh-CN",
+    "message": {
+      "key": "context.review",
+      "params": {}
+    }
+  },
+  {
+    "expected": "工作环境连接中断",
+    "language": "zh-CN",
+    "message": {
+      "key": "context.disconnected",
+      "params": {}
+    }
+  },
+  {
+    "expected": "2s",
+    "language": "zh-CN",
+    "message": {
+      "key": "time.seconds",
+      "params": {
+        "seconds": 2
+      }
+    }
+  },
+  {
+    "expected": "2m02s",
+    "language": "zh-CN",
+    "message": {
+      "key": "time.minutes",
+      "params": {
+        "minutes": 2,
+        "seconds": 2
+      }
+    }
+  },
+  {
+    "expected": "2h02m02s",
+    "language": "zh-CN",
+    "message": {
+      "key": "time.hours",
+      "params": {
+        "hours": 2,
+        "minutes": 2,
+        "seconds": 2
+      }
+    }
+  },
+  {
+    "expected": "Codex Desktop 本机实时进度",
+    "language": "zh-CN",
+    "message": {
+      "key": "cli.description",
+      "params": {}
+    }
+  },
+  {
+    "expected": "配置登录启动和 Desktop 默认入口",
+    "language": "zh-CN",
+    "message": {
+      "key": "cli.launch_agent",
+      "params": {}
+    }
+  },
+  {
+    "expected": "聊天名称或 ID 筛选",
+    "language": "zh-CN",
+    "message": {
+      "key": "cli.thread",
+      "params": {}
+    }
+  },
+  {
+    "expected": "界面语言；默认使用保存的偏好或中文",
+    "language": "zh-CN",
+    "message": {
+      "key": "cli.language",
+      "params": {}
+    }
+  },
+  {
+    "expected": "不支持的界面语言：原始内容.py；可用语言：原始内容.py",
+    "language": "zh-CN",
+    "message": {
+      "key": "cli.unsupported_language",
+      "params": {
+        "available": "原始内容.py",
+        "language": "原始内容.py"
+      }
+    }
+  },
+  {
+    "expected": "采集进程已运行：原始内容.py",
+    "language": "zh-CN",
+    "message": {
+      "key": "cli.started",
+      "params": {
+        "path": "原始内容.py"
+      }
+    }
+  },
+  {
+    "expected": "采集进程已停止；Codex 通信继续运行",
+    "language": "zh-CN",
+    "message": {
+      "key": "cli.stopped",
+      "params": {}
+    }
+  },
+  {
+    "expected": "采集进程启动失败；请检查 原始内容.py",
+    "language": "zh-CN",
+    "message": {
+      "key": "cli.start_failed",
+      "params": {
+        "path": "原始内容.py"
+      }
+    }
+  },
+  {
+    "expected": "采集进程启动超时；请检查 原始内容.py",
+    "language": "zh-CN",
+    "message": {
+      "key": "cli.start_timeout",
+      "params": {
+        "path": "原始内容.py"
+      }
+    }
+  },
+  {
+    "expected": "运行目录路径过长，无法使用 macOS Unix socket；请通过 --runtime 选择更短路径",
+    "language": "zh-CN",
+    "message": {
+      "key": "cli.runtime_long",
+      "params": {}
+    }
+  },
+  {
+    "expected": "原 Codex CLI 不可执行：原始内容.py",
+    "language": "zh-CN",
+    "message": {
+      "key": "cli.original_invalid",
+      "params": {
+        "path": "原始内容.py"
+      }
+    }
+  },
+  {
+    "expected": "原 CLI 不能使用包装器路径",
+    "language": "zh-CN",
+    "message": {
+      "key": "cli.original_wrapper",
+      "params": {}
+    }
+  },
+  {
+    "expected": "此 LaunchAgent 由另一个运行目录使用；请先卸载原接入",
+    "language": "zh-CN",
+    "message": {
+      "key": "cli.agent_owned",
+      "params": {}
+    }
+  },
+  {
+    "expected": "已安装登录启动和 Desktop 默认采集入口。现有任务继续运行；下次退出并重新打开 Codex 后接入。",
+    "language": "zh-CN",
+    "message": {
+      "key": "cli.installed",
+      "params": {}
+    }
+  },
+  {
+    "expected": "采集进程和包装器已准备：原始内容.py",
+    "language": "zh-CN",
+    "message": {
+      "key": "cli.prepared",
+      "params": {
+        "path": "原始内容.py"
+      }
+    }
+  },
+  {
+    "expected": "已恢复原启动环境。下次重新打开 Codex 使用原 CLI；现有任务可继续结束。",
+    "language": "zh-CN",
+    "message": {
+      "key": "cli.uninstalled",
+      "params": {}
+    }
+  },
+  {
+    "expected": "已请求打开独立 Codex 测试实例，使用指定 profile。主 App 无需退出；请在新窗口提交测试聊天。",
+    "language": "zh-CN",
+    "message": {
+      "key": "cli.desktop_isolated",
+      "params": {}
+    }
+  },
+  {
+    "expected": "已请求打开 Codex。已在运行的实例需先正常退出再重开，才能切换后端入口。",
+    "language": "zh-CN",
+    "message": {
+      "key": "cli.desktop",
+      "params": {}
+    }
+  },
+  {
+    "expected": "无法读取管理记录：原始内容.py",
+    "language": "zh-CN",
+    "message": {
+      "key": "control.invalid_record",
+      "params": {
+        "value": "原始内容.py"
+      }
+    }
+  },
+  {
+    "expected": "无法读取启动配置：原始内容.py",
+    "language": "zh-CN",
+    "message": {
+      "key": "control.environment_read_failed",
+      "params": {
+        "value": "原始内容.py"
+      }
+    }
+  },
+  {
+    "expected": "启动配置格式无法确认：原始内容.py",
+    "language": "zh-CN",
+    "message": {
+      "key": "control.environment_format",
+      "params": {
+        "value": "原始内容.py"
+      }
+    }
+  },
+  {
+    "expected": "无法恢复或设置启动配置：原始内容.py",
+    "language": "zh-CN",
+    "message": {
+      "key": "control.environment_write_failed",
+      "params": {
+        "value": "原始内容.py"
+      }
+    }
+  },
+  {
+    "expected": "启动配置写入后不一致：原始内容.py",
+    "language": "zh-CN",
+    "message": {
+      "key": "control.environment_verify_failed",
+      "params": {
+        "value": "原始内容.py"
+      }
+    }
+  },
+  {
+    "expected": "已有启动项不属于当前 Monitor，未修改。",
+    "language": "zh-CN",
+    "message": {
+      "key": "control.foreign_agent",
+      "params": {}
+    }
+  },
+  {
+    "expected": "旧启动项已被修改，未覆盖。",
+    "language": "zh-CN",
+    "message": {
+      "key": "control.agent_changed",
+      "params": {}
+    }
+  },
+  {
+    "expected": "请使用重新下载的 App 完成登录项清理。",
+    "language": "zh-CN",
+    "message": {
+      "key": "control.login_cleanup_unavailable",
+      "params": {}
+    }
+  },
+  {
+    "expected": "登录启动尚未成功撤销，恢复记录仍保留。",
+    "language": "zh-CN",
+    "message": {
+      "key": "control.login_cleanup_failed",
+      "params": {}
+    }
+  },
+  {
+    "expected": "不能把系统、用户或源码根目录作为 App 数据目录。",
+    "language": "zh-CN",
+    "message": {
+      "key": "control.unsafe_data_root",
+      "params": {}
+    }
+  },
+  {
+    "expected": "管理记录版本不受支持，未覆盖。",
+    "language": "zh-CN",
+    "message": {
+      "key": "control.record_version",
+      "params": {}
+    }
+  },
+  {
+    "expected": "找不到 Monitor App，请先构建或重新下载。",
+    "language": "zh-CN",
+    "message": {
+      "key": "control.app_missing",
+      "params": {}
+    }
+  },
+  {
+    "expected": "找不到可执行的原版 CLI 或本机 Python。",
+    "language": "zh-CN",
+    "message": {
+      "key": "control.entry_missing",
+      "params": {}
+    }
+  },
+  {
+    "expected": "找不到本机核心入口。",
+    "language": "zh-CN",
+    "message": {
+      "key": "control.source_missing",
+      "params": {}
+    }
+  },
+  {
+    "expected": "数据目录包含未登记文件，未执行全部清理。",
+    "language": "zh-CN",
+    "message": {
+      "key": "control.unowned_data",
+      "params": {}
+    }
+  },
+  {
+    "expected": "轨迹目录包含未登记文件，未执行全部清理。",
+    "language": "zh-CN",
+    "message": {
+      "key": "control.unowned_data.2",
+      "params": {}
+    }
+  },
+  {
+    "expected": "运行目录包含未清理或未登记文件，未删除。",
+    "language": "zh-CN",
+    "message": {
+      "key": "control.unowned_data.3",
+      "params": {}
+    }
+  },
+  {
+    "expected": "运行目录仍有桥接记录，未删除。",
+    "language": "zh-CN",
+    "message": {
+      "key": "control.unowned_data.4",
+      "params": {}
+    }
+  },
+  {
+    "expected": "无法停用旧 Monitor 自动重启服务。",
+    "language": "zh-CN",
+    "message": {
+      "key": "control.agent_unload_failed",
+      "params": {}
+    }
+  },
+  {
+    "expected": "请先完成上次恢复与清理，再重新配置。",
+    "language": "zh-CN",
+    "message": {
+      "key": "control.cleanup_pending",
+      "params": {}
+    }
+  },
+  {
+    "expected": "运行目录过长，无法创建本地通信入口。",
+    "language": "zh-CN",
+    "message": {
+      "key": "control.runtime_long",
+      "params": {}
+    }
+  },
+  {
+    "expected": "原 CLI 不能指向 Monitor 包装器。",
+    "language": "zh-CN",
+    "message": {
+      "key": "control.recursive_cli",
+      "params": {}
+    }
+  },
+  {
+    "expected": "请先配置接入。",
+    "language": "zh-CN",
+    "message": {
+      "key": "control.not_configured",
+      "params": {}
+    }
+  },
+  {
+    "expected": "找不到 Monitor 界面进程。",
+    "language": "zh-CN",
+    "message": {
+      "key": "control.owner_missing",
+      "params": {}
+    }
+  },
+  {
+    "expected": "另一个 Monitor 界面正在采集，请先退出该实例。",
+    "language": "zh-CN",
+    "message": {
+      "key": "control.another_gui_running",
+      "params": {}
+    }
+  },
+  {
+    "expected": "采集器尚未停止，请重试；没有结束 Codex。",
+    "language": "zh-CN",
+    "message": {
+      "key": "control.stop_timeout",
+      "params": {}
+    }
+  },
+  {
+    "expected": "当前采集由另一个 Monitor 界面管理，未停止。",
+    "language": "zh-CN",
+    "message": {
+      "key": "control.another_gui_running.2",
+      "params": {}
+    }
+  },
+  {
+    "expected": "旧启动项尚未恢复，备份仍保留。",
+    "language": "zh-CN",
+    "message": {
+      "key": "control.agent_rollback_failed",
+      "params": {}
+    }
+  },
+  {
+    "expected": "数据目录包含未登记内容，未接管。",
+    "language": "zh-CN",
+    "message": {
+      "key": "control.foreign_data_root",
+      "params": {}
+    }
+  },
+  {
+    "expected": "数据目录归属无法确认。",
+    "language": "zh-CN",
+    "message": {
+      "key": "control.foreign_data_root.2",
+      "params": {}
+    }
+  },
+  {
+    "expected": "旧接入备份不完整，未修改配置。",
+    "language": "zh-CN",
+    "message": {
+      "key": "control.legacy_invalid",
+      "params": {}
+    }
+  },
+  {
+    "expected": "旧接入原值格式无效，未修改配置。",
+    "language": "zh-CN",
+    "message": {
+      "key": "control.legacy_invalid.2",
+      "params": {}
+    }
+  },
+  {
+    "expected": "旧备份无法区分空值与未设置，需确认原先状态后迁移。",
+    "language": "zh-CN",
+    "message": {
+      "key": "control.legacy_ambiguous",
+      "params": {}
+    }
+  },
+  {
+    "expected": "检测到旧包装器但找不到原备份，未覆盖当前配置。",
+    "language": "zh-CN",
+    "message": {
+      "key": "control.backup_missing",
+      "params": {}
+    }
+  },
+  {
+    "expected": "原配置备份缺失，停止恢复和删除。",
+    "language": "zh-CN",
+    "message": {
+      "key": "control.backup_missing.2",
+      "params": {}
+    }
+  },
+  {
+    "expected": "另一个管理操作尚未完成，请稍后重试。",
+    "language": "zh-CN",
+    "message": {
+      "key": "control.management_busy",
+      "params": {}
+    }
+  },
+  {
+    "expected": "采集器仍在退出，恢复记录已保留，请稍后重试。",
+    "language": "zh-CN",
+    "message": {
+      "key": "control.stop_timeout.2",
+      "params": {}
+    }
+  },
+  {
+    "expected": "配置需要 Monitor App 路径。",
+    "language": "zh-CN",
+    "message": {
+      "key": "control.app_missing.2",
+      "params": {}
+    }
+  },
+  {
+    "expected": "缺少界面进程身份。",
+    "language": "zh-CN",
+    "message": {
+      "key": "control.owner_missing.2",
+      "params": {}
+    }
+  },
+  {
+    "expected": "缺少登录启动选项。",
+    "language": "zh-CN",
+    "message": {
+      "key": "control.preference_missing",
+      "params": {}
+    }
+  },
+  {
+    "expected": "参数",
+    "language": "zh-CN",
+    "message": {
+      "key": "detail.input",
+      "params": {}
+    }
+  },
+  {
+    "expected": "结果",
+    "language": "zh-CN",
+    "message": {
+      "key": "detail.output",
+      "params": {}
+    }
+  },
+  {
+    "expected": "用户输入",
+    "language": "zh-CN",
+    "message": {
+      "key": "detail.user",
+      "params": {}
+    }
+  },
+  {
+    "expected": "正文",
+    "language": "zh-CN",
+    "message": {
+      "key": "detail.body",
+      "params": {}
+    }
+  },
+  {
+    "expected": "图片附件",
+    "language": "zh-CN",
+    "message": {
+      "key": "detail.attachments",
+      "params": {}
+    }
+  },
+  {
+    "expected": "可见思考摘要",
+    "language": "zh-CN",
+    "message": {
+      "key": "detail.reasoning",
+      "params": {}
+    }
+  },
+  {
+    "expected": "活动内容",
+    "language": "zh-CN",
+    "message": {
+      "key": "detail.content",
+      "params": {}
+    }
+  },
+  {
+    "expected": "实时内容",
+    "language": "zh-CN",
+    "message": {
+      "key": "detail.live",
+      "params": {}
+    }
+  },
+  {
+    "expected": "源记录未提供独立参数。",
+    "language": "zh-CN",
+    "message": {
+      "key": "detail.missing_input",
+      "params": {}
+    }
+  },
+  {
+    "expected": "来源中尚无这次调用的结果。",
+    "language": "zh-CN",
+    "message": {
+      "key": "detail.missing_output",
+      "params": {}
+    }
+  },
+  {
+    "expected": "此条输入包含图片，预览见下方。",
+    "language": "zh-CN",
+    "message": {
+      "key": "detail.image_notice",
+      "params": {}
+    }
+  },
+  {
+    "expected": "只读活动时间线接口",
+    "language": "zh-CN",
+    "message": {
+      "key": "cli.timeline_help",
+      "params": {}
+    }
+  },
+  {
+    "expected": "GUI 管理接口",
+    "language": "zh-CN",
+    "message": {
+      "key": "cli.app_help",
+      "params": {}
+    }
+  },
+  {
+    "expected": "当前接入由 GUI 管理，请在 App 中配置或恢复；终端 watch / status 仍可使用。",
+    "language": "zh-CN",
+    "message": {
+      "key": "cli.gui_managed",
+      "params": {}
+    }
+  },
+  {
+    "expected": "刚完成 · 编辑中 · 原始内容.py（另 1 个）",
+    "language": "zh-CN",
+    "message": {
+      "key": "activity.recent",
+      "params": {
+        "activity": {
+          "key": "activity.file_editing_more",
+          "params": {
+            "count": 1,
+            "target": "原始内容.py"
+          }
+        }
+      }
+    }
+  },
+  {
+    "expected": "Unknown tool",
+    "language": "en",
+    "message": {
+      "key": "diagnostic.tool_unknown",
+      "params": {}
+    }
+  },
+  {
+    "expected": " · Planned: 原始内容.py",
+    "language": "en",
+    "message": {
+      "key": "diagnostic.planned",
+      "params": {
+        "commands": "原始内容.py"
+      }
+    }
+  },
+  {
+    "expected": "原始内容.py (Code Mode)",
+    "language": "en",
+    "message": {
+      "key": "diagnostic.code_mode",
+      "params": {
+        "name": "原始内容.py"
+      }
+    }
+  },
+  {
+    "expected": "Preparing · 原始内容.py",
+    "language": "en",
+    "message": {
+      "key": "activity.preparing",
+      "params": {
+        "target": "原始内容.py"
+      }
+    }
+  },
+  {
+    "expected": "Running · 原始内容.py",
+    "language": "en",
+    "message": {
+      "key": "activity.running",
+      "params": {
+        "target": "原始内容.py"
+      }
+    }
+  },
+  {
+    "expected": "Processing · 原始内容.py",
+    "language": "en",
+    "message": {
+      "key": "activity.processing",
+      "params": {
+        "target": "原始内容.py"
+      }
+    }
+  },
+  {
+    "expected": "原始内容.py",
+    "language": "en",
+    "message": {
+      "key": "activity.named",
+      "params": {
+        "name": "原始内容.py"
+      }
+    }
+  },
+  {
+    "expected": "Command",
+    "language": "en",
+    "message": {
+      "key": "activity.command",
+      "params": {}
+    }
+  },
+  {
+    "expected": "Tool",
+    "language": "en",
+    "message": {
+      "key": "activity.tool",
+      "params": {}
+    }
+  },
+  {
+    "expected": "Just completed · 原始内容.py",
+    "language": "en",
+    "message": {
+      "key": "activity.recent",
+      "params": {
+        "activity": "原始内容.py"
+      }
+    }
+  },
+  {
+    "expected": "File change · 原始内容.py",
+    "language": "en",
+    "message": {
+      "key": "activity.file_change",
+      "params": {
+        "target": "原始内容.py"
+      }
+    }
+  },
+  {
+    "expected": "File change · 原始内容.py (+0 more)",
+    "language": "en",
+    "message": {
+      "key": "activity.file_change_more",
+      "params": {
+        "count": 0,
+        "target": "原始内容.py"
+      }
+    }
+  },
+  {
+    "expected": "File change · 原始内容.py (+1 more)",
+    "language": "en",
+    "message": {
+      "key": "activity.file_change_more",
+      "params": {
+        "count": 1,
+        "target": "原始内容.py"
+      }
+    }
+  },
+  {
+    "expected": "File change · 原始内容.py (+2 more)",
+    "language": "en",
+    "message": {
+      "key": "activity.file_change_more",
+      "params": {
+        "count": 2,
+        "target": "原始内容.py"
+      }
+    }
+  },
+  {
+    "expected": "Editing · 原始内容.py",
+    "language": "en",
+    "message": {
+      "key": "activity.file_editing",
+      "params": {
+        "target": "原始内容.py"
+      }
+    }
+  },
+  {
+    "expected": "Editing · 原始内容.py (+0 more)",
+    "language": "en",
+    "message": {
+      "key": "activity.file_editing_more",
+      "params": {
+        "count": 0,
+        "target": "原始内容.py"
+      }
+    }
+  },
+  {
+    "expected": "Editing · 原始内容.py (+1 more)",
+    "language": "en",
+    "message": {
+      "key": "activity.file_editing_more",
+      "params": {
+        "count": 1,
+        "target": "原始内容.py"
+      }
+    }
+  },
+  {
+    "expected": "Editing · 原始内容.py (+2 more)",
+    "language": "en",
+    "message": {
+      "key": "activity.file_editing_more",
+      "params": {
+        "count": 2,
+        "target": "原始内容.py"
+      }
+    }
+  },
+  {
+    "expected": "File edit · 原始内容.py",
+    "language": "en",
+    "message": {
+      "key": "activity.file_edited",
+      "params": {
+        "target": "原始内容.py"
+      }
+    }
+  },
+  {
+    "expected": "File edit · 原始内容.py (+0 more)",
+    "language": "en",
+    "message": {
+      "key": "activity.file_edited_more",
+      "params": {
+        "count": 0,
+        "target": "原始内容.py"
+      }
+    }
+  },
+  {
+    "expected": "File edit · 原始内容.py (+1 more)",
+    "language": "en",
+    "message": {
+      "key": "activity.file_edited_more",
+      "params": {
+        "count": 1,
+        "target": "原始内容.py"
+      }
+    }
+  },
+  {
+    "expected": "File edit · 原始内容.py (+2 more)",
+    "language": "en",
+    "message": {
+      "key": "activity.file_edited_more",
+      "params": {
+        "count": 2,
+        "target": "原始内容.py"
+      }
+    }
+  },
+  {
+    "expected": "Searching the web",
+    "language": "en",
+    "message": {
+      "key": "activity.web",
+      "params": {}
+    }
+  },
+  {
+    "expected": "Viewing an image",
+    "language": "en",
+    "message": {
+      "key": "activity.image_view",
+      "params": {}
+    }
+  },
+  {
+    "expected": "Generating an image",
+    "language": "en",
+    "message": {
+      "key": "activity.image_generation",
+      "params": {}
+    }
+  },
+  {
+    "expected": "Waiting for subagents",
+    "language": "en",
+    "message": {
+      "key": "activity.agent_wait",
+      "params": {}
+    }
+  },
+  {
+    "expected": "Assigning a subtask",
+    "language": "en",
+    "message": {
+      "key": "activity.agent_spawn",
+      "params": {}
+    }
+  },
+  {
+    "expected": "Updating a subtask",
+    "language": "en",
+    "message": {
+      "key": "activity.agent_update",
+      "params": {}
+    }
+  },
+  {
+    "expected": "Resuming a subagent",
+    "language": "en",
+    "message": {
+      "key": "activity.agent_resume",
+      "params": {}
+    }
+  },
+  {
+    "expected": "Closing a subagent",
+    "language": "en",
+    "message": {
+      "key": "activity.agent_close",
+      "params": {}
+    }
+  },
+  {
+    "expected": "Interrupting a subagent",
+    "language": "en",
+    "message": {
+      "key": "activity.agent_interrupt",
+      "params": {}
+    }
+  },
+  {
+    "expected": "Listing subagents",
+    "language": "en",
+    "message": {
+      "key": "activity.agent_list",
+      "params": {}
+    }
+  },
+  {
+    "expected": "Working on subtasks",
+    "language": "en",
+    "message": {
+      "key": "activity.agent_work",
+      "params": {}
+    }
+  },
+  {
+    "expected": "Generating response",
+    "language": "en",
+    "message": {
+      "key": "activity.text",
+      "params": {}
+    }
+  },
+  {
+    "expected": "Updating plan",
+    "language": "en",
+    "message": {
+      "key": "activity.plan",
+      "params": {}
+    }
+  },
+  {
+    "expected": "Thinking",
+    "language": "en",
+    "message": {
+      "key": "activity.reasoning",
+      "params": {}
+    }
+  },
+  {
+    "expected": "Automatic review",
+    "language": "en",
+    "message": {
+      "key": "activity.review",
+      "params": {}
+    }
+  },
+  {
+    "expected": "Compacting context",
+    "language": "en",
+    "message": {
+      "key": "activity.compaction",
+      "params": {}
+    }
+  },
+  {
+    "expected": "Waiting",
+    "language": "en",
+    "message": {
+      "key": "activity.sleep",
+      "params": {}
+    }
+  },
+  {
+    "expected": "Connecting to service",
+    "language": "en",
+    "message": {
+      "key": "activity.auth",
+      "params": {}
+    }
+  },
+  {
+    "expected": "Retrying",
+    "language": "en",
+    "message": {
+      "key": "activity.retry",
+      "params": {}
+    }
+  },
+  {
+    "expected": "Waiting for output",
+    "language": "en",
+    "message": {
+      "key": "activity.buffering",
+      "params": {}
+    }
+  },
+  {
+    "expected": "Getting ready",
+    "language": "en",
+    "message": {
+      "key": "activity.waiting",
+      "params": {}
+    }
+  },
+  {
+    "expected": "Paused",
+    "language": "en",
+    "message": {
+      "key": "activity.paused",
+      "params": {}
+    }
+  },
+  {
+    "expected": "Status unavailable",
+    "language": "en",
+    "message": {
+      "key": "activity.unknown",
+      "params": {}
+    }
+  },
+  {
+    "expected": "Disconnected",
+    "language": "en",
+    "message": {
+      "key": "activity.disconnected",
+      "params": {}
+    }
+  },
+  {
+    "expected": "Task completed",
+    "language": "en",
+    "message": {
+      "key": "activity.completed",
+      "params": {}
+    }
+  },
+  {
+    "expected": "Turn completed",
+    "language": "en",
+    "message": {
+      "key": "activity.turn_completed",
+      "params": {}
+    }
+  },
+  {
+    "expected": "Stopped",
+    "language": "en",
+    "message": {
+      "key": "activity.stopped",
+      "params": {}
+    }
+  },
+  {
+    "expected": "Task failed",
+    "language": "en",
+    "message": {
+      "key": "activity.failed",
+      "params": {}
+    }
+  },
+  {
+    "expected": "Idle",
+    "language": "en",
+    "message": {
+      "key": "activity.idle",
+      "params": {}
+    }
+  },
+  {
+    "expected": "Active",
+    "language": "en",
+    "message": {
+      "key": "status.active",
+      "params": {}
+    }
+  },
+  {
+    "expected": "Completed",
+    "language": "en",
+    "message": {
+      "key": "status.completed",
+      "params": {}
+    }
+  },
+  {
+    "expected": "Failed",
+    "language": "en",
+    "message": {
+      "key": "status.failed",
+      "params": {}
+    }
+  },
+  {
+    "expected": "Not executed",
+    "language": "en",
+    "message": {
+      "key": "status.declined",
+      "params": {}
+    }
+  },
+  {
+    "expected": "Approved",
+    "language": "en",
+    "message": {
+      "key": "status.approved",
+      "params": {}
+    }
+  },
+  {
+    "expected": "Denied",
+    "language": "en",
+    "message": {
+      "key": "status.denied",
+      "params": {}
+    }
+  },
+  {
+    "expected": "Review timed out",
+    "language": "en",
+    "message": {
+      "key": "status.timedOut",
+      "params": {}
+    }
+  },
+  {
+    "expected": "Stopped",
+    "language": "en",
+    "message": {
+      "key": "status.stopped",
+      "params": {}
+    }
+  },
+  {
+    "expected": "Status unavailable",
+    "language": "en",
+    "message": {
+      "key": "status.unknown",
+      "params": {}
+    }
+  },
+  {
+    "expected": "Ended",
+    "language": "en",
+    "message": {
+      "key": "status.ended",
+      "params": {}
+    }
+  },
+  {
+    "expected": "Command failed",
+    "language": "en",
+    "message": {
+      "key": "status.command_failed",
+      "params": {}
+    }
+  },
+  {
+    "expected": "Chat / project",
+    "language": "en",
+    "message": {
+      "key": "table.chat",
+      "params": {}
+    }
+  },
+  {
+    "expected": "Current activity",
+    "language": "en",
+    "message": {
+      "key": "table.activity",
+      "params": {}
+    }
+  },
+  {
+    "expected": "Duration",
+    "language": "en",
+    "message": {
+      "key": "table.duration",
+      "params": {}
+    }
+  },
+  {
+    "expected": "Speed",
+    "language": "en",
+    "message": {
+      "key": "table.speed",
+      "params": {}
+    }
+  },
+  {
+    "expected": "Turn tokens",
+    "language": "en",
+    "message": {
+      "key": "table.tokens",
+      "params": {}
+    }
+  },
+  {
+    "expected": "Generation",
+    "language": "en",
+    "message": {
+      "key": "usage.generation",
+      "params": {}
+    }
+  },
+  {
+    "expected": "Activity",
+    "language": "en",
+    "message": {
+      "key": "table.detail_activity",
+      "params": {}
+    }
+  },
+  {
+    "expected": "Status",
+    "language": "en",
+    "message": {
+      "key": "table.status",
+      "params": {}
+    }
+  },
+  {
+    "expected": "Untitled chat",
+    "language": "en",
+    "message": {
+      "key": "view.unnamed",
+      "params": {}
+    }
+  },
+  {
+    "expected": "Local progress",
+    "language": "en",
+    "message": {
+      "key": "view.local",
+      "params": {}
+    }
+  },
+  {
+    "expected": "Codex Progress · 原始内容.py · 0 chats",
+    "language": "en",
+    "message": {
+      "key": "view.header",
+      "params": {
+        "count": 0,
+        "state": "原始内容.py"
+      }
+    }
+  },
+  {
+    "expected": "Codex Progress · 原始内容.py · 1 chat",
+    "language": "en",
+    "message": {
+      "key": "view.header",
+      "params": {
+        "count": 1,
+        "state": "原始内容.py"
+      }
+    }
+  },
+  {
+    "expected": "Codex Progress · 原始内容.py · 2 chats",
+    "language": "en",
+    "message": {
+      "key": "view.header",
+      "params": {
+        "count": 2,
+        "state": "原始内容.py"
+      }
+    }
+  },
+  {
+    "expected": "Waiting for a Codex task.",
+    "language": "en",
+    "message": {
+      "key": "view.empty",
+      "params": {}
+    }
+  },
+  {
+    "expected": " · Turn completed",
+    "language": "en",
+    "message": {
+      "key": "view.turn_finished",
+      "params": {}
+    }
+  },
+  {
+    "expected": " · 0 other activities",
+    "language": "en",
+    "message": {
+      "key": "view.parallel",
+      "params": {
+        "count": 0
+      }
+    }
+  },
+  {
+    "expected": " · 1 other activity",
+    "language": "en",
+    "message": {
+      "key": "view.parallel",
+      "params": {
+        "count": 1
+      }
+    }
+  },
+  {
+    "expected": " · 2 other activities",
+    "language": "en",
+    "message": {
+      "key": "view.parallel",
+      "params": {
+        "count": 2
+      }
+    }
+  },
+  {
+    "expected": "j/k or ↑/↓ Select · Enter Expand activities原始内容.py · q Quit | Output includes Reasoning · Usage updates in batches · ≈ Estimated · — No reliable data",
+    "language": "en",
+    "message": {
+      "key": "view.footer",
+      "params": {
+        "language_hint": "原始内容.py"
+      }
+    }
+  },
+  {
+    "expected": " · l Switch language",
+    "language": "en",
+    "message": {
+      "key": "view.language_hint",
+      "params": {}
+    }
+  },
+  {
+    "expected": "Language changed, but the preference could not be saved.",
+    "language": "en",
+    "message": {
+      "key": "view.settings_failed",
+      "params": {}
+    }
+  },
+  {
+    "expected": "Model · 原始内容.py",
+    "language": "en",
+    "message": {
+      "key": "context.model",
+      "params": {
+        "name": "原始内容.py"
+      }
+    }
+  },
+  {
+    "expected": "Plan 2/2 · 原始内容.py",
+    "language": "en",
+    "message": {
+      "key": "context.plan",
+      "params": {
+        "completed": 2,
+        "target": "原始内容.py",
+        "total": 2
+      }
+    }
+  },
+  {
+    "expected": "0 subtasks · 2 completed",
+    "language": "en",
+    "message": {
+      "key": "context.agents",
+      "params": {
+        "completed": 2,
+        "count": 0
+      }
+    }
+  },
+  {
+    "expected": "1 subtask · 2 completed",
+    "language": "en",
+    "message": {
+      "key": "context.agents",
+      "params": {
+        "completed": 2,
+        "count": 1
+      }
+    }
+  },
+  {
+    "expected": "2 subtasks · 2 completed",
+    "language": "en",
+    "message": {
+      "key": "context.agents",
+      "params": {
+        "completed": 2,
+        "count": 2
+      }
+    }
+  },
+  {
+    "expected": "Reviewing code",
+    "language": "en",
+    "message": {
+      "key": "context.review",
+      "params": {}
+    }
+  },
+  {
+    "expected": "Workspace disconnected",
+    "language": "en",
+    "message": {
+      "key": "context.disconnected",
+      "params": {}
+    }
+  },
+  {
+    "expected": "2s",
+    "language": "en",
+    "message": {
+      "key": "time.seconds",
+      "params": {
+        "seconds": 2
+      }
+    }
+  },
+  {
+    "expected": "2m02s",
+    "language": "en",
+    "message": {
+      "key": "time.minutes",
+      "params": {
+        "minutes": 2,
+        "seconds": 2
+      }
+    }
+  },
+  {
+    "expected": "2h02m02s",
+    "language": "en",
+    "message": {
+      "key": "time.hours",
+      "params": {
+        "hours": 2,
+        "minutes": 2,
+        "seconds": 2
+      }
+    }
+  },
+  {
+    "expected": "Local live progress for Codex Desktop",
+    "language": "en",
+    "message": {
+      "key": "cli.description",
+      "params": {}
+    }
+  },
+  {
+    "expected": "Set up launch at login and the default Desktop entry point",
+    "language": "en",
+    "message": {
+      "key": "cli.launch_agent",
+      "params": {}
+    }
+  },
+  {
+    "expected": "Filter by chat name or ID",
+    "language": "en",
+    "message": {
+      "key": "cli.thread",
+      "params": {}
+    }
+  },
+  {
+    "expected": "UI language; uses the saved preference or Chinese by default",
+    "language": "en",
+    "message": {
+      "key": "cli.language",
+      "params": {}
+    }
+  },
+  {
+    "expected": "Unsupported UI language: 原始内容.py; available: 原始内容.py",
+    "language": "en",
+    "message": {
+      "key": "cli.unsupported_language",
+      "params": {
+        "available": "原始内容.py",
+        "language": "原始内容.py"
+      }
+    }
+  },
+  {
+    "expected": "Collector is running: 原始内容.py",
+    "language": "en",
+    "message": {
+      "key": "cli.started",
+      "params": {
+        "path": "原始内容.py"
+      }
+    }
+  },
+  {
+    "expected": "Collector stopped; Codex communication continues",
+    "language": "en",
+    "message": {
+      "key": "cli.stopped",
+      "params": {}
+    }
+  },
+  {
+    "expected": "Collector failed to start; check 原始内容.py",
+    "language": "en",
+    "message": {
+      "key": "cli.start_failed",
+      "params": {
+        "path": "原始内容.py"
+      }
+    }
+  },
+  {
+    "expected": "Collector startup timed out; check 原始内容.py",
+    "language": "en",
+    "message": {
+      "key": "cli.start_timeout",
+      "params": {
+        "path": "原始内容.py"
+      }
+    }
+  },
+  {
+    "expected": "Runtime path is too long for a macOS Unix socket; choose a shorter path with --runtime",
+    "language": "en",
+    "message": {
+      "key": "cli.runtime_long",
+      "params": {}
+    }
+  },
+  {
+    "expected": "Original Codex CLI is not executable: 原始内容.py",
+    "language": "en",
+    "message": {
+      "key": "cli.original_invalid",
+      "params": {
+        "path": "原始内容.py"
+      }
+    }
+  },
+  {
+    "expected": "The original CLI cannot point to the wrapper",
+    "language": "en",
+    "message": {
+      "key": "cli.original_wrapper",
+      "params": {}
+    }
+  },
+  {
+    "expected": "This LaunchAgent belongs to another runtime; uninstall that integration first",
+    "language": "en",
+    "message": {
+      "key": "cli.agent_owned",
+      "params": {}
+    }
+  },
+  {
+    "expected": "Launch at login and the default Desktop capture entry point are installed. Current tasks continue; integration starts after you quit and reopen Codex.",
+    "language": "en",
+    "message": {
+      "key": "cli.installed",
+      "params": {}
+    }
+  },
+  {
+    "expected": "Collector and wrapper are ready: 原始内容.py",
+    "language": "en",
+    "message": {
+      "key": "cli.prepared",
+      "params": {
+        "path": "原始内容.py"
+      }
+    }
+  },
+  {
+    "expected": "Original launch environment restored. Reopening Codex will use the original CLI; current tasks can finish.",
+    "language": "en",
+    "message": {
+      "key": "cli.uninstalled",
+      "params": {}
+    }
+  },
+  {
+    "expected": "Requested an isolated Codex test instance with the specified profile. Keep the main app open and submit a test chat in the new window.",
+    "language": "en",
+    "message": {
+      "key": "cli.desktop_isolated",
+      "params": {}
+    }
+  },
+  {
+    "expected": "Requested Codex to open. An existing instance must quit normally and reopen to use the new backend entry point.",
+    "language": "en",
+    "message": {
+      "key": "cli.desktop",
+      "params": {}
+    }
+  },
+  {
+    "expected": "Cannot read management record: 原始内容.py",
+    "language": "en",
+    "message": {
+      "key": "control.invalid_record",
+      "params": {
+        "value": "原始内容.py"
+      }
+    }
+  },
+  {
+    "expected": "Cannot read launch setting: 原始内容.py",
+    "language": "en",
+    "message": {
+      "key": "control.environment_read_failed",
+      "params": {
+        "value": "原始内容.py"
+      }
+    }
+  },
+  {
+    "expected": "Unrecognized launch setting format: 原始内容.py",
+    "language": "en",
+    "message": {
+      "key": "control.environment_format",
+      "params": {
+        "value": "原始内容.py"
+      }
+    }
+  },
+  {
+    "expected": "Cannot restore or set launch setting: 原始内容.py",
+    "language": "en",
+    "message": {
+      "key": "control.environment_write_failed",
+      "params": {
+        "value": "原始内容.py"
+      }
+    }
+  },
+  {
+    "expected": "Launch setting verification failed: 原始内容.py",
+    "language": "en",
+    "message": {
+      "key": "control.environment_verify_failed",
+      "params": {
+        "value": "原始内容.py"
+      }
+    }
+  },
+  {
+    "expected": "The existing launch item belongs to another Monitor; it was left unchanged.",
+    "language": "en",
+    "message": {
+      "key": "control.foreign_agent",
+      "params": {}
+    }
+  },
+  {
+    "expected": "The previous launch item has changed; it was not overwritten.",
+    "language": "en",
+    "message": {
+      "key": "control.agent_changed",
+      "params": {}
+    }
+  },
+  {
+    "expected": "Use a newly downloaded app to finish removing the login item.",
+    "language": "en",
+    "message": {
+      "key": "control.login_cleanup_unavailable",
+      "params": {}
+    }
+  },
+  {
+    "expected": "Launch at login could not be removed; the restoration record is retained.",
+    "language": "en",
+    "message": {
+      "key": "control.login_cleanup_failed",
+      "params": {}
+    }
+  },
+  {
+    "expected": "The app data directory cannot be a system, home, or source root.",
+    "language": "en",
+    "message": {
+      "key": "control.unsafe_data_root",
+      "params": {}
+    }
+  },
+  {
+    "expected": "The management record version is unsupported; it was not overwritten.",
+    "language": "en",
+    "message": {
+      "key": "control.record_version",
+      "params": {}
+    }
+  },
+  {
+    "expected": "Monitor App was not found. Build or download it again.",
+    "language": "en",
+    "message": {
+      "key": "control.app_missing",
+      "params": {}
+    }
+  },
+  {
+    "expected": "The executable original CLI or local Python was not found.",
+    "language": "en",
+    "message": {
+      "key": "control.entry_missing",
+      "params": {}
+    }
+  },
+  {
+    "expected": "The local backend entry point was not found.",
+    "language": "en",
+    "message": {
+      "key": "control.source_missing",
+      "params": {}
+    }
+  },
+  {
+    "expected": "The data directory contains unregistered files; full cleanup was not performed.",
+    "language": "en",
+    "message": {
+      "key": "control.unowned_data",
+      "params": {}
+    }
+  },
+  {
+    "expected": "The timeline directory contains unregistered files; full cleanup was not performed.",
+    "language": "en",
+    "message": {
+      "key": "control.unowned_data.2",
+      "params": {}
+    }
+  },
+  {
+    "expected": "The runtime directory contains remaining or unregistered files; it was not deleted.",
+    "language": "en",
+    "message": {
+      "key": "control.unowned_data.3",
+      "params": {}
+    }
+  },
+  {
+    "expected": "The runtime directory still contains bridge records; it was not deleted.",
+    "language": "en",
+    "message": {
+      "key": "control.unowned_data.4",
+      "params": {}
+    }
+  },
+  {
+    "expected": "Cannot disable the previous Monitor restart service.",
+    "language": "en",
+    "message": {
+      "key": "control.agent_unload_failed",
+      "params": {}
+    }
+  },
+  {
+    "expected": "Finish the previous restoration and cleanup before configuring again.",
+    "language": "en",
+    "message": {
+      "key": "control.cleanup_pending",
+      "params": {}
+    }
+  },
+  {
+    "expected": "The runtime path is too long to create the local communication endpoint.",
+    "language": "en",
+    "message": {
+      "key": "control.runtime_long",
+      "params": {}
+    }
+  },
+  {
+    "expected": "The original CLI cannot point to the Monitor wrapper.",
+    "language": "en",
+    "message": {
+      "key": "control.recursive_cli",
+      "params": {}
+    }
+  },
+  {
+    "expected": "Configure the integration first.",
+    "language": "en",
+    "message": {
+      "key": "control.not_configured",
+      "params": {}
+    }
+  },
+  {
+    "expected": "The Monitor UI process was not found.",
+    "language": "en",
+    "message": {
+      "key": "control.owner_missing",
+      "params": {}
+    }
+  },
+  {
+    "expected": "Another Monitor UI is collecting activity. Quit that instance first.",
+    "language": "en",
+    "message": {
+      "key": "control.another_gui_running",
+      "params": {}
+    }
+  },
+  {
+    "expected": "The collector has not stopped. Try again; Codex was not terminated.",
+    "language": "en",
+    "message": {
+      "key": "control.stop_timeout",
+      "params": {}
+    }
+  },
+  {
+    "expected": "Collection is managed by another Monitor UI; it was not stopped.",
+    "language": "en",
+    "message": {
+      "key": "control.another_gui_running.2",
+      "params": {}
+    }
+  },
+  {
+    "expected": "The previous launch item has not been restored; its backup is retained.",
+    "language": "en",
+    "message": {
+      "key": "control.agent_rollback_failed",
+      "params": {}
+    }
+  },
+  {
+    "expected": "The data directory contains unregistered content; ownership was not assumed.",
+    "language": "en",
+    "message": {
+      "key": "control.foreign_data_root",
+      "params": {}
+    }
+  },
+  {
+    "expected": "Cannot verify ownership of the data directory.",
+    "language": "en",
+    "message": {
+      "key": "control.foreign_data_root.2",
+      "params": {}
+    }
+  },
+  {
+    "expected": "The previous integration backup is incomplete; configuration was left unchanged.",
+    "language": "en",
+    "message": {
+      "key": "control.legacy_invalid",
+      "params": {}
+    }
+  },
+  {
+    "expected": "The previous integration values have an invalid format; configuration was left unchanged.",
+    "language": "en",
+    "message": {
+      "key": "control.legacy_invalid.2",
+      "params": {}
+    }
+  },
+  {
+    "expected": "The previous backup cannot distinguish empty from unset values. Confirm the original state before migrating.",
+    "language": "en",
+    "message": {
+      "key": "control.legacy_ambiguous",
+      "params": {}
+    }
+  },
+  {
+    "expected": "A previous wrapper was found without its original backup; current configuration was not overwritten.",
+    "language": "en",
+    "message": {
+      "key": "control.backup_missing",
+      "params": {}
+    }
+  },
+  {
+    "expected": "The original configuration backup is missing; restoration and deletion were stopped.",
+    "language": "en",
+    "message": {
+      "key": "control.backup_missing.2",
+      "params": {}
+    }
+  },
+  {
+    "expected": "Another management operation is still running. Try again shortly.",
+    "language": "en",
+    "message": {
+      "key": "control.management_busy",
+      "params": {}
+    }
+  },
+  {
+    "expected": "The collector is still exiting. The restoration record is retained; try again shortly.",
+    "language": "en",
+    "message": {
+      "key": "control.stop_timeout.2",
+      "params": {}
+    }
+  },
+  {
+    "expected": "Configuration requires the Monitor App path.",
+    "language": "en",
+    "message": {
+      "key": "control.app_missing.2",
+      "params": {}
+    }
+  },
+  {
+    "expected": "The UI process identity is missing.",
+    "language": "en",
+    "message": {
+      "key": "control.owner_missing.2",
+      "params": {}
+    }
+  },
+  {
+    "expected": "The launch-at-login option is missing.",
+    "language": "en",
+    "message": {
+      "key": "control.preference_missing",
+      "params": {}
+    }
+  },
+  {
+    "expected": "Input",
+    "language": "en",
+    "message": {
+      "key": "detail.input",
+      "params": {}
+    }
+  },
+  {
+    "expected": "Result",
+    "language": "en",
+    "message": {
+      "key": "detail.output",
+      "params": {}
+    }
+  },
+  {
+    "expected": "User input",
+    "language": "en",
+    "message": {
+      "key": "detail.user",
+      "params": {}
+    }
+  },
+  {
+    "expected": "Response",
+    "language": "en",
+    "message": {
+      "key": "detail.body",
+      "params": {}
+    }
+  },
+  {
+    "expected": "Image attachments",
+    "language": "en",
+    "message": {
+      "key": "detail.attachments",
+      "params": {}
+    }
+  },
+  {
+    "expected": "Visible reasoning summary",
+    "language": "en",
+    "message": {
+      "key": "detail.reasoning",
+      "params": {}
+    }
+  },
+  {
+    "expected": "Activity content",
+    "language": "en",
+    "message": {
+      "key": "detail.content",
+      "params": {}
+    }
+  },
+  {
+    "expected": "Live content",
+    "language": "en",
+    "message": {
+      "key": "detail.live",
+      "params": {}
+    }
+  },
+  {
+    "expected": "The source record provides no separate input.",
+    "language": "en",
+    "message": {
+      "key": "detail.missing_input",
+      "params": {}
+    }
+  },
+  {
+    "expected": "The source has no result for this call yet.",
+    "language": "en",
+    "message": {
+      "key": "detail.missing_output",
+      "params": {}
+    }
+  },
+  {
+    "expected": "This input contains images. See the preview below.",
+    "language": "en",
+    "message": {
+      "key": "detail.image_notice",
+      "params": {}
+    }
+  },
+  {
+    "expected": "Read-only activity timeline interface",
+    "language": "en",
+    "message": {
+      "key": "cli.timeline_help",
+      "params": {}
+    }
+  },
+  {
+    "expected": "GUI management interface",
+    "language": "en",
+    "message": {
+      "key": "cli.app_help",
+      "params": {}
+    }
+  },
+  {
+    "expected": "This integration is managed by the GUI. Configure or restore it in the app; terminal watch / status remain available.",
+    "language": "en",
+    "message": {
+      "key": "cli.gui_managed",
+      "params": {}
+    }
+  },
+  {
+    "expected": "Just completed · Editing · 原始内容.py (+1 more)",
+    "language": "en",
+    "message": {
+      "key": "activity.recent",
+      "params": {
+        "activity": {
+          "key": "activity.file_editing_more",
+          "params": {
+            "count": 1,
+            "target": "原始内容.py"
+          }
+        }
+      }
+    }
+  }
+]

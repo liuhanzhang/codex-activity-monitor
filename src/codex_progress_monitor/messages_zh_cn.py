@@ -75,3 +75,9 @@ MESSAGES = {
     'cli.desktop_isolated': '已请求打开独立 Codex 测试实例，使用指定 profile。主 App 无需退出；请在新窗口提交测试聊天。',
     'cli.desktop': '已请求打开 Codex。已在运行的实例需先正常退出再重开，才能切换后端入口。',
 }
+
+from .messages_control import ZH as CONTROL
+from .messages_detail import ZH as DETAIL
+
+MESSAGES.update(CONTROL)
+MESSAGES.update(DETAIL)

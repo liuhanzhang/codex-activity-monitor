@@ -25,10 +25,10 @@ def _values(wrapper):
     return dict(zip(KEYS,(str(wrapper),'0','0','')))
 
 
-def _environment_value(key):
+def _environment_value(key, language=DEFAULT_LANGUAGE):
     result = _run(['/bin/launchctl', 'getenv', key], False)
     if result.returncode:
-        raise RuntimeError('Cannot read launch environment: ' + key)
+        raise RuntimeError(tr('control.environment_read_failed', language, value=key))
     # Missing is zero bytes; a present empty value is one terminating newline.
     return None if result.stdout == '' else result.stdout.removesuffix('\n')
 
@@ -56,7 +56,7 @@ def setup(runtime,actual,launch_agent=False,language=DEFAULT_LANGUAGE):
         else:
             previous={}
             for key in KEYS:
-                previous[key]=_environment_value(key)
+                previous[key]=_environment_value(key, language)
             state={'previous':previous}
         # Keep the original backup, but track the values owned by this install
         # so uninstall can restore them after an upgrade changes our defaults.
@@ -94,7 +94,7 @@ def uninstall(runtime,language=DEFAULT_LANGUAGE):
             _run(['/bin/launchctl','bootout',f'gui/{os.getuid()}/{LABEL}'],False)
             plist.unlink()
         for key,value in state['installed'].items():
-            current=_environment_value(key)
+            current=_environment_value(key, language)
             if current!=value:
                 continue
             previous=state['previous'].get(key)

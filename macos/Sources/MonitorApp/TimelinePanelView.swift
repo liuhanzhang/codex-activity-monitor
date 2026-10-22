@@ -1,7 +1,8 @@
 import SwiftUI
 import MonitorModel
 
-struct TimelinePanelView: View {
+struct TimelinePanelView: LocalizedView {
+    @Environment(\.monitorLanguage) var language
     @Bindable var store: TimelineStore
     var compact = true
     var presentation: TimelinePresentation = .activityViewer
@@ -24,7 +25,7 @@ struct TimelinePanelView: View {
                 } else { plot(bundle, layout: layout) }
                 footer(bundle).opacity(store.switchingTurn ? 0 : 1).allowsHitTesting(!store.switchingTurn)
                 if let error = store.error {
-                    HStack { Text(error); Spacer(); Button(L("重试")) { Task { await store.refresh() } }.buttonStyle(.plain) }
+                    HStack { Text(L(error)); Spacer(); Button(L("重试")) { Task { await store.refresh() } }.buttonStyle(.plain) }
                         .font(.system(size: 10)).foregroundStyle(.secondary)
                 }
                 if !bundle.earlier_active_turns.isEmpty {
@@ -43,7 +44,7 @@ struct TimelinePanelView: View {
                     .font(.system(size: 11)).foregroundStyle(.secondary)
                 Menu(L("查看可用活动")) {
                     ForEach(bundle.allActivities) { phase in
-                        Button(phase.kindLabel + " · " + phase.label) { (onSelect ?? { store.open($0) })([phase]) }
+                        Button(phase.presentationLabel(language: language)) { (onSelect ?? { store.open($0) })([phase]) }
                     }
                 }.font(.system(size: 11))
             } else if let bundle = store.bundle, bundle.quality.contains("turn_identity_unavailable") {
@@ -58,7 +59,7 @@ struct TimelinePanelView: View {
             } else if store.loading { ProgressView().controlSize(.small).frame(maxWidth: .infinity) }
             else {
                 HStack {
-                    Text(store.error ?? L("这轮暂无可用轨迹")).foregroundStyle(.secondary)
+                    Text(store.error.map { L($0) } ?? L("这轮暂无可用轨迹")).foregroundStyle(.secondary)
                     Spacer()
                     Button(L("重试")) { Task { await store.refresh() } }.buttonStyle(.plain)
                 }.font(.system(size: 11))
@@ -145,15 +146,15 @@ struct TimelinePanelView: View {
                                 Image(systemName: "questionmark.circle").font(.system(size: 8))
                             }
                         }
-                        Text(L(agent?.roundStatusLabel ?? "状态未知")).font(.system(size: 9))
+                        Text(agent?.roundStatusLabel(in: language) ?? L("状态未知")).font(.system(size: 9))
                             .foregroundStyle(.secondary).lineLimit(1)
                     }
                     .padding(.leading, CGFloat(lane.depth * 5))
                     .frame(maxWidth: .infinity, minHeight: lane.height * 2, maxHeight: lane.height * 2, alignment: .leading)
                     .accessibilityElement(children: .ignore).accessibilityLabel(name)
-                    .accessibilityValue(L(agent?.roundStatusLabel ?? "状态未知") + (agent?.hasPartialInformation == true ? " · " + L("部分观测") : ""))
+                    .accessibilityValue((agent?.roundStatusLabel(in: language) ?? L("状态未知")) + (agent?.hasPartialInformation == true ? " · " + L("部分观测") : ""))
                     .accessibilityIdentifier("monitor.agent.\(lane.threadID)")
-                    .help([name, L(agent?.roundStatusLabel ?? "状态未知"), agent?.agent_path, lane.threadID,
+                    .help([name, agent?.roundStatusLabel(in: language) ?? L("状态未知"), agent?.agent_path, lane.threadID,
                            L("模型在上，工具在下")].compactMap { $0 }.joined(separator: "\n"))
                 } else {
                     VStack(alignment: .leading, spacing: 0) {
@@ -251,13 +252,13 @@ struct TimelinePanelView: View {
                                     .help(L("子智能体轨迹尚未完整关联"))
                             }
                         }.frame(maxWidth: .infinity, alignment: .leading).contentShape(Rectangle())
-                    }.buttonStyle(.plain).help(lane.label).accessibilityLabel(lane.label)
+                    }.buttonStyle(.plain).help(agentLaneLabel(lane)).accessibilityLabel(agentLaneLabel(lane))
                         .accessibilityValue(store.expandedAgents.contains(lane.threadID) ? L("已展开") : L("已折叠"))
                         .frame(height: lane.height)
                 } else {
-                    Text(L(lane.label))
+                    Text(lane.track == "model" ? L("模型") : lane.track == "tool" ? L("工具") : lane.label)
                         .help(lane.track == "tool" ? L("短工具以粗线标记；重叠处增强颜色，点击直接查看此处的工具详情。") : L("短活动以粗线标记，符号宽度不代表耗时；点击查看活动详情。"))
-                        .accessibilityLabel(L(lane.label))
+                        .accessibilityLabel(lane.track == "model" ? L("模型") : lane.track == "tool" ? L("工具") : lane.label)
                         .foregroundStyle(.secondary).padding(.leading, lane.isChild ? 10 : 0)
                         .frame(height: lane.height, alignment: .leading)
                 }
@@ -265,11 +266,16 @@ struct TimelinePanelView: View {
         }.font(.system(size: 10))
     }
 
+    private func agentLaneLabel(_ lane: TimelineLane) -> String {
+        let name = store.bundle?.agents.first { $0.thread_id == lane.threadID }?.displayName ?? String(lane.threadID.suffix(8))
+        return L("子智能体") + " · " + name
+    }
+
     @ViewBuilder private func agentHeader(_ lane: TimelineLane, in bundle: TimelineBundle) -> some View {
         let agent = bundle.agents.first { $0.thread_id == lane.threadID }
         let expanded = store.expandedAgents.contains(lane.threadID)
         let label = lane.isChild ? L("子智能体") + " · " + (agent?.displayName ?? lane.label) : L("主智能体")
-        let state = agent?.roundStatusLabel ?? "状态未知"
+        let state = agent?.roundStatusLabel(in: language) ?? L("状态未知")
         let accessibleState = L(state) + (agent?.hasPartialInformation == true ? " · " + L("部分活动记录不完整") : "")
         let description = [label, agent?.agent_path, lane.threadID].compactMap { $0 }.joined(separator: "\n")
         if lane.isChild {
@@ -310,28 +316,43 @@ struct TimelinePanelView: View {
     }
 
     private func footer(_ bundle: TimelineBundle) -> some View {
+        ViewThatFits(in: .horizontal) {
+            HStack(spacing: 5) { legend; footerActions(bundle) }
+                .fixedSize(horizontal: true, vertical: false)
+            VStack(alignment: .leading, spacing: 5) {
+                legend
+                HStack(spacing: 5) { footerActions(bundle) }
+            }
+        }.font(.system(size: 9)).foregroundStyle(.secondary)
+    }
+
+    private var legend: some View {
         HStack(spacing: 5) {
-            ForEach([("reasoning", "思考"), ("text", "正文"), ("tool_input", "参数"), ("file_edit_input", "编辑"),
-                     ("contextCompaction", "整理")], id: \.0) { kind, title in
+            ForEach([("reasoning", "思考"), ("text", "回复"), ("tool_input", "参数"), ("file_edit_input", "改动"),
+                     ("contextCompaction", "压缩")], id: \.0) { kind, title in
                 HStack(spacing: 3) {
                     RoundedRectangle(cornerRadius: 1.5)
                         .fill(legendColor(kind)).frame(width: 12, height: 5)
-                    Text(L(title))
+                    Text(L(title)).lineLimit(1).fixedSize()
                 }
             }
-            if bundle.phases.contains(where: \.isCoordination) {
-                HStack(spacing: 3) { Image(systemName: "person.2"); Text(L("协作")) }
-            }
-            Spacer(minLength: 1)
-            if !bundle.quality.isEmpty || bundle.phases.contains(where: { !($0.quality ?? []).isEmpty }) {
-                Image(systemName: "info.circle").help(L("部分耗时或内容未被完整观测，点击活动查看可用记录。"))
-                    .accessibilityLabel(L("部分观测"))
-            }
-            if presentation != .panelCompact || !store.followsLatest || !store.followsCurrentTurn {
-                Button(L("回到最新")) { store.latest() }
-                    .buttonStyle(.plain).disabled(store.followsLatest && store.followsCurrentTurn)
-            }
-        }.font(.system(size: 9)).foregroundStyle(.secondary)
+        }
+    }
+
+    @ViewBuilder private func footerActions(_ bundle: TimelineBundle) -> some View {
+        if bundle.phases.contains(where: \.isCoordination) {
+            HStack(spacing: 3) { Image(systemName: "person.2"); Text(L("协作")).lineLimit(1).fixedSize() }
+        }
+        Spacer(minLength: 1)
+        if !bundle.quality.isEmpty || bundle.phases.contains(where: { !($0.quality ?? []).isEmpty }) {
+            Image(systemName: "info.circle").help(L("部分耗时或内容未被完整观测，点击活动查看可用记录。"))
+                .accessibilityLabel(L("部分观测"))
+        }
+        if presentation != .panelCompact || !store.followsLatest || !store.followsCurrentTurn {
+            Button(L("回到最新")) { store.latest() }
+                .buttonStyle(.plain).disabled(store.followsLatest && store.followsCurrentTurn)
+                .lineLimit(1).fixedSize()
+        }
     }
     private func legendColor(_ kind: String) -> Color {
         Color(nsColor: TimelinePalette.color(for: kind))
@@ -348,7 +369,7 @@ struct TimelinePanelView: View {
             if turn == bundle.current_turn_id { return L("当前轮") }
             if index == 0 { return L("最近一轮") }
         }
-        let date = bundle.turns[index].start_ms.map { Date(timeIntervalSince1970: $0 / 1000).formatted(date: .omitted, time: .shortened) } ?? "—"
-        return "\(L("前")) \(index) \(L("轮")) · \(date)"
+        let date = bundle.turns[index].start_ms.map { Date(timeIntervalSince1970: $0 / 1000).formatted(.dateTime.hour().minute().locale(language.locale)) } ?? "—"
+        return String(format: L("前 %d 轮 · %@"), index, date)
     }
 }

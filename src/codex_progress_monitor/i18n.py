@@ -1,8 +1,10 @@
 """Language-independent messages and complete, explicitly registered catalogs."""
 
 from string import Formatter
+import math
 
 from .messages_zh_cn import MESSAGES
+from .messages_en import MESSAGES as ENGLISH_MESSAGES
 
 DEFAULT_LANGUAGE = 'zh-CN'
 CATALOGS = {DEFAULT_LANGUAGE: MESSAGES}
@@ -29,7 +31,7 @@ def available_languages():
 
 
 def validate_language(language):
-    if language not in CATALOGS:
+    if not isinstance(language, str) or language not in CATALOGS:
         raise ValueError(tr('cli.unsupported_language', language=language,
                             available=', '.join(available_languages())))
     return language
@@ -53,25 +55,39 @@ def register_catalog(language, catalog):
     CATALOGS[language] = dict(catalog)
 
 
-def tr(key, locale=DEFAULT_LANGUAGE, **params):
+def tr(key, locale=DEFAULT_LANGUAGE, _depth=0, **params):
     catalog = CATALOGS.get(locale, MESSAGES)
-    template = catalog.get(key, MESSAGES.get(key, MESSAGES['activity.processing']))
+    if _depth >= 8 or not isinstance(key, str):
+        return catalog['activity.processing'].format(target='')
+    template = catalog.get(key, catalog['activity.processing'])
     if isinstance(template, dict):
         template = template['one' if params.get('count') == 1 else 'other']
     values = {'target': '', 'language_hint': '', **params}
-    # Targets remain raw in the snapshot; punctuation belongs to presentation.
-    if values.get('target'):
-        values['target'] = ' · ' + str(values['target'])
-    values = {k: render_message(v, locale) if isinstance(v, dict) and 'key' in v else v
+    values = {k: render_message(v, locale, _depth=_depth + 1) if isinstance(v, dict) and 'key' in v else v
               for k, v in values.items()}
     try:
+        for _, field, _, _ in Formatter().parse(template):
+            if field:
+                value = values[field]
+                if (not isinstance(value, (str, int, float)) or isinstance(value, bool) or
+                        isinstance(value, float) and not math.isfinite(value)):
+                    raise ValueError('Invalid message parameter')
+        # Targets remain raw in the snapshot; punctuation belongs to presentation.
+        if values.get('target'):
+            values['target'] = ' · ' + str(values['target'])
         return template.format(**values)
     except (KeyError, ValueError, TypeError):
-        return MESSAGES['activity.processing'].format(target='')
+        return catalog['activity.processing'].format(target='')
 
 
-def render_message(value, locale=DEFAULT_LANGUAGE):
+def render_message(value, locale=DEFAULT_LANGUAGE, _depth=0):
     if not isinstance(value, dict) or not isinstance(value.get('key'), str):
         return tr('activity.processing', locale)
     params = value.get('params', {})
-    return tr(value['key'], locale, **params) if isinstance(params, dict) else tr('activity.processing', locale)
+    if not isinstance(params, dict):
+        return tr('activity.processing', locale)
+    safe = {k: v for k, v in params.items() if isinstance(k, str) and k not in {'key', 'locale', '_depth'}}
+    return tr(value['key'], locale, _depth=_depth, **safe)
+
+
+register_catalog('en', ENGLISH_MESSAGES)

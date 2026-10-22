@@ -1,0 +1,86 @@
+#!/usr/bin/env python3
+"""Export validated core catalogs for Swift. --check never writes files."""
+import argparse
+import json
+from pathlib import Path
+import re
+import sys
+from string import Formatter
+
+ROOT = Path(__file__).resolve().parents[1]
+sys.path.insert(0, str(ROOT / 'src'))
+from codex_progress_monitor.i18n import CATALOGS, render_message
+
+
+def exported():
+    for language, catalog in CATALOGS.items():
+        for value in catalog.values():
+            for template in value.values() if isinstance(value, dict) else [value]:
+                if language == 'en' and re.search('[\u4e00-\u9fff]', template):
+                    raise ValueError('Untranslated English core copy')
+                for _, name, spec, conversion in Formatter().parse(template):
+                    if name is not None and (not re.fullmatch(r'[a-z_]+', name) or conversion or spec not in ('', '02')):
+                        raise ValueError(f'Unsupported Swift template: {template}')
+    return json.dumps(CATALOGS, ensure_ascii=False, sort_keys=True, indent=2) + '\n'
+
+
+def examples():
+    cases = []
+    for language, catalog in CATALOGS.items():
+        for key, entry in catalog.items():
+            template = entry['other'] if isinstance(entry, dict) else entry
+            fields = {name for _, name, _, _ in Formatter().parse(template) if name}
+            params = {name: (2 if name in {'count', 'seconds', 'minutes', 'hours', 'completed', 'total'} else '原始内容.py')
+                      for name in fields}
+            for count in ([0, 1, 2] if 'count' in fields else [None]):
+                if count is not None:
+                    params['count'] = count
+                value = {'key': key, 'params': dict(params)}
+                cases.append({'language': language, 'message': value, 'expected': render_message(value, language)})
+        nested = {'key': 'activity.recent', 'params': {'activity': {
+            'key': 'activity.file_editing_more', 'params': {'target': '原始内容.py', 'count': 1}}}}
+        cases.append({'language': language, 'message': nested, 'expected': render_message(nested, language)})
+    return json.dumps(cases, ensure_ascii=False, sort_keys=True, indent=2) + '\n'
+
+
+def validate_ui_resources():
+    for target in ('MonitorModel', 'MonitorApp'):
+        root = ROOT / 'macos/Sources' / target
+        catalogs = {}
+        for language in ('zh-Hans', 'en'):
+            text = (root / 'Resources' / (language + '.lproj') / 'Localizable.strings').read_text()
+            pairs = re.findall(r'("(?:[^"\\]|\\.)*")\s*=\s*("(?:[^"\\]|\\.)*");', text)
+            catalogs[language] = {json.loads(k): json.loads(v) for k, v in pairs}
+            if len(pairs) != len(catalogs[language]):
+                raise ValueError(f'Duplicate resource keys: {target}/{language}')
+        if catalogs['en'].keys() != catalogs['zh-Hans'].keys():
+            raise ValueError(f'Incomplete GUI catalog: {target}')
+        for key, english in catalogs['en'].items():
+            if re.search('[\u4e00-\u9fff]', english):
+                raise ValueError(f'Untranslated GUI copy: {target}/{key}')
+            fields = lambda value: sorted(re.findall(r'%(?:\d+\$)?[-.\d]*[d@fgs]', value))
+            if fields(english) != fields(catalogs['zh-Hans'][key]):
+                raise ValueError(f'GUI template mismatch: {target}/{key}')
+        for path in root.glob('*.swift'):
+            for key in re.findall(r'(?:\bL|ModelLocalizer.text)\("((?:[^"\\]|\\.)*)"', path.read_text()):
+                if key not in catalogs['en']:
+                    raise ValueError(f'Missing GUI resource: {path.name}/{key}')
+
+
+def main():
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument('--check', action='store_true')
+    args = parser.parse_args()
+    validate_ui_resources()
+    for name, content in [('CoreMessages.json', exported()), ('LocalizationExamples.json', examples())]:
+        path = ROOT / ('macos/Tests/MonitorModelTests/Fixtures' if name == 'LocalizationExamples.json' else 'macos/Sources/MonitorModel/Resources') / name
+        if args.check:
+            if not path.exists() or path.read_text() != content:
+                parser.exit(1, name + ' is stale; run bin/export-localizations\n')
+        else:
+            path.parent.mkdir(parents=True, exist_ok=True)
+            path.write_text(content)
+
+
+if __name__ == '__main__':
+    main()

@@ -12,7 +12,7 @@ import time
 
 from .runtime import ROOT,REAL_CLI,atomic_json,read_snapshot,runtime_dir,ui_language
 
-from .i18n import DEFAULT_LANGUAGE, tr
+from .i18n import DEFAULT_LANGUAGE, available_languages, tr
 
 _children={}
 
@@ -124,9 +124,9 @@ def main(argv=None):
     p=subs.add_parser('replay')
     p.add_argument('path',type=Path)
     p.add_argument('--output',type=Path)
-    p=subs.add_parser('timeline-query', help='只读活动时间线接口')
+    p=subs.add_parser('timeline-query', help=tr('cli.timeline_help', language))
     p.add_argument('request', help=argparse.SUPPRESS)
-    p=subs.add_parser('app', help='GUI 管理接口')
+    p=subs.add_parser('app', help=tr('cli.app_help', language))
     p.add_argument('action', choices=('status','configure','resume','stop','restore','cleanup','preferences'))
     p.add_argument('--data-root', type=Path)
     p.add_argument('--app', type=Path)
@@ -136,6 +136,7 @@ def main(argv=None):
     p.add_argument('--legacy-unset', action='store_true')
     p.add_argument('--purge', action='store_true')
     p.add_argument('--launch-at-login', choices=('on','off'))
+    p.add_argument('--ui-language', choices=available_languages(), help=argparse.SUPPRESS)
     p.add_argument('--test-profile', type=Path, help=argparse.SUPPRESS)
     args=parser.parse_args(argv)
     if args.command == 'timeline-query':
@@ -159,28 +160,28 @@ def main(argv=None):
                 args.legacy_runtime = None
             if args.action == 'configure':
                 if args.app is None:
-                    raise ControlError('app_missing', '配置需要 Monitor App 路径。')
+                    raise ControlError('app_missing', 'control.app_missing.2')
                 value = control.configure(args.app, args.real_cli, legacy_runtime=args.legacy_runtime,
                                           legacy_unset=args.legacy_unset)
             elif args.action == 'resume':
                 if args.owner_pid is None:
-                    raise ControlError('owner_missing', '缺少界面进程身份。')
+                    raise ControlError('owner_missing', 'control.owner_missing.2')
                 value = control.resume(args.owner_pid)
             elif args.action == 'restore':
                 value = control.restore(args.purge)
             elif args.action == 'stop':
                 value = control.stop(args.owner_pid)
             elif args.action == 'preferences':
-                if args.launch_at_login is None:
-                    raise ControlError('preference_missing', '缺少登录启动选项。')
-                value = control.set_preferences(args.launch_at_login == 'on')
+                if args.launch_at_login is None and args.ui_language is None:
+                    raise ControlError('preference_missing', 'control.preference_missing')
+                value = control.set_preferences(None if args.launch_at_login is None else args.launch_at_login == 'on', args.ui_language)
             else:
                 value = getattr(control, args.action)()
             print(json.dumps(value, ensure_ascii=False))
             return 0
         except (OSError, ValueError, RuntimeError) as exc:
             print(json.dumps({'version': 1, 'ok': False, 'code': getattr(exc, 'code', 'operation_failed'),
-                              'error': str(exc)}, ensure_ascii=False))
+                              'error': str(exc), 'display_message': getattr(exc, 'display_message', None)}, ensure_ascii=False))
             return 1
     try:
         runtime=runtime_dir(args.runtime, language)
@@ -208,7 +209,7 @@ def main(argv=None):
             replay(args.path,args.output)
         else:
             if args.command in ('setup', 'uninstall') and (runtime/'app-managed.json').exists():
-                raise RuntimeError('当前接入由 GUI 管理，请在 App 中配置或恢复；终端 watch / status 仍可使用。')
+                raise RuntimeError(tr('cli.gui_managed', language))
             from .integration import setup,uninstall,desktop
             if args.command=='setup':
                 setup(runtime,args.real_cli,args.launch_agent,language)

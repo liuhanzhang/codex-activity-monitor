@@ -39,15 +39,16 @@ public struct TimelineAgent: Decodable, Identifiable, Sendable {
         let legacy = name.hasPrefix(prefix) ? String(name.dropFirst(prefix.count)) : name
         return legacy == String(thread_id.prefix(8)) || legacy == thread_id ? String(thread_id.suffix(8)) : legacy
     }
-    public var roundStatusLabel: String {
-        guard status_scope == "selected_parent_turn" else { return "状态未知" }
+    public var roundStatusLabel: String { roundStatusLabel(in: .chinese) }
+    public func roundStatusLabel(in language: MonitorLanguage) -> String {
+        guard status_scope == "selected_parent_turn" else { return ModelLocalizer.text("状态未知", language) }
         switch status {
-        case "active": return "本轮活动中"
-        case "waiting": return "本轮等待中"
-        case "completed": return "本轮已结束"
-        case "interrupted": return "本轮已停止"
-        case "failed": return "本轮失败"
-        default: return "状态未知"
+        case "active": return ModelLocalizer.text("本轮活动中", language)
+        case "waiting": return ModelLocalizer.text("本轮等待中", language)
+        case "completed": return ModelLocalizer.text("本轮已结束", language)
+        case "interrupted": return ModelLocalizer.text("本轮已停止", language)
+        case "failed": return ModelLocalizer.text("本轮失败", language)
+        default: return ModelLocalizer.text("状态未知", language)
         }
     }
 }
@@ -75,26 +76,39 @@ public struct TimelinePhase: Decodable, Identifiable, Sendable {
     public let coordination_action: String?
     public let related_agent_ids: [String]?
     public let coordination_target_scope: String?
+    public var label_message: DisplayMessage? = nil
 
     public var isCoordination: Bool {
         (namespace == "canonical" && item_type == "collabAgentToolCall") ||
         (namespace == "input" && item_type == "function_call" && coordination_action != nil)
     }
-    public func coordinationTargets(in agents: [TimelineAgent]) -> String {
+    public func coordinationTargets(in agents: [TimelineAgent], language: MonitorLanguage = .chinese) -> String {
         let ids = related_agent_ids ?? []
-        if coordination_action == "wait" && coordination_target_scope == "global" { return "等待子智能体消息" }
-        if ids.count > 1 { return "\(ids.count) 个智能体" }
-        guard let id = ids.first else { return "对象未知" }
-        return agents.first { $0.thread_id == id }?.displayName ?? "智能体 · " + String(id.suffix(6))
+        if coordination_action == "wait" && coordination_target_scope == "global" { return ModelLocalizer.text("等待子智能体消息", language) }
+        if ids.count > 1 { return String(format: ModelLocalizer.text("%d 个智能体", language), ids.count) }
+        guard let id = ids.first else { return ModelLocalizer.text("对象未知", language) }
+        return agents.first { $0.thread_id == id }?.displayName ?? ModelLocalizer.text("智能体 · ", language) + String(id.suffix(6))
     }
-    public func presentationLabel(in agents: [TimelineAgent] = []) -> String {
-        if isCoordination && coordination_action == "wait" && coordination_target_scope == "global" { return kindLabel }
-        return isCoordination ? kindLabel + " · " + coordinationTargets(in: agents) : kindLabel + " · " + label
+    public func presentationLabel(in agents: [TimelineAgent] = [], language: MonitorLanguage = .chinese) -> String {
+        if isCoordination && coordination_action == "wait" && coordination_target_scope == "global" { return kindLabel(in: language) }
+        if isCoordination { return kindLabel(in: language) + " · " + coordinationTargets(in: agents, language: language) }
+        let kind = kindLabel(in: language), source = sourceLabel(in: language)
+        return kind == source ? kind : kind + " · " + source
     }
-    public func coordinationTargetDetails(in agents: [TimelineAgent]) -> String {
+    public func coordinationTargetDetails(in agents: [TimelineAgent], language: MonitorLanguage = .chinese) -> String {
         (related_agent_ids ?? []).map { id in
-            (agents.first { $0.thread_id == id }?.displayName ?? "智能体") + " · " + id
+            (agents.first { $0.thread_id == id }?.displayName ?? ModelLocalizer.text("智能体", language)) + " · " + id
         }.joined(separator: "\n")
+    }
+
+    public func sourceLabel(in language: MonitorLanguage) -> String {
+        if let label_message { return label_message.rendered(in: language) }
+        if language == .chinese { return label }
+        if namespace == "input" || track == "tool" {
+            // Older tool labels have no provenance. New records carry label_message.
+            return ModelLocalizer.text("工具", language)
+        }
+        return kindLabel(in: language)
     }
 
     public var anchor: Double? { start_ms ?? end_ms ?? observed_until_ms }
@@ -107,38 +121,40 @@ public struct TimelinePhase: Decodable, Identifiable, Sendable {
               let end = end_ms ?? (isActive ? now : nil), end >= start_ms else { return nil }
         return (end - start_ms) / 1000
     }
-    public var kindLabel: String {
+    public var kindLabel: String { kindLabel(in: .chinese) }
+    public func kindLabel(in language: MonitorLanguage) -> String {
         if isCoordination {
-            let action = coordination_action == "wait" && coordination_target_scope == "global" ? "协作 · 等待子智能体消息" :
-                (["spawn": "协作 · 派发", "send": "协作 · 发送消息", "followup": "协作 · 追加任务", "wait": "协作 · 等待",
-                  "close": "协作 · 关闭", "resume": "协作 · 恢复"][coordination_action ?? ""] ?? "协作调用")
-            return namespace == "input" ? "工具参数生成 · " + action : action
+            let action = coordination_action == "wait" && coordination_target_scope == "global" ? ModelLocalizer.text("协作 · 等待子智能体消息", language) :
+                (["spawn": ModelLocalizer.text("协作 · 派发", language), "send": ModelLocalizer.text("协作 · 发送消息", language), "followup": ModelLocalizer.text("协作 · 追加任务", language), "wait": ModelLocalizer.text("协作 · 等待", language),
+                  "close": ModelLocalizer.text("协作 · 关闭", language), "resume": ModelLocalizer.text("协作 · 恢复", language)][coordination_action ?? ""] ?? ModelLocalizer.text("协作调用", language))
+            return namespace == "input" ? ModelLocalizer.text("工具参数生成 · ", language) + action : action
         }
         return switch kind {
-        case "reasoning": "思考"
-        case "text": "正文输出"
-        case "tool_input": "工具参数生成"
-        case "file_edit_input": "编辑内容生成"
-        case "input": "用户输入"
-        case "tool_execution": "工具执行"
-        case "contextCompaction": "整理上下文"
-        default: label
+        case "reasoning": ModelLocalizer.text("思考", language)
+        case "text": ModelLocalizer.text("正文输出", language)
+        case "tool_input": ModelLocalizer.text("工具参数生成", language)
+        case "file_edit_input": ModelLocalizer.text("编辑内容生成", language)
+        case "input": ModelLocalizer.text("用户输入", language)
+        case "tool_execution": ModelLocalizer.text("工具执行", language)
+        case "contextCompaction": ModelLocalizer.text("整理上下文", language)
+        default: language == .chinese ? label : ModelLocalizer.text("活动", language)
         }
     }
-    public var statusLabel: String {
+    public var statusLabel: String { statusLabel(in: .chinese) }
+    public func statusLabel(in language: MonitorLanguage) -> String {
         switch status {
-        case "active": "进行中"
-        case "completed": "已完成"
-        case "failed": "失败"
-        case "interrupted": "已停止"
-        case "declined": "已阻止，未执行"
-        case "waiting": "等待执行"
-        default: "部分观测"
+        case "active": ModelLocalizer.text("进行中", language)
+        case "completed": ModelLocalizer.text("已完成", language)
+        case "failed": ModelLocalizer.text("失败", language)
+        case "interrupted": ModelLocalizer.text("已停止", language)
+        case "declined": ModelLocalizer.text("已阻止，未执行", language)
+        case "waiting": ModelLocalizer.text("等待执行", language)
+        default: ModelLocalizer.text("部分观测", language)
         }
     }
-    public func accessibleLabel(at now: Double, agents: [TimelineAgent] = []) -> String {
-        let length = duration(at: now).map { $0 < 1 ? String(format: "%.0f 毫秒", $0 * 1000) : String(format: "%.1f 秒", $0) } ?? "耗时未知"
-        return "\(presentationLabel(in: agents)) · \(statusLabel) · \(length)"
+    public func accessibleLabel(at now: Double, agents: [TimelineAgent] = [], language: MonitorLanguage = .chinese) -> String {
+        let length = duration(at: now).map { $0 < 1 ? String(format: ModelLocalizer.text("%.0f 毫秒", language), $0 * 1000) : String(format: ModelLocalizer.text("%.1f 秒", language), $0) } ?? ModelLocalizer.text("耗时未知", language)
+        return "\(presentationLabel(in: agents, language: language)) · \(statusLabel(in: language)) · \(length)"
     }
 }
 
@@ -189,10 +205,25 @@ public struct ActivitySection: Decodable, Identifiable, Sendable {
     public let total_chars: Int?
     public var next_offset: Int?
     public let notice: String?
+    public var title_message: DisplayMessage? = nil
+    public var notice_message: DisplayMessage? = nil
+    public var text_message: DisplayMessage? = nil
+
+    public func localizedTitle(_ language: MonitorLanguage) -> String {
+        if let title_message { return title_message.rendered(in: language) }
+        let key = ["input": "detail.input", "output": "detail.output", "live": "detail.live", "attachments": "detail.attachments"][id]
+        return key.map { DisplayMessage($0).rendered(in: language) } ?? (language == .chinese ? title : ModelLocalizer.text("活动", language))
+    }
+    public func localizedNotice(_ language: MonitorLanguage) -> String? {
+        notice_message.map { $0.rendered(in: language) } ?? notice.map { language == .chinese ? $0 : ModelLocalizer.text("来源未提供可查看内容，活动状态与时间见上方。", language) }
+    }
+    public func localizedText(_ language: MonitorLanguage) -> String { text_message?.rendered(in: language) ?? text }
 
     public func appendingPage(_ part: Self) -> Self {
         Self(id: id, title: title, format: format, text: text + part.text, offset: offset,
-             total_chars: part.total_chars ?? total_chars, next_offset: part.next_offset, notice: part.notice ?? notice)
+             total_chars: part.total_chars ?? total_chars, next_offset: part.next_offset, notice: part.notice ?? notice,
+             title_message: part.title_message ?? title_message, notice_message: part.notice_message ?? notice_message,
+             text_message: part.text_message ?? text_message)
     }
 }
 

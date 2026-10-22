@@ -16,13 +16,15 @@ import uuid
 
 from .integration import KEYS, LABEL
 from .runtime import ROOT, REAL_CLI, atomic_json
+from .i18n import CATALOGS, DEFAULT_LANGUAGE, message, render_message, validate_language
 
 DATA_ROOT = Path.home() / 'Library/Application Support/CodexProgressMonitor'
 
 
 class ControlError(RuntimeError):
-    def __init__(self, code, message):
-        super().__init__(message)
+    def __init__(self, code, key, **params):
+        self.display_message = message(key, **params) if key in CATALOGS[DEFAULT_LANGUAGE] else None
+        super().__init__(render_message(self.display_message) if self.display_message else key)
         self.code = code
 
 
@@ -35,29 +37,29 @@ def read_json(path, default=None):
     except FileNotFoundError:
         return {} if default is None else default
     except (ValueError, OSError) as exc:
-        raise ControlError('invalid_record', f'无法读取管理记录：{path.name}') from exc
+        raise ControlError('invalid_record', 'control.invalid_record', value=path.name) from exc
 
 
 class LaunchEnvironment:
     def get(self, key):
         result = subprocess.run(['/bin/launchctl', 'getenv', key], capture_output=True)
         if result.returncode:
-            raise ControlError('environment_read_failed', f'无法读取启动配置：{key}')
+            raise ControlError('environment_read_failed', 'control.environment_read_failed', value=key)
         # launchctl returns success for missing values too. It adds one newline
         # for a present value, including an empty value; preserve all other bytes.
         if result.stdout == b'':
             return None
         if not result.stdout.endswith(b'\n'):
-            raise ControlError('environment_format', f'启动配置格式无法确认：{key}')
+            raise ControlError('environment_format', 'control.environment_format', value=key)
         return result.stdout[:-1].decode('utf-8')
 
     def set(self, key, value):
         args = ['setenv', key, value] if value is not None else ['unsetenv', key]
         result = subprocess.run(['/bin/launchctl', *args], capture_output=True)
         if result.returncode:
-            raise ControlError('environment_write_failed', f'无法恢复或设置启动配置：{key}')
+            raise ControlError('environment_write_failed', 'control.environment_write_failed', value=key)
         if self.get(key) != value:
-            raise ControlError('environment_verify_failed', f'启动配置写入后不一致：{key}')
+            raise ControlError('environment_verify_failed', 'control.environment_verify_failed', value=key)
 
 
 class SystemServices:
@@ -68,7 +70,7 @@ class SystemServices:
             return None
         raw = path.read_bytes()
         if str(runtime) not in json.dumps(plistlib.loads(raw)):
-            raise ControlError('foreign_agent', '已有启动项不属于当前 Monitor，未修改。')
+            raise ControlError('foreign_agent', 'control.foreign_agent')
         loaded = subprocess.run(['/bin/launchctl','print',f'gui/{os.getuid()}/{LABEL}'], capture_output=True).returncode == 0
         return {'content': base64.b64encode(raw).decode('ascii'), 'loaded': loaded}
 
@@ -78,7 +80,7 @@ class SystemServices:
         path = Path.home() / 'Library/LaunchAgents' / f'{LABEL}.plist'
         raw = base64.b64decode(saved['content'], validate=True)
         if path.exists() and path.read_bytes() != raw:
-            raise ControlError('agent_changed', '旧启动项已被修改，未覆盖。')
+            raise ControlError('agent_changed', 'control.agent_changed')
         path.parent.mkdir(parents=True, exist_ok=True)
         path.write_bytes(raw)
         path.chmod(0o600)
@@ -86,21 +88,21 @@ class SystemServices:
             domain = f'gui/{os.getuid()}/{LABEL}'
             if subprocess.run(['/bin/launchctl', 'print', domain], capture_output=True).returncode:
                 if subprocess.run(['/bin/launchctl', 'bootstrap', f'gui/{os.getuid()}', str(path)], capture_output=True).returncode:
-                    raise ControlError('agent_rollback_failed', '旧启动项尚未恢复，备份仍保留。')
+                    raise ControlError('agent_rollback_failed', 'control.agent_rollback_failed')
 
     def remove_gui_login(self, app):
         if app is None:
             return
         executable = Path(app) / 'Contents/MacOS/MonitorApp'
         if not executable.is_file():
-            raise ControlError('login_cleanup_unavailable', '请使用重新下载的 App 完成登录项清理。')
+            raise ControlError('login_cleanup_unavailable', 'control.login_cleanup_unavailable')
         result = subprocess.run([str(executable), '--login-remove'], capture_output=True, text=True)
         try:
             success = json.loads(result.stdout).get('ok') is True
         except (ValueError, AttributeError):
             success = False
         if result.returncode or not success:
-            raise ControlError('login_cleanup_failed', '登录启动尚未成功撤销，恢复记录仍保留。')
+            raise ControlError('login_cleanup_failed', 'control.login_cleanup_failed')
 
     def disable_legacy(self, runtime):
         path = Path.home() / 'Library/LaunchAgents' / f'{LABEL}.plist'
@@ -108,13 +110,13 @@ class SystemServices:
             return
         data = plistlib.loads(path.read_bytes())
         if str(runtime) not in json.dumps(data):
-            raise ControlError('foreign_agent', '已有启动项不属于当前 Monitor，未修改。')
+            raise ControlError('foreign_agent', 'control.foreign_agent')
         domain = f'gui/{os.getuid()}/{LABEL}'
         loaded = subprocess.run(['/bin/launchctl', 'print', domain], capture_output=True).returncode == 0
         if loaded:
             result = subprocess.run(['/bin/launchctl', 'bootout', domain], capture_output=True)
             if result.returncode:
-                raise ControlError('agent_unload_failed', '无法停用旧 Monitor 自动重启服务。')
+                raise ControlError('agent_unload_failed', 'control.agent_unload_failed')
         path.unlink()
 
     def dependents(self, receipt):
@@ -171,7 +173,7 @@ class AppController:
     @contextmanager
     def locked(self):
         if self.root in (Path('/'), Path.home(), ROOT):
-            raise ControlError('unsafe_data_root', '不能把系统、用户或源码根目录作为 App 数据目录。')
+            raise ControlError('unsafe_data_root', 'control.unsafe_data_root')
         self.root.mkdir(parents=True, exist_ok=True, mode=0o700)
         self.root.chmod(0o700)
         with (self.root / 'management.lock').open('a+') as lock:
@@ -182,26 +184,29 @@ class AppController:
                     break
                 except BlockingIOError:
                     if time.monotonic()>=deadline:
-                        raise ControlError('management_busy', '另一个管理操作尚未完成，请稍后重试。')
+                        raise ControlError('management_busy', 'control.management_busy')
                     time.sleep(.05)
             marker = self.root / '.monitor-owned'
             if not marker.exists():
                 if any(p.name != 'management.lock' for p in self.root.iterdir()):
-                    raise ControlError('foreign_data_root', '数据目录包含未登记内容，未接管。')
+                    raise ControlError('foreign_data_root', 'control.foreign_data_root')
                 marker.write_text('codex-progress-monitor:1\n')
             elif marker.read_text() != 'codex-progress-monitor:1\n':
-                raise ControlError('foreign_data_root', '数据目录归属无法确认。')
+                raise ControlError('foreign_data_root', 'control.foreign_data_root.2')
             yield
 
     def _receipt(self):
         value = read_json(self.receipt_path)
         if value and value.get('version') != 1:
-            raise ControlError('record_version', '管理记录版本不受支持，未覆盖。')
+            raise ControlError('record_version', 'control.record_version')
         return value
 
     def status(self):
         receipt = self._receipt()
-        prefs = read_json(self.preferences)
+        try:
+            prefs = read_json(self.preferences)
+        except ControlError:
+            prefs = {}
         state = receipt.get('state', 'restored' if prefs.get('restored') else 'new')
         return {'version': 1, 'ok': True, 'state': state,
                 'configured': state == 'configured', 'runtime': receipt.get('runtime'),
@@ -212,12 +217,22 @@ class AppController:
         receipt['updated_at'] = time.time()
         atomic_json(self.receipt_path, receipt)
 
-    def set_preferences(self, launch_at_login):
+    def set_preferences(self, launch_at_login=None, language=None):
+        if language is not None:
+            validate_language(language)
         with self.locked():
-            prefs = read_json(self.preferences)
-            prefs.update(version=1, launch_at_login=bool(launch_at_login))
+            try:
+                prefs = read_json(self.preferences)
+            except ControlError:
+                prefs = {}
+            prefs.update(version=1)
+            if launch_at_login is not None:
+                prefs['launch_at_login'] = bool(launch_at_login)
+            if language is not None:
+                prefs['language'] = language
             atomic_json(self.preferences, prefs)
-        return self.status()
+        # Saving UI preferences must not require a readable integration record.
+        return {'version': 1, 'ok': True, 'language': prefs.get('language', 'zh-CN')}
 
     def _save_restored(self, value):
         prefs = read_json(self.preferences)
@@ -229,15 +244,15 @@ class AppController:
                   legacy_runtime=None, legacy_unset=False):
         app, actual, python, source = (Path(p).expanduser().resolve() for p in (app, real_cli, python, source_root))
         if not app.is_dir() or not (app / 'Contents/MacOS/MonitorApp').is_file():
-            raise ControlError('app_missing', '找不到 Monitor App，请先构建或重新下载。')
+            raise ControlError('app_missing', 'control.app_missing')
         if not os.access(actual, os.X_OK) or not os.access(python, os.X_OK):
-            raise ControlError('entry_missing', '找不到可执行的原版 CLI 或本机 Python。')
+            raise ControlError('entry_missing', 'control.entry_missing')
         if not (source / 'src/codex_progress_monitor/cli.py').is_file():
-            raise ControlError('source_missing', '找不到本机核心入口。')
+            raise ControlError('source_missing', 'control.source_missing')
         with self.locked():
             old = self._receipt()
             if old.get('state') in ('restoring', 'pending_cleanup', 'configuring', 'error'):
-                raise ControlError('cleanup_pending', '请先完成上次恢复与清理，再重新配置。')
+                raise ControlError('cleanup_pending', 'control.cleanup_pending')
             current = {key: self.environment.get(key) for key in KEYS}
             legacy = Path(legacy_runtime).resolve() if legacy_runtime else None
             previous = old.get('previous') if old.get('state') == 'configured' else None
@@ -248,12 +263,12 @@ class AppController:
                 saved = read_json(legacy / 'desktop-environment.json')
                 previous = saved.get('previous')
                 if not isinstance(previous, dict) or set(previous) != set(KEYS):
-                    raise ControlError('legacy_invalid', '旧接入备份不完整，未修改配置。')
+                    raise ControlError('legacy_invalid', 'control.legacy_invalid')
                 if any(value is not None and not isinstance(value, str) for value in previous.values()):
-                    raise ControlError('legacy_invalid', '旧接入原值格式无效，未修改配置。')
+                    raise ControlError('legacy_invalid', 'control.legacy_invalid.2')
                 ambiguous = [key for key, value in previous.items() if value == '']
                 if ambiguous and not legacy_unset:
-                    raise ControlError('legacy_ambiguous', '旧备份无法区分空值与未设置，需确认原先状态后迁移。')
+                    raise ControlError('legacy_ambiguous', 'control.legacy_ambiguous')
                 previous = {key: (None if value == '' and legacy_unset else value) for key, value in previous.items()}
                 legacy_backup = {'record': saved, 'path': str(legacy / 'desktop-environment.json'),
                                  'empty_resolution': 'user_confirmed_monitor_introduced_unset' if legacy_unset else 'preserved'}
@@ -263,14 +278,14 @@ class AppController:
                 runtime, imported = legacy, True
             if previous is None:
                 if current['CODEX_CLI_PATH'] and 'codex-observed' in current['CODEX_CLI_PATH']:
-                    raise ControlError('backup_missing', '检测到旧包装器但找不到原备份，未覆盖当前配置。')
+                    raise ControlError('backup_missing', 'control.backup_missing')
                 previous = current.copy()
             runtime.mkdir(parents=True, exist_ok=True, mode=0o700)
             if len(str(runtime / 'events.sock').encode()) > 103:
-                raise ControlError('runtime_long', '运行目录过长，无法创建本地通信入口。')
+                raise ControlError('runtime_long', 'control.runtime_long')
             launcher = self.root / 'codex-observed'
             if actual == launcher:
-                raise ControlError('recursive_cli', '原 CLI 不能指向 Monitor 包装器。')
+                raise ControlError('recursive_cli', 'control.recursive_cli')
             installed = dict(zip(KEYS, (str(launcher), '0', '0', '')))
             receipt = {'version': 1, 'id': old.get('id') if old.get('state') == 'configured' else uuid.uuid4().hex,
                        'state': 'configuring', 'previous': previous, 'installed': installed,
@@ -366,14 +381,14 @@ class AppController:
         with self.locked():
             receipt = self._receipt()
             if receipt.get('state') != 'configured':
-                raise ControlError('not_configured', '请先配置接入。')
+                raise ControlError('not_configured', 'control.not_configured')
             if owner_pid <= 1 or not process_alive(owner_pid):
-                raise ControlError('owner_missing', '找不到 Monitor 界面进程。')
+                raise ControlError('owner_missing', 'control.owner_missing')
             current = read_json(self.session)
             if (current.get('owner_pid') != owner_pid and current.get('active') is True and
                     isinstance(current.get('owner_pid'), int) and process_alive(current['owner_pid']) and
                     -5 <= time.time() - current.get('heartbeat_at', 0) < 5):
-                raise ControlError('another_gui_running', '另一个 Monitor 界面正在采集，请先退出该实例。')
+                raise ControlError('another_gui_running', 'control.another_gui_running')
             session = {'version': 1, 'id': uuid.uuid4().hex, 'owner_pid': owner_pid,
                        'heartbeat_at': time.time(), 'active': True}
             atomic_json(self.session, session)
@@ -388,7 +403,7 @@ class AppController:
             runtime = Path(receipt['runtime'])
             stop(runtime)
             if running(runtime):
-                raise ControlError('stop_timeout', '采集器尚未停止，请重试；没有结束 Codex。')
+                raise ControlError('stop_timeout', 'control.stop_timeout')
             # A stale snapshot is not proof that the writer has finished. Its
             # lifetime lock remains held until after the final snapshot write.
             lock = runtime / 'collector.lock'
@@ -397,7 +412,7 @@ class AppController:
                     try:
                         fcntl.flock(handle, fcntl.LOCK_EX | fcntl.LOCK_NB)
                     except BlockingIOError as exc:
-                        raise ControlError('stop_timeout', '采集器仍在退出，恢复记录已保留，请稍后重试。') from exc
+                        raise ControlError('stop_timeout', 'control.stop_timeout.2') from exc
 
     def stop(self, owner_pid=None):
         if not self.root.exists():
@@ -405,7 +420,7 @@ class AppController:
         with self.locked():
             session = read_json(self.session)
             if owner_pid is not None and session and session.get('owner_pid') != owner_pid:
-                raise ControlError('another_gui_running', '当前采集由另一个 Monitor 界面管理，未停止。')
+                raise ControlError('another_gui_running', 'control.another_gui_running.2')
             self._stop(self._receipt())
         return self.status()
 
@@ -425,7 +440,7 @@ class AppController:
                 receipt.update(state='pending_cleanup', purge=True)
             else:
                 if not isinstance(receipt.get('previous'), dict) or set(receipt['previous']) != set(KEYS):
-                    raise ControlError('backup_missing', '原配置备份缺失，停止恢复和删除。')
+                    raise ControlError('backup_missing', 'control.backup_missing.2')
                 receipt.update(state='restoring', purge=bool(purge or receipt.get('purge')))
             self._write(receipt)
             self.enabled.unlink(missing_ok=True)
@@ -506,15 +521,15 @@ class AppController:
                    'integration.enabled', 'observation.json', 'run', 'timeline'}
         unknown = [p.name for p in self.root.iterdir() if p.name not in allowed]
         if unknown:
-            raise ControlError('unowned_data', '数据目录包含未登记文件，未执行全部清理。')
+            raise ControlError('unowned_data', 'control.unowned_data')
         from .timeline_storage import owned_directory
         if not owned_directory(self.root / 'timeline'):
-            raise ControlError('unowned_data', '轨迹目录包含未登记文件，未执行全部清理。')
+            raise ControlError('unowned_data', 'control.unowned_data.2')
         run = self.root / 'run'
         if run.exists() and (run.is_symlink() or any(p.name not in {'collector.lock', 'bridges'} for p in run.iterdir())):
-            raise ControlError('unowned_data', '运行目录包含未清理或未登记文件，未删除。')
+            raise ControlError('unowned_data', 'control.unowned_data.3')
         if (run / 'bridges').exists() and any((run / 'bridges').iterdir()):
-            raise ControlError('unowned_data', '运行目录仍有桥接记录，未删除。')
+            raise ControlError('unowned_data', 'control.unowned_data.4')
         receipt=self._receipt()
         self.services.remove_gui_login(self.current_app or receipt.get('app'))
         for path in self.root.iterdir():

@@ -39,7 +39,7 @@ final class TimelineStore {
             guard !Task.isCancelled, token == serial else { return }
             guard next.scope_id == scope, next.thread_id == thread,
                   requestedTurn == nil || next.selected_turn_id == requestedTurn else {
-                throw BackendFailure(message: L("轨迹身份不匹配"))
+                throw BackendFailure(message: "轨迹身份不匹配")
             }
             if followsCurrentTurn, selectedTurn != next.selected_turn_id {
                 viewportRevision += 1
@@ -50,7 +50,7 @@ final class TimelineStore {
         } catch is CancellationError { }
         catch {
             guard !Task.isCancelled, token == serial else { return }
-            self.error = L("暂时无法读取轨迹")
+            self.error = "暂时无法读取轨迹"
         }
     }
 
@@ -139,7 +139,7 @@ final class ActivityViewerStore {
             if let returned = next.phase {
                 guard returned.id == selected.id, returned.scope_id == selected.scope_id,
                       returned.thread_id == selected.thread_id, returned.turn_id == selected.turn_id else {
-                    throw BackendFailure(message: L("活动身份不匹配"))
+                    throw BackendFailure(message: "活动身份不匹配")
                 }
             }
             if let prior = detail, next.sections.isEmpty, !prior.sections.isEmpty,
@@ -159,7 +159,7 @@ final class ActivityViewerStore {
         } catch is CancellationError { }
         catch {
             guard !Task.isCancelled, token == serial else { return }
-            self.error = L("暂时无法读取活动内容")
+            self.error = "暂时无法读取活动内容"
         }
     }
 
@@ -177,7 +177,7 @@ final class ActivityViewerStore {
             detail?.sections[target].text += part.text
             detail?.sections[target].next_offset = part.next_offset
         } catch is CancellationError { }
-        catch { self.error = L("暂时无法读取更多内容") }
+        catch { self.error = "暂时无法读取更多内容" }
     }
 }
 

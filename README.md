@@ -18,6 +18,8 @@
 
 文案统一、命令名简化、1Hz 看板与多语言准备见 [易用性需求](docs/04_usability_and_localization/requirements.md)、[实现计划](docs/04_usability_and_localization/implementation-plan.md) 和 [实施结果](docs/04_usability_and_localization/implementation-results.md)。
 
+中英文界面已实现：顶部设置可即时切换「简体中文 / English」，终端使用 `watch --lang en` 或按 `l` 切换。默认中文，GUI 与终端分别保存偏好。资源、兼容规则、隔离预览和日常加载边界见[第 16 章](docs/16_english_localization/README.md)与[实施结果](docs/16_english_localization/implementation-results.md)。
+
 本回合官方 Output / Reasoning 用量已实现并完成隔离运行验证。推理均速已移除：事件接收区间不能保证覆盖服务端实际推理过程，且多段推理缺少通用的逐段用量。保留可见文本的实时接收速度；现行范围与旧数据兼容规则见[移除说明](docs/05_token_usage_and_reasoning_speed/removal.md)。原[需求](docs/05_token_usage_and_reasoning_speed/requirements.md)、[计划](docs/05_token_usage_and_reasoning_speed/implementation-plan.md)和[验收记录](docs/05_token_usage_and_reasoning_speed/implementation-results.md)保留为历史资料。
 
 主 App / 隔离 App 的启动步骤、环境变量保存位置，以及各进程如何启动、停止和通信，见 [启动步骤与进程管理](/Users/bytedance/personal/codex_progress_monitor/docs/02_product_mvp/startup-and-processes.md)。

@@ -54,6 +54,9 @@ enum MonitorApplication {
 }
 
 @MainActor final class AppDelegate: NSObject, NSApplicationDelegate {
+    private func L(_ key: String) -> String {
+        localizedText(key, language: store?.language ?? DashboardStore.savedLanguage(at: NSHomeDirectory() + "/Library/Application Support/CodexProgressMonitor"))
+    }
     private var item: NSStatusItem!
     private var panel: PopoverController!
     private var statusContent: StatusContentView!
@@ -109,14 +112,16 @@ enum MonitorApplication {
                 }
                 self.statusContent.update(mode: self.store.menuMode, title: self.store.menuTitle)
                 let state = switch self.store.menuMode {
-                case .idle: L("空闲 · 暂无活动聊天")
-                case .thinking: L("思考中")
-                case .executing: L("执行中")
+                case .idle: self.L("空闲 · 暂无活动聊天")
+                case .thinking: self.L("思考中")
+                case .executing: self.L("执行中")
                 case .unavailable: self.store.connectionLabel
                 case .speed: self.store.menuTitle
                 }
-                self.item.button?.toolTip = state + " · " + L("点击查看实时活动")
+                self.item.button?.toolTip = state + " · " + self.L("点击查看实时活动")
                 self.item.button?.setAccessibilityLabel("Codex Monitor · " + state)
+                self.activityViewer?.updateLanguage()
+                self.previewWindow?.title = self.store.testProfile != nil ? self.L("Codex Monitor · 隔离验证") : (self.store.readOnly ? self.L("Codex Monitor · 只读验证") : "Codex Monitor")
                 self.writeDiagnostics("tick")
             }
             store.onPurgeComplete = { NSApplication.shared.terminate(nil) }
@@ -124,7 +129,7 @@ enum MonitorApplication {
                 guard let self else { return }
                 self.panel.close(reason: "activity-viewer")
                 if self.activityViewer == nil {
-                    self.activityViewer = ActivityViewerWindowController(preview: self.isPreview)
+                    self.activityViewer = ActivityViewerWindowController(preview: self.isPreview, dashboard: self.store)
                     self.activityViewer?.onTrace = { [weak self] in self?.writeDiagnostics($0) }
                 }
                 self.activityViewer?.show(timeline: timeline, phases: phases)
@@ -156,7 +161,8 @@ enum MonitorApplication {
         } catch {
             let alert = NSAlert()
             alert.messageText = L("无法启动 Codex Monitor")
-            alert.informativeText = "请使用 bin/build-gui 重新构建本机 App。\n\(error.localizedDescription)"
+            alert.informativeText = L("请使用 bin/build-gui 重新构建本机 App。") + "\n" + error.localizedDescription
+            alert.addButton(withTitle: L("关闭提示"))
             alert.runModal()
             NSApplication.shared.terminate(nil)
         }
@@ -209,7 +215,7 @@ enum MonitorApplication {
     func applicationShouldTerminate(_ sender: NSApplication) -> NSApplication.TerminateReply {
         guard let store, !store.readOnly, store.management?.state != "purged" else { return .terminateNow }
         if store.busy {
-            store.operationError = L("管理操作仍在完成，请稍后退出。")
+            store.operationError = "管理操作仍在完成，请稍后退出。"
             return .terminateCancel
         }
         Task {

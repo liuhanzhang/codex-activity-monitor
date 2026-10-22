@@ -39,7 +39,7 @@ private func state(_ name: String, session: Bool = false) throws -> ManagementSt
     let value = store(backend)
     await value.configure()
     #expect(!(await value.prepareQuit()))
-    #expect(value.operationError == "still stopping")
+    #expect(value.operationError == "管理操作失败，请重试。\nstill stopping")
     #expect(await value.prepareQuit())
     #expect(await backend.actions() == ["configure", "resume", "stop", "stop"])
 }
@@ -60,7 +60,7 @@ private func state(_ name: String, session: Bool = false) throws -> ManagementSt
     let backend = FakeBackend([.failure(BackendFailure(message: "restore failed"))])
     let value = store(backend)
     await value.restore(purge: false)
-    #expect(value.operationError == "restore failed")
+    #expect(value.operationError == "管理操作失败，请重试。\nrestore failed")
     #expect(value.management?.state != "restored")
     #expect(!value.busy)
 }

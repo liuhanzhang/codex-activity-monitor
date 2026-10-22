@@ -1,10 +1,10 @@
 import SwiftUI
 import MonitorModel
-import ServiceManagement
 
 private struct RestoreRequest: Identifiable { let id = UUID() }
 
-struct DashboardView: View {
+struct DashboardView: LocalizedView {
+    var language: MonitorLanguage { store.language }
     @Bindable var store: DashboardStore
     var quit: () -> Void
     var onSizeChange: (CGSize) -> Void = { _ in }
@@ -81,6 +81,9 @@ struct DashboardView: View {
         .background(.background)
         .onChange(of: store.dismissPresentation) { restoreRequest = nil }
         .onGeometryChange(for: CGSize.self) { $0.size } action: { onSizeChange($0) }
+        .environment(\.monitorLanguage, store.language)
+        .environment(\.locale, store.language.locale)
+        .onAppear { if store.previewRestore { restoreRequest = RestoreRequest() } }
         .sheet(item: $restoreRequest) { _ in
             RestoreSheet(store: store)
                 .onAppear { onModalChange(true) }
@@ -94,7 +97,7 @@ struct DashboardView: View {
                 Button {
                     store.showRecent.toggle()
                 } label: {
-                    Text(store.showRecent ? L("收起已完成") : String(format: L("显示最近完成（%d）"), store.recentRoots.count))
+                    Text(store.showRecent ? L("收起已完成") : plural("显示最近完成（%d）", count: store.recentRoots.count))
                         .frame(maxWidth: .infinity, alignment: .leading).contentShape(Rectangle())
                 }.accessibilityIdentifier("monitor.recent")
             }
@@ -102,7 +105,7 @@ struct DashboardView: View {
                 Button {
                     store.showUnassigned.toggle()
                 } label: {
-                    Label(String(format: L("归属待确认的子任务（%d）"), snapshot.unassignedChats.count),
+                    Label(plural("归属待确认的子任务（%d）", count: snapshot.unassignedChats.count),
                           systemImage: store.showUnassigned ? "chevron.up" : "questionmark.circle")
                         .frame(maxWidth: .infinity, alignment: .leading).contentShape(Rectangle())
                 }.accessibilityIdentifier("monitor.unassignedAgents")
@@ -116,7 +119,7 @@ struct DashboardView: View {
     private var header: some View {
         HStack(spacing: 8) {
             Text(L("工作概览")).fontWeight(.semibold)
-            Text(store.fresh ? String(format: L("%d 个活跃聊天"), store.activeRows.count) : "—")
+            Text(store.fresh ? plural("%d 个活跃聊天", count: store.activeRows.count) : "—")
                 .font(.system(size: 10)).foregroundStyle(.secondary).fixedSize()
             Spacer(minLength: 6)
             if store.menuTitle != "—", let rate = store.snapshot?.overview?.generation_rate, rate > 0 {
@@ -166,29 +169,14 @@ struct DashboardView: View {
     }
 
     private var settings: some View {
-        Menu {
-            Button(String(localized: "Configure", bundle: .module)) { Task { await store.configure() } }
-                .disabled(store.readOnly || store.busy || store.management?.waitingForCleanup == true)
-            Button(String(localized: "Restore", bundle: .module)) { restoreRequest = RestoreRequest() }
-                .disabled(store.readOnly || store.busy || store.management == nil)
-            Divider()
-            Toggle(L("登录时启动"), isOn: Binding(get: { store.loginEnabled }, set: { enabled in
-                Task { await store.setLogin(enabled) }
-            })).disabled(store.readOnly || store.busy || store.testProfile != nil)
-            if store.loginNeedsApproval {
-                Button(L("在系统设置中允许登录启动")) { SMAppService.openSystemSettingsLoginItems() }
-            }
-            Divider()
-            Button(String(localized: "Quit", bundle: .module), action: quit).keyboardShortcut("q")
-        } label: { Image(systemName: "gearshape").font(.system(size: 13)) }
-        .menuStyle(.borderlessButton).fixedSize().accessibilityLabel(L("设置"))
-        .menuIndicator(.hidden)
-        .accessibilityIdentifier("monitor.settings")
+        DashboardSettingsMenu(state: SettingsMenuState(store: store), store: store,
+            restore: { restoreRequest = RestoreRequest() }, quit: quit)
+            .equatable()
     }
 
     private var footer: some View {
         HStack(spacing: 8) {
-            if store.readOnly { Text(String(localized: "ReadOnly", bundle: .module)) }
+            if store.readOnly { Text(L("ReadOnly")) }
             if store.testProfile != nil { Text(L("隔离验证")) }
             Spacer()
             if store.busy { ProgressView().controlSize(.mini).accessibilityLabel(L("正在处理")) }

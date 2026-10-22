@@ -176,9 +176,9 @@ class UsabilityTests(unittest.TestCase):
                 self.assertEqual(ui_language(runtime), 'zh-CN')
             with self.assertRaises(ValueError):
                 ui_language(runtime, 'missing')
-        self.assertNotIn('en', CATALOGS)
+        self.assertIn('en', CATALOGS)
 
-    def test_cli_once_and_unpublished_language(self):
+    def test_cli_once_and_published_english(self):
         with tempfile.TemporaryDirectory() as tmp:
             runtime = Path(tmp)
             atomic_json(runtime/'snapshot.json', self.snapshot(103))
@@ -186,10 +186,10 @@ class UsabilityTests(unittest.TestCase):
             with patch('sys.stdout', output):
                 self.assertEqual(main(['--runtime', tmp, 'watch', '--once', '--lang', 'zh-CN']), 0)
             self.assertIn('当前活动', output.getvalue())
-            self.assertNotIn('l 切换语言', output.getvalue())
+            self.assertIn('l 切换语言', output.getvalue())
             error = io.StringIO()
             with patch('sys.stderr', error):
-                self.assertEqual(main(['--runtime', tmp, 'watch', '--once', '--lang', 'en']), 1)
+                self.assertEqual(main(['--runtime', tmp, 'watch', '--once', '--lang', 'missing']), 1)
             self.assertIn('不支持的界面语言', error.getvalue())
 
 
@@ -277,7 +277,7 @@ display.watch(runtime)
                 self.assertLess(float(reads.read_text().splitlines()[3])-sent, .3)
                 os.write(master, b'l')
                 self.wait_for(reads, 5, master, process, timeout=.4)
-                self.assertEqual(json.loads((runtime/'ui-settings.json').read_text())['language'], 'test-en')
+                self.assertEqual(json.loads((runtime/'ui-settings.json').read_text())['language'], 'en')
                 sent = time.monotonic()
                 os.write(master, b'q')
                 process.wait(timeout=.5)

@@ -16,10 +16,13 @@ import MonitorModel
     private(set) var viewer: ActivityViewerGroupStore?
     var onTrace: ((String) -> Void)?
 
-    init(preview: Bool) {
+    private let dashboard: DashboardStore?
+    func updateLanguage() { window?.title = localizedText("活动查看器", language: dashboard?.language ?? .chinese) }
+    init(preview: Bool, dashboard: DashboardStore? = nil) {
+        self.dashboard = dashboard
         let window = ActivityWindow(contentRect: NSRect(x: 0, y: 0, width: 800, height: 600),
                                     styleMask: [.titled, .closable, .miniaturizable, .resizable], backing: .buffered, defer: false)
-        window.title = L("活动查看器")
+        window.title = localizedText("活动查看器", language: dashboard?.language ?? .chinese)
         window.identifier = NSUserInterfaceItemIdentifier("monitor.activity.viewer")
         window.contentMinSize = NSSize(width: 640, height: 420)
         window.isReleasedWhenClosed = false
@@ -37,8 +40,9 @@ import MonitorModel
         if let viewer, viewer.timeline === timeline { viewer.select(phases) }
         else {
             let preservedFrame = window?.frame
-            viewer = ActivityViewerGroupStore(timeline: timeline, phases: phases)
-            let host = NSHostingController(rootView: ActivityViewerView(store: viewer!))
+            let group = ActivityViewerGroupStore(timeline: timeline, phases: phases)
+            viewer = group
+            let host = NSHostingController(rootView: ViewerLanguageScope(dashboard: dashboard) { ActivityViewerView(store: group) })
             host.sizingOptions = []
             window?.contentViewController = host
             if let preservedFrame { window?.setFrame(preservedFrame, display: false) }
@@ -65,16 +69,17 @@ import MonitorModel
     }
 }
 
-struct ActivityViewerView: View {
+struct ActivityViewerView: LocalizedView {
+    @Environment(\.monitorLanguage) var language
     @Bindable var store: ActivityViewerGroupStore
 
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
             HStack {
-                Text(store.timeline.title).lineLimit(1).help(store.timeline.title)
+                Text(store.timeline.title.isEmpty ? L("未命名聊天") : store.timeline.title).lineLimit(1).help(store.timeline.title)
                 Spacer()
                 if store.entries.count > 1 {
-                    Text(String(format: L("%d 项工具"), store.entries.count)).foregroundStyle(.secondary)
+                    Text(plural("%d 项工具", count: store.entries.count)).foregroundStyle(.secondary)
                 }
             }.font(.system(size: 12, weight: .medium)).padding(.horizontal, 20).padding(.vertical, 14)
             Divider()
@@ -110,7 +115,8 @@ struct ActivityViewerView: View {
     }
 }
 
-private struct ActivityDetailView: View {
+private struct ActivityDetailView: LocalizedView {
+    @Environment(\.monitorLanguage) var language
     @Bindable var store: ActivityViewerStore
     let onSelect: (TimelinePhase) -> Void
 
@@ -138,13 +144,13 @@ private struct ActivityDetailView: View {
                 } else {
                     Circle().fill(Color(nsColor: TimelinePalette.color(store.phase))).frame(width: 7, height: 7)
                 }
-                Text(L(store.phase.kindLabel)).fontWeight(.medium)
+                Text(L(store.phase.kindLabel(in: language))).fontWeight(.medium)
                 if store.phase.isCoordination && store.phase.coordination_target_scope != "global" {
-                    Text(store.phase.coordinationTargets(in: store.timeline.bundle?.agents ?? []))
+                    Text(store.phase.coordinationTargets(in: store.timeline.bundle?.agents ?? [], language: language))
                         .lineLimit(1).foregroundStyle(.secondary)
-                        .help(store.phase.coordinationTargetDetails(in: store.timeline.bundle?.agents ?? []))
-                } else if !store.phase.isCoordination && store.phase.label != store.phase.kindLabel {
-                    Text(store.phase.label).lineLimit(1).foregroundStyle(.secondary).help(store.phase.label)
+                        .help(store.phase.coordinationTargetDetails(in: store.timeline.bundle?.agents ?? [], language: language))
+                } else if !store.phase.isCoordination && store.phase.sourceLabel(in: language) != store.phase.kindLabel(in: language) {
+                    Text(store.phase.sourceLabel(in: language)).lineLimit(1).foregroundStyle(.secondary).help(store.phase.sourceLabel(in: language))
                 }
                 Spacer(minLength: 8)
                 HStack(spacing: 4) {
@@ -153,7 +159,7 @@ private struct ActivityDetailView: View {
                             .foregroundStyle(Color(nsColor: TimelineDecoration.statusColor(for: store.phase)))
                             .accessibilityHidden(true)
                     }
-                    Text(L(store.phase.statusLabel)).foregroundStyle(.secondary)
+                    Text(L(store.phase.statusLabel(in: language))).foregroundStyle(.secondary)
                 }.accessibilityElement(children: .combine)
                 Text(durationText)
                     .monospacedDigit().foregroundStyle(.secondary)
@@ -161,7 +167,7 @@ private struct ActivityDetailView: View {
             }.font(.system(size: 12))
             HStack(spacing: 7) {
                 if let time = store.phase.anchor {
-                    Text(Date(timeIntervalSince1970: time / 1000).formatted(date: .abbreviated, time: .standard))
+                    Text(Date(timeIntervalSince1970: time / 1000).formatted(.dateTime.month(.abbreviated).day().hour().minute().second().locale(language.locale)))
                 }
                 Text("·")
                 Text(L(store.phase.thread_id != store.timeline.thread ? "子智能体活动" :
@@ -181,7 +187,7 @@ private struct ActivityDetailView: View {
             HStack(spacing: 18) {
                 ForEach(detail.sections) { section in
                     Button { store.selectedSection = section.id } label: {
-                        Text(section.title).fontWeight(store.selectedSection == section.id ? .semibold : .regular)
+                        Text(section.localizedTitle(language)).fontWeight(store.selectedSection == section.id ? .semibold : .regular)
                             .foregroundStyle(store.selectedSection == section.id ? .primary : .secondary)
                             .padding(.vertical, 11)
                     }.buttonStyle(.plain).accessibilityIdentifier("monitor.activity.tab.\(section.id)")
@@ -197,14 +203,14 @@ private struct ActivityDetailView: View {
             }.font(.system(size: 12)).padding(.horizontal, 20)
             Divider()
             if let section = selectedSection {
-                if let notice = section.notice {
-                    Text(L(notice)).font(.system(size: 12)).foregroundStyle(.secondary)
+                if let notice = section.localizedNotice(language) {
+                    Text(notice).font(.system(size: 12)).foregroundStyle(.secondary)
                         .frame(maxWidth: .infinity, maxHeight: .infinity)
                 } else if section.text.isEmpty {
                     Text(L("来源记录为空字符串。")).font(.system(size: 12)).foregroundStyle(.secondary)
                         .frame(maxWidth: .infinity, maxHeight: .infinity)
                 } else {
-                    ActivityTextView(text: section.text, format: section.format, followsContent: $store.followsContent)
+                    ActivityTextView(text: section.localizedText(language), format: section.format, followsContent: $store.followsContent)
                         .id(store.phase.id + "-" + section.id)
                         .accessibilityIdentifier("monitor.activity.content")
                 }
@@ -221,7 +227,7 @@ private struct ActivityDetailView: View {
         } else {
             VStack(spacing: 12) {
                 if store.detail == nil && store.error == nil { ProgressView().controlSize(.small) }
-                Text(store.error ?? detailNotice).font(.system(size: 12)).foregroundStyle(.secondary)
+                Text(store.error.map { L($0) } ?? detailNotice).font(.system(size: 12)).foregroundStyle(.secondary)
                 if store.detail?.state != "no_content" {
                     Button(L("重新读取")) { Task { await store.refresh() } }.buttonStyle(.bordered)
                 }
@@ -231,7 +237,7 @@ private struct ActivityDetailView: View {
 
     private var statusBar: some View {
         HStack(spacing: 8) {
-            if let error = store.error { Text(error).foregroundStyle(.red) }
+            if let error = store.error { Text(L(error)).foregroundStyle(.red) }
             else if !isEmptyReasoning && store.detail?.state != "available" && store.detail?.state != "no_content" {
                 Image(systemName: "info.circle"); Text(detailNotice)
             }
@@ -260,7 +266,9 @@ private struct ActivityDetailView: View {
         return detail.sections.isEmpty && detail.attachments.isEmpty &&
             ["available", "no_content", "content_unavailable", "pending"].contains(detail.state)
     }
-    private var ownerName: String { store.timeline.bundle?.agents.first { $0.thread_id == store.phase.thread_id }?.name ?? L("所属智能体") }
+    private var ownerName: String {
+        if store.phase.thread_id == store.timeline.thread { return L("主智能体") }
+        return store.timeline.bundle?.agents.first { $0.thread_id == store.phase.thread_id }?.displayName ?? L("所属智能体") }
     private var detailNotice: String {
         switch store.detail?.state {
         case "source_truncated": L("来源已截断，以下是 Codex 保留的全部可用内容。")
@@ -279,7 +287,8 @@ private struct ActivityDetailView: View {
     }
 }
 
-private struct AttachmentPreview: View {
+private struct AttachmentPreview: LocalizedView {
+    @Environment(\.monitorLanguage) var language
     let path: String
     @State private var image: NSImage?
     var body: some View {
@@ -365,4 +374,10 @@ struct ActivityTextView: NSViewRepresentable {
         var format = ""
         var onFollow: ((Bool) -> Void)?
     }
+}
+
+private struct ViewerLanguageScope<Content: View>: View {
+    let dashboard: DashboardStore?
+    @ViewBuilder var content: () -> Content
+    var body: some View { content().environment(\.monitorLanguage, dashboard?.language ?? .chinese).environment(\.locale, (dashboard?.language ?? .chinese).locale) }
 }

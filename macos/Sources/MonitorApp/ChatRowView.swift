@@ -1,7 +1,8 @@
 import SwiftUI
 import MonitorModel
 
-struct ChatRowView: View {
+struct ChatRowView: LocalizedView {
+    @Environment(\.monitorLanguage) var language
     let chat: Chat
     @Bindable var store: DashboardStore
     @State private var hovered = false
@@ -13,7 +14,7 @@ struct ChatRowView: View {
         if !live { return L("状态暂不可用") }
         if working {
             if chat.has_active_work != true { return L("子代理工作中") }
-            return chat.display_label ?? L("状态暂不可用")
+            return chat.activityLabel(language)
         }
         return switch chat.status {
         case "completed": L("已完成")
@@ -27,7 +28,7 @@ struct ChatRowView: View {
         Button { store.selectChat(chat) } label: {
             VStack(alignment: .leading, spacing: 5) {
                 HStack(alignment: .firstTextBaseline, spacing: 8) {
-                    Text(chat.title).font(.system(size: 12, weight: selected ? .medium : .regular))
+                    Text(chat.localizedTitle(language)).font(.system(size: 12, weight: selected ? .medium : .regular))
                         .lineLimit(1).truncationMode(.tail)
                     Spacer(minLength: 0)
                     if live, working, let rate = chat.generation_rate, rate.isFinite, rate >= 0 {
@@ -61,7 +62,7 @@ struct ChatRowView: View {
             .contentShape(Rectangle())
         }
         .buttonStyle(.plain).onHover { hovered = $0 }
-        .help([chat.title, chat.cwd, actionLabel].compactMap { $0 }.joined(separator: "\n"))
+        .help([chat.localizedTitle(language), chat.cwd, actionLabel].compactMap { $0 }.joined(separator: "\n"))
         .accessibilityElement(children: .combine)
         .accessibilityAddTraits(selected ? .isSelected : [])
         .accessibilityIdentifier("monitor.chat.\(chat.scope).\(chat.threadID)")

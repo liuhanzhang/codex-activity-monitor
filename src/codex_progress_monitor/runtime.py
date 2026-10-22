@@ -53,7 +53,8 @@ def ui_language(runtime, explicit=None):
         return validate_language(explicit)
     try:
         settings = json.loads((runtime/'ui-settings.json').read_text())
-        value = settings.get('language') if isinstance(settings, dict) and settings.get('version') == 1 else None
+        value = settings.get('language') if (isinstance(settings, dict) and
+            type(settings.get('version')) is int and settings.get('version') == 1) else None
         return value if value in available_languages() else DEFAULT_LANGUAGE
     except (OSError, ValueError):
         return DEFAULT_LANGUAGE

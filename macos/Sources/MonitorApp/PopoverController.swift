@@ -53,7 +53,17 @@ import SwiftUI
         NSApplication.shared.activate(ignoringOtherApps: true)
         installMonitors()
         onTrace?("show-native")
-        DispatchQueue.main.async { [weak self] in self?.constrainPosition(); self?.onTrace?("show-positioned") }
+        let presentationID = store.presentationID
+        DispatchQueue.main.async { [weak self] in
+            guard let self, self.popover.isShown, self.store.presentationID == presentationID else { return }
+            self.constrainPosition()
+            // Let the window receive input without preselecting the settings
+            // menu. Tab can still enter the native key-view loop normally.
+            if !self.modalShown && !self.menuTracking && self.store.auxiliary.activeID == nil {
+                _ = self.host.view.window?.makeFirstResponder(nil)
+            }
+            self.onTrace?("show-positioned")
+        }
     }
 
     func close(reason: String) {

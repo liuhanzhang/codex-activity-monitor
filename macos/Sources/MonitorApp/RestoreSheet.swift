@@ -1,6 +1,8 @@
 import SwiftUI
+import MonitorModel
 
-struct RestoreSheet: View {
+struct RestoreSheet: LocalizedView {
+    var language: MonitorLanguage { store.language }
     let store: DashboardStore
     @Environment(\.dismiss) private var dismiss
     @State private var purge = false

@@ -22,11 +22,17 @@ public struct ManagementState: Decodable, Sendable {
     public let pending: [PendingDependency]?
     public let code: String?
     public let error: String?
+    public let display_message: DisplayMessage?
+    public let language: String?
     public let session: ObservationLease?
 
     public var configured: Bool { state == "configured" }
     public var waitingForCleanup: Bool { state == "pending_cleanup" || state == "restoring" }
-    public var label: String {
+    public var label: String { localizedLabel(.chinese) }
+    public func localizedLabel(_ language: MonitorLanguage) -> String {
+        ModelLocalizer.text(labelKey, language)
+    }
+    private var labelKey: String {
         switch state {
         case "configured": "已配置"
         case "pending_cleanup":

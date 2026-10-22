@@ -19,6 +19,7 @@ public struct Usage: Decodable, Sendable {
 public struct Activity: Decodable, Identifiable, Sendable {
     public let id: String
     public let display_label: String?
+    public let display_message: DisplayMessage?
     public let display_visible: Bool?
     public let status: String?
     public let active: Bool?
@@ -48,6 +49,7 @@ public struct Chat: Decodable, Identifiable, Sendable {
     public let ephemeral: Bool?
     public let has_active_work: Bool?
     public let display_label: String?
+    public let display_message: DisplayMessage?
     public let display_seconds: Double?
     public let generation_rate: Double?
     public let generation_estimated: Bool?
@@ -64,7 +66,14 @@ public struct Chat: Decodable, Identifiable, Sendable {
 
     public var id: String { (home ?? backend ?? "") + "\u{0}" + threadID }
     public var scope: String { home ?? backend ?? "" }
-    public var title: String { name.flatMap { $0.isEmpty ? nil : $0 } ?? "未命名聊天" }
+    public var title: String { localizedTitle(.chinese) }
+    public func localizedTitle(_ language: MonitorLanguage) -> String { name.flatMap { $0.isEmpty ? nil : $0 } ?? ModelLocalizer.text("未命名聊天", language) }
+    public func activityLabel(_ language: MonitorLanguage) -> String {
+        if let display_message { return display_message.rendered(in: language) }
+        if language == .chinese, let display_label { return display_label }
+        let key = ["completed": "activity.completed", "failed": "activity.failed", "interrupted": "activity.stopped", "idle": "activity.idle"][status ?? ""] ?? "activity.unknown"
+        return DisplayMessage(key).rendered(in: language)
+    }
     public var project: String { cwd.map { URL(fileURLWithPath: $0).lastPathComponent } ?? "" }
     public var isKnownSubagent: Bool { thread_source != "user" && (thread_source == "subagent" || parent_thread_id != nil) }
     public var isTerminal: Bool { ["completed", "failed", "interrupted"].contains(status ?? "") }
@@ -72,7 +81,7 @@ public struct Chat: Decodable, Identifiable, Sendable {
     enum CodingKeys: String, CodingKey {
         case threadID = "id"
         case home, backend, name, cwd, model, status, connected, visible, ephemeral, has_active_work
-        case display_label, display_seconds, generation_rate, generation_estimated
+        case display_label, display_message, display_seconds, generation_rate, generation_estimated
         case last_progress_seconds, usage, activities, subagents, parent_thread_id, parent_source, parent_quality, thread_source, context_only, turn_id
     }
 }
