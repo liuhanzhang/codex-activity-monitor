@@ -97,8 +97,8 @@ def fixtures(base, case):
     if case == 'missing-input':
         current['markers'] = [p for p in current['markers'] if not p.get('is_initial')]
     if case in ('zero', 'unknown') and snapshot['threads']:
-        snapshot['threads'][0]['usage'] = ({'turn_id': 'turn-current', 'output_tokens': 0, 'reasoning_tokens': 0,
-            'latest_reasoning': {'turn_id': 'turn-current', 'tokens_per_second': 0}} if case == 'zero' else {})
+        snapshot['threads'][0]['usage'] = ({'turn_id': 'turn-current', 'output_tokens': 0, 'reasoning_tokens': 0}
+                                         if case == 'zero' else {})
     # Every interactive synthetic phase has a detail reply with matching identity.
     for owner in [{'bundles': timeline['bundles']}, *timeline['threads'].values()]:
         for bundle in owner['bundles'].values():

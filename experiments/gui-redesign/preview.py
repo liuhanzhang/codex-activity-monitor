@@ -16,7 +16,7 @@ def fixture(case):
                     connected=True, visible=True, has_active_work=active,
                     display_label='编辑界面' if active else '任务完成', display_seconds=18 if active else None,
                     generation_rate=48.2 if active else None, last_progress_seconds=1,
-                    usage=dict(output_tokens=3240, reasoning_tokens=1280, latest_reasoning=dict(tokens_per_second=43.1)),
+                    usage=dict(output_tokens=3240, reasoning_tokens=1280),
                     activities=[dict(id=identity+'-tool', display_label='编辑 DashboardView.swift', display_visible=True,
                                      active=active, status='inProgress' if active else 'completed', duration_seconds=18,
                                      start_known=True)])

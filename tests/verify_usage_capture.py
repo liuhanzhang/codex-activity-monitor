@@ -1,8 +1,7 @@
-"""Compare real capture usage and original reasoning clocks without exporting text."""
+"""Compare official capture usage without exporting text or estimating speed."""
 import argparse
 import hashlib
 import json
-import math
 from pathlib import Path
 
 from codex_progress_monitor.engine import Engine
@@ -26,8 +25,7 @@ def verify(path):
             if direction=='upstream':
                 kind=event.get('type','')
                 if kind in ('response.output_item.added','response.output_item.done'):
-                    item=event['item'];known=items.setdefault(item['id'],{'turn':item.get('metadata',{}).get('turn_id'),'type':item['type']})
-                    known['start' if kind.endswith('.added') else 'end']=clock
+                    item=event['item'];items.setdefault(item['id'],{'turn':item.get('metadata',{}).get('turn_id')})
                 if kind=='response.completed' and event.get('response',{}).get('usage',{}).get('output_tokens',0)>0:
                     raw=event['response'];safe=filter_event(direction,event)['response']
                     item_ids=safe['item_ids'];owners={items[i]['turn'] for i in item_ids}
@@ -35,11 +33,7 @@ def verify(path):
                     turn=owners.pop();values=[raw['usage']['output_tokens'],raw['usage']['output_tokens_details']['reasoning_tokens']]
                     expected.setdefault(turn,[0,0])
                     expected[turn]=[expected[turn][i]+values[i] for i in range(2)]
-                    reasons=[items[i] for i in item_ids if items[i]['type']=='reasoning']
-                    assert len(reasons)==1
-                    duration=reasons[0]['end']-reasons[0]['start']
-                    responses.append({'turn':turn,'response_id':raw['id'],'usage':values,'duration_seconds':duration,
-                                      'tokens_per_second':values[1]/duration,'usage_delay_seconds':clock-reasons[0]['end'],
+                    responses.append({'turn':turn,'response_id':raw['id'],'usage':values,
                                       'items_source':safe['items_source']})
             safe=filter_event(direction,event)
             if safe is not None:
@@ -50,9 +44,8 @@ def verify(path):
             view=next(t for t in snapshot['threads'] if t['id']==turns[turn])
             actual=[view['usage']['output_tokens'],view['usage']['reasoning_tokens']]
             assert actual==values==protocol[turn],(actual,values,protocol[turn])
-            latest=[r for r in responses if r['turn']==turn][-1]
-            assert math.isclose(view['usage']['latest_reasoning']['tokens_per_second'],latest['tokens_per_second'])
-            result.append({'expected':values,'actual':actual,'protocol_total':protocol[turn],'latest_reasoning':view['usage']['latest_reasoning']})
+            assert 'latest_reasoning' not in view['usage']
+            result.append({'expected':values,'actual':actual,'protocol_total':protocol[turn]})
         assert sorted(expected.values())==[[1424,156],[1820,237]]
         return {'capture_sha256':hashlib.sha256(path.read_bytes()).hexdigest(),'scope':'20261011 concurrent capture',
                 'responses':responses,'threads':result,'passed':True}

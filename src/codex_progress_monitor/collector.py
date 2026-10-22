@@ -67,6 +67,8 @@ def serve(runtime):
     if historical:
         engine.usage.restore(previous.get('usage_recovery'))
     for thread in historical:
+        if isinstance(thread.get('usage'), dict):
+            thread['usage'].pop('latest_reasoning', None)
         # Old snapshots inferred these edges from communication. Re-verify them
         # from session headers / new explicit live creation evidence.
         if thread.get('parent_source') not in ('session_header', 'spawn_call'):

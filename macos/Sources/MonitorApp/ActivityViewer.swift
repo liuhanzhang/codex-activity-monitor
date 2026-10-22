@@ -175,7 +175,9 @@ private struct ActivityDetailView: View {
     }
 
     @ViewBuilder private var content: some View {
-        if let detail = store.detail, !detail.sections.isEmpty {
+        if isEmptyReasoning {
+            Color.clear.frame(maxWidth: .infinity, maxHeight: .infinity)
+        } else if let detail = store.detail, !detail.sections.isEmpty {
             HStack(spacing: 18) {
                 ForEach(detail.sections) { section in
                     Button { store.selectedSection = section.id } label: {
@@ -230,7 +232,7 @@ private struct ActivityDetailView: View {
     private var statusBar: some View {
         HStack(spacing: 8) {
             if let error = store.error { Text(error).foregroundStyle(.red) }
-            else if store.detail?.state != "available" && store.detail?.state != "no_content" {
+            else if !isEmptyReasoning && store.detail?.state != "available" && store.detail?.state != "no_content" {
                 Image(systemName: "info.circle"); Text(detailNotice)
             }
             else {
@@ -253,6 +255,11 @@ private struct ActivityDetailView: View {
         return MetricFormat.duration(seconds)
     }
     private var selectedSection: ActivitySection? { store.detail?.sections.first { $0.id == store.selectedSection } }
+    private var isEmptyReasoning: Bool {
+        guard store.phase.kind == "reasoning", store.error == nil, let detail = store.detail else { return false }
+        return detail.sections.isEmpty && detail.attachments.isEmpty &&
+            ["available", "no_content", "content_unavailable", "pending"].contains(detail.state)
+    }
     private var ownerName: String { store.timeline.bundle?.agents.first { $0.thread_id == store.phase.thread_id }?.name ?? L("所属智能体") }
     private var detailNotice: String {
         switch store.detail?.state {

@@ -45,8 +45,7 @@ def main():
         thread=rpc.request('thread/start',{'model':model,'cwd':str(run),'ephemeral':False,'approvalPolicy':'never','sandbox':'read-only'})['thread']['id']
         prompts=['用心算求 sum(k*k for k in range(1,201))，再且只调用一次 exec_command 用 python3 -B -c 验证该数值。不读写文件、不联网，最后回答数值和一句解释。',
                  '不调用工具。计算 19*23*29*31，给出精确值和一句解释。']
-        previous=None
-        for index,prompt in enumerate(prompts):
+        for prompt in prompts:
             rpc.completed.pop(thread,None)
             turn=rpc.request('turn/start',{'threadId':thread,'input':[{'type':'text','text':prompt}],'effort':'medium','summary':'auto'})['turn']['id']
             samples=[]
@@ -56,7 +55,7 @@ def main():
                 view=next((t for t in snapshot.get('threads',[]) if t['id']==thread and t.get('turn_id')==turn),None)
                 if view:
                     samples.append({'phase':view['phase'],'usage':view.get('usage'),'generation_rate':view.get('generation_rate')})
-                    if thread in rpc.completed and view['usage']['output_tokens'] and view['usage'].get('latest_reasoning'):
+                    if thread in rpc.completed and view['usage']['output_tokens']:
                         break
                 time.sleep(.05)
             assert thread in rpc.completed,'Turn timed out'
@@ -67,12 +66,9 @@ def main():
             expected=[sum(u['last'][key] for u in notifications) for key in ('outputTokens','reasoningOutputTokens')]
             actual=[final['usage']['output_tokens'],final['usage']['reasoning_tokens']]
             assert actual==expected,(actual,expected)
-            assert final['usage']['latest_reasoning'],'No verified reasoning speed'
-            if previous:
-                assert any(s['usage']['output_tokens']==0 and s['usage']['latest_reasoning']==previous for s in samples),'Reset/retention unobserved'
-            previous=final['usage']['latest_reasoning']
+            assert 'latest_reasoning' not in final['usage']
             evidence['turns'].append({'notification_count':len(notifications),'expected':expected,'actual':actual,
-                                      'latest_reasoning':previous,'zero_observed':any(s['usage']['output_tokens']==0 for s in samples),
+                                      'zero_observed':any(s['usage']['output_tokens']==0 for s in samples),
                                       'live_generation_observed':any(s['generation_rate'] is not None for s in samples)})
         before_restart=final['usage']
         stop(runtime);start(runtime)

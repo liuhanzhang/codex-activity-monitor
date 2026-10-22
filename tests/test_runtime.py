@@ -11,8 +11,9 @@ import unittest
 from unittest.mock import patch, MagicMock
 
 from codex_progress_monitor.cli import start,stop
-from codex_progress_monitor.runtime import runtime_dir,read_snapshot
+from codex_progress_monitor.runtime import runtime_dir,read_snapshot,atomic_json
 from codex_progress_monitor.bridge import observes_stdio,Observer
+from codex_progress_monitor.events import filter_event
 from codex_progress_monitor.timeline_query import query_runtime
 
 
@@ -446,12 +447,23 @@ protocol('turn/completed',{'threadId':'t','turn':{'id':'u','status':'completed'}
             send(sock,'lifecycle',{'type':'bridge/started','home':'/tmp/owned'})
             send(sock,'protocol_out',{'method':'turn/started','params':{'threadId':'t','turn':{'id':'u'}}})
             send(sock,'upstream',{'type':'response.output_item.done','item':{'id':'i','type':'message','metadata':{'turn_id':'u'},'content':[{'type':'output_text','text':'completed metrics'}]}})
+            send(sock,'upstream',filter_event('upstream',{'type':'response.completed','response':{'id':'resp',
+                'output':[{'id':'i','type':'message'}],
+                'usage':{'output_tokens':100,'output_tokens_details':{'reasoning_tokens':40}}}}))
             send(sock,'protocol_out',{'method':'turn/completed','params':{'threadId':'t','turn':{'id':'u','status':'completed'}}})
-            before=self.wait_snapshot(lambda s: any(t['phase']=='completed' and any(
+            before=self.wait_snapshot(lambda s: any(t['phase']=='completed' and t['status']=='completed'
+                and t.get('usage',{}).get('output_tokens')==100 and any(
                 stream['tokens'] is not None for a in t['activities'] for stream in a['streams'])
                 for t in s['threads']))['threads'][0]
         stop(self.runtime)
+        legacy=read_snapshot(self.runtime)
+        self.assertEqual(legacy['threads'][0]['usage']['output_tokens'],100)
+        legacy['threads'][0]['usage']['latest_reasoning']={'tokens_per_second':20,'turn_id':'u'}
+        atomic_json(self.runtime/'snapshot.json',legacy)
         start(self.runtime)
+        restored=read_snapshot(self.runtime)['threads'][0]['usage']
+        self.assertEqual((restored['output_tokens'],restored['reasoning_tokens']),(100,40))
+        self.assertNotIn('latest_reasoning',restored)
         with socket.socket(socket.AF_UNIX,socket.SOCK_STREAM) as sock:
             sock.connect(str(self.runtime/'events.sock'))
             send(sock,'lifecycle',{'type':'bridge/started','home':'/tmp/owned'})
@@ -462,6 +474,8 @@ protocol('turn/completed',{'threadId':'t','turn':{'id':'u','status':'completed'}
             self.assertEqual(after['name'],'replayed')
             self.assertEqual(after['activities'][0]['streams'][0]['tokens'],before['activities'][0]['streams'][0]['tokens'])
             self.assertIsNone(after['token_rates']['text'])
+            self.assertEqual((after['usage']['output_tokens'],after['usage']['reasoning_tokens']),(100,40))
+            self.assertNotIn('latest_reasoning',after['usage'])
 
 
 if __name__=='__main__':

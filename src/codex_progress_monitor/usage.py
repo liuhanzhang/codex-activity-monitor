@@ -1,4 +1,4 @@
-"""Official output accounting and completed reasoning timing, without model text.
+"""Official output and reasoning token accounting, without model text.
 
 The response ledger and cumulative server snapshots are alternative views of
 the same usage. Snapshot differences require a verified turn baseline; `last`
@@ -64,8 +64,6 @@ def response_metadata(response):
     valid = len(items) <= MAX_ITEMS and all(isinstance(i, dict) and identifier(i.get('id'))
                                           and identifier(i.get('type')) for i in items)
     result['item_ids'] = [i['id'] for i in items[:MAX_ITEMS] if isinstance(i, dict) and identifier(i.get('id'))]
-    result['item_types'] = {i['id']: i['type'] for i in items[:MAX_ITEMS]
-                            if isinstance(i, dict) and identifier(i.get('id')) and identifier(i.get('type'))}
     result['items_complete'] = bool(items) and valid and len(set(result['item_ids'])) == len(items)
     result['items_source'] = 'output'
     if not items:
@@ -102,7 +100,7 @@ class UsageBook:
     def state(self, identity, at=0):
         if identity not in self.threads:
             self.threads[identity] = {'turns': OrderedDict(), 'current': None, 'total': None,
-                                      'total_turn': None, 'latest_reasoning': None, 'new_thread': False,
+                                      'total_turn': None, 'new_thread': False,
                                       'total_last': None,
                                       'updated_at': at}
         state = self.threads[identity]
@@ -179,12 +177,6 @@ class UsageBook:
                 record['coverage'] = False
                 record['snapshot'] = None
                 self.note(record, reason)
-        for (owner, _), item in self.items.items():
-            if owner == backend:
-                for boundary in item['boundaries'].values():
-                    if (boundary.get('end') is None and (origin_at is None or boundary.get('start') is None
-                                                        or origin_at >= boundary['start'])):
-                        boundary['valid'] = False
 
     def ingest(self, event, engine):
         kind = event.data.get('type')
@@ -227,15 +219,6 @@ class UsageBook:
                 for record in state['turns'].values():
                     record.update(baseline=None,snapshot=None,coverage=False)
                     self.note(record, method)
-            if (method in ('modelProvider/authRecoveryStarted','item/tool/requestUserInput',
-                           'item/commandExecution/requestApproval','item/fileChange/requestApproval',
-                           'item/permissions/requestApproval','mcpServer/elicitation/request')
-                    or method == 'error' and params.get('willRetry')):
-                for (owner, _), item in self.items.items():
-                    if owner==backend and item['identity']==identity and (not turn_id or item['turn_id']==turn_id):
-                        for boundary in item['boundaries'].values():
-                            if boundary.get('end') is None:
-                                boundary['valid']=False
         relevant = method in ('item/started', 'item/completed', 'turn/started') or kind in (
             'response.output_item.added','response.output_item.done',
             'response.completed','response.failed','response.incomplete')
@@ -257,15 +240,10 @@ class UsageBook:
                 self.pending.pop(key)
                 self.diagnostics['unassociated_expired'] = self.diagnostics.get('unassociated_expired', 0)+1
                 # Expiry is discovered later; it is not a new transport gap.
-                # Never invalidate a turn or reasoning begun after that usage.
+                # Never invalidate a turn begun after that usage.
                 self.gap(pending.backend,engine,'unassociated_usage_expired',origin_at=pending.at)
             elif self.response(pending, engine):
                 self.pending.pop(key)
-        # Usage may precede canonical item completion or identity mapping.
-        for state in self.threads.values():
-            for record in state['turns'].values():
-                for response in record['responses'].values():
-                    self.speed(state, response)
 
     def item(self, event, engine):
         params = event.data.get('params', {})
@@ -284,7 +262,7 @@ class UsageBook:
         self.turn(state, turn_id)
         key = (event.backend, item_id)
         current = self.items.setdefault(key, {'id': item_id, 'identity': identity, 'turn_id': turn_id,
-                                             'type': item.get('type'), 'boundaries': {}})
+                                             'type': item.get('type')})
         if current['identity'] != identity or current['turn_id'] != turn_id:
             current['conflict'] = True
             for owner,turn in ((identity,turn_id),(current['identity'],current['turn_id'])):
@@ -292,20 +270,7 @@ class UsageBook:
                 record=self.turn(affected,turn)
                 record.update(coverage=False,baseline=None,snapshot=None)
                 self.note(record,'item_identity_conflict')
-                if affected['latest_reasoning'] and affected['latest_reasoning']['item_id']==item_id:
-                    affected['latest_reasoning']=None
             return
-        if item.get('type') == 'reasoning':
-            source = event.direction
-            boundary = current['boundaries'].setdefault(source, {'start': None, 'end': None, 'valid': True})
-            started = event.data.get('method') == 'item/started' or event.data.get('type', '').endswith('.added')
-            if started and boundary['start'] is None:
-                boundary['start'] = event.at
-                boundary['order'] = event.wall_time or event.at
-                boundary['valid'] = not event.replayed
-            elif not started and boundary['end'] is None:
-                boundary['end'] = event.at
-                boundary['valid'] &= not event.replayed and item.get('status', 'completed') == 'completed'
         self.items.move_to_end(key)
         while len(self.items) > MAX_ITEMS:
             self.items.popitem(last=False)
@@ -369,18 +334,13 @@ class UsageBook:
         record = self.turn(state, turn_id)
         values = pair(response.get('usage', {}))
         entry = {'id': response_id, 'backend': event.backend, 'turn_id': turn_id,
-                 'item_ids': list(ids), 'item_types': response.get('item_types', {}),
-                 'items_complete': response.get('items_complete', False), 'usage': values,
-                 'model': response.get('model'), 'normal': event.data['type'] == 'response.completed',
-                 'speed_done': False}
+                 'item_ids': list(ids), 'usage': values}
         previous = record['responses'].get(response_id)
         if previous:
             conflict=any(old is not None and new is not None and old!=new for old,new in zip(previous['usage'],values))
             if conflict or set(previous['item_ids']) != set(ids):
                 record.update(coverage=False, snapshot=None, baseline=None)
                 self.note(record, 'response_conflict')
-                if state['latest_reasoning'] and state['latest_reasoning']['response_id']==response_id:
-                    state['latest_reasoning']=None
             else:
                 previous['usage']=[old if old is not None else new for old,new in zip(previous['usage'],values)]
             return True
@@ -397,7 +357,6 @@ class UsageBook:
             current = self.turn(state, state['current'])
             current.update(baseline=None, snapshot=None)
             self.note(current, 'late_previous_turn_usage')
-        self.speed(state, entry)
         return True
 
     def cumulative(self, identity, turn_id, usage, event):
@@ -442,56 +401,12 @@ class UsageBook:
                 self.note(record, 'baseline_conflict')
         state['total'], state['total_turn'],state['total_last'] = total, turn_id, pair(usage.get('last',{}))
 
-    def speed(self, state, response):
-        if response['speed_done'] or not response['normal'] or not response['items_complete'] or not complete_pair(response['usage']):
-            return
-        record=self.turn(state,response['turn_id'])
-        if any('conflict' in reason for reason in record['diagnostics']):
-            return
-        reasoning = response['usage'][1]
-        if reasoning is None:
-            return
-        items = [self.items.get((response['backend'], item_id)) for item_id in response['item_ids']]
-        types = response['item_types']
-        if any(item is None and item_id not in types for item_id, item in zip(response['item_ids'], items)):
-            return
-        reasons = [item for item_id, item in zip(response['item_ids'], items)
-                   if (types.get(item_id) or (item or {}).get('type')) == 'reasoning']
-        if len(reasons) != 1 or reasons[0] is None or reasons[0].get('conflict'):
-            return
-        segment = reasons[0]
-        if segment['turn_id'] != response['turn_id']:
-            return
-        if any(item and (item['identity'] != segment['identity'] or item['turn_id'] != segment['turn_id'] or item.get('conflict'))
-               for item in items):
-            record=self.turn(state,response['turn_id'])
-            record.update(coverage=False,baseline=None,snapshot=None)
-            self.note(record,'response_identity_conflict')
-            return
-        for source in ('upstream', 'protocol_out'):
-            boundary = segment['boundaries'].get(source, {})
-            start, end = boundary.get('start'), boundary.get('end')
-            if not boundary.get('valid') or start is None or end is None or end <= start:
-                continue
-            value = reasoning/(end-start)
-            if not math.isfinite(value):
-                continue
-            result = {'tokens_per_second': value, 'reasoning_tokens': reasoning, 'duration_seconds': end-start,
-                      'turn_id': response['turn_id'], 'response_id': response['id'], 'item_id': segment['id'],
-                      'model': response['model'], 'source': source, 'order': boundary['order']}
-            latest = state['latest_reasoning']
-            if latest is None or result['order'] > latest['order']:
-                state['latest_reasoning'] = result
-            response['speed_done'] = True
-            return
-
     def view(self, identity, turn_id):
         state = self.threads.get(identity)
         record = state['turns'].get(turn_id) if state else None
         counts, source = self.counts(record) if record else ([None, None], 'unavailable')
         return {'turn_id': turn_id, 'output_tokens': counts[0], 'reasoning_tokens': counts[1],
-                'source': source, 'diagnostics': list(record['diagnostics']) if record else ['turn_start_unobserved'],
-                'latest_reasoning': deepcopy(state['latest_reasoning']) if state else None}
+                'source': source, 'diagnostics': list(record['diagnostics']) if record else ['turn_start_unobserved']}
 
     def dump(self):
         return {'version': 2, 'threads': [{'home': home, 'id': thread, 'state': deepcopy(state)}
@@ -506,8 +421,7 @@ class UsageBook:
                 if not identifier(entry['id']) or not isinstance(entry['home'],str) or len(entry['home'])>4096:
                     continue
                 state={'current':previous['current'],'total':previous['total'],'total_turn':previous['total_turn'],
-                       'total_last':previous.get('total_last'),'new_thread':False,'updated_at':previous['updated_at'],
-                       'latest_reasoning':None}
+                       'total_last':previous.get('total_last'),'new_thread':False,'updated_at':previous['updated_at']}
                 if not isinstance(state['updated_at'],(int,float)) or not math.isfinite(state['updated_at']):
                     continue
                 turns = previous['turns']
@@ -535,22 +449,9 @@ class UsageBook:
                                 or len(response['usage'])!=2 or any(v is not None and token_number(v) is None for v in response['usage'])):
                             raise ValueError('Invalid recovery response')
                         record['responses'][response_id]={'id':response_id,'backend':str(response['backend'])[:256],
-                            'turn_id':turn_id,'item_ids':list(response['item_ids']),'item_types':{},
-                            'items_complete':False,'usage':list(response['usage']),'model':None,
-                            'normal':bool(response['normal']),'speed_done':True}
+                            'turn_id':turn_id,'item_ids':list(response['item_ids']),'usage':list(response['usage'])}
                     restored[turn_id]=record
                 state['turns']=restored
-                latest=previous.get('latest_reasoning')
-                if isinstance(latest,dict):
-                    speed=latest.get('tokens_per_second');duration=latest.get('duration_seconds');tokens=latest.get('reasoning_tokens')
-                    if (isinstance(speed,(int,float)) and math.isfinite(speed) and speed>=0
-                            and isinstance(duration,(int,float)) and math.isfinite(duration) and duration>0
-                            and token_number(tokens) is not None and math.isclose(speed,tokens/duration)
-                            and all(identifier(latest.get(k)) for k in ('turn_id','response_id','item_id','source'))
-                            and isinstance(latest.get('order'),(int,float)) and math.isfinite(latest['order'])):
-                        state['latest_reasoning']={k:latest[k] for k in ('tokens_per_second','duration_seconds',
-                            'reasoning_tokens','turn_id','response_id','item_id','source','order')}
-                        state['latest_reasoning']['model']=latest.get('model') if identifier(latest.get('model')) else None
                 for key in ('total','total_last'):
                     if state[key] is not None and not complete_pair(state[key]):
                         state[key]=None

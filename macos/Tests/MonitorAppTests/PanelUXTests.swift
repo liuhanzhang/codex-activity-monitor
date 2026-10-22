@@ -208,15 +208,14 @@ private func panelUsage(_ fields: [String: Any]) throws -> Usage {
     #expect(store.visibleChats.map(\.id) == order)
 }
 
-@Test func panelStatisticsRequireExplicitTurnOwnershipForEachMetric() throws {
+@Test func panelStatisticsRequireExplicitTurnOwnershipAndIgnoreRetiredRate() throws {
     let usage = try panelUsage(["turn_id": "new", "output_tokens": 5214, "reasoning_tokens": 1382,
         "latest_reasoning": ["turn_id": "old", "tokens_per_second": 50]])
     let current = PanelStatistics(usage: usage, selectedTurn: "new")
     #expect(current.outputTokens == 5214 && current.reasoningTokens == 1382)
-    #expect(current.reasoningRate == nil)
     let old = PanelStatistics(usage: usage, selectedTurn: "old")
-    #expect(old.outputTokens == nil && old.reasoningTokens == nil && old.reasoningRate == 50)
-    #expect(!old.isUnavailable)
+    #expect(old.outputTokens == nil && old.reasoningTokens == nil)
+    #expect(old.isUnavailable)
     #expect(PanelStatistics(usage: usage, selectedTurn: nil).isUnavailable)
     #expect(PanelStatistics(usage: usage, selectedTurn: "new", switchingTurn: true).isUnavailable)
 }
@@ -228,7 +227,7 @@ private func panelUsage(_ fields: [String: Any]) throws -> Usage {
     let zero = try panelUsage(["turn_id": "new", "output_tokens": 0,
         "latest_reasoning": ["turn_id": "new", "tokens_per_second": 0]])
     let result = PanelStatistics(usage: zero, selectedTurn: "new")
-    #expect(result.outputTokens == 0 && result.reasoningTokens == nil && result.reasoningRate == 0)
+    #expect(result.outputTokens == 0 && result.reasoningTokens == nil)
     #expect(!result.isUnavailable)
     let malformed = try panelUsage(["turn_id": "new", "output_tokens": -1, "reasoning_tokens": -4])
     #expect(PanelStatistics(usage: malformed, selectedTurn: "new").isUnavailable)

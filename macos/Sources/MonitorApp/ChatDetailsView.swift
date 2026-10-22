@@ -35,8 +35,6 @@ struct ChatDetailsView: View {
                 Text(String(format: L("含推理 %@"), PanelStatistics.compactCount(statistics.reasoningTokens)))
                     .help(MetricFormat.count(statistics.reasoningTokens)).foregroundStyle(.secondary)
                 Spacer(minLength: 2)
-                Text(L("推理均速") + " " + MetricFormat.compactSpeed(statistics.reasoningRate))
-                    .help(MetricFormat.speed(statistics.reasoningRate)).accessibilityIdentifier("monitor.statistics.reasoning")
                 Button { information = StatisticsInfo() } label: { Image(systemName: "info.circle") }
                     .buttonStyle(.borderless).accessibilityLabel(L("统计口径说明"))
                     .accessibilityIdentifier("monitor.statistics.info")
@@ -65,7 +63,6 @@ struct ChatDetailsView: View {
                 Text(L("当前模型") + " · " + model).textSelection(.enabled)
             }
             Text(L("输出包含推理用量；统计只显示可确认属于所选轮次的数据。"))
-            Text(L("推理均速是接收窗口估算，并非服务端纯计算速度。"))
             if statistics.isUnavailable { Text(L("所选轮次统计暂不可用")) }
         }.font(.system(size: 11)).foregroundStyle(.secondary)
     }

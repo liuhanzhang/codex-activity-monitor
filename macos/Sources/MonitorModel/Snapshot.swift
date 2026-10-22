@@ -10,17 +10,10 @@ public struct Overview: Decodable, Sendable {
     public let quality: [String]?
 }
 
-public struct ReasoningRate: Decodable, Sendable {
-    public let tokens_per_second: Double?
-    public let model: String?
-    public let turn_id: String?
-}
-
 public struct Usage: Decodable, Sendable {
     public let turn_id: String?
     public let output_tokens: Int?
     public let reasoning_tokens: Int?
-    public let latest_reasoning: ReasoningRate?
 }
 
 public struct Activity: Decodable, Identifiable, Sendable {

@@ -1,5 +1,7 @@
 # Monitor 展开面板：第三轮设计与实施方案
 
+> 2026-10-22 更新：统计行已移除推理均速，保留输出和其中推理用量。见[移除说明](../05_token_usage_and_reasoning_speed/removal.md)。旧线框与验收图片保留原样。
+
 设计日期：2026-10-20。验收更新：2026-10-21。状态：本轮实施及定向验收完成，日常 GUI 已载入。构建身份、原生证据、租约交接时的自动采集器重启和验证边界见[实施结果](implementation-results.md)。
 
 方案核对的源码基线：`768aa6e`（`perf(collector): publish disk snapshots once per second`）。后续实施应重新检查工作区和构建身份，以本章最新决定为目标，不覆盖其他工作。

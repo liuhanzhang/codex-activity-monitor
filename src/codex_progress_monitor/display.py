@@ -100,9 +100,7 @@ def render(snapshot, selected=0, detail=False, thread_filter=None, language=DEFA
         usage = thread.get('usage', {})
         token_lines = '\n'.join(f'{label} '+(f'{usage[key]:,}' if usage.get(key) is not None else '—')
                                 for label, key in (('Output', 'output_tokens'), ('Reasoning', 'reasoning_tokens')))
-        recent = usage.get('latest_reasoning')
-        reasoning_rate = '—' if not recent else f'≈{recent["tokens_per_second"]:.1f} token/s'
-        rates = t('usage.generation')+' '+rate+'\n'+t('usage.reasoning_compact')+' '+reasoning_rate
+        rates = t('usage.generation')+' '+rate
         cwd = Path(thread['cwd']).name if thread.get('cwd') else ''
         title = thread['name'] if thread['name'] != thread['id'][:8] else t('view.unnamed')
         name = ('› ' if index == selected else '  ')+title+('\n  '+cwd if cwd else '')
@@ -131,10 +129,6 @@ def render(snapshot, selected=0, detail=False, thread_filter=None, language=DEFA
             details.add_row(Text(render_message(_activity_message(activity), language)), state,
                             seconds(activity['duration_seconds'], language) if activity.get('start_known') else '—')
         context = []
-        recent = thread.get('usage', {}).get('latest_reasoning')
-        if recent:
-            context.append(t('usage.reasoning_detail', rate=f'{recent["tokens_per_second"]:.1f}',
-                             model=recent.get('model') or 'unknown', turn=recent['turn_id']))
         if thread.get('model') and thread['model'] != 'unknown':
             context.append(t('context.model', name=thread['model']))
         plan = thread.get('plan', [])

@@ -1,5 +1,7 @@
 # 本回合 Token 用量与最近推理均速：需求
 
+> 2026-10-22 更新：推理均速功能已移除，官方 Output / Reasoning 用量继续保留。当前范围见[移除说明](removal.md)；下文保留原需求和验收的历史记录。
+
 日期：2026-10-13。状态：已实现并完成隔离运行验收；日常旧进程的加载边界见 [实现结果](implementation-results.md)。实施步骤见 [实现计划](implementation-plan.md)。
 
 本轮为每个聊天增加 Output Tokens、Reasoning Tokens 和最近一次有效的 reasoning 平均速度。已有的流式生成速度继续保留。需求依据本次对话中用户最后确认的规则；此前文档中“不展示服务端 usage”的范围约定由本轮扩展，历史实验结论保留原时点。
