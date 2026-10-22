@@ -67,6 +67,19 @@ func modelStagesStaySeparateWhenMinimumPixelsOrClockBoundariesOverlap(track: Str
     #expect(active.duration(at: 5000) == 4)
 }
 
+@Test(arguments: ["unknown", "completed", "interrupted"])
+func missingModelEndDoesNotTurnObservationWindowIntoGeneration(status: String) throws {
+    let phase = try timelinePhase(["status": status, "kind": "reasoning", "end_ms": NSNull(),
+                                   "observed_until_ms": 76000, "quality": ["missing_item_end"]])
+    let lane = TimelineLane(id: "model", threadID: "root", track: "model", label: "模型", height: 21, isChild: false)
+    for now in [76000.0, 100000.0] {
+        let layout = TimelineLayout(origin: 0, end: now, now: now, lanes: [lane], activities: [phase])
+        #expect(phase.duration(at: now) == nil)
+        #expect(layout.rect(for: phase).map { Double($0.width) } == TimelineLayout.shortActivityWidth)
+        #expect(layout.rect(for: phase).map { Double($0.minX) } == layout.x(at: 1000))
+    }
+}
+
 @Test func oldSnapshotAcceptsMissingTimelineContract() throws {
     let snapshot = try Snapshot.decode(Data("{\"schema_version\":1,\"threads\":[{\"id\":\"root\"}]}".utf8))
     #expect(snapshot.timeline_summary == nil)

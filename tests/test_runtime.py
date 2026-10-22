@@ -99,6 +99,33 @@ class RuntimeTests(unittest.TestCase):
             for a in t['activities']) for t in s['threads']),timeout=6)
         self.assertFalse(next(t for t in after['threads'] if t['id']=='t')['has_active_work'])
 
+    def test_history_retires_unrecorded_model_without_timeline_request(self):
+        home, _ = self.history_fixture()
+        path = home/'sessions/probe-t.jsonl'
+        start(self.runtime)
+        with socket.socket(socket.AF_UNIX,socket.SOCK_STREAM) as sock:
+            sock.connect(str(self.runtime/'events.sock'))
+            def send(direction, event):
+                sock.sendall(json.dumps({'backend':'history-test','direction':direction,
+                    'observed_ns':time.monotonic_ns(),'observed_timestamp':time.time(),'event':event}).encode()+b'\n')
+            send('lifecycle', {'type':'bridge/started','home':str(home)})
+            send('protocol_out', {'method':'turn/started','params':{'threadId':'t','turn':{'id':'u'}}})
+            send('protocol_out', {'method':'item/started','params':{'threadId':'t','turnId':'u',
+                'item':{'id':'thinking','type':'reasoning'}}})
+            send('protocol_out', {'method':'turn/completed','params':{'threadId':'t','turn':{'id':'u','status':'completed'}}})
+            self.wait_snapshot(lambda s:any(any(a['id']=='thinking' for a in t['activities']) for t in s['threads']))
+            with path.open('a') as stream:
+                stream.write(json.dumps({'type':'event_msg','timestamp':time.time(),'payload':{
+                    'type':'task_complete','turn_id':'u','completed_at':time.time()}})+'\n')
+            self.wait_snapshot(lambda s:any(t['id']=='t' and t['status']=='completed' and
+                not any(a['id']=='thinking' for a in t['activities']) for t in s['threads']),timeout=6)
+        bundle = query_runtime(self.runtime,{'action':'timeline','scope_id':str(home),'thread_id':'t','turn_id':'u'})
+        self.assertNotIn('thinking',[p['item_id'] for p in bundle['phases']])
+        stop(self.runtime)
+        start(self.runtime)
+        bundle = query_runtime(self.runtime,{'action':'timeline','scope_id':str(home),'thread_id':'t','turn_id':'u'})
+        self.assertNotIn('thinking',[p['item_id'] for p in bundle['phases']])
+
     def test_blocked_history_read_does_not_block_collector_events(self):
         home, complete = self.history_fixture()
         entered, release = self.runtime/'reader-entered', self.runtime/'reader-release'

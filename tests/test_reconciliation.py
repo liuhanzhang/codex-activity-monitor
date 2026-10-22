@@ -187,11 +187,136 @@ class ReconciliationTests(unittest.TestCase):
         self.send({'method': 'item/started', 'params': {'threadId': 't', 'turnId': 'u',
                    'item': {'id': 'thinking', 'type': 'reasoning'}}}, 101)
         self.reconcile([self.row('event_msg', {'type': 'task_complete', 'turn_id': 'u'})])
-        activity = self.activity('thinking')
-        self.assertEqual(activity['status'], 'unknown')
-        self.assertFalse(activity['active'])
-        self.assertIsNone(activity['duration_seconds'])
+        self.assertNotIn('thinking', [a['id'] for a in self.snapshot()['threads'][0]['activities']])
+        activity = self.engine.threads[('b', 't')].activities['thinking']
+        self.assertTrue(activity.history_retired)
+        self.assertIsNone(activity.ended_at)
+        phase = next(p for p in self.book.phases.values() if p['item_id'] == 'thinking')
+        self.assertTrue(phase['history_retired'])
+        self.assertIsNone(phase['end_ms'])
         self.assertTrue(self.activity()['active'])
+
+    def thinking(self, item='thinking', turn='u', at=101):
+        self.send({'method': 'item/started', 'params': {'threadId': 't', 'turnId': turn,
+                   'item': {'id': item, 'type': 'reasoning'}}}, at)
+
+    def model_ids(self, turn='u'):
+        bundle = TimelineQuery(self.book, history=self.provider).bundle(str(self.home), 't', turn)
+        return [p['item_id'] for p in bundle['phases'] if p['track'] == 'model']
+
+    def test_unrecorded_model_retires_after_persisted_turn_end_but_evidence_remains(self):
+        self.thinking()
+        self.assertIn('thinking', self.model_ids())
+        self.finish_turn()
+        self.reconcile()
+        self.assertIn('thinking', self.model_ids())  # A live turn end alone is insufficient.
+        usage = self.engine.usage.dump()
+        self.reconcile([self.row('event_msg', {'type': 'task_complete', 'turn_id': 'u'})])
+        self.assertNotIn('thinking', self.model_ids())
+        self.assertNotIn('thinking', [a['id'] for a in self.snapshot()['threads'][0]['activities']])
+        self.assertEqual(self.engine.usage.dump(), usage)
+        phase = next(p for p in self.book.phases.values() if p['item_id'] == 'thinking')
+        self.assertEqual(phase['status'], 'unknown')
+        self.assertIsNone(phase['end_ms'])
+        detail = TimelineQuery(self.book, history=self.provider).detail(str(self.home), 't', 'u', phase['id'])
+        self.assertEqual(detail['state'], 'not_retained')
+        self.assertTrue(detail['phase']['history_retired'])
+        self.assertTrue(self.activity()['active'])  # Its real background process still survives.
+
+    def test_late_model_history_restores_retired_item_with_source_times(self):
+        self.thinking()
+        self.finish_turn()
+        self.reconcile([self.row('event_msg', {'type': 'task_complete', 'turn_id': 'u'})])
+        self.assertNotIn('thinking', self.model_ids())
+        record = self.completion(item='thinking')
+        record['payload']['item']['type'] = 'Reasoning'
+        self.reconcile([record])
+        self.assertIn('thinking', self.model_ids())
+        self.assertEqual(self.activity('thinking')['status'], 'completed')
+        self.assertAlmostEqual(self.activity('thinking')['duration_seconds'], .35, places=4)
+
+    def test_realtime_completed_model_remains_until_persisted_turn_end(self):
+        self.thinking()
+        self.send({'method': 'item/completed', 'params': {'threadId': 't', 'turnId': 'u',
+                   'item': {'id': 'thinking', 'type': 'reasoning'}}}, 102)
+        self.reconcile()
+        self.assertEqual(self.activity('thinking')['status'], 'completed')
+        self.assertIn('thinking', self.model_ids())
+        self.reconcile([self.row('event_msg', {'type': 'task_complete', 'turn_id': 'u'})])
+        self.assertNotIn('thinking', self.model_ids())
+        self.assertNotIn('thinking', [a['id'] for a in self.snapshot()['threads'][0]['activities']])
+
+    def test_unreliable_history_cannot_retire_model_supplement(self):
+        self.thinking()
+        self.finish_turn()
+        basis = self.path.read_text()
+        ending = json.dumps(self.row('event_msg', {'type': 'task_complete', 'turn_id': 'u'}))+'\n'
+        for suffix in (ending[:30], ending+'{"type":', 'invalid json\n'+ending):
+            with self.subTest(suffix=suffix):
+                self.path.write_text(basis+suffix)
+                self.reconcile()
+                self.assertIn('thinking', self.model_ids())
+                self.assertIn('thinking', [a['id'] for a in self.snapshot()['threads'][0]['activities']])
+        self.path.unlink()
+        self.provider.indices.clear()
+        self.reconcile()
+        self.assertIn('thinking', self.model_ids())
+
+    def test_old_turn_retirement_keeps_new_model_activity_and_explicit_raw_input(self):
+        from codex_progress_monitor.timeline import item_phase
+        self.thinking()
+        parameters = item_phase(str(self.home), 't', 'u',
+                                {'id': 'params', 'type': 'custom_tool_call', 'name': 'exec'},
+                                self.wall*1000+500, self.wall*1000+900)
+        self.book._put(parameters)
+        self.finish_turn()
+        self.start('new', 104)
+        self.thinking('new-thinking', 'new', 104.1)
+        self.reconcile([self.row('response_item', {'type': 'custom_tool_call', 'id': 'params',
+                                                 'name': 'exec', 'input': 'fixture parameters'}),
+                        self.row('event_msg', {'type': 'task_complete', 'turn_id': 'u'})], ('u', 'new'))
+        self.assertEqual(self.model_ids('u'), ['params'])
+        self.assertEqual(self.model_ids('new'), ['new-thinking'])
+        self.assertEqual(self.snapshot()['threads'][0]['status'], 'inProgress')
+        self.assertTrue(self.activity('new-thinking')['active'])
+        returned = next(p for p in TimelineQuery(self.book, history=self.provider).bundle(str(self.home), 't', 'u')['phases']
+                        if p['item_id'] == 'params')
+        self.assertEqual((returned['start_ms'], returned['end_ms']), (parameters['start_ms'], parameters['end_ms']))
+
+    def test_retirement_survives_transient_read_failure_but_not_valid_source_replacement(self):
+        self.thinking()
+        self.finish_turn()
+        self.reconcile([self.row('event_msg', {'type': 'task_complete', 'turn_id': 'u'})])
+        self.engine.apply_history({'scope_id': str(self.home), 'thread_id': 't', 'quality': ['history_unavailable']})
+        from unittest.mock import patch
+        with patch.object(self.provider, 'view', side_effect=OSError):
+            self.assertNotIn('thinking', self.model_ids())
+        self.assertNotIn('thinking', [a['id'] for a in self.snapshot()['threads'][0]['activities']])
+        self.write([self.row('session_meta', {'id': 't', 'history_mode': 'paginated'}),
+                    self.row('event_msg', {'type': 'task_started', 'turn_id': 'u'})])
+        self.reconcile()
+        self.assertIn('thinking', self.model_ids())
+
+    def test_retirement_is_preserved_in_metadata_for_stopped_queries(self):
+        from codex_progress_monitor.timeline_storage import TimelineStorage, read_records
+        self.thinking()
+        self.finish_turn()
+        self.reconcile([self.row('event_msg', {'type': 'task_complete', 'turn_id': 'u'})])
+        path = self.home/'metadata.sqlite3'
+        store = TimelineStorage(path)
+        for phase in self.book.phases.values():
+            store.put('phase', phase)
+        for turn in self.book.turns.values():
+            store.put('turn', turn)
+        store.close()
+        original = next(p for kind, p in read_records(path) if kind == 'phase' and p['item_id'] == 'thinking')
+        self.assertTrue(original['history_retired'])
+        self.assertIsNone(original['end_ms'])
+        query = TimelineQuery(metadata=path)
+        from unittest.mock import patch
+        with patch.object(query.history, 'view', side_effect=OSError):
+            result = query.bundle(str(self.home), 't', 'u')
+        self.assertNotIn('thinking', [p['item_id'] for p in result['phases']])
 
     def test_known_history_activity_can_exist_without_live_start(self):
         self.reconcile([self.completion(item='missed-command')])

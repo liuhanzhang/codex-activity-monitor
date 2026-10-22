@@ -91,12 +91,40 @@ def item_phase(scope, thread, turn, item, start=None, end=None, source='producer
             'quality': [], 'mirrored': item.get('delivery') == 'async', **raw_coordination(item)}
 
 
+def settled_model_items(turns, phases, *, read_complete, quality=()):
+    """Membership for reliable, ended JSONL turns; None means no new decision."""
+    if not read_complete or quality:
+        return None
+    settled = {(t['scope_id'], t['thread_id'], t['turn_id']): set() for t in turns
+               if t['status'] in ('completed', 'failed', 'interrupted') and t.get('end_ms') is not None}
+    for phase in phases:
+        key = (phase['scope_id'], phase['thread_id'], phase['turn_id'])
+        if key in settled:
+            settled[key].add(({'message': 'agentMessage'}.get(phase['item_type'], phase['item_type']), phase['item_id']))
+    return settled
+
+
+def retired_model_supplement(scope, thread, turn, item, item_type, settled):
+    """Only model generation retires at its turn boundary, never tool execution."""
+    key = (scope, thread, turn)
+    item_type = {'message': 'agentMessage'}.get(item_type, item_type)
+    return (item_type in MODEL_TYPES.keys() | {'function_call', 'custom_tool_call'} and
+            key in settled and (item_type, item) not in settled[key])
+
+
+def apply_model_membership(phase, settled):
+    if settled is not None:
+        phase = {**phase, 'history_retired': retired_model_supplement(
+            phase['scope_id'], phase['thread_id'], phase['turn_id'], phase['item_id'], phase.get('item_type'), settled)}
+    return phase
+
+
 def display_phase(phase):
     """Project old sidecars and fresh events with the same visibility policy."""
     phase = dict(phase)
     if phase.get('item_type') == 'contextCompaction':
         phase.update(track='model', kind='contextCompaction', label=LABELS['contextCompaction'])
-    if phase.get('track') == 'marker' and phase.get('kind') != 'input':
+    if phase.get('history_retired') or (phase.get('track') == 'marker' and phase.get('kind') != 'input'):
         return None
     return phase
 
@@ -176,6 +204,15 @@ class TimelineBook:
     def apply_history(self, summary):
         """Correct already-observed phases; JSONL remains the content store."""
         with self.lock:
+            settled = settled_model_items(summary.get('turns', []), summary.get('phases', []),
+                                          read_complete=summary.get('read_complete', False), quality=summary.get('quality', []))
+            if settled is not None:
+                for phase in list(self.phases.values()):
+                    if ((phase['scope_id'], phase['thread_id']) == (summary['scope_id'], summary['thread_id']) and
+                            phase['turn_id'] in summary.get('requested_turns', [])):
+                        updated = apply_model_membership(phase, settled)
+                        if bool(phase.get('history_retired')) != updated['history_retired']:
+                            self._put(updated)
             for phase in summary.get('phases', []):
                 if phase.get('history_terminal') and phase['id'] in self.phases:
                     self._put(phase)

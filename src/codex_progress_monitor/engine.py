@@ -59,6 +59,7 @@ class Activity:
     startup_pending: bool = False
     coordination_action: str | None = None
     history: dict | None = None
+    history_retired: bool = False
     observation_lost: bool = False
 
     @property
@@ -67,11 +68,11 @@ class Activity:
 
     @property
     def unresolved(self):
-        return self.observation_lost and self.effective_status == 'unknown' and self.ended_at is None
+        return not self.history_retired and self.observation_lost and self.effective_status == 'unknown' and self.ended_at is None
 
     @property
     def active(self):
-        return self.ended_at is None and self.effective_status not in ('completed','failed','declined','interrupted','unknown')
+        return not self.history_retired and self.ended_at is None and self.effective_status not in ('completed','failed','declined','interrupted','unknown')
 
 
 @dataclass
@@ -173,7 +174,7 @@ class Engine:
 
     def apply_history(self, summary):
         """Apply persisted facts without replaying them through usage or delta intake."""
-        from .timeline import merge_phase
+        from .timeline import merge_phase, retired_model_supplement, settled_model_items
         scope, identity = summary['scope_id'], summary['thread_id']
         for thread in self.threads.values():
             if thread.id != identity or self.backends.get(thread.backend, {}).get('home') != scope:
@@ -204,6 +205,19 @@ class Engine:
                                 self.streams[key].ended_by_history = False
                                 self.streams[key].quality = 'observation_gap'
             source_turns = {t['turn_id']: t for t in summary.get('turns', [])}
+            settled = settled_model_items(source_turns.values(), phases,
+                                          read_complete=summary.get('read_complete', False), quality=summary.get('quality', []))
+            if settled is not None:
+                for activity in thread.activities.values():
+                    if activity.turn_id not in summary.get('requested_turns', []):
+                        continue
+                    item_type = activity.item_type or self.items.get((thread.backend, activity.id), {}).get('type')
+                    activity.history_retired = retired_model_supplement(scope, identity, activity.turn_id,
+                                                                       activity.id, item_type, settled)
+                    if activity.history_retired:
+                        for key in activity.stream_keys:
+                            if key in self.streams:
+                                self.streams[key].close_from_history()
             if thread.turn_id is None and source_turns:
                 thread.turn_id = max(source_turns.values(), key=lambda t: t.get('updated_ms') or 0)['turn_id']
             # Seed only recent facts for the selected/current turn. The full
@@ -855,7 +869,7 @@ class Engine:
             return False
         thread=self._thread(event.backend,thread_id)
         existing = thread.activities.get(item_id)
-        if existing and existing.history and existing.history.get('history_terminal'):
+        if existing and (existing.history_retired or (existing.history and existing.history.get('history_terminal'))):
             self.counts['late_terminal_deltas'] += 1
             return True
         if (event.backend,turn_id) in self.ended_turns or thread.status not in ('inProgress','idle'):
@@ -1022,6 +1036,8 @@ class Engine:
             since=primary.started_at if primary else thread.wait_started_at
             details=[]
             for activity in reversed(list(thread.activities.values())):
+                if activity.history_retired:
+                    continue
                 end=activity.ended_at
                 history = activity.history or {}
                 source_start, source_end = history.get('start_ms'), history.get('end_ms')

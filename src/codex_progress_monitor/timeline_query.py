@@ -9,7 +9,7 @@ import threading
 import time
 
 from .history import HistoryProvider, raw_section
-from .timeline import display_phase, identity, merge_phase
+from .timeline import apply_model_membership, display_phase, identity, merge_phase, settled_model_items
 from .timeline_storage import metadata_path, read_records
 from .agent_presentation import present_agents, present_coordination, scoped_status
 from .agent_relations import SPAWN_OPERATIONS
@@ -66,6 +66,11 @@ class TimelineQuery:
                     phases[p['id']] = merge_phase(phases.get(p['id']), p)
                     if p.get('call_operation') == 'spawn':
                         spawn_calls.add((p['thread_id'], p['turn_id'], p.get('call_id')))
+                settled = settled_model_items(index.turns.values(), index.phases.values(),
+                                              read_complete=index.read_complete, quality=index.quality)
+                for key, phase in list(phases.items()):
+                    if phase['thread_id'] == owner:
+                        phases[key] = apply_model_membership(phase, settled)
                 for t in index.turns.values():
                     key = (owner, t['turn_id']); old = turns.get(key, {})
                     merged = {**old, **{k: v for k, v in t.items() if v is not None}}
@@ -152,7 +157,8 @@ class TimelineQuery:
                     if matches:
                         engine_names[agent['thread_id']] = matches[0].name
         present_agents(agents, loaded, engine_names)
-        owned = [p for p in phases.values() if (p['thread_id'], p['turn_id']) in owners and not p.get('mirrored')]
+        owned = [p for p in phases.values() if (p['thread_id'], p['turn_id']) in owners
+                 and not p.get('mirrored') and not p.get('history_retired')]
         by_agent = {}
         for phase in owned:
             by_agent.setdefault(phase['thread_id'], []).append(phase)
@@ -188,7 +194,7 @@ class TimelineQuery:
         if root_index is None:
             quality.add('history_pending' if any(p['status'] == 'active' for p in visible) else 'history_unavailable')
         earlier = sorted({p['turn_id'] for p in phases.values() if p['thread_id'] == thread and
-                          p['turn_id'] != selected and p['status'] == 'active'})
+                          p['turn_id'] != selected and p['status'] == 'active' and not p.get('history_retired')})
         earlier_relations = {}
         for relation in list(relations.values()):
             if relation['parent_thread_id'] != thread or relation['parent_turn_id'] == selected:
@@ -200,7 +206,7 @@ class TimelineQuery:
                 continue
             child_turns = [t for t in turns.values() if t['thread_id'] == child]
             first = min(child_turns, key=lambda t: t.get('start_ms') or t.get('updated_ms') or 0) if child_turns else None
-            active = [p for p in phases.values() if p['thread_id'] == child and p['status'] == 'active']
+            active = [p for p in phases.values() if p['thread_id'] == child and p['status'] == 'active' and not p.get('history_retired')]
             for p in active:
                 owned = turns.get((child, p['turn_id']), {})
                 for relation in candidates:
@@ -237,6 +243,12 @@ class TimelineQuery:
         historical = index.phases.get(phase_id) if index else None
         if historical:
             phase = merge_phase(phase, historical)
+        if phase and index:
+            phase = apply_model_membership(phase, settled_model_items(
+                index.turns.values(), index.phases.values(), read_complete=index.read_complete, quality=index.quality))
+        if phase and phase.get('history_retired'):
+            return {'version': 1, 'state': 'not_retained', 'phase': phase,
+                    'source': 'observed_metadata', 'sections': [], 'attachments': []}
         phase = display_phase(phase) if phase else None
         if not phase:
             return {'version': 1, 'state': 'content_unavailable', 'sections': [], 'attachments': []}

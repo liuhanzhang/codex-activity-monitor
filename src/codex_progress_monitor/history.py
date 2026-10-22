@@ -65,9 +65,11 @@ class RolloutIndex:
         self.quality = set()
         self.revision = 0
         self.generation = None
+        self.read_complete = False
         self.agent_metadata = {}
 
     def refresh(self):
+        self.read_complete = False
         previous_metadata, self.agent_metadata = self.agent_metadata, {}
         stat = self.path.stat()
         signature = (stat.st_dev, stat.st_ino)
@@ -105,6 +107,7 @@ class RolloutIndex:
                 except (ValueError, TypeError, KeyError, AttributeError):
                     self.quality.add('malformed_history_record')
                 self.revision += 1
+            self.read_complete = not line
             stream.seek(max(0, self.offset - 256))
             self.anchor = hashlib.sha256(stream.read(min(self.offset, 256))).digest()
 
@@ -388,6 +391,7 @@ class HistoryProvider:
                 selected.add(max(index.turns.values(), key=lambda t: t.get('updated_ms') or 0)['turn_id'])
             return {'scope_id': scope, 'thread_id': thread,
                     'revision': index.revision, 'generation': index.generation, 'fingerprint': index.fingerprint,
+                    'read_complete': index.read_complete,
                     'requested_turns': sorted(selected),
                     'quality': sorted(index.quality),
                     'turns': deepcopy([t for t in index.turns.values() if t['turn_id'] in selected]),

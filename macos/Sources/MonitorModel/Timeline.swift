@@ -335,10 +335,8 @@ public struct TimelineLayout: Sendable {
         for lane in lanes {
             defer { y += lane.height }
             guard lane.threadID == phase.thread_id, lane.track == phase.displayTrack || lane.track == "summary" else { continue }
-            let end = phase.start_ms == nil ? anchor : (phase.end_ms ?? (phase.isActive ? now : phase.observed_until_ms) ?? anchor)
-            let width = phase.displayTrack == "tool"
-                ? max(shortActivityWidth, (phase.duration(at: now) ?? 0) * points)
-                : max(shortActivityWidth, max(0, end - anchor) / 1000 * points)
+            // An observation boundary cannot supply an unknown lifecycle end.
+            let width = max(shortActivityWidth, (phase.duration(at: now) ?? 0) * points)
             return CGRect(x: x, y: y + (lane.height - 11) / 2, width: width, height: 11)
         }
         return nil
