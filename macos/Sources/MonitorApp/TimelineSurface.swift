@@ -11,9 +11,9 @@ import MonitorModel
         }
     }
     private static let shades: [String: NSColor] = [
-        "reasoning": shade(0x8968B3, 0x9A80C0), "text": shade(0x7957AC, 0xB097D1),
-        "tool_input": shade(0x6A429E, 0xC3A2E1), "file_edit_input": shade(0x4F2B77, 0xDCBAF1),
-        "tool_execution": shade(0x965916, 0xD49B57), "contextCompaction": shade(0x567D85, 0x82ACB4)]
+        "reasoning": shade(0x8B6CC1, 0xB49ADC), "text": shade(0x27847B, 0x69B9AF),
+        "tool_input": shade(0x427DBB, 0x82ACE2), "file_edit_input": shade(0xB65D91, 0xD796B7),
+        "tool_execution": shade(0x965916, 0xD49B57), "contextCompaction": shade(0x6F7886, 0xA4ABB6)]
     static let toolOpacity: Double = 0.72
     static var selectionColor: NSColor { NSColor.systemBlue.withAlphaComponent(0.16) }
     static func color(for kind: String) -> NSColor { shades[kind] ?? .secondaryLabelColor }

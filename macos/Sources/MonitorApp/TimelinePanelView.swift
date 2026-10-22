@@ -313,7 +313,8 @@ struct TimelinePanelView: View {
             ForEach([("reasoning", "思考"), ("text", "正文"), ("tool_input", "参数"), ("file_edit_input", "编辑"),
                      ("contextCompaction", "整理")], id: \.0) { kind, title in
                 HStack(spacing: 3) {
-                    Circle().fill(legendColor(kind)).frame(width: 5, height: 5)
+                    RoundedRectangle(cornerRadius: 1.5)
+                        .fill(legendColor(kind)).frame(width: 12, height: 5)
                     Text(L(title))
                 }
             }
