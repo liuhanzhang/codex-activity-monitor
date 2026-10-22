@@ -52,6 +52,7 @@ public struct Chat: Decodable, Identifiable, Sendable {
     public let status: String?
     public let connected: Bool?
     public let visible: Bool?
+    public let ephemeral: Bool?
     public let has_active_work: Bool?
     public let display_label: String?
     public let display_seconds: Double?
@@ -77,7 +78,7 @@ public struct Chat: Decodable, Identifiable, Sendable {
 
     enum CodingKeys: String, CodingKey {
         case threadID = "id"
-        case home, backend, name, cwd, model, status, connected, visible, has_active_work
+        case home, backend, name, cwd, model, status, connected, visible, ephemeral, has_active_work
         case display_label, display_seconds, generation_rate, generation_estimated
         case last_progress_seconds, usage, activities, subagents, parent_thread_id, parent_source, parent_quality, thread_source, context_only, turn_id
     }
@@ -168,18 +169,22 @@ public struct Snapshot: Decodable, Sendable {
         return false
     }
 
+    // Older snapshots omit the flag. Hide only explicitly ephemeral threads.
+    private var listChats: [Chat] { threads.filter { $0.ephemeral != true } }
+
     private var grouped: (members: [Chat], roots: [Chat], unassigned: [Chat], edges: [String: String]) {
+        let chats = listChats
         let edges = parentMap
-        var eligible = Set(threads.filter { $0.visible != false }.map(\.id))
+        var eligible = Set(chats.filter { $0.visible != false }.map(\.id))
         // Hidden/expired ancestors are context for visible descendants, never
         // additional independently recent conversations.
         for id in Array(eligible) {
             var cursor = edges[id]
             while let parent = cursor { eligible.insert(parent); cursor = edges[parent] }
         }
-        let candidates = threads.filter { eligible.contains($0.id) && edges[$0.id] == nil }
+        let candidates = chats.filter { eligible.contains($0.id) && edges[$0.id] == nil }
         func members(_ root: Chat) -> [Chat] {
-            threads.filter { eligible.contains($0.id) && Self.belongs($0.id, to: root.id, edges: edges) }
+            chats.filter { eligible.contains($0.id) && Self.belongs($0.id, to: root.id, edges: edges) }
         }
         func active(_ root: Chat) -> Bool { members(root).contains { $0.has_active_work == true } }
         func age(_ root: Chat) -> Double {
@@ -197,15 +202,16 @@ public struct Snapshot: Decodable, Sendable {
         }
             .sorted { age($0) < age($1) }.prefix(10)
         let selected = roots + unassigned
-        let visible = threads.filter { chat in selected.contains { Self.belongs(chat.id, to: $0.id, edges: edges) } }
+        let visible = chats.filter { chat in selected.contains { Self.belongs(chat.id, to: $0.id, edges: edges) } }
         return (visible, roots, unassigned, edges)
     }
 
     private var parentMap: [String: String] {
+        let chats = listChats
         var edges: [String: String] = [:]
         let spawnOperations: Set<String> = ["spawnAgent", "spawn_agent", "spawn"]
-        for child in threads where child.thread_source != "user" && !(child.parent_quality ?? []).contains("parent_identity_conflict") {
-            let parents = threads.filter { parent in
+        for child in chats where child.thread_source != "user" && !(child.parent_quality ?? []).contains("parent_identity_conflict") {
+            let parents = chats.filter { parent in
                 parent.scope == child.scope && parent.id != child.id &&
                     (child.parent_thread_id == parent.threadID ||
                      (child.parent_thread_id == nil && spawnOperations.contains(parent.subagents?[child.threadID] ?? "")))

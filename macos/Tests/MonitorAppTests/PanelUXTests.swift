@@ -94,6 +94,24 @@ import MonitorModel
     #expect(store.selectedChat?.threadID == "new")
 }
 
+@Test @MainActor func lateEphemeralMetadataClearsRetainedSelection() throws {
+    let helper: [String: Any] = ["id": "helper", "has_active_work": true]
+    let user: [String: Any] = ["id": "user", "ephemeral": false, "has_active_work": true]
+    let store = try panelStore([helper, user])
+    store.panelVisible = true
+    #expect(store.selectedChat?.threadID == "helper")
+    try updatePanel(store, [
+        ["id": "helper", "ephemeral": true, "thread_source": "composer_predictions",
+         "status": "completed", "last_progress_seconds": 1], user
+    ])
+    store.showRecent = true
+    #expect(store.selectedChat?.threadID == "user")
+    #expect(store.visibleChats.map(\.threadID) == ["user"])
+    #expect(store.recentRoots.isEmpty)
+    try updatePanel(store, [user])
+    #expect(store.selectedChat?.threadID == "user")
+}
+
 @Test func listFitsContentThroughFiveRowsAndSharesSmallScreenBudget() {
     for count in [1, 3, 5, 6, 12] {
         let budget = PanelLayoutBudget(maximum: 720, chrome: 90, chatCount: count, hasSelection: true)

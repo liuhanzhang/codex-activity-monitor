@@ -151,7 +151,8 @@ final class DashboardStore {
     }
 
     var selectedChat: Chat? {
-        snapshot?.threads.first { $0.id == selectedChatKey } ?? retainedSelection
+        let chat = snapshot?.threads.first { $0.id == selectedChatKey } ?? retainedSelection
+        return chat?.ephemeral == true ? nil : chat
     }
 
     func selectChat(_ chat: Chat?) {

@@ -76,6 +76,38 @@ private func hierarchy(_ rows: String) throws -> Snapshot {
     #expect(!value.displayedChats.contains { $0.threadID == "old" })
 }
 
+@Test func ephemeralThreadsStayOutOfActiveAndRecentChats() throws {
+    let value = try hierarchy("""
+    {"id":"active-helper","ephemeral":true,"thread_source":"composer_predictions","has_active_work":true},
+    {"id":"01a1623b","ephemeral":true,"thread_source":"composer_predictions","status":"completed","last_progress_seconds":1},
+    {"id":"01a16238","ephemeral":true,"thread_source":"composer_predictions","status":"completed","last_progress_seconds":2},
+    {"id":"user","ephemeral":false,"thread_source":"user","has_active_work":true},
+    {"id":"legacy","status":"completed","last_progress_seconds":3}
+    """)
+    #expect(value.threads.count == 5)
+    #expect(value.rootChats.map(\.threadID) == ["user", "legacy"])
+    #expect(value.displayedChats.map(\.threadID) == ["user", "legacy"])
+    #expect(value.unassignedChats.isEmpty)
+    #expect(value.activeConversationCount == 1)
+}
+
+@Test func ephemeralThreadsNeverReenterThroughParentGrouping() throws {
+    let value = try hierarchy("""
+    {"id":"root","ephemeral":false,"thread_source":"user","status":"completed","last_progress_seconds":700},
+    {"id":"child","thread_source":"subagent","parent_thread_id":"root","has_active_work":true},
+    {"id":"helper-child","ephemeral":true,"parent_thread_id":"root","has_active_work":true},
+    {"id":"helper-parent","ephemeral":true,"has_active_work":true},
+    {"id":"orphan","thread_source":"subagent","parent_thread_id":"helper-parent","has_active_work":true},
+    {"id":"expired","status":"completed","last_progress_seconds":700},
+    {"id":"expired-helper","ephemeral":true,"parent_thread_id":"expired","has_active_work":true}
+    """)
+    #expect(value.rootChats.map(\.threadID) == ["root"])
+    #expect(value.children(of: value.threads[0]).map(\.threadID) == ["child"])
+    #expect(value.unassignedChats.map(\.threadID) == ["orphan"])
+    #expect(value.rows(expanded: [value.threads[0].id]).map { $0.chat.threadID } == ["root", "child"])
+    #expect(Set(value.displayedChats.map(\.threadID)) == ["root", "child", "orphan"])
+}
+
 @Test func managementSeparatesRestoreAndCleanup() throws {
     for state in ["restoring", "pending_cleanup", "restored", "purged", "error"] {
         let result = try JSONDecoder().decode(ManagementState.self, from: Data("{\"version\":1,\"state\":\"\(state)\"}".utf8))
