@@ -3,6 +3,7 @@
 from collections import OrderedDict, defaultdict
 from dataclasses import dataclass, field
 import json
+import time
 
 from .events import DELTA_KINDS, TOOL_TYPES, Event
 from .progress_state import handle_protocol, resolve_request, presentation
@@ -57,10 +58,20 @@ class Activity:
     review_started_ms: int | None = None
     startup_pending: bool = False
     coordination_action: str | None = None
+    history: dict | None = None
+    observation_lost: bool = False
+
+    @property
+    def effective_status(self):
+        return self.history['status'] if self.history and self.history.get('history_terminal') else self.status
+
+    @property
+    def unresolved(self):
+        return self.observation_lost and self.effective_status == 'unknown' and self.ended_at is None
 
     @property
     def active(self):
-        return self.ended_at is None and self.status not in ('completed','failed','declined','interrupted','unknown')
+        return self.ended_at is None and self.effective_status not in ('completed','failed','declined','interrupted','unknown')
 
 
 @dataclass
@@ -94,6 +105,8 @@ class Thread:
     parent_source: str | None = None
     parent_quality: set = field(default_factory=set)
     context_only: bool = False
+    history_progress_ms: float | None = None
+    history_quality: set = field(default_factory=set)
 
 
 class Engine:
@@ -117,6 +130,139 @@ class Engine:
         self.clock=0
         self.resolved_requests = OrderedDict()
         self.usage = UsageBook()
+        self.history_versions = {}
+
+    def history_requests(self):
+        requests = []
+        for thread in self.threads.values():
+            if thread.context_only:
+                continue
+            turns = {a.turn_id for a in thread.activities.values() if a.turn_id}
+            if thread.turn_id:
+                turns.add(thread.turn_id)
+            requests.append((self.backends.get(thread.backend, {}).get('home'), thread.id, turns,
+                             thread.status in ('inProgress', 'unknown') or
+                             any(a.active or a.unresolved for a in thread.activities.values())))
+        return requests
+
+    def restore_unresolved(self, rows, updated_at):
+        """Restore identities, never old live speed or a fabricated observation."""
+        restored = set()
+        for row in rows:
+            if row.get('status') != 'unknown' or not row.get('home') or not row.get('turn_id'):
+                continue
+            backend = row['backend']
+            self.backends.setdefault(backend, {'connected': False, 'home': row['home']})
+            thread = self._thread(backend, row['id'])
+            thread.name, thread.cwd = row.get('name') or '', row.get('cwd') or ''
+            thread.turn_id, thread.status = row['turn_id'], 'unknown'
+            thread.quality.update(row.get('quality', []))
+            thread.quality.add('observation_gap')
+            age = row.get('last_progress_seconds')
+            thread.history_progress_ms = (updated_at - (age or 0)) * 1000 if updated_at else None
+            for item in row.get('activities', []):
+                if item.get('status') != 'unknown':
+                    continue
+                activity = Activity(item['id'], item.get('turn_id') or thread.turn_id,
+                                    item['kind'], item.get('label') or '', None,
+                                    status='unknown', observation_lost=True,
+                                    turn_bound=item.get('turn_bound', True), item_type=item.get('item_type'))
+                thread.activities[activity.id] = activity
+            restored.add((row['home'], row['id']))
+        return restored
+
+    def apply_history(self, summary):
+        """Apply persisted facts without replaying them through usage or delta intake."""
+        from .timeline import merge_phase
+        scope, identity = summary['scope_id'], summary['thread_id']
+        for thread in self.threads.values():
+            if thread.id != identity or self.backends.get(thread.backend, {}).get('home') != scope:
+                continue
+            thread.history_quality = set(summary.get('quality', []))
+            if 'revision' not in summary:
+                continue
+            version_key = (scope, identity)
+            previous = self.history_versions.get(version_key)
+            version = (summary.get('generation'), summary['revision'])
+            if previous and previous[0] == version[0] and previous[1] > version[1]:
+                continue
+            self.history_versions[version_key] = version
+            phases = summary.get('phases', [])
+            terminal_ids = {p['id'] for p in phases if p.get('history_terminal')}
+            for activity in thread.activities.values():
+                if (activity.history and activity.turn_id in summary.get('requested_turns', []) and
+                        activity.history['id'] not in terminal_ids):
+                    activity.history = None
+                    thread.history_quality.add('history_changed')
+                    if activity.status not in ('completed', 'failed', 'interrupted', 'declined'):
+                        activity.status = 'unknown'
+                        activity.observation_lost = True
+                        activity.ended_at = None
+                        thread.history_progress_ms = None
+                        for key in activity.stream_keys:
+                            if key in self.streams:
+                                self.streams[key].ended_by_history = False
+                                self.streams[key].quality = 'observation_gap'
+            source_turns = {t['turn_id']: t for t in summary.get('turns', [])}
+            if thread.turn_id is None and source_turns:
+                thread.turn_id = max(source_turns.values(), key=lambda t: t.get('updated_ms') or 0)['turn_id']
+            # Seed only recent facts for the selected/current turn. The full
+            # transcript remains in JSONL and is read lazily by timeline queries.
+            seeds = [p for p in phases if p.get('history_terminal') and p['turn_id'] == thread.turn_id and
+                     p['item_type'] in TOOL_TYPES | {'agentMessage', 'reasoning', 'plan', 'contextCompaction'}][-20:]
+            for fact in seeds:
+                if fact['item_id'] in thread.activities:
+                    continue
+                kind = {'agentMessage': 'text', 'reasoning': 'reasoning', 'plan': 'plan'}.get(fact['item_type'], 'tool')
+                activity = Activity(fact['item_id'], fact['turn_id'], kind, fact['label'], None,
+                                    status='unknown', item_type=fact['item_type'])
+                activity.tool_name = fact.get('tool_name')
+                thread.activities[activity.id] = activity
+            for fact in phases:
+                activity = thread.activities.get(fact['item_id'])
+                if not activity or activity.turn_id != fact['turn_id'] or not fact.get('history_terminal'):
+                    continue
+                live_type = activity.item_type or self.items.get((thread.backend, activity.id), {}).get('type')
+                live_type = {'message': 'agentMessage'}.get(live_type, live_type)
+                if live_type != fact['item_type']:
+                    continue
+                if (activity.status in ('completed', 'failed', 'interrupted', 'declined') and
+                        activity.status != fact['status']):
+                    thread.history_quality.add('lifecycle_conflict')
+                activity.history = merge_phase(activity.history, fact)
+                thread.history_quality.update(activity.history.get('quality', []))
+                for key in activity.stream_keys:
+                    stream = self.streams.get(key)
+                    if stream:
+                        stream.close_from_history()
+            current = source_turns.get(thread.turn_id)
+            if current and current['status'] in ('completed', 'failed', 'interrupted'):
+                if thread.status in ('completed', 'failed', 'interrupted') and thread.status != current['status']:
+                    thread.history_quality.add('lifecycle_conflict')
+                thread.status = current['status']
+                self.ended_turns[(thread.backend, thread.turn_id)] = current['status']
+                self.turns[(thread.backend, thread.turn_id)] = thread.id
+                for activity in thread.activities.values():
+                    if activity.turn_id == thread.turn_id and activity.turn_bound and (activity.active or activity.unresolved):
+                        # A turn end closes turn-bound context but cannot supply
+                        # the missing item's own terminal state or time.
+                        activity.status = 'unknown'
+                        activity.observation_lost = False
+                        thread.history_quality.add('missing_item_end')
+                        for key in activity.stream_keys:
+                            if key in self.streams:
+                                self.streams[key].close_from_history()
+                if not any(a.active or a.unresolved for a in thread.activities.values()):
+                    ends = [p['end_ms'] for p in phases if p.get('history_terminal') and p.get('end_ms') is not None]
+                    if current.get('end_ms') is not None:
+                        ends.append(current['end_ms'])
+                    if ends:
+                        thread.history_progress_ms = max(ends)
+            elif current and current['status'] == 'active' and thread.status == 'idle':
+                thread.status = 'unknown'
+                thread.quality.add('observation_gap')
+            if self.timeline:
+                self.timeline.apply_history(summary)
 
     def _thread(self, backend, thread_id):
         key = (backend, thread_id)
@@ -272,8 +418,12 @@ class Engine:
             for thread in self.threads.values():
                 if thread.backend==event.backend and (thread.status=='inProgress' or any(a.active for a in thread.activities.values())):
                     thread.quality.add('observation_gap')
+                    for activity in thread.activities.values():
+                        if activity.active:
+                            activity.status = 'unknown'
+                            activity.observation_lost = True
             for stream in self.streams.values():
-                if stream.key[0]==event.backend and stream.ended_at is None:
+                if stream.key[0]==event.backend and stream.ended_at is None and not stream.ended_by_history:
                     stream.quality='observation_gap'
                     stream.text=''
             backend['gaps'] = event.data.get('dropped_packets',backend.get('gaps',0)+1)
@@ -289,9 +439,9 @@ class Engine:
                     for activity in thread.activities.values():
                         if activity.active:
                             activity.status='unknown'
-                            activity.ended_at=event.at
+                            activity.observation_lost=True
                 for stream in self.streams.values():
-                    if stream.key[0]==event.backend and stream.ended_at is None:
+                    if stream.key[0]==event.backend and stream.ended_at is None and not stream.ended_by_history:
                         stream.quality='disconnected'
                         stream.ended_at=event.at
                         stream.text=''
@@ -348,7 +498,7 @@ class Engine:
             if model:
                 thread.model=model
                 for key,stream in self.streams.items():
-                    if key[0]==backend and self.turns.get((backend,self.items.get((backend,key[1]),{}).get('turn_id')))==thread_id and stream.ended_at is None:
+                    if key[0]==backend and self.turns.get((backend,self.items.get((backend,key[1]),{}).get('turn_id')))==thread_id and stream.ended_at is None and not stream.ended_by_history:
                         stream.set_model(model)
             return
         if method in ('turn/started','turn/completed'):
@@ -369,7 +519,7 @@ class Engine:
                 return
             event.turn_started_accepted=True
             for activity in thread.activities.values():
-                if activity.turn_id!=turn_id and activity.active and activity.turn_bound:
+                if activity.turn_id!=turn_id and (activity.active or activity.unresolved) and activity.turn_bound:
                     activity.status='unknown'
                     activity.ended_at=at
                     for key in activity.stream_keys:
@@ -379,6 +529,7 @@ class Engine:
                             stream.quality='missing_termination'
                             stream.text=''
             thread.turn_id,thread.status=turn_id,'inProgress'
+            thread.history_progress_ms=None
             thread.wait_started_at=thread.last_progress_at=at
             thread.quality.clear()
             thread.active_flags.clear()
@@ -395,7 +546,7 @@ class Engine:
             thread.status=params.get('turn',{}).get('status','unknown')
             thread.last_progress_at=at
             for activity in thread.activities.values():
-                if activity.turn_id==turn_id and activity.active:
+                if activity.turn_id==turn_id and (activity.active or activity.unresolved):
                     if not activity.turn_bound and thread.status=='completed':
                         continue
                     activity.ended_at=at
@@ -405,7 +556,7 @@ class Engine:
                 if owner==(backend,thread_id) and thread.activities[item_id].turn_id==turn_id and thread.activities[item_id].turn_bound:
                     resolve_request(self,backend,request_key[1],at)
             for key,stream in self.streams.items():
-                if key[0]==backend and self.items.get((backend,key[1]),{}).get('turn_id')==turn_id and stream.ended_at is None:
+                if key[0]==backend and self.items.get((backend,key[1]),{}).get('turn_id')==turn_id and stream.ended_at is None and not stream.ended_by_history:
                     stream.ended_at=at
         elif method in ('item/started','item/completed'):
             self._protocol_item(thread,turn_id,params.get('item',{}),method,at)
@@ -562,7 +713,7 @@ class Engine:
             for key,stream in self.streams.items():
                 known=self.items.get((backend,key[1]),{})
                 scoped=key[1] in ids if ids else identity.get('turn_id') and known.get('turn_id')==identity['turn_id']
-                if key[0]==backend and scoped and stream.ended_at is None:
+                if key[0]==backend and scoped and stream.ended_at is None and not stream.ended_by_history:
                     self._finish_stream(stream,at)
                     owner=self.turns.get((backend,known.get('turn_id')))
                     activity=self.threads.get((backend,owner)).activities.get(key[1]) if (backend,owner) in self.threads else None
@@ -703,6 +854,10 @@ class Engine:
         if not thread_id:
             return False
         thread=self._thread(event.backend,thread_id)
+        existing = thread.activities.get(item_id)
+        if existing and existing.history and existing.history.get('history_terminal'):
+            self.counts['late_terminal_deltas'] += 1
+            return True
         if (event.backend,turn_id) in self.ended_turns or thread.status not in ('inProgress','idle'):
             self.counts['late_terminal_deltas']+=1
             return True
@@ -710,7 +865,7 @@ class Engine:
         if source=='protocol' and known.get('upstream') and key not in self.streams:
             return True
         stream=self.streams.get(key)
-        if stream and (stream.source!=source or stream.ended_at is not None):
+        if stream and (stream.source!=source or stream.ended_at is not None or stream.ended_by_history):
             self.counts['mirrors_ignored']+=1
             return True
         if sequence is not None:
@@ -739,6 +894,10 @@ class Engine:
                 stream.quality='observation_gap'
         stream.append(delta,event.at)
         if delta:
+            if (activity.observation_lost and not event.replayed and
+                    event.at > self.backends[event.backend].get('gap_at', 0)):
+                activity.status = 'inProgress'
+                activity.observation_lost = False
             activity.last_progress_at=event.at
             thread.error_status=None
             for waiting in thread.activities.values():
@@ -752,7 +911,7 @@ class Engine:
         return True
 
     def _finish_stream(self,stream,at,final=None):
-        if getattr(stream,'finalized',False):
+        if getattr(stream,'finalized',False) or stream.ended_by_history:
             return
         stream.ended_at=at
         if final is not None:
@@ -792,7 +951,8 @@ class Engine:
                 break
             needed.update(ancestors)
         for key,thread in list(self.threads.items()):
-            if thread.status!='inProgress' and not any(a.active for a in thread.activities.values()) and now-thread.last_progress_at>600:
+            age = max(0, time.time() - thread.history_progress_ms / 1000) if thread.history_progress_ms is not None else now-thread.last_progress_at
+            if thread.status!='inProgress' and not any(a.active or a.unresolved for a in thread.activities.values()) and age>600:
                 if key in needed:
                     thread.activities.clear()
                     thread.context_only = True
@@ -818,7 +978,7 @@ class Engine:
                             and stream.quality in ('complete', 'reconciled')):
                         self._tool_label(activity, stream.text)
                         activity.tool_label_revision = stream.revision
-            terminal=[a for a in thread.activities.values() if not a.active]
+            terminal=[a for a in thread.activities.values() if not a.active and not a.unresolved]
             for activity in terminal[:-20]:
                 thread.activities.pop(activity.id,None)
         alive_turns={(t.backend,t.turn_id) for t in self.threads.values()} | {(t.backend,a.turn_id) for t in self.threads.values() for a in t.activities.values()}
@@ -834,6 +994,8 @@ class Engine:
         for backend in list(self.backends):
             if not self.backends[backend].get('connected') and now-self.backends[backend].get('ended_at',now)>600:
                 self.backends.pop(backend,None)
+        history_keys = {(self.backends.get(t.backend, {}).get('home'), t.id) for t in self.threads.values()}
+        self.history_versions = {k: v for k, v in self.history_versions.items() if k in history_keys}
         if sum(len(s.text.encode()) for s in self.streams.values())>32*1024*1024:
             for stream in sorted(self.streams.values(),key=lambda s:len(s.text),reverse=True):
                 if not stream.text:
@@ -849,20 +1011,27 @@ class Engine:
         for thread in self.threads.values():
             backend=self.backends.get(thread.backend,{})
             active=[a for a in thread.activities.values() if a.active]
+            unresolved = any(a.unresolved for a in thread.activities.values()) or thread.status == 'unknown'
             def phase(activity):
                 return activity.kind
             active.sort(key=lambda a:(PRIORITY.get(phase(a),9),-(a.started_at or 0)))
             primary=active[0] if active else None
-            main_phase=phase(primary) if primary else 'waiting' if thread.status=='inProgress' else thread.status
+            main_phase=phase(primary) if primary else 'unknown' if unresolved else 'waiting' if thread.status=='inProgress' else thread.status
             if not backend.get('connected',True) and thread.status=='inProgress':
                 main_phase='unknown'
             since=primary.started_at if primary else thread.wait_started_at
             details=[]
             for activity in reversed(list(thread.activities.values())):
                 end=activity.ended_at
+                history = activity.history or {}
+                source_start, source_end = history.get('start_ms'), history.get('end_ms')
+                duration = ((source_end-source_start)/1000 if source_start is not None and source_end is not None and source_end >= source_start else
+                            None if activity.unresolved or (activity.effective_status == 'unknown' and end is None) or (history.get('history_terminal') and end is None) else
+                            max(0,(end or now)-(activity.started_at or now)))
                 details.append({'id':activity.id,'turn_id':activity.turn_id,'kind':phase(activity),
-                                'label':str(activity.label)[:160], 'status':activity.status,
-                                'active':activity.active, 'duration_seconds':max(0,(end or now)-(activity.started_at or now)),
+                                'label':str(activity.label)[:160], 'status':activity.effective_status,
+                                'active':activity.active, 'duration_seconds':duration,
+                                'source_start_ms':source_start, 'source_end_ms':source_end,
                                 'turn_bound':activity.turn_bound,
                                 'tool_name':activity.tool_name, 'tool_names':list(activity.tool_names),
                                 'command':activity.command,
@@ -872,12 +1041,16 @@ class Engine:
                                 'file_edit_preview':activity.file_edit_preview, 'call_id':activity.call_id,
                                 'start_known':activity.started_at is not None,'summary_chars':activity.summary_chars,
                                 'summary_parts':len(activity.summary_parts), 'output_chars':activity.output_chars,
-                                'exit_code':activity.exit_code,
+                                'exit_code':history.get('exit_code', activity.exit_code),
                                 'streams':[self.streams[k].view(now) for k in activity.stream_keys if k in self.streams]})
             rates={'text':0.0,'tool_input':0.0}
             seen_rates=set()
             unavailable_rates=set()
-            quality=set(thread.quality)
+            # History availability is independent of live stream continuity.
+            quality=set(thread.quality) | (thread.history_quality - {
+                'history_unavailable', 'history_identity_mismatch', 'malformed_history_record'})
+            if unresolved:
+                quality.add('observation_gap')
             for activity in thread.activities.values():
                 if activity.turn_id==thread.turn_id:
                     for key in activity.stream_keys:
@@ -887,7 +1060,7 @@ class Engine:
             for activity in active:
                 for key in activity.stream_keys:
                     stream=self.streams.get(key)
-                    if stream and stream.kind in rates and stream.ended_at is None:
+                    if stream and stream.kind in rates and stream.ended_at is None and not stream.ended_by_history:
                         rate=stream.rate(now)
                         if rate is not None:
                             rates[stream.kind]+=rate
@@ -902,12 +1075,14 @@ class Engine:
                           'home':backend.get('home'),'host':'local',
                           'cwd':thread.cwd,'model':thread.model,'turn_id':thread.turn_id,'status':thread.status,
                           'phase':main_phase,'phase_label':PHASES.get(main_phase,main_phase),
-                          'phase_seconds':max(0,now-since) if (primary is not None or thread.status=='inProgress') and since else None,
-                          'has_active_work':bool(active) or thread.status=='inProgress',
+                          'phase_seconds':max(0,now-since) if not unresolved and (primary is not None or thread.status=='inProgress') and since else None,
+                          'has_active_work':bool(active) or unresolved or thread.status=='inProgress',
+                          'has_unresolved_work':unresolved,
                           'active_count':len(active),'primary_activity_id':primary.id if primary else None,
-                          'last_progress_seconds':max(0,now-thread.last_progress_at) if thread.last_progress_at else None,
+                          'last_progress_seconds':max(0,(wall_time or time.time())-thread.history_progress_ms/1000) if thread.history_progress_ms is not None and not active and not unresolved else max(0,now-thread.last_progress_at) if thread.last_progress_at else None,
                           'token_rates':{k:v if k in seen_rates and k not in unavailable_rates else None for k,v in rates.items()},
                           'quality':sorted(quality),'connected':backend.get('connected',True),
+                          'history_quality':sorted(thread.history_quality),
                           'activities':details})
             views[-1]['usage']=self.usage.view(self.usage.identity(thread.backend,thread.id,self),thread.turn_id)
             presentation(self,thread,views[-1],now)

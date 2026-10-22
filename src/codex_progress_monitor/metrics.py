@@ -23,6 +23,7 @@ class TextStream:
     counted_revision: int = -1
     tokens: int = 0
     ended_at: float | None = None
+    ended_by_history: bool = False
     last_delta_at: float | None = None
     last_count_at: float | None = None
     encoding_name: str = 'o200k_base'
@@ -46,7 +47,7 @@ class TextStream:
             self.estimated = False
         except KeyError:
             self.encoding_name, self.estimated = 'o200k_base', True
-        if previous != self.encoding_name and self.text and self.ended_at is None:
+        if previous != self.encoding_name and self.text and self.ended_at is None and not self.ended_by_history:
             self.pending = None
             self.revision += 1
             self.counted_revision = -1
@@ -57,7 +58,7 @@ class TextStream:
             self.samples.append((self.last_delta_at or self.started_at, 0))
 
     def append(self, delta, at, max_bytes=8*1024*1024):
-        if self.ended_at is not None:
+        if self.ended_at is not None or self.ended_by_history:
             return
         self.chars += len(delta)
         self.utf8_bytes += len(delta.encode('utf-8'))
@@ -70,6 +71,11 @@ class TextStream:
         if self.quality == 'complete':
             self.text += delta
             self.revision += 1
+
+    def close_from_history(self):
+        self.ended_by_history = True
+        if self.counted_revision == self.revision:
+            self.text = ''
 
     def apply_count(self, count, revision, at, cost_ms):
         if revision < self.counted_revision:
@@ -85,11 +91,11 @@ class TextStream:
         # Keep one point before the speed window, bounded by actual sampling frequency.
         while len(self.samples) > 2 and self.samples[1][0] < at-3:
             self.samples.popleft()
-        if self.ended_at is not None and self.counted_revision == self.revision:
+        if (self.ended_at is not None or self.ended_by_history) and self.counted_revision == self.revision:
             self.text = ''
 
     def rate(self, now, window=2.0):
-        if self.ended_at is not None or self.quality != 'complete':
+        if self.ended_at is not None or self.ended_by_history or self.quality != 'complete':
             return None
         if self.last_count_at is None:
             return None
@@ -109,7 +115,7 @@ class TextStream:
         return change/span
 
     def view(self, now):
-        duration = max(0, (self.ended_at or now)-self.started_at)
+        duration = None if self.ended_by_history and self.ended_at is None else max(0, (self.ended_at or now)-self.started_at)
         return {'kind': self.kind, 'source': self.source, 'chars': self.chars,
                 'utf8_bytes': self.utf8_bytes, 'deltas': self.deltas,
                 'tokens': self.tokens if self.last_count_at is not None and self.quality in ('complete','reconciled') else None,
@@ -119,7 +125,7 @@ class TextStream:
                 'count_pending': self.counted_revision!=self.revision,
                 'count_cost_ms': self.count_cost_ms, 'corrections': self.corrections,
                 'mean_received_rate': self.tokens/max(.001,(self.last_delta_at or self.started_at)-self.started_at) if self.ended_at is not None and self.last_count_at is not None and self.quality=='complete' and self.last_delta_at is not None else None,
-                'duration_seconds': duration, 'finished': self.ended_at is not None}
+                'duration_seconds': duration, 'finished': self.ended_at is not None or self.ended_by_history}
 
 
 def count_text(text, encoding_name):
@@ -134,7 +140,7 @@ class TokenCounter:
 
     def tick(self, streams, now):
         # Respect a shared CPU budget as well as each stream's own cost.
-        budget_interval=max(.25,sum(s.count_cost_ms for s in streams if s.ended_at is None)/1000*4)
+        budget_interval=max(.25,sum(s.count_cost_ms for s in streams if s.ended_at is None and not s.ended_by_history)/1000*4)
         for stream in streams:
             if stream.pending is not None:
                 future, revision, at = stream.pending
@@ -145,7 +151,7 @@ class TokenCounter:
                     except Exception:
                         stream.quality = 'tokenizer_error'
                     stream.pending = None
-            if stream.counted_revision==stream.revision and stream.ended_at is None:
+            if stream.counted_revision==stream.revision and stream.ended_at is None and not stream.ended_by_history:
                 if not stream.samples or now-stream.samples[-1][0]>=.25:
                     stream.samples.append((now,stream.tokens))
                     while len(stream.samples)>2 and stream.samples[1][0]<now-3:
@@ -153,7 +159,7 @@ class TokenCounter:
             if stream.quality not in ('complete','reconciled') or stream.counted_revision==stream.revision or stream.pending is not None:
                 continue
             minimum_interval = max(budget_interval, stream.count_cost_ms/1000*4)
-            if stream.ended_at is None and stream.last_count_at is not None and now-stream.last_count_at < minimum_interval:
+            if stream.ended_at is None and not stream.ended_by_history and stream.last_count_at is not None and now-stream.last_count_at < minimum_interval:
                 continue
             if self.pool is None:
                 count, cost = count_text(stream.text, stream.encoding_name)

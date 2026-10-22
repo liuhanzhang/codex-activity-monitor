@@ -2,6 +2,17 @@
 
 配合 [第 09 章](../../docs/09_activity_timeline/README.md)。所有输出放在被忽略的 `.local/`；Git 中只保留脚本、合成截图和脱敏结构统计。
 
+## JSONL 活动校正原型
+
+`jsonl_reconciliation_probe.py` 使用现有历史解析器和实时引擎，以合成事件验证后台读取 JSONL 后结束残留命令、延迟落盘、半行记录及新回合并行等场景。它不执行 fixture 命令、不请求模型、不连接日常 collector，实验适配器不属于产品实现。
+
+```sh
+.local/venv/bin/python -B experiments/timeline/jsonl_reconciliation_probe.py \
+  --output .local/diagnostics/jsonl-feasibility-20261022/run-next
+```
+
+输出目录必须尚不存在。实际结果和边界见[第 14 章可行性实验](../../docs/14_jsonl_activity_reconciliation/feasibility-results.md)。
+
 ## 只读原生预览
 
 最新选中与结果状态见[选中与结果状态](../../docs/09_activity_timeline/selection-status.md)。夹具包含 90 秒失败长工具、5 毫秒失败短工具和无开始时间的阻止记录，用于检查淡蓝底衬、局部图标与详情文案。

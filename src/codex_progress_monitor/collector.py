@@ -20,6 +20,7 @@ from .timeline_storage import TimelineStorage, metadata_path
 from .timeline_query import TimelineQuery, QueryServer
 from .agent_identity import AgentIdentityCache
 from .menu_presentation import menu_presentation
+from .reconciliation import HistoryRefresh
 
 
 def serve(runtime):
@@ -50,16 +51,17 @@ def serve(runtime):
         timeline_error = 'metadata_unavailable'
     timeline = TimelineBook(timeline_store)
     engine=Engine(timeline=timeline)
+    history = HistoryRefresh()
     identities = AgentIdentityCache()
     query_server = None
     try:
-        query_server = QueryServer(runtime/'tl.sock', TimelineQuery(timeline))
+        query_server = QueryServer(runtime/'tl.sock', TimelineQuery(timeline, history=history.provider))
         threading.Thread(target=query_server.serve_forever, kwargs={'poll_interval': .1}, daemon=True,
                          name='timeline-queries').start()
     except OSError:
         timeline_error = 'query_unavailable'
     implementation=source_identity('collector','app_session','engine','overview','menu_presentation','progress_state','events','usage','metrics','runtime','tool_labels','i18n','messages_zh_cn',
-                                   'timeline','timeline_storage','timeline_query','history','agent_presentation','agent_relations','agent_identity')
+                                   'timeline','timeline_storage','timeline_query','history','reconciliation','agent_presentation','agent_relations','agent_identity')
     previous=read_snapshot(runtime)
     historical=previous.get('threads',[]) if time.time()-(previous.get('updated_at') or 0)<600 else []
     if historical:
@@ -73,7 +75,7 @@ def serve(runtime):
         thread['connected']=False
         thread['token_rates']={'text':None,'tool_input':None}
         thread['generation_rate']=None
-        if thread.get('status')=='inProgress' or thread.get('active_count'):
+        if thread.get('status')=='inProgress' or thread.get('active_count') or thread.get('has_unresolved_work'):
             unavailable = message('activity.unknown')
             thread.update(status='unknown',phase='unknown',phase_label=render_message(unavailable),display_label=render_message(unavailable),
                           display_message=unavailable,
@@ -86,6 +88,8 @@ def serve(runtime):
             for stream in activity.get('streams',[]):
                 stream['token_rate']=None
     recovered_at=time.time()
+    restored = engine.restore_unresolved(historical, previous.get('updated_at'))
+    historical = [t for t in historical if (t.get('home'), t['id']) not in restored]
     def retain_history(snapshot):
         if time.time()-recovered_at>=600:
             return
@@ -214,6 +218,9 @@ def serve(runtime):
                 next_tick=now+0.25
             if now>=next_snapshot:
                 with timeline.lock:
+                    for summary in history.drain():
+                        engine.apply_history(summary)
+                    history.schedule(engine.history_requests(), now)
                     snapshot=engine.snapshot(now,time.time())
                     snapshot['timeline_summary']={'version':1,'revision':timeline.revision,
                                                    'available':query_server is not None,
@@ -227,6 +234,7 @@ def serve(runtime):
                 atomic_json(runtime/'snapshot.json',snapshot)
                 next_snapshot=now+1
     finally:
+        history.close()
         if query_server:
             query_server.shutdown()
             query_server.server_close()

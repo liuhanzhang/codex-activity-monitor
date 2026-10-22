@@ -32,7 +32,7 @@ def overview(engine, views, now):
                     continue
                 seen.add(key)
                 stream = engine.streams.get(key)
-                if stream is None or stream.kind not in LIVE_KINDS or stream.ended_at is not None:
+                if stream is None or stream.kind not in LIVE_KINDS or stream.ended_at is not None or stream.ended_by_history:
                     continue
                 rate = stream.rate(now)
                 if rate is None or not math.isfinite(rate) or rate < 0:

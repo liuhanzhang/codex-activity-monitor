@@ -58,7 +58,7 @@ def menu_presentation(engine, views, total):
             generating |= activity.kind in ('text', 'plan', 'tool_input')
             generating |= any(
                 stream is not None and stream.kind in LIVE_KINDS and
-                stream.ended_at is None and stream.last_delta_at is not None
+                stream.ended_at is None and not stream.ended_by_history and stream.last_delta_at is not None
                 for stream in (engine.streams.get(key) for key in activity.stream_keys))
             executing |= activity.kind == 'tool' and not activity.startup_pending and activity.started_at is not None
             thinking |= activity.kind == 'reasoning' and activity.started_at is not None

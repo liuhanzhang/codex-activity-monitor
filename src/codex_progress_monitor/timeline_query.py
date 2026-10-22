@@ -16,10 +16,10 @@ from .agent_relations import SPAWN_OPERATIONS
 
 
 class TimelineQuery:
-    def __init__(self, book=None, metadata=None):
+    def __init__(self, book=None, metadata=None, history=None):
         self.book = book
         self.metadata = metadata
-        self.history = HistoryProvider()
+        self.history = history or HistoryProvider()
 
     def _observed(self, scope, thread):
         if self.book:
@@ -57,7 +57,7 @@ class TimelineQuery:
                 return loaded[owner]
             loaded[owner] = None
             try:
-                index = self.history.index(scope, owner)
+                index = self.history.view(scope, owner)
                 if not index:
                     return None
                 revisions.append(index.revision)
@@ -227,7 +227,7 @@ class TimelineQuery:
         history_error = None
         try:
             previous_index = self.history.indices.get((scope, thread))
-            index = self.history.index(scope, thread)
+            index = self.history.view(scope, thread)
             if index is None and previous_index and not previous_index.path.exists():
                 history_error = 'missing'
         except (OSError, ValueError, TypeError):

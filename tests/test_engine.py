@@ -153,7 +153,9 @@ class EngineTests(unittest.TestCase):
         self.send({'type':'bridge/disconnected'},104,direction='lifecycle')
         thread=self.view(105)['threads'][0]
         self.assertEqual(thread['phase'],'unknown')
-        self.assertFalse(thread['has_active_work'])
+        self.assertEqual(thread['active_count'],0)
+        self.assertTrue(thread['has_unresolved_work'])
+        self.assertIsNone(self.view(105)['overview']['generation_rate'])
 
     def test_late_generation_cannot_reopen_completed_turn(self):
         self.turn()

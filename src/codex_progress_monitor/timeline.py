@@ -109,13 +109,18 @@ def merge_phase(old, new):
         result = {**old, **{k: v for k, v in new.items() if v is not None}}
         result['quality'] = sorted(set(old.get('quality', [])) | set(new.get('quality', [])))
         result['mirrored'] = old.get('mirrored', False) or new.get('mirrored', False)
-        rank = lambda value: 2 if value in ('producer', 'history') else 1 if value == 'receipt' else 0
+        rank = lambda value: 3 if value == 'history' else 2 if value == 'producer' else 1 if value == 'receipt' else 0
         for bound in ('start', 'end'):
             key, provenance = bound + '_ms', bound + '_source'
             if old.get(key) is not None and (new.get(key) is None or
                     rank(old.get(provenance)) >= rank(new.get(provenance))):
                 result[key], result[provenance] = old[key], old.get(provenance)
         if old.get('status') not in ('active', 'waiting') and new.get('status') == 'active':
+            result['status'] = old['status']
+        terminal = {'completed', 'failed', 'interrupted', 'declined'}
+        if old.get('status') in terminal and new.get('status') in terminal and old['status'] != new['status']:
+            result['quality'] = sorted(set(result['quality']) | {'lifecycle_conflict'})
+        if old.get('history_terminal') and not new.get('history_terminal'):
             result['status'] = old['status']
         if old.get('kind') == 'file_edit_input':
             result['kind'] = 'file_edit_input'
@@ -167,6 +172,28 @@ class TimelineBook:
             self.revision += 1
             if self.store:
                 self.store.put(record_type, record)
+
+    def apply_history(self, summary):
+        """Correct already-observed phases; JSONL remains the content store."""
+        with self.lock:
+            for phase in summary.get('phases', []):
+                if phase.get('history_terminal') and phase['id'] in self.phases:
+                    self._put(phase)
+            for turn in summary.get('turns', []):
+                old = self.turns.get(turn['id'])
+                if old and turn['status'] in ('completed', 'failed', 'interrupted'):
+                    self._save('turn', {**old, **{k: v for k, v in turn.items() if v is not None}})
+                    for phase in list(self.phases.values()):
+                        if (phase['scope_id'], phase['thread_id'], phase['turn_id']) != (turn['scope_id'], turn['thread_id'], turn['turn_id']):
+                            continue
+                        if phase['status'] not in ('active', 'waiting'):
+                            continue
+                        activity = next((t.activities.get(phase['item_id']) for t in self.engine.threads.values()
+                                         if t.id == turn['thread_id'] and
+                                         self.engine.backends.get(t.backend, {}).get('home') == turn['scope_id']), None) if self.engine else None
+                        if not activity or not activity.active:
+                            self._put({**phase, 'status': 'unknown',
+                                       'quality': sorted(set(phase['quality']) | {'missing_item_end'})})
 
     def _turn(self, scope, thread, turn, at, state=None, start=None, end=None):
         if not thread or not turn:

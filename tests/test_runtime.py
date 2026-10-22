@@ -13,6 +13,7 @@ from unittest.mock import patch, MagicMock
 from codex_progress_monitor.cli import start,stop
 from codex_progress_monitor.runtime import runtime_dir,read_snapshot
 from codex_progress_monitor.bridge import observes_stdio,Observer
+from codex_progress_monitor.timeline_query import query_runtime
 
 
 class RuntimeTests(unittest.TestCase):
@@ -29,6 +30,114 @@ class RuntimeTests(unittest.TestCase):
         path.write_text('#!'+sys.executable+'\n'+source)
         path.chmod(0o700)
         return path
+
+    def history_fixture(self):
+        home = self.runtime/'fixture-home'
+        path = home/'sessions/probe-t.jsonl'
+        path.parent.mkdir(parents=True)
+        wall = time.time()-1
+        def row(kind, payload):
+            return {'type':kind, 'timestamp':wall, 'payload':payload}
+        path.write_text('\n'.join(json.dumps(r) for r in [
+            row('session_meta', {'id':'t','history_mode':'paginated'}),
+            row('event_msg', {'type':'task_started','turn_id':'u','started_at':wall})])+'\n')
+        def complete():
+            with path.open('a') as stream:
+                for record in [row('event_msg', {'type':'item_completed','thread_id':'t','turn_id':'u',
+                    'started_at_ms':wall*1000+100,'completed_at_ms':wall*1000+450,
+                    'item':{'id':'cmd','type':'CommandExecution','status':'completed','exit_code':0,
+                            'aggregated_output':'PRIVATE_HISTORY_RESULT'}}),
+                    row('event_msg', {'type':'task_complete','turn_id':'u','completed_at':wall+.5})]:
+                    stream.write(json.dumps(record)+'\n')
+        return home, complete
+
+    def send_history_work(self, sock, home):
+        def send(direction, event):
+            sock.sendall(json.dumps({'backend':'history-test','direction':direction,
+                'observed_ns':time.monotonic_ns(),'observed_timestamp':time.time(),'event':event}).encode()+b'\n')
+        send('lifecycle', {'type':'bridge/started','home':str(home)})
+        send('protocol_out', {'method':'turn/started','params':{'threadId':'t','turn':{'id':'u'}}})
+        send('protocol_out', {'method':'item/started','params':{'threadId':'t','turnId':'u',
+            'item':{'id':'cmd','type':'commandExecution','source':'unifiedExecStartup',
+                    'processId':'fixture-only','status':'inProgress'}}})
+        send('lifecycle', {'type':'bridge/gap'})
+        send('protocol_out', {'method':'turn/completed','params':{'threadId':'t',
+            'turn':{'id':'u','status':'completed'}}})
+        return send
+
+    def test_history_corrects_without_timeline_request(self):
+        home, complete = self.history_fixture()
+        start(self.runtime)
+        with socket.socket(socket.AF_UNIX,socket.SOCK_STREAM) as sock:
+            sock.connect(str(self.runtime/'events.sock'))
+            self.send_history_work(sock,home)
+            before = self.wait_snapshot(lambda s:any(t.get('has_unresolved_work') for t in s['threads']))
+            self.assertIsNone(before['overview']['generation_rate'])
+            complete()
+            after = self.wait_snapshot(lambda s:any(any(a['id']=='cmd' and a['status']=='completed'
+                for a in t['activities']) for t in s['threads']),timeout=6)
+            thread = next(t for t in after['threads'] if t['id']=='t')
+            self.assertFalse(thread['has_active_work'])
+            self.assertIn('observation_gap',thread['quality'])
+            self.assertEqual(after['overview']['generation_rate'],0)
+            self.assertNotIn('PRIVATE_HISTORY_RESULT',(self.runtime/'snapshot.json').read_text())
+            bundle = query_runtime(self.runtime,{'action':'timeline','scope_id':str(home),'thread_id':'t','turn_id':'u'})
+            phase = next(p for p in bundle['phases'] if p['item_id']=='cmd')
+            self.assertEqual(phase['status'],'completed')
+
+    def test_history_corrects_restored_unknown_without_starting_new_turn(self):
+        home, complete = self.history_fixture()
+        start(self.runtime)
+        with socket.socket(socket.AF_UNIX,socket.SOCK_STREAM) as sock:
+            sock.connect(str(self.runtime/'events.sock'))
+            self.send_history_work(sock,home)
+            self.wait_snapshot(lambda s:any(t.get('has_unresolved_work') for t in s['threads']))
+            stop(self.runtime)
+        complete()
+        start(self.runtime)
+        after = self.wait_snapshot(lambda s:any(any(a['id']=='cmd' and a['status']=='completed'
+            for a in t['activities']) for t in s['threads']),timeout=6)
+        self.assertFalse(next(t for t in after['threads'] if t['id']=='t')['has_active_work'])
+
+    def test_blocked_history_read_does_not_block_collector_events(self):
+        home, complete = self.history_fixture()
+        entered, release = self.runtime/'reader-entered', self.runtime/'reader-release'
+        script = '''import time
+from pathlib import Path
+from codex_progress_monitor.history import HistoryProvider
+from codex_progress_monitor.collector import serve
+original=HistoryProvider.reconciliation
+def blocked(self,*args):
+    Path(ENTERED).touch()
+    while not Path(RELEASE).exists(): time.sleep(.01)
+    return original(self,*args)
+HistoryProvider.reconciliation=blocked
+serve(Path(RUNTIME))
+'''.replace('ENTERED',repr(str(entered))).replace('RELEASE',repr(str(release))).replace('RUNTIME',repr(str(self.runtime)))
+        with (self.runtime/'probe.log').open('w') as log:
+            process = subprocess.Popen([sys.executable,'-B','-c',script],stdout=log,stderr=log)
+            try:
+                self.wait_snapshot(lambda s:s.get('running'),timeout=4)
+                with socket.socket(socket.AF_UNIX,socket.SOCK_STREAM) as sock:
+                    sock.connect(str(self.runtime/'events.sock'))
+                    send = self.send_history_work(sock,home)
+                    self.wait_snapshot(lambda s:entered.exists(),timeout=4)
+                    blocked_at = read_snapshot(self.runtime)['updated_at']
+                    send('protocol_out',{'method':'turn/started','params':{'threadId':'t','turn':{'id':'new'}}})
+                    send('protocol_out',{'method':'turn/started','params':{'threadId':'other','turn':{'id':'independent'}}})
+                    during = self.wait_snapshot(lambda s:s.get('updated_at',0)>blocked_at and
+                        any(t['turn_id']=='new' for t in s['threads']) and
+                        any(t['id']=='other' and t['status']=='inProgress' for t in s['threads']),timeout=4)
+                    self.assertFalse(release.exists())
+                    complete()
+                    release.touch()
+                    after = self.wait_snapshot(lambda s:any(any(a['id']=='cmd' and a['status']=='completed'
+                        for a in t['activities']) for t in s['threads']),timeout=6)
+                    self.assertEqual(next(t for t in after['threads'] if t['id']=='t')['turn_id'],'new')
+            finally:
+                release.touch()
+                stop(self.runtime)
+                process.wait(timeout=5)
 
     def command(self,actual,*args):
         return [sys.executable,'-m','codex_progress_monitor.cli','--runtime',str(self.runtime),'bridge','--real-cli',str(actual),'--',*args]

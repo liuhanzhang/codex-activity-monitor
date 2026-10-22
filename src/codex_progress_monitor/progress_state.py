@@ -348,6 +348,8 @@ def presentation(engine, thread, view, now):
     if not connected or 'system_error' in thread.quality:
         label = message('activity.disconnected' if not connected else 'activity.unknown')
         primary = None
+    elif view.get('has_unresolved_work') and not primary:
+        label = message('activity.unknown')
     elif primary and 'observation_gap' in thread.quality and primary.last_progress_at <= engine.backends[thread.backend].get('gap_at',0):
         label = message('activity.unknown')
         primary = None
@@ -387,7 +389,7 @@ def presentation(engine, thread, view, now):
     for activity in actual:
         for key in activity.stream_keys:
             stream = engine.streams.get(key)
-            if stream and stream.ended_at is None and stream.last_delta_at is not None and stream.kind in ('text','plan','summary','tool_input'):
+            if stream and stream.ended_at is None and not stream.ended_by_history and stream.last_delta_at is not None and stream.kind in ('text','plan','summary','tool_input'):
                 rate = stream.rate(now)
                 if rate is None:
                     unavailable = True

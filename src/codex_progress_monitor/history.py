@@ -1,6 +1,7 @@
 """Read Codex-owned JSONL lazily. Cache offsets and metadata, never transcripts."""
 
 from collections import OrderedDict
+from copy import copy, deepcopy
 from datetime import datetime
 import hashlib
 import json
@@ -8,6 +9,7 @@ import re
 from pathlib import Path
 import threading
 import time
+import uuid
 
 from .timeline import identity, item_phase, merge_phase, status, valid_ms
 from .events import TOOL_TYPES
@@ -62,6 +64,7 @@ class RolloutIndex:
         self.mode = None
         self.quality = set()
         self.revision = 0
+        self.generation = None
         self.agent_metadata = {}
 
     def refresh(self):
@@ -83,6 +86,7 @@ class RolloutIndex:
             stream.seek(max(0, self.offset - 256))
             anchor = hashlib.sha256(stream.read(min(self.offset, 256))).digest()
             if self.fingerprint != signature or stat.st_size < self.offset or (self.anchor is not None and self.anchor != anchor):
+                self.generation = uuid.uuid4().hex
                 self.offset = 0
                 self.turn = None
                 self.turns.clear(); self.phases.clear(); self.refs.clear(); self.outputs.clear(); self.relations.clear()
@@ -147,6 +151,10 @@ class RolloutIndex:
                                valid_ms(payload.get('started_at_ms')), valid_ms(payload.get('completed_at_ms')), 'history')
             if phase:
                 phase['status'] = status(item.get('status', 'completed'))
+                phase['history_terminal'] = phase['status'] in ('completed', 'failed', 'interrupted', 'declined')
+                code = payload.get('item', {}).get('exit_code', item.get('exitCode'))
+                if isinstance(code, int) and not isinstance(code, bool):
+                    phase['exit_code'] = code
                 phase['observed_until_ms'] = at
                 self._phase(phase, offset, length, 'canonical')
                 self._turn_record(turn, at)
@@ -352,10 +360,38 @@ def item_content(item):
 
 
 class HistoryProvider:
-    def __init__(self):
+    def __init__(self, capacity=12):
         self.indices = OrderedDict()
         self.lock = threading.RLock()
         self.missing = {}
+        self.capacity = capacity
+
+    def view(self, scope, thread):
+        """Detach mutable index metadata before releasing the reader lock."""
+        with self.lock:
+            index = self.index(scope, thread)
+            if index is None:
+                return None
+            result = copy(index)
+            for name in ('turns', 'phases', 'refs', 'outputs', 'relations', 'agent_metadata', 'quality'):
+                setattr(result, name, deepcopy(getattr(index, name)))
+            return result
+
+    def reconciliation(self, scope, thread, turns):
+        """Small, content-free summary for the event loop; all I/O stays here."""
+        with self.lock:
+            index = self.index(scope, thread)
+            if index is None:
+                return {'scope_id': scope, 'thread_id': thread, 'quality': ['history_unavailable']}
+            selected = set(turns)
+            if not selected and index.turns:
+                selected.add(max(index.turns.values(), key=lambda t: t.get('updated_ms') or 0)['turn_id'])
+            return {'scope_id': scope, 'thread_id': thread,
+                    'revision': index.revision, 'generation': index.generation, 'fingerprint': index.fingerprint,
+                    'requested_turns': sorted(selected),
+                    'quality': sorted(index.quality),
+                    'turns': deepcopy([t for t in index.turns.values() if t['turn_id'] in selected]),
+                    'phases': deepcopy([p for p in index.phases.values() if p['turn_id'] in selected])}
 
     def index(self, scope, thread):
         if not isinstance(thread, str) or not thread or any(c in thread for c in ('/', '\\', '\x00')):
@@ -381,7 +417,7 @@ class HistoryProvider:
                             meta = json.loads(stream.readline())
                         if meta.get('type') == 'session_meta' and meta.get('payload', {}).get('id') == thread:
                             verified.append(path)
-                    except (OSError, ValueError):
+                    except (OSError, ValueError, TypeError, AttributeError):
                         continue
                 if len(verified) != 1:
                     self.missing[key] = time.monotonic()
@@ -390,6 +426,6 @@ class HistoryProvider:
                 self.indices[key] = index
             index.refresh()
             self.indices.move_to_end(key)
-            while len(self.indices) > 12:
+            while len(self.indices) > self.capacity:
                 self.indices.popitem(last=False)
             return index

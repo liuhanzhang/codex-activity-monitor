@@ -30,6 +30,8 @@
 
 第三轮展开面板已实现并载入日常 GUI：统一聊天列表、最多 5 行、单选查看区、主子智能体固定紧凑双轨、标题轮次入口和原生加减缩放。71 项定向测试及关键原生交互、有限来源核对已完成；日常重载触发的既有采集器租约重启及验证边界见[实施结果](docs/13_expanded_panel_round3/implementation-results.md)。设计与[最终交互线框](docs/13_expanded_panel_round3/assets/wireframe.html)见[第 13 章](docs/13_expanded_panel_round3/README.md)。
 
+“JSONL 已记录完成、Monitor 仍显示运行中”的修复已实现并载入日常 collector：以 Codex JSONL 为基础，补充实时活动，在后台主动校正残留状态。232 项相关测试、隔离 collector、原始来源和有限日常检查已完成；实际证据与观测重载边界见[第 14 章实施结果](docs/14_jsonl_activity_reconciliation/implementation-results.md)。
+
 ## 目录
 
 **日常开发主要看 `src/`、`tests/`、`bin/`、`pyproject.toml` 和 `docs/02_product_mvp/`。** 其余目录是实验资料或本机运行环境。
@@ -54,7 +56,8 @@ codex_progress_monitor/
 │   ├── 10_expanded_panel_ux/                 展开面板信息结构、原生控件及实施验证结果
 │   ├── 11_agent_timeline_ux/                 子智能体时间轴设计与实施
 │   ├── 12_subagent_monitoring_fixes/         子智能体归属、状态与历史加载修复
-│   └── 13_expanded_panel_round3/             第三轮展开面板设计、实施计划、最终线框与实施验证
+│   ├── 13_expanded_panel_round3/             第三轮展开面板设计、实施计划、最终线框与实施验证
+│   └── 14_jsonl_activity_reconciliation/     JSONL 基础与实时活动合并、残留状态修复方案及验收计划
 ├── experiments/                    可复用实验脚本
 │   ├── desktop-isolation/          隔离 Desktop / WebSocket 实验
 │   │   └── runs/                   本机隔离 App 数据和原始记录，不提交
