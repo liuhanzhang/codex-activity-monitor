@@ -20,27 +20,13 @@ struct InputPopoverRequest: Identifiable {
     init(phase: TimelinePhase, client: any TimelineReading) { self.phase = phase; self.client = client }
     func invalidate() { serial += 1; loading = false }
 
-    private func validated(_ value: ActivityDetail) throws -> ActivityDetail {
-        guard value.version == 1 else { throw SnapshotError.unsupportedVersion }
-        if value.phase == nil, value.sections.isEmpty,
-           ["content_unavailable", "history_unavailable", "missing", "unavailable", "not_retained"].contains(value.state) {
-            return value // An unavailable reply carries no content to borrow or attribute.
-        }
-        guard let returned = value.phase,
-              returned.scope_id == phase.scope_id, returned.thread_id == phase.thread_id,
-              returned.turn_id == phase.turn_id, returned.id == phase.id else {
-            throw BackendFailure(message: "活动身份不匹配")
-        }
-        return value
-    }
-
     func load() async {
         serial += 1
         let token = serial
         loading = true; error = nil
         defer { if token == serial { loading = false } }
         do {
-            let value = try validated(await client.detail(phase: phase, section: nil, offset: 0))
+            let value = try await client.detail(phase: phase, section: nil, offset: 0).validated(for: phase)
             guard !Task.isCancelled, token == serial else { return }
             detail = value
         } catch {
@@ -50,27 +36,16 @@ struct InputPopoverRequest: Identifiable {
     }
 
     func loadMore() async {
-        guard let section = detail?.sections.first(where: { $0.next_offset != nil }),
+        guard !loading, let section = detail?.sections.first(where: { $0.next_offset != nil }),
               let offset = section.next_offset else { return }
         serial += 1
         let token = serial
         loading = true; error = nil
         defer { if token == serial { loading = false } }
         do {
-            let value = try validated(await client.detail(phase: phase, section: section.id, offset: offset))
+            let value = try await client.detail(phase: phase, section: section.id, offset: offset).validated(for: phase)
             guard !Task.isCancelled, token == serial, let prior = detail else { return }
-            guard let part = value.sections.first(where: { $0.id == section.id }),
-                  let index = prior.sections.firstIndex(where: { $0.id == section.id }) else {
-                detail = value.retainingContent(from: prior)
-                if value.state == "available" { error = "暂时无法读取更多内容" }
-                return
-            }
-            guard part.offset == offset, part.next_offset == nil || part.next_offset! > offset else {
-                throw BackendFailure(message: "活动身份不匹配")
-            }
-            var merged = value.retainingContent(from: prior)
-            merged.sections[index] = section.appendingPage(part)
-            detail = merged
+            detail = try prior.appendingPage(value, sectionID: section.id, offset: offset)
         } catch {
             guard !Task.isCancelled, token == serial else { return }
             self.error = "暂时无法读取更多内容"

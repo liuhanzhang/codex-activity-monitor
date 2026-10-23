@@ -29,6 +29,8 @@ import SwiftUI
     private var drawCount = 0
     private var drawCalls = 0
     private var lastDrawTime: CFTimeInterval?
+    private var lastDrawnMode: MenuMode?
+    var onModeDrawn: (() -> Void)?
     private var motionObserver: NSObjectProtocol?
     var forceReducedMotion = false
     var recordsFrameCadence = false
@@ -149,6 +151,10 @@ import SwiftUI
             if lastDrawTime != frameTime { drawCount += 1; lastDrawTime = frameTime }
         }
         drawContent(at: max(0, frameTime - epoch))
+        if recordsFrameCadence && lastDrawnMode != mode {
+            lastDrawnMode = mode
+            onModeDrawn?()
+        }
     }
 
     func drawContent(at elapsed: TimeInterval) {

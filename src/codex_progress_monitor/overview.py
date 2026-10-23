@@ -7,7 +7,13 @@ LIVE_KINDS = frozenset(('text', 'plan', 'summary', 'tool_input'))
 CONFLICTS = frozenset(('multiple_active_backends', 'identity_conflict', 'system_error', 'observation_gap'))
 
 
+def monitored_threads(views):
+    """Match the GUI chat scope: exclude only explicitly ephemeral threads."""
+    return [view for view in views if view.get('ephemeral') is not True]
+
+
 def overview(engine, views, now):
+    views = monitored_threads(views)
     quality = set()
     rates = []
     unknown = 0
@@ -41,7 +47,7 @@ def overview(engine, views, now):
                 else:
                     rates.append(rate)
                     estimated |= stream.estimated
-    if engine.pending_count:
+    if engine.pending_generation_count:
         unknown += 1
         quality.add('unassociated_events')
     connected = any(b.get('connected', False) for b in engine.backends.values())

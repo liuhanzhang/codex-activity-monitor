@@ -32,6 +32,48 @@ class RuntimeTests(unittest.TestCase):
         path.chmod(0o700)
         return path
 
+    def test_snapshot_reader_rejects_non_object_json(self):
+        for value in ([], None, 'invalid-root', 5):
+            with self.subTest(value=value):
+                (self.runtime/'snapshot.json').write_text(json.dumps(value))
+                self.assertEqual(read_snapshot(self.runtime)['threads'], [])
+
+    def test_snapshot_freshness_rejects_future_and_malformed_clocks(self):
+        from codex_progress_monitor.cli import running
+        from codex_progress_monitor.runtime import snapshot_fresh
+        (self.runtime/'events.sock').touch()
+        for updated in (time.time()+60, 'invalid', [], None, True):
+            with self.subTest(updated=updated):
+                atomic_json(self.runtime/'snapshot.json', {'running': True, 'updated_at': updated})
+                self.assertFalse(running(self.runtime))
+        self.assertFalse(snapshot_fresh({'updated_at': float('nan')}, now=100))
+        self.assertFalse(snapshot_fresh({'updated_at': float('inf')}, now=100))
+        self.assertFalse(snapshot_fresh({'updated_at': 97}, now=100))
+        self.assertTrue(snapshot_fresh({'updated_at': 105}, now=100))
+        self.assertFalse(snapshot_fresh({'updated_at': 106}, now=100))
+
+    def test_lifecycle_changes_publish_before_the_numeric_refresh_deadline(self):
+        from codex_progress_monitor.engine import Engine
+        from codex_progress_monitor.events import Event
+        from codex_progress_monitor.runtime import SnapshotCadence
+        engine = Engine(asynchronous_counts=False)
+        self.addCleanup(engine.close)
+        cadence = SnapshotCadence()
+        engine.ingest(Event('b', 'protocol_out', {'method': 'turn/started', 'params': {
+            'threadId': 't', 'turn': {'id': 'u', 'status': 'inProgress'}}}, 100, 0))
+        self.assertTrue(cadence.should_publish(engine.snapshot(100), 100))
+        self.assertFalse(cadence.should_publish(engine.snapshot(100.25), 100.25))
+        self.assertTrue(cadence.should_publish(engine.snapshot(101), 101))
+        engine.ingest(Event('b', 'protocol_out', {'method': 'turn/completed', 'params': {
+            'threadId': 't', 'turn': {'id': 'u', 'status': 'completed'}}}, 101.1, 0))
+        ended = engine.snapshot(101.25)
+        self.assertEqual(ended['menu_presentation']['reason'], 'idle')
+        self.assertTrue(cadence.should_publish(ended, 101.25))
+        self.assertFalse(cadence.should_publish(engine.snapshot(101.5), 101.5))
+        ended['threads'].append({'backend': 'b', 'id': 'parent', 'status': 'unknown',
+                                 'context_only': True, 'has_active_work': False})
+        self.assertTrue(cadence.should_publish(ended, 101.75))
+
     def history_fixture(self):
         home = self.runtime/'fixture-home'
         path = home/'sessions/probe-t.jsonl'
@@ -167,6 +209,53 @@ serve(Path(RUNTIME))
                 stop(self.runtime)
                 process.wait(timeout=5)
 
+    def test_snapshot_write_failure_preserves_collector_and_read_queries(self):
+        blocked = self.runtime/'publication-blocked'
+        attempted = self.runtime/'publication-attempted'
+        blocked.touch()
+        script = '''import errno
+from pathlib import Path
+import codex_progress_monitor.runtime as persistence
+from codex_progress_monitor.collector import serve
+original = persistence.atomic_json
+def failing(path, value):
+    if path.name == 'snapshot.json' and Path(BLOCKED).exists():
+        Path(ATTEMPTED).touch()
+        raise OSError(errno.ENOSPC, 'injected disk failure')
+    return original(path, value)
+persistence.atomic_json = failing
+serve(Path(RUNTIME))
+'''.replace('BLOCKED', repr(str(blocked))).replace('ATTEMPTED', repr(str(attempted))).replace('RUNTIME', repr(str(self.runtime)))
+        with (self.runtime/'probe.log').open('w') as log:
+            process = subprocess.Popen([sys.executable, '-B', '-c', script], stdout=log, stderr=log)
+            try:
+                self.wait_snapshot(lambda _: attempted.exists(), timeout=4)
+                from codex_progress_monitor.runtime import collector_alive
+                self.assertTrue(collector_alive(self.runtime))
+                # Freshness may be unavailable without authorizing a second collector.
+                with patch('codex_progress_monitor.cli.subprocess.Popen') as spawn:
+                    start(self.runtime)
+                spawn.assert_not_called()
+                with socket.socket(socket.AF_UNIX, socket.SOCK_STREAM) as sock:
+                    sock.connect(str(self.runtime/'events.sock'))
+                    row = {'backend': 'disk-test', 'direction': 'protocol_out',
+                           'observed_ns': time.monotonic_ns(), 'observed_timestamp': time.time(),
+                           'event': {'method': 'turn/started', 'params': {'threadId': 't', 'turn': {'id': 'u'}}}}
+                    sock.sendall(json.dumps(row).encode()+b'\n')
+                    self.wait_snapshot(lambda _: query_runtime(self.runtime, {
+                        'action': 'timeline', 'scope_id': 'disk-test', 'thread_id': 't'
+                    }).get('selected_turn_id') == 'u')
+                    self.assertFalse((self.runtime/'snapshot.json').exists())
+                    self.assertIsNone(process.poll())
+                    blocked.unlink()
+                    recovered = self.wait_snapshot(lambda s: bool(s.get('running')))
+                    self.assertGreaterEqual(recovered['persistence']['snapshot_write_failures'], 1)
+                    self.assertEqual(recovered['persistence']['last_snapshot_error']['errno'], 28)
+            finally:
+                blocked.unlink(missing_ok=True)
+                stop(self.runtime)
+                process.wait(timeout=5)
+
     def command(self,actual,*args):
         return [sys.executable,'-m','codex_progress_monitor.cli','--runtime',str(self.runtime),'bridge','--real-cli',str(actual),'--',*args]
 
@@ -178,6 +267,23 @@ serve(Path(RUNTIME))
                 return snapshot
             time.sleep(.05)
         self.fail('Expected state was not published to the snapshot')
+
+    def test_turn_end_does_not_wait_for_the_one_second_snapshot_refresh(self):
+        start(self.runtime)
+        with socket.socket(socket.AF_UNIX, socket.SOCK_STREAM) as sock:
+            sock.connect(str(self.runtime/'events.sock'))
+            def send(method, params):
+                row = {'backend': 'b', 'direction': 'protocol_out',
+                       'observed_ns': time.monotonic_ns(), 'observed_timestamp': time.time(),
+                       'event': {'method': method, 'params': params}}
+                sock.sendall(json.dumps(row).encode()+b'\n')
+            send('turn/started', {'threadId': 't', 'turn': {'id': 'u', 'status': 'inProgress'}})
+            send('item/started', {'threadId': 't', 'turnId': 'u', 'item': {'id': 'r', 'type': 'reasoning'}})
+            self.wait_snapshot(lambda s:s.get('menu_presentation', {}).get('mode') == 'thinking')
+            # Send just after a published state, rather than near its old deadline.
+            send('turn/completed', {'threadId': 't', 'turn': {'id': 'u', 'status': 'completed'}})
+            ended = self.wait_snapshot(lambda s:s.get('menu_presentation', {}).get('reason') == 'idle', timeout=.75)
+            self.assertEqual(ended['overview']['generation_rate'], 0)
 
     def test_transport_exit_stderr_and_absent_collector(self):
         actual=self.fake('import sys,json\nraw=sys.stdin.buffer.read()\nsys.stdout.buffer.write(raw)\nsys.stdout.flush()\nprint(json.dumps({"target":"tungstenite::protocol", "level":"TRACE", "fields":{"message":"Received message {}"}}),file=sys.stderr)\nprint("normal diagnostic",file=sys.stderr)\nsys.exit(7)\n')

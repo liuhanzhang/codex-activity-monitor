@@ -12,7 +12,7 @@ import uuid
 
 from .engine import Engine
 from .events import Event
-from .runtime import atomic_json,read_snapshot,source_identity
+from .runtime import SnapshotCadence, SnapshotPublisher, atomic_json, read_snapshot, snapshot_age, source_identity
 from .app_session import observing
 from .i18n import message, render_message
 from .timeline import TimelineBook
@@ -51,6 +51,8 @@ def serve(runtime):
         timeline_error = 'metadata_unavailable'
     timeline = TimelineBook(timeline_store)
     engine=Engine(timeline=timeline)
+    publisher = SnapshotPublisher(runtime)
+    cadence = SnapshotCadence()
     history = HistoryRefresh()
     identities = AgentIdentityCache()
     query_server = None
@@ -61,9 +63,10 @@ def serve(runtime):
     except OSError:
         timeline_error = 'query_unavailable'
     implementation=source_identity('collector','app_session','engine','overview','menu_presentation','progress_state','events','usage','metrics','runtime','tool_labels','i18n','messages_zh_cn',
-                                   'timeline','timeline_storage','timeline_query','history','reconciliation','agent_presentation','agent_relations','agent_identity')
+                                   'state','timeline','timeline_storage','timeline_query','history','reconciliation','agent_presentation','agent_relations','agent_identity')
     previous=read_snapshot(runtime)
-    historical=previous.get('threads',[]) if time.time()-(previous.get('updated_at') or 0)<600 else []
+    previous_age = snapshot_age(previous)
+    historical = previous.get('threads', []) if previous_age is not None and -5 <= previous_age < 600 else []
     if historical:
         engine.usage.restore(previous.get('usage_recovery'))
     for thread in historical:
@@ -137,7 +140,7 @@ def serve(runtime):
                                         'implementation':implementation})
     # Keep token sampling responsive without publishing every tick to disk.
     next_tick=0
-    next_snapshot=0
+    next_history=0
     def close_client(conn,reason='shutdown'):
         engine.counts['ipc_close_'+reason]+=1
         state=clients.pop(conn,{})
@@ -217,12 +220,11 @@ def serve(runtime):
                 with timeline.lock:
                     engine.tick(now)
                     timeline.prune()
-                next_tick=now+0.25
-            if now>=next_snapshot:
-                with timeline.lock:
                     for summary in history.drain():
                         engine.apply_history(summary)
-                    history.schedule(engine.history_requests(), now)
+                    if now >= next_history:
+                        history.schedule(engine.history_requests(), now)
+                        next_history = now + 1
                     snapshot=engine.snapshot(now,time.time())
                     snapshot['timeline_summary']={'version':1,'revision':timeline.revision,
                                                    'available':query_server is not None,
@@ -230,11 +232,12 @@ def serve(runtime):
                 retain_history(snapshot)
                 identities.enrich(snapshot['threads'])
                 snapshot['menu_presentation'] = menu_presentation(engine, snapshot['threads'], snapshot['overview'])
-                snapshot['collector_pid']=os.getpid()
-                snapshot['implementation']=implementation
-                snapshot['running']=True
-                atomic_json(runtime/'snapshot.json',snapshot)
-                next_snapshot=now+1
+                if cadence.should_publish(snapshot, now):
+                    snapshot['collector_pid']=os.getpid()
+                    snapshot['implementation']=implementation
+                    snapshot['running']=True
+                    publisher.publish(snapshot)
+                next_tick=now+0.25
     finally:
         history.close()
         if query_server:
@@ -256,7 +259,7 @@ def serve(runtime):
         snapshot['menu_presentation'] = menu_presentation(engine, snapshot['threads'], snapshot['overview'])
         snapshot['running']=False
         snapshot['implementation']=implementation
-        atomic_json(runtime/'snapshot.json',snapshot)
+        publisher.publish(snapshot)
         engine.close()
         selector.close()
         listener.close()

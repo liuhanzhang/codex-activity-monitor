@@ -111,6 +111,9 @@ final class DashboardStore {
     @ObservationIgnored private var timelines: [String: TimelineStore] = [:]
     private var timelineFixture: String?
     private var polling: Task<Void, Never>?
+    @ObservationIgnored private var snapshotWatching: Task<Void, Never>?
+    private var watchedSnapshotPath: String?
+    private var snapshotReadGeneration = 0
     private let injectedClient: (any BackendManaging)?
 
     init(configuration: BackendConfiguration, arguments: [String], client: (any BackendManaging)? = nil) {
@@ -160,15 +163,8 @@ final class DashboardStore {
                     await cleanup()
                 }
                 guard !Task.isCancelled else { break }
-                let url = URL(fileURLWithPath: snapshotOverride ?? runtimePath + "/snapshot.json")
-                let result = await Task.detached(priority: .utility) { () -> Result<Snapshot, Error> in
-                    Result { try Snapshot.decode(Data(contentsOf: url)) }
-                }.value
-                switch result {
-                case .success(let value): snapshot = value; readError = nil
-                case .failure: readError = "暂时无法读取采集数据"
-                }
-                updatePresentation()
+                watchSnapshot()
+                await readSnapshot()
                 if !readOnly && management?.configured == true && !fresh && !busy && !closing && Date() >= nextResume {
                     nextResume = Date().addingTimeInterval(5)
                     busy = true
@@ -180,6 +176,38 @@ final class DashboardStore {
                 try? await Task.sleep(for: .seconds(1))
             }
         }
+    }
+
+    private func watchSnapshot() {
+        let path = snapshotOverride ?? runtimePath + "/snapshot.json"
+        guard watchedSnapshotPath != path else { return }
+        snapshotWatching?.cancel()
+        watchedSnapshotPath = path
+        let updates = snapshotUpdates(at: URL(fileURLWithPath: path))
+        snapshotWatching = Task { [weak self] in
+            for await _ in updates {
+                guard !Task.isCancelled, let self else { break }
+                await self.readSnapshot()
+            }
+            if !Task.isCancelled { self?.watchedSnapshotPath = nil }
+        }
+    }
+
+    private func readSnapshot() async {
+        guard !closing else { return }
+        snapshotReadGeneration += 1
+        let generation = snapshotReadGeneration
+        let url = URL(fileURLWithPath: snapshotOverride ?? runtimePath + "/snapshot.json")
+        let result = await Task.detached(priority: .utility) { () -> Result<Snapshot, Error> in
+            Result { try Snapshot.decode(Data(contentsOf: url)) }
+        }.value
+        guard generation == snapshotReadGeneration, !closing else { return }
+        switch result {
+        case .success(let value): snapshot = value; readError = nil
+        case .failure: readError = "暂时无法读取采集数据"
+        }
+        updatePresentation()
+        onUpdate?()
     }
 
     func updatePresentation(at date: Date = Date()) {
@@ -370,6 +398,7 @@ final class DashboardStore {
     private func finishPurge() {
         closing = true
         polling?.cancel()
+        snapshotWatching?.cancel()
         lease = nil
         onPurgeComplete?()
     }
@@ -379,10 +408,15 @@ final class DashboardStore {
         let ownedSession = lease != nil
         closing = true
         await waitForLanguageSave()
-        guard !readOnly, management?.state != "purged" else { return true }
+        guard !readOnly, management?.state != "purged" else {
+            polling?.cancel()
+            snapshotWatching?.cancel()
+            return true
+        }
         do {
             if ownedSession { _ = try await client.command("stop", extra: ["--owner-pid", String(ProcessInfo.processInfo.processIdentifier)]) }
             polling?.cancel()
+            snapshotWatching?.cancel()
             lease = nil
             return true
         }

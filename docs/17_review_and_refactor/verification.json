@@ -1,0 +1,34 @@
+{
+  "version": 1,
+  "baseline_commit": "6314547",
+  "verified_at": "2026-10-23T00:11:40.773592+08:00",
+  "environment": {
+    "macos": "27.0 (26A428)",
+    "architecture": "arm64",
+    "python": "3.14.7",
+    "swift": "6.4"
+  },
+  "tests": {
+    "baseline_python": 307,
+    "baseline_swift": 74,
+    "python": 327,
+    "swift_default": 78,
+    "native_windows": 6
+  },
+  "preview_build_id": "5d648b227bda4f0d4d068208b0151633784089568f54aea992fe755ef5379ad6",
+  "status": {
+    "python": "passed",
+    "swift": "passed",
+    "native_windows": "passed",
+    "preview_build": "passed",
+    "localization": "passed",
+    "workflow_yaml_syntax": "passed",
+    "github_ci": "not_run",
+    "production_reload": "not_performed",
+    "fresh_machine": "not_validated",
+    "distribution": "not_validated"
+  },
+  "raw_logs_committed": false,
+  "commit_created": false,
+  "pushed": false
+}

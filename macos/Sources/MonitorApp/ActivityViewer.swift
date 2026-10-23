@@ -84,7 +84,7 @@ struct ActivityViewerView: LocalizedView {
             }.font(.system(size: 12, weight: .medium)).padding(.horizontal, 20).padding(.vertical, 14)
             Divider()
             ScrollView(.vertical) {
-                TimelinePanelView(store: store.timeline, compact: false, presentation: .activityViewer, onSelect: { store.select($0) })
+                TimelinePanelView(store: store.timeline, presentation: .activityViewer, onSelect: { store.select($0) })
                     .padding(.horizontal, 20).padding(.vertical, 10)
             }.frame(maxHeight: 190)
             Divider()

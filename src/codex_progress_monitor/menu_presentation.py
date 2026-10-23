@@ -1,9 +1,10 @@
 """Evidence-based menu state. Formatting and animation belong to the GUI."""
 
-from .overview import CONFLICTS, LIVE_KINDS
+from .overview import CONFLICTS, LIVE_KINDS, monitored_threads
 
 
 def menu_presentation(engine, views, total):
+    views = monitored_threads(views)
     by_id = {(v.get('home') or v['backend'], v['id']): v for v in views}
 
     def root(view):

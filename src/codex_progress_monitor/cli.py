@@ -10,7 +10,10 @@ import subprocess
 import sys
 import time
 
-from .runtime import ROOT,REAL_CLI,atomic_json,read_snapshot,runtime_dir,ui_language
+from .runtime import (
+    ROOT, REAL_CLI, atomic_json, collector_alive, read_snapshot,
+    runtime_dir, snapshot_fresh, ui_language,
+)
 
 from .i18n import DEFAULT_LANGUAGE, available_languages, tr
 
@@ -18,7 +21,7 @@ _children={}
 
 
 def start(runtime, language=DEFAULT_LANGUAGE):
-    if running(runtime):
+    if running(runtime) or collector_alive(runtime):
         return
     log=runtime/'collector.log'
     if log.exists() and log.stat().st_size>1024*1024:
@@ -32,14 +35,17 @@ def start(runtime, language=DEFAULT_LANGUAGE):
         if running(runtime):
             return
         if process.poll() is not None:
+            if collector_alive(runtime):
+                return  # Another starter acquired the lifetime lock first.
             raise RuntimeError(tr('cli.start_failed', language, path=str(log)))
         time.sleep(0.05)
-    raise RuntimeError(tr('cli.start_timeout', language, path=str(log)))
+    if not collector_alive(runtime):
+        raise RuntimeError(tr('cli.start_timeout', language, path=str(log)))
 
 
 def running(runtime):
     snapshot=read_snapshot(runtime)
-    return bool(snapshot.get('running') and time.time()-(snapshot.get('updated_at') or 0)<3 and (runtime/'events.sock').exists())
+    return snapshot.get('running') is True and snapshot_fresh(snapshot) and (runtime/'events.sock').exists()
 
 
 def stop(runtime):
@@ -196,7 +202,8 @@ def main(argv=None):
             print(tr('cli.stopped', language))
         elif args.command=='status':
             value=read_snapshot(runtime)
-            print(json.dumps({'running':running(runtime),'runtime':str(runtime),'updated_at':value.get('updated_at'),
+            print(json.dumps({'running':running(runtime),'collector_alive':collector_alive(runtime),
+                              'runtime':str(runtime),'updated_at':value.get('updated_at'),
                               'backends':value.get('backends',{}),'threads':len(value.get('threads',[])),
                               'counters':value.get('counters',{})},ensure_ascii=False,indent=2))
         elif args.command=='bridge':

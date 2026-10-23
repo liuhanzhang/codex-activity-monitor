@@ -20,7 +20,9 @@ class StorageTests(unittest.TestCase):
         store = TimelineStorage(self.path)
         store.put('phase', {'id': 'p', 'scope_id': '/probe', 'thread_id': 't', 'turn_id': 'u',
                            'kind': 'tool_input', 'text': 'PRIVATE_BODY', 'arguments': 'PRIVATE_CODE',
-                           'output': 'PRIVATE_RESULT', 'status': 'completed'})
+                           'output': 'PRIVATE_RESULT', 'status': 'completed',
+                           'observation': {'status': 'active', 'text': 'PRIVATE_BASE',
+                                           'observation': {'output': 'PRIVATE_NESTED'}}})
         store.close()
         records = read_records(self.path)
         self.assertEqual(len(records), 1)

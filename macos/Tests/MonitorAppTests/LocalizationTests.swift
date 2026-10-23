@@ -3,7 +3,7 @@ import Foundation
 import Observation
 import SwiftUI
 import Testing
-import MonitorModel
+@testable import MonitorModel
 @testable import MonitorApp
 
 private actor LanguageBackend: BackendManaging {
@@ -99,14 +99,13 @@ private actor LanguageBackend: BackendManaging {
 
 private struct NativeLanguageFixture: TimelineReading {
     let bundle: TimelineBundle
-    let phase: TimelinePhase
     func timeline(scope: String, thread: String, turn: String?) async throws -> TimelineBundle { bundle }
     func detail(phase: TimelinePhase, section: String?, offset: Int) async throws -> ActivityDetail {
-        let value: [String: Any] = ["version": 1, "state": "available", "source": "synthetic",
-            "sections": [["id": "input", "title": "参数", "format": "code",
-                "title_message": ["key": "detail.input", "params": [:]],
-                "text": (1...100).map { "\($0). 原始中文内容 remains unchanged" }.joined(separator: "\n")]], "attachments": []]
-        return try JSONDecoder().decode(ActivityDetail.self, from: JSONSerialization.data(withJSONObject: value))
+        let section = ActivitySection(id: "input", title: "参数", format: "code",
+            text: (1...100).map { "\($0). 原始中文内容 remains unchanged" }.joined(separator: "\n"),
+            offset: 0, total_chars: nil, next_offset: nil, notice: nil, title_message: DisplayMessage("detail.input"))
+        return ActivityDetail(version: 1, state: "available", phase: phase,
+                              sections: [section], attachments: [], source: "synthetic")
     }
 }
 
@@ -128,7 +127,7 @@ private struct NativeLanguageFixture: TimelineReading {
         "agents": [], "phases": [phaseFields], "markers": [], "origin_ms": 0, "end_ms": 3000, "now_ms": 3000,
         "revision": "test", "quality": [], "earlier_active_turns": []]
     let bundle = try TimelineBundle.decode(JSONSerialization.data(withJSONObject: bundleFields))
-    let timeline = TimelineStore(scope: "scope", thread: "root", title: "原始聊天标题", client: NativeLanguageFixture(bundle: bundle, phase: phase))
+    let timeline = TimelineStore(scope: "scope", thread: "root", title: "原始聊天标题", client: NativeLanguageFixture(bundle: bundle))
     timeline.bundle = bundle; timeline.selectedTurn = "turn"; timeline.zoom = .wide; timeline.followsLatest = false
     let viewer = ActivityViewerWindowController(preview: true, dashboard: root)
     viewer.show(timeline: timeline, phase: phase)

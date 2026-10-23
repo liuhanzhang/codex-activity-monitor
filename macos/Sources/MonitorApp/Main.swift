@@ -62,6 +62,7 @@ enum MonitorApplication {
     private var statusContent: StatusContentView!
     private var store: DashboardStore!
     private var previewWindow: NSWindow?
+    private let diagnosticsStartedAt = Date()
     private var fullscreenObserver: NSObjectProtocol?
     private var activityViewer: ActivityViewerWindowController?
 
@@ -95,6 +96,7 @@ enum MonitorApplication {
                 statusContent.autoresizingMask = [.width, .height]
                 statusContent.forceReducedMotion = isPreview && arguments.contains("--preview-reduce-motion")
                 statusContent.recordsFrameCadence = arguments.contains("--ui-diagnostics")
+                statusContent.onModeDrawn = { [weak self] in self?.writeDiagnostics("draw") }
                 button.addSubview(statusContent)
                 button.toolTip = L("Codex 生成速度 · 点击查看实时活动")
                 button.target = self
@@ -189,8 +191,13 @@ enum MonitorApplication {
     private func writeDiagnostics(_ event: String) {
         guard let i = CommandLine.arguments.firstIndex(of: "--ui-diagnostics"), i + 1 < CommandLine.arguments.count,
               let panel, let statusContent else { return }
+        if let limit = CommandLine.arguments.firstIndex(of: "--ui-diagnostics-seconds"),
+           limit + 1 < CommandLine.arguments.count,
+           let seconds = Double(CommandLine.arguments[limit + 1]), seconds.isFinite, seconds > 0,
+           Date().timeIntervalSince(diagnosticsStartedAt) >= seconds { return }
         var value = panel.diagnostics
         value["event"] = event; value["at"] = Date().timeIntervalSince1970
+        value["snapshot_updated_at"] = store.snapshot?.updated_at
         value["mode"] = store.menuMode.rawValue; value["title"] = store.menuTitle
         value["animating"] = statusContent.animating; value["reduced_motion"] = statusContent.reducedMotion
         value["animation_frames"] = statusContent.frameDiagnostics

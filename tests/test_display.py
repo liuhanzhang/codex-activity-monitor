@@ -8,6 +8,18 @@ from codex_progress_monitor.display import render
 
 
 class DisplayTests(unittest.TestCase):
+    def test_future_snapshot_cannot_keep_terminal_activity_live(self):
+        engine = Engine(False)
+        try:
+            engine.ingest(Event('b', 'protocol_out', {'method': 'turn/started',
+                'params': {'threadId': 't', 'turn': {'id': 'u'}}}, 100, 0))
+            snapshot = engine.snapshot(101, time.time()+60)
+            output = io.StringIO()
+            Console(file=output, width=240).print(render(snapshot, language='en')[0])
+            self.assertIn('Disconnected', output.getvalue())
+        finally:
+            engine.close()
+
     def test_partial_command_preview_is_visible_and_remains_planned(self):
         engine=Engine(False)
         try:

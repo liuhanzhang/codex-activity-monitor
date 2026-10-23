@@ -4,7 +4,6 @@ import MonitorModel
 struct TimelinePanelView: LocalizedView {
     @Environment(\.monitorLanguage) var language
     @Bindable var store: TimelineStore
-    var compact = true
     var presentation: TimelinePresentation = .activityViewer
     var pollingEnabled = true
     var presentationID = 0
@@ -88,7 +87,7 @@ struct TimelinePanelView: LocalizedView {
     }
 
     @ViewBuilder private var header: some View {
-        if presentation == .panelCompact { compactHeader } else { legacyHeader }
+        if presentation == .panelCompact { compactHeader } else { viewerHeader }
     }
 
     private var compactHeader: some View {
@@ -171,7 +170,7 @@ struct TimelinePanelView: LocalizedView {
             Group {
                 if presentation == .panelCompact { compactLabels(layout, bundle: bundle) }
                 else { labels(lanes: layout.lanes) }
-            }.frame(width: presentation == .panelCompact ? (layout.lanes.contains(where: \.isChild) ? 104 : 32) : compact ? 78 : 116)
+            }.frame(width: presentation == .panelCompact ? (layout.lanes.contains(where: \.isChild) ? 104 : 32) : 116)
             TimelineSurface(store: store, layout: layout, activities: bundle.allActivities, agents: bundle.agents,
                             pagedFollowing: presentation == .panelCompact, animationsEnabled: pollingEnabled,
                             onSelect: onSelect ?? { store.open($0) })
@@ -179,27 +178,12 @@ struct TimelinePanelView: LocalizedView {
                 .onGeometryChange(for: Double.self) { Double($0.size.width) } action: { viewportWidth = $0 }
                 .accessibilityIdentifier("monitor.timeline.surface")
         }
-        .overlay(alignment: .topLeading) {
-            if presentation == .panelGrouped {
-                VStack(spacing: 0) {
-                    Color.clear.frame(height: TimelineLayout.axisHeight).allowsHitTesting(false)
-                    ForEach(layout.lanes) { lane in
-                        if lane.track == "header" {
-                            agentHeader(lane, in: bundle).frame(height: lane.height)
-                        } else {
-                            Color.clear.frame(height: lane.height).allowsHitTesting(false)
-                        }
-                    }
-                    Spacer(minLength: 0)
-                }
-            }
-        }
         .opacity(store.switchingTurn ? 0 : 1)
         .allowsHitTesting(!store.switchingTurn)
         .overlay { if store.switchingTurn { ProgressView(L("读取所选轮次…")).controlSize(.small) } }
     }
 
-    private var legacyHeader: some View {
+    private var viewerHeader: some View {
         HStack(spacing: 6) {
             if let bundle = store.bundle, !bundle.turns.isEmpty {
                 Picker(L("轮次"), selection: Binding(get: { store.selectedTurn ?? "" }, set: { changeTurn($0) })) {
@@ -237,9 +221,7 @@ struct TimelinePanelView: LocalizedView {
         VStack(alignment: .leading, spacing: 0) {
             Color.clear.frame(height: TimelineLayout.axisHeight)
             ForEach(lanes) { lane in
-                if presentation == .panelGrouped && lane.track == "header" {
-                    Color.clear.frame(height: lane.height)
-                } else if presentation == .activityViewer && (lane.track == "summary" || lane.track == "header") {
+                if lane.track == "summary" || lane.track == "header" {
                     Button {
                         if !store.expandedAgents.insert(lane.threadID).inserted { store.expandedAgents.remove(lane.threadID) }
                     } label: {
@@ -271,72 +253,15 @@ struct TimelinePanelView: LocalizedView {
         return L("子智能体") + " · " + name
     }
 
-    @ViewBuilder private func agentHeader(_ lane: TimelineLane, in bundle: TimelineBundle) -> some View {
-        let agent = bundle.agents.first { $0.thread_id == lane.threadID }
-        let expanded = store.expandedAgents.contains(lane.threadID)
-        let label = lane.isChild ? L("子智能体") + " · " + (agent?.displayName ?? lane.label) : L("主智能体")
-        let state = agent?.roundStatusLabel(in: language) ?? L("状态未知")
-        let accessibleState = L(state) + (agent?.hasPartialInformation == true ? " · " + L("部分活动记录不完整") : "")
-        let description = [label, agent?.agent_path, lane.threadID].compactMap { $0 }.joined(separator: "\n")
-        if lane.isChild {
-            Button {
-                if !store.expandedAgents.insert(lane.threadID).inserted { store.expandedAgents.remove(lane.threadID) }
-            } label: {
-                agentHeaderContent(lane, name: agent?.displayName ?? lane.label, state: state, expanded: expanded,
-                                   partial: agent?.hasPartialInformation == true)
-            }.buttonStyle(.plain).help(description)
-                .accessibilityLabel(label).accessibilityValue(accessibleState + " · " + L(expanded ? "已展开" : "已折叠"))
-                .accessibilityIdentifier("monitor.agent.\(lane.threadID)")
-        } else {
-            agentHeaderContent(lane, name: "主智能体", state: state, expanded: false, partial: agent?.hasPartialInformation == true)
-                .accessibilityElement(children: .ignore).accessibilityLabel(L("主智能体")).accessibilityValue(accessibleState)
-                .accessibilityIdentifier("monitor.agent.root")
-        }
-    }
-
-    private func agentHeaderContent(_ lane: TimelineLane, name: String, state: String, expanded: Bool, partial: Bool) -> some View {
-        HStack(spacing: 5) {
-            if lane.isChild {
-                Image(systemName: expanded ? "chevron.down" : "chevron.right").font(.system(size: 8, weight: .medium)).frame(width: 9)
-                Text(L("子智能体")).foregroundStyle(.secondary).font(.system(size: 10))
-                    .fixedSize(horizontal: true, vertical: false)
-            }
-            Text(lane.isChild ? name : L(name)).font(.system(size: 11, weight: .medium)).lineLimit(1).truncationMode(.middle)
-                .layoutPriority(1)
-            if partial {
-                Image(systemName: "questionmark.circle").font(.system(size: 9)).foregroundStyle(.secondary)
-                    .help(L("部分身份或活动记录不完整"))
-            }
-            Spacer(minLength: 4)
-            Text(L(state)).font(.system(size: 9)).foregroundStyle(.secondary).fixedSize()
-        }
-        .padding(.leading, CGFloat(max(0, lane.depth - 1) * 8))
-        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .leading).contentShape(Rectangle())
-        .overlay(alignment: .top) { if lane.isChild { Divider().opacity(0.5) } }
-    }
-
     private func footer(_ bundle: TimelineBundle) -> some View {
         ViewThatFits(in: .horizontal) {
-            HStack(spacing: 5) { legend; footerActions(bundle) }
+            HStack(spacing: 5) { TimelineLegend(); footerActions(bundle) }
                 .fixedSize(horizontal: true, vertical: false)
             VStack(alignment: .leading, spacing: 5) {
-                legend
+                TimelineLegend()
                 HStack(spacing: 5) { footerActions(bundle) }
             }
         }.font(.system(size: 9)).foregroundStyle(.secondary)
-    }
-
-    private var legend: some View {
-        HStack(spacing: 5) {
-            ForEach([("reasoning", "思考"), ("text", "回复"), ("tool_input", "参数"), ("file_edit_input", "改动"),
-                     ("contextCompaction", "压缩")], id: \.0) { kind, title in
-                HStack(spacing: 3) {
-                    RoundedRectangle(cornerRadius: 1.5)
-                        .fill(legendColor(kind)).frame(width: 12, height: 5)
-                    Text(L(title)).lineLimit(1).fixedSize()
-                }
-            }
-        }
     }
 
     @ViewBuilder private func footerActions(_ bundle: TimelineBundle) -> some View {
@@ -353,9 +278,6 @@ struct TimelinePanelView: LocalizedView {
                 .buttonStyle(.plain).disabled(store.followsLatest && store.followsCurrentTurn)
                 .lineLimit(1).fixedSize()
         }
-    }
-    private func legendColor(_ kind: String) -> Color {
-        Color(nsColor: TimelinePalette.color(for: kind))
     }
     private func changeTurn(_ turn: String) { store.selectTurn(turn) }
     private func turnLabel(_ turn: String, in bundle: TimelineBundle) -> String {

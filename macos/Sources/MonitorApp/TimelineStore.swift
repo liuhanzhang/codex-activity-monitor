@@ -125,7 +125,7 @@ final class ActivityViewerStore {
 
     func select(_ phase: TimelinePhase) {
         guard self.phase.id != phase.id else { return }
-        serial += 1; self.phase = phase; detail = nil; selectedSection = nil; error = nil
+        serial += 1; self.phase = phase; detail = nil; selectedSection = nil; error = nil; loadingMore = false
         followsContent = phase.isActive; timeline.selectedPhaseID = phase.id; timeline.selectedPhaseIDs = [phase.id]
     }
 
@@ -136,14 +136,9 @@ final class ActivityViewerStore {
         do {
             var next = try await timeline.client.detail(phase: selected, section: nil, offset: 0)
             guard !Task.isCancelled, !loadingMore, token == serial, phase.id == selected.id else { return }
-            if let returned = next.phase {
-                guard returned.id == selected.id, returned.scope_id == selected.scope_id,
-                      returned.thread_id == selected.thread_id, returned.turn_id == selected.turn_id else {
-                    throw BackendFailure(message: "活动身份不匹配")
-                }
-            }
+            next = try next.validated(for: selected)
             if let prior = detail, next.sections.isEmpty, !prior.sections.isEmpty,
-               ["not_retained", "missing", "unavailable", "pending"].contains(next.state) {
+               next.state != "available", next.state != "no_content" {
                 next = next.retainingContent(from: prior)
             }
             if let prior = detail, prior.source == next.source, selected.status != "active" {
@@ -164,20 +159,24 @@ final class ActivityViewerStore {
     }
 
     func loadMore() async {
-        guard !loadingMore, let index = detail?.sections.firstIndex(where: { $0.id == selectedSection }),
-              let offset = detail?.sections[index].next_offset else { return }
+        guard !loadingMore, let prior = detail,
+              let section = prior.sections.first(where: { $0.id == selectedSection }),
+              let offset = section.next_offset else { return }
         loadingMore = true
-        let token = serial, selected = phase, sectionID = detail!.sections[index].id
-        defer { loadingMore = false }
+        serial += 1
+        let token = serial, selected = phase, sectionID = section.id
+        defer { if token == serial { loadingMore = false } }
         do {
             let next = try await timeline.client.detail(phase: selected, section: sectionID, offset: offset)
-            guard !Task.isCancelled, token == serial, phase.id == selected.id,
-                  let part = next.sections.first(where: { $0.id == sectionID }),
-                  let target = detail?.sections.firstIndex(where: { $0.id == sectionID }) else { return }
-            detail?.sections[target].text += part.text
-            detail?.sections[target].next_offset = part.next_offset
+            guard !Task.isCancelled, token == serial, phase.id == selected.id else { return }
+            detail = try prior.appendingPage(next.validated(for: selected), sectionID: sectionID, offset: offset)
+            phase = next.phase ?? phase
+            error = nil
         } catch is CancellationError { }
-        catch { self.error = "暂时无法读取更多内容" }
+        catch {
+            guard !Task.isCancelled, token == serial else { return }
+            self.error = "暂时无法读取更多内容"
+        }
     }
 }
 

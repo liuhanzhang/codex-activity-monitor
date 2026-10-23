@@ -122,7 +122,10 @@ class RolloutIndex:
                             'start_ms': start or old.get('start_ms'), 'end_ms': end or old.get('end_ms'),
                             'updated_ms': at or old.get('updated_ms'),
                             'parent_turn_id': parent or old.get('parent_turn_id'),
-                            'status': state or old.get('status', 'unknown')}
+                            'status': state or old.get('status', 'unknown'),
+                            'start_source': 'history' if start else old.get('start_source'),
+                            'end_source': 'history' if end else old.get('end_source'),
+                            'history_terminal': (state or old.get('status')) in ('completed', 'failed', 'interrupted')}
 
     def _row(self, row, offset, length):
         outer, payload = row.get('type'), row.get('payload', {})
@@ -371,7 +374,7 @@ class HistoryProvider:
     def __init__(self, capacity=12):
         self.indices = OrderedDict()
         self.lock = threading.RLock()
-        self.missing = {}
+        self.missing = OrderedDict()
         self.capacity = capacity
 
     def view(self, scope, thread):
@@ -430,7 +433,11 @@ class HistoryProvider:
                         continue
                 if len(verified) != 1:
                     self.missing[key] = time.monotonic()
+                    self.missing.move_to_end(key)
+                    while len(self.missing) > 512:
+                        self.missing.popitem(last=False)
                     return None
+                self.missing.pop(key, None)
                 index = RolloutIndex(verified[0], scope, thread)
                 self.indices[key] = index
             index.refresh()

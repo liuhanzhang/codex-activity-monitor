@@ -16,7 +16,7 @@ from rich.text import Text
 
 from .i18n import DEFAULT_LANGUAGE, available_languages, message, phase_message, render_message, tr
 from .progress_state import activity_message
-from .runtime import read_snapshot, save_ui_language, ui_language
+from .runtime import read_snapshot, save_ui_language, ui_language, snapshot_age, snapshot_fresh
 
 REFRESH_SECONDS = 1.0
 
@@ -46,8 +46,8 @@ def _activity_message(activity):
 def render(snapshot, selected=0, detail=False, thread_filter=None, language=DEFAULT_LANGUAGE, notice=None):
     def t(key, **params):
         return tr(key, language, **params)
-    age = time.time()-(snapshot.get('updated_at') or 0)
-    stale = age > 3 or not snapshot.get('running', True)
+    age = snapshot_age(snapshot)
+    stale = not snapshot_fresh(snapshot)
     if stale:
         snapshot = deepcopy(snapshot)
         for thread in snapshot.get('threads', []):
@@ -56,7 +56,7 @@ def render(snapshot, selected=0, detail=False, thread_filter=None, language=DEFA
             thread['generation_rate'] = None
             thread['quality'] = sorted(set(thread.get('quality', [])) | {'stale_snapshot'})
             if thread.get('last_progress_seconds') is not None:
-                thread['last_progress_seconds'] = thread['last_progress_seconds']+max(0, age) if snapshot.get('updated_at') else None
+                thread['last_progress_seconds'] = thread['last_progress_seconds']+max(0, age) if age is not None else None
             if thread['status'] == 'inProgress' or thread.get('active_count'):
                 disconnected = message('activity.disconnected')
                 thread.update(status='unknown', phase='unknown', phase_label=render_message(disconnected),

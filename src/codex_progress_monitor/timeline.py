@@ -126,6 +126,7 @@ def apply_model_membership(phase, settled):
 def display_phase(phase):
     """Project old sidecars and fresh events with the same visibility policy."""
     phase = dict(phase)
+    phase.pop('observation', None)  # Internal basis, not a second visible activity.
     if phase.get('tool_name'):
         phase['label_message'] = message('activity.named', name=phase['tool_name'])
     elif phase.get('item_type') in ('commandExecution', 'fileChange'):
@@ -145,6 +146,12 @@ def merge_phase(old, new):
         result = {**old, **{k: v for k, v in new.items() if v is not None}}
         result['quality'] = sorted(set(old.get('quality', [])) | set(new.get('quality', [])))
         result['mirrored'] = old.get('mirrored', False) or new.get('mirrored', False)
+        if old and new.get('history_terminal') and not old.get('history_terminal'):
+            # Historical coverage is replaceable. Keep the independent producer
+            # facts so removing/replacing JSONL never leaves borrowed endpoints.
+            result['observation'] = deepcopy(old)
+        elif old.get('observation') and not new.get('history_terminal'):
+            result['observation'] = merge_phase(old['observation'], new)
         rank = lambda value: 3 if value == 'history' else 2 if value == 'producer' else 1 if value == 'receipt' else 0
         for bound in ('start', 'end'):
             key, provenance = bound + '_ms', bound + '_source'
@@ -173,6 +180,28 @@ def merge_phase(old, new):
     return result
 
 
+def merge_history_phase(observed, historical):
+    """Reapply current history to its original observation, never to an old overlay."""
+    basis = observed
+    if observed and observed.get('history_terminal'):
+        basis = deepcopy(observed.get('observation'))
+        if not basis:
+            # Sidecars written before observation bases existed cannot recover
+            # producer boundaries overwritten by history. Keep that absence explicit.
+            basis = {k: v for k, v in observed.items() if k not in ('history_terminal', 'exit_code', 'observation')}
+            basis['status'] = 'unknown'
+            for bound in ('start', 'end'):
+                if basis.get(bound + '_source') == 'history':
+                    basis[bound + '_ms'] = basis[bound + '_source'] = None
+        if 'history_retired' in observed:
+            basis['history_retired'] = observed['history_retired']
+        if historical is None or historical.get('status') in ('active', 'waiting'):
+            basis['quality'] = sorted(set(basis.get('quality', [])) | {'history_changed'})
+            if basis['status'] in ('active', 'waiting'):
+                basis['status'] = 'unknown'
+    return merge_phase(basis, historical) if historical is not None else basis
+
+
 class TimelineBook:
     def __init__(self, store=None):
         self.lock = threading.RLock()
@@ -182,7 +211,6 @@ class TimelineBook:
         self.relations = OrderedDict()
         self.revision = 0
         self.engine = None
-        self.requests = {}
         self.waiting = {}
         self.pins = {}
         self.live = {}
@@ -221,13 +249,19 @@ class TimelineBook:
                         updated = apply_model_membership(phase, settled)
                         if bool(phase.get('history_retired')) != updated['history_retired']:
                             self._put(updated)
-            for phase in summary.get('phases', []):
-                if phase.get('history_terminal') and phase['id'] in self.phases:
-                    self._put(phase)
+            facts = {p['id']: p for p in summary.get('phases', []) if p.get('history_terminal')}
+            for phase in list(self.phases.values()):
+                if ((phase['scope_id'], phase['thread_id']) == (summary['scope_id'], summary['thread_id']) and
+                        phase['turn_id'] in summary.get('requested_turns', [])):
+                    self._save('phase', merge_history_phase(phase, facts.get(phase['id'])))
+            source_turns = {t['id']: t for t in summary.get('turns', [])}
+            for turn in list(self.turns.values()):
+                if ((turn['scope_id'], turn['thread_id']) == (summary['scope_id'], summary['thread_id']) and
+                        turn['turn_id'] in summary.get('requested_turns', [])):
+                    self._save('turn', merge_history_phase(turn, source_turns.get(turn['id'])))
             for turn in summary.get('turns', []):
                 old = self.turns.get(turn['id'])
                 if old and turn['status'] in ('completed', 'failed', 'interrupted'):
-                    self._save('turn', {**old, **{k: v for k, v in turn.items() if v is not None}})
                     for phase in list(self.phases.values()):
                         if (phase['scope_id'], phase['thread_id'], phase['turn_id']) != (turn['scope_id'], turn['thread_id'], turn['turn_id']):
                             continue
@@ -245,15 +279,20 @@ class TimelineBook:
             return
         key = identity('turn', scope, thread, turn)
         old = self.turns.get(key, {})
-        record = {**old, 'id': key, 'scope_id': scope, 'thread_id': thread, 'turn_id': turn,
-                  'status': state or old.get('status', 'unknown'), 'updated_ms': at,
+        basis = old.get('observation', old)
+        record = {**basis, 'id': key, 'scope_id': scope, 'thread_id': thread, 'turn_id': turn,
+                  'status': state or basis.get('status', 'unknown'), 'updated_ms': at,
                   'observation_backend': self.current_backend,
-                  'start_ms': old.get('start_ms'), 'end_ms': old.get('end_ms')}
+                  'start_ms': basis.get('start_ms'), 'end_ms': basis.get('end_ms')}
+        record.pop('history_terminal', None)
+        record.pop('observation', None)
         if start is not None and record['start_ms'] is None:
             record['start_ms'] = start
+            record['start_source'] = 'receipt'
         if end is not None:
             record['end_ms'] = end
-        self._save('turn', record)
+            record['end_source'] = 'receipt'
+        self._save('turn', merge_phase(old or None, record))
 
     def _put(self, record):
         if not record:
@@ -302,11 +341,8 @@ class TimelineBook:
                     self._put({**phase, 'end_ms': at, 'end_source': 'receipt',
                                'status': 'declined' if decision in ('decline', 'cancel') else 'completed'})
             if event.direction == 'protocol_in':
-                if method == 'turn/steer':
-                    self.requests[(event.backend, data.get('id'))] = (params, at)
                 return
             if event.direction == 'protocol_out' and not method:
-                self.requests.pop((event.backend, data.get('id')), None)
                 return  # canonical userMessage is the sole input marker source
             raw = event.direction == 'upstream'
             item = data.get('item', params.get('item', {}))
@@ -505,3 +541,5 @@ class TimelineBook:
                     del self.relations[key]
                     if self.store:
                         self.store.delete(key)
+            self.waiting = {key: phase for key, phase in self.waiting.items()
+                            if phase in self.phases and self.phases[phase]['status'] in ('active', 'waiting')}

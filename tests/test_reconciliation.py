@@ -196,6 +196,21 @@ class ReconciliationTests(unittest.TestCase):
         self.assertIsNone(phase['end_ms'])
         self.assertTrue(self.activity()['active'])
 
+    def test_retired_model_cannot_shift_another_activitys_display_metadata(self):
+        self.send({'method': 'item/started', 'params': {'threadId': 't', 'turnId': 'u',
+                   'item': {'id': 'edit', 'type': 'fileChange',
+                            'changes': [{'path': '/project/kept.py'}], 'file_count': 1}}}, 101)
+        self.thinking(at=102)
+        record = self.completion(item='edit')
+        record['payload']['item'] = {'id': 'edit', 'type': 'FileChange', 'status': 'completed',
+                                     'changes': [{'path': '/project/kept.py'}], 'file_count': 1}
+        self.reconcile([record, self.row('event_msg', {'type': 'task_complete', 'turn_id': 'u'})])
+        edit = self.activity('edit')
+        self.assertEqual(edit['display_message']['key'], 'activity.file_edited')
+        self.assertEqual(edit['display_message']['params']['target'], 'kept.py')
+        self.assertEqual(edit['files'], [{'path': '/project/kept.py'}])
+        self.assertEqual(self.activity()['display_message']['key'], 'activity.running')
+
     def thinking(self, item='thinking', turn='u', at=101):
         self.send({'method': 'item/started', 'params': {'threadId': 't', 'turnId': turn,
                    'item': {'id': item, 'type': 'reasoning'}}}, at)
@@ -355,6 +370,107 @@ class ReconciliationTests(unittest.TestCase):
         self.assertEqual(self.activity()['status'], 'unknown')
         self.assertTrue(self.snapshot()['threads'][0]['has_unresolved_work'])
         self.assertIn('history_changed', self.snapshot()['threads'][0]['quality'])
+        bundle = TimelineQuery(self.book, history=self.provider).bundle(str(self.home), 't', 'u')
+        phase = next(p for p in bundle['phases'] if p['item_id'] == 'cmd')
+        self.assertEqual(phase['status'], 'unknown')
+        self.assertIsNone(phase['end_ms'])
+
+    def test_replacement_refreshes_same_identity_source_times(self):
+        self.reconcile([self.completion()])
+        start, end = self.wall*1000+200, self.wall*1000+1200
+        self.write([self.row('session_meta', {'id': 't', 'history_mode': 'paginated'}),
+                    self.completion(start=start, end=end)])
+        self.reconcile()
+        self.assertAlmostEqual(self.activity()['duration_seconds'], 1, places=4)
+        bundle = TimelineQuery(self.book, history=self.provider).bundle(str(self.home), 't', 'u')
+        phase = next(p for p in bundle['phases'] if p['item_id'] == 'cmd')
+        self.assertEqual((phase['start_ms'], phase['end_ms']), (start, end))
+
+    def test_replacement_rebases_all_backends_for_the_same_persistent_thread(self):
+        events = [
+            ('lifecycle', {'type': 'bridge/started', 'home': str(self.home)}),
+            ('protocol_out', {'method': 'turn/started', 'params': {'threadId': 't', 'turn': {'id': 'u'}}}),
+            ('protocol_out', {'method': 'item/started', 'params': {'threadId': 't', 'turnId': 'u',
+                'item': {'id': 'cmd', 'type': 'commandExecution', 'source': 'unifiedExecStartup', 'processId': 'p'}}}),
+        ]
+        for direction, event in events:
+            self.engine.ingest(Event('second-backend', direction, event, 101, self.wall+1))
+        self.reconcile([self.completion()])
+        end = self.wall*1000+1500
+        self.write([self.row('session_meta', {'id': 't', 'history_mode': 'paginated'}), self.completion(end=end)])
+        self.reconcile()
+        for thread in self.engine.threads.values():
+            self.assertEqual(thread.activities['cmd'].history['end_ms'], end)
+
+    def test_query_rebases_history_before_the_background_refresh_arrives(self):
+        self.reconcile([self.completion()])
+        self.write([self.row('session_meta', {'id': 't', 'history_mode': 'paginated'})])
+        bundle = TimelineQuery(self.book, history=self.provider).bundle(str(self.home), 't', 'u')
+        phase = next(p for p in bundle['phases'] if p['item_id'] == 'cmd')
+        self.assertEqual(phase['status'], 'unknown')
+        self.assertIsNone(phase['end_ms'])
+
+    def test_stopped_sidecar_retains_observation_basis_for_source_replacement(self):
+        from codex_progress_monitor.timeline_storage import TimelineStorage
+        self.reconcile([self.completion()])
+        path = self.home/'metadata.sqlite3'
+        store = TimelineStorage(path)
+        for kind, records in (('phase', self.book.phases), ('turn', self.book.turns)):
+            for record in records.values():
+                store.put(kind, record)
+        store.close()
+        self.write([self.row('session_meta', {'id': 't', 'history_mode': 'paginated'})])
+        query = TimelineQuery(metadata=path)
+        bundle = query.bundle(str(self.home), 't', 'u')
+        phase = next(p for p in bundle['phases'] if p['item_id'] == 'cmd')
+        self.assertEqual(phase['status'], 'unknown')
+        self.assertIsNone(phase['end_ms'])
+        self.assertNotIn('observation', phase)
+
+    def test_legacy_history_overlay_degrades_when_its_source_is_removed(self):
+        self.reconcile([self.completion()])
+        for record in self.book.phases.values():
+            record.pop('observation', None)
+        self.write([self.row('session_meta', {'id': 't', 'history_mode': 'paginated'})])
+        bundle = TimelineQuery(self.book, history=self.provider).bundle(str(self.home), 't', 'u')
+        phase = next(p for p in bundle['phases'] if p['item_id'] == 'cmd')
+        self.assertEqual(phase['status'], 'unknown')
+        self.assertIsNone(phase['start_ms'])
+        self.assertIsNone(phase['end_ms'])
+
+    def test_source_loss_keeps_independently_observed_completion(self):
+        self.send({'method': 'item/completed', 'params': {'threadId': 't', 'turnId': 'u',
+            'item': {'id': 'cmd', 'type': 'commandExecution', 'status': 'completed'}}}, 102)
+        self.reconcile([self.completion()])
+        self.write([self.row('session_meta', {'id': 't', 'history_mode': 'paginated'})])
+        self.reconcile()
+        bundle = TimelineQuery(self.book, history=self.provider).bundle(str(self.home), 't', 'u')
+        phase = next(p for p in bundle['phases'] if p['item_id'] == 'cmd')
+        self.assertEqual(phase['status'], 'completed')
+        self.assertEqual(phase['end_source'], 'receipt')
+        self.assertAlmostEqual(phase['end_ms'], (self.wall+2)*1000, places=3)
+
+    def test_replacement_cannot_keep_a_borrowed_turn_completion(self):
+        self.reconcile([self.completion(), self.row('event_msg', {'type': 'task_complete', 'turn_id': 'u'})])
+        self.write([self.row('session_meta', {'id': 't', 'history_mode': 'paginated'}),
+                    self.row('event_msg', {'type': 'task_started', 'turn_id': 'u'})])
+        self.reconcile()
+        self.assertEqual(self.snapshot()['threads'][0]['status'], 'unknown')
+        bundle = TimelineQuery(self.book, history=self.provider).bundle(str(self.home), 't', 'u')
+        turn = next(t for t in bundle['turns'] if t['turn_id'] == 'u')
+        self.assertEqual(turn['status'], 'unknown')
+        self.assertIsNone(turn['end_ms'])
+
+    def test_replacement_keeps_independently_observed_turn_completion(self):
+        self.finish_turn()
+        self.reconcile([self.completion(), self.row('event_msg', {'type': 'task_complete', 'turn_id': 'u'})])
+        self.write([self.row('session_meta', {'id': 't', 'history_mode': 'paginated'})])
+        self.reconcile()
+        self.assertEqual(self.snapshot()['threads'][0]['status'], 'completed')
+        bundle = TimelineQuery(self.book, history=self.provider).bundle(str(self.home), 't', 'u')
+        turn = next(t for t in bundle['turns'] if t['turn_id'] == 'u')
+        self.assertEqual(turn['status'], 'completed')
+        self.assertAlmostEqual(turn['end_ms'], (self.wall+3)*1000, places=3)
 
     def test_conflicting_terminal_sources_are_reported(self):
         self.send({'method': 'item/completed', 'params': {'threadId': 't', 'turnId': 'u',
@@ -374,6 +490,12 @@ class ReconciliationTests(unittest.TestCase):
         self.assertEqual(self.activity()['exit_code'], 7)
         self.assertEqual(self.activity()['duration_seconds'], 1)
         self.assertIsNone(self.activity()['source_end_ms'])
+
+    def test_history_only_activity_has_known_source_duration(self):
+        self.reconcile([self.completion(item='history-only')])
+        activity = self.activity('history-only')
+        self.assertTrue(activity['start_known'])
+        self.assertAlmostEqual(activity['duration_seconds'], .35, places=4)
 
     def test_same_inode_truncation_rebuilds_history_basis(self):
         self.reconcile([self.completion()])
@@ -433,6 +555,21 @@ class ReconciliationTests(unittest.TestCase):
         self.reconcile([self.completion(), self.row('event_msg', {'type': 'task_complete', 'turn_id': 'u'})])
         self.assertEqual(self.activity()['status'], 'completed')
         self.assertFalse(self.snapshot()['threads'][0]['has_active_work'])
+
+    def test_recovery_preserves_thread_visibility_and_identity_metadata(self):
+        restored = Engine(asynchronous_counts=False)
+        self.addCleanup(restored.close)
+        restored.restore_unresolved([{
+            'backend': 'b', 'home': str(self.home), 'id': 'hidden', 'turn_id': 'u',
+            'status': 'unknown', 'ephemeral': True, 'thread_source': 'subagent',
+            'parent_thread_id': 'root', 'parent_source': 'session_header',
+            'parent_quality': ['parent_identity_conflict'], 'visible': False,
+        }], self.wall)
+        thread = restored.snapshot(105, self.wall+5)['threads'][0]
+        self.assertIs(thread['ephemeral'], True)
+        self.assertEqual(thread['thread_source'], 'subagent')
+        self.assertFalse(thread['visible'])
+        self.assertIn('parent_identity_conflict', thread['parent_quality'])
 
     def test_background_reader_is_bounded_and_does_not_own_live_lock(self):
         entered, release = threading.Event(), threading.Event()

@@ -41,6 +41,36 @@ class QueryTests(unittest.TestCase):
         self.assertEqual(len(result['phases']), 1)
         self.assertEqual(result['phases'][0]['scope_id'], self.scope)
 
+    def test_query_rejects_invalid_shapes_before_reading_history(self):
+        query = TimelineQuery(self.book)
+        valid = {'action': 'detail', 'scope_id': self.scope, 'thread_id': 'root',
+                 'turn_id': 'turn', 'phase_id': 'phase'}
+        invalid = [None, [], 'timeline'] + [dict(valid, **change) for change in (
+            {'thread_id': '../root'}, {'turn_id': []}, {'phase_id': []},
+            {'offset': -1}, {'offset': True}, {'offset': 1.5}, {'section_id': []})]
+        for request in invalid:
+            with self.subTest(request=request), self.assertRaises(ValueError):
+                query.query(request)
+
+    def test_cli_string_offset_is_normalized(self):
+        from codex_progress_monitor.timeline_query import validated_request
+        value = validated_request({'action': 'detail', 'scope_id': self.scope, 'thread_id': 'root',
+                                   'turn_id': 'turn', 'phase_id': 'phase', 'offset': '3'})
+        self.assertEqual(value['offset'], 3)
+
+    def test_detail_requires_the_requested_turn_even_for_historical_phase_id(self):
+        sessions = Path(self.scope) / 'sessions'
+        sessions.mkdir(parents=True)
+        rows = [{'type': 'session_meta', 'payload': {'id': 'root', 'history_mode': 'paginated'}},
+                {'type': 'event_msg', 'payload': {'type': 'item_completed', 'thread_id': 'root',
+                    'turn_id': 'real-turn', 'item': {'id': 'item', 'type': 'AgentMessage', 'text': 'PRIVATE'}}}]
+        (sessions / 'rollout-root.jsonl').write_text(''.join(json.dumps(r)+'\n' for r in rows))
+        query = TimelineQuery(self.book)
+        phase = next(iter(query.history.view(self.scope, 'root').phases.values()))
+        wrong = query.detail(self.scope, 'root', 'wrong-turn', phase['id'])
+        self.assertEqual(wrong['state'], 'content_unavailable')
+        self.assertNotIn('PRIVATE', json.dumps(wrong))
+
     def test_names_use_verified_metadata_and_remain_unique_without_changing_identity(self):
         sessions = Path(self.scope) / 'sessions'
         sessions.mkdir(parents=True)

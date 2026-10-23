@@ -50,6 +50,22 @@ class OverviewTests(unittest.TestCase):
         self.stream(t)
         self.assertEqual(self.result()['generation_rate'], 4)
 
+    def test_ephemeral_streams_and_gaps_do_not_change_chat_totals(self):
+        self.stream(self.thread())
+        helper = self.thread('helper')
+        helper.ephemeral = True
+        self.stream(helper, 'helper-output', pending=True)
+        helper.quality.add('observation_gap')
+        value = self.result()
+        self.assertEqual(value['coverage'], 'complete')
+        self.assertEqual(value['generation_rate'], 4)
+        self.assertEqual(value['active_thread_count'], 1)
+        self.assertEqual(value['unknown_stream_count'], 0)
+        # Raw observations remain available; scope only affects aggregation.
+        self.assertEqual(len(self.engine.snapshot(103)['threads']), 2)
+        helper.ephemeral = None
+        self.assertEqual(self.result()['coverage'], 'partial')
+
     def test_partial_never_claims_known_subtotal_is_total(self):
         self.stream(self.thread())
         self.stream(self.thread('unknown'), 'j', pending=True)

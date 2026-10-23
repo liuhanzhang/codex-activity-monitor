@@ -32,6 +32,17 @@ class HistoryTests(unittest.TestCase):
     def index(self):
         return self.provider.index(str(self.home), 't')
 
+    def test_missing_history_cache_is_bounded_and_success_clears_the_miss(self):
+        for number in range(520):
+            self.assertIsNone(self.provider.index(str(self.home), f'missing-{number}'))
+        self.assertLessEqual(len(self.provider.missing), 512)
+        self.assertNotIn((str(self.home), 'missing-0'), self.provider.missing)
+        self.write()
+        key = (str(self.home), 't')
+        self.provider.missing[key] = 0
+        self.assertIsNotNone(self.index())
+        self.assertNotIn(key, self.provider.missing)
+
     def test_agent_identity_is_verified_bounded_and_invalidated_with_history(self):
         self.rows[0]['payload'].update(agent_nickname='Lorentz', source={'subagent': {'thread_spawn': {
             'agent_nickname': 'Lorentz', 'agent_path': '/root/desktop_control', 'agent_role': None}}})

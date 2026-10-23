@@ -57,6 +57,58 @@ class EngineTests(unittest.TestCase):
         self.view(120)
         self.assertEqual(self.engine.counts['unassociated_expired'],1)
 
+    def test_unmapped_completed_output_no_longer_blocks_live_coverage(self):
+        self.turn()
+        self.item()
+        self.delta()
+        self.item('unmapped', turn='unobserved-turn', at=102.1)
+        self.delta('unmapped', at=102.2)
+        self.assertEqual(self.view(103)['overview']['coverage'], 'partial')
+        self.send({'type': 'response.output_item.done', 'item': {
+            'id': 'unmapped', 'type': 'message', 'metadata': {'turn_id': 'unobserved-turn'},
+            'content': [{'type': 'output_text', 'text': 'finished'}]}}, 103.1, direction='upstream')
+        result = self.view(103.2)
+        self.assertEqual(result['overview']['coverage'], 'complete')
+        self.assertGreater(result['unassociated_events'], 0)
+        self.assertEqual(result['unassociated_live_events'], 0)
+        self.assertEqual(len(result['threads']), 1)  # No guessed owner.
+        # The bounded queue can still recover identity and final counts later.
+        self.turn('other', 'unobserved-turn', 104)
+        recovered = next(t for t in self.view(104.1)['threads'] if t['id'] == 'other')
+        self.assertFalse(recovered['activities'][0]['active'])
+
+    def test_response_end_retires_only_its_unmapped_generation(self):
+        self.turn()
+        self.item()
+        self.delta()
+        for item in ('closed', 'still-open'):
+            self.item(item, turn='unobserved-turn', at=102.1)
+            self.delta(item, at=102.2)
+        self.send({'type': 'response.completed', 'response': {'id': 'response',
+            'output': [{'id': 'closed', 'type': 'message'}]}}, 103, direction='upstream')
+        result = self.view(103.1)
+        self.assertEqual(result['overview']['coverage'], 'partial')
+        self.assertEqual(result['unassociated_live_events'], 2)
+        self.send({'type': 'response.completed', 'response': {'id': 'response2',
+            'output': [{'id': 'still-open', 'type': 'message'}]}}, 103.2, direction='upstream')
+        self.assertEqual(self.view(103.3)['overview']['coverage'], 'complete')
+        self.turn('other', 'unobserved-turn', 104)
+        recovered = next(t for t in self.view(104.1)['threads'] if t['id'] == 'other')
+        self.assertTrue(all(not a['active'] for a in recovered['activities']))
+        self.assertEqual(recovered['generation_rate'], None)
+        self.assertEqual(self.engine.pending_ends, {})
+
+    def test_unmapped_completion_is_scoped_to_its_backend(self):
+        self.turn()
+        self.item()
+        self.delta()
+        for backend in ('b', 'other'):
+            self.send({'type': 'response.output_text.delta', 'item_id': 'unmapped', 'delta': 'x'},
+                      102.1, backend, 'upstream')
+        self.send({'type': 'response.completed', 'response': {'id': 'response',
+            'output': [{'id': 'unmapped', 'type': 'message'}]}}, 103, direction='upstream')
+        self.assertEqual(self.view(103.1)['unassociated_live_events'], 1)
+
     def test_reconnect_before_thread_identity_keeps_gap_until_new_turn(self):
         self.engine.ingest(Event('b','lifecycle',{'type':'bridge/started'},100,0))
         self.engine.ingest(Event('b','lifecycle',{'type':'bridge/reconnected'},101,0))

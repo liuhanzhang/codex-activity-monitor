@@ -9,10 +9,38 @@ import threading
 import time
 
 from .history import HistoryProvider, raw_section
-from .timeline import apply_model_membership, display_phase, identity, merge_phase, settled_model_items
+from .timeline import (
+    apply_model_membership, display_phase, identity, merge_history_phase, settled_model_items,
+)
 from .timeline_storage import metadata_path, read_records
 from .agent_presentation import present_agents, present_coordination, scoped_status
-from .agent_relations import SPAWN_OPERATIONS
+from .agent_relations import SPAWN_OPERATIONS, thread_identity
+
+
+def validated_request(value):
+    """Validate once at the read API boundary, including CLI string offsets."""
+    if not isinstance(value, dict):
+        raise ValueError('invalid_query')
+    action = value.get('action')
+    if action not in ('timeline', 'detail'):
+        raise ValueError('unsupported_query')
+    scope, thread = value.get('scope_id'), value.get('thread_id')
+    if (not isinstance(scope, str) or not 0 < len(scope) <= 4096 or '\x00' in scope
+            or not thread_identity(thread)):
+        raise ValueError('invalid_identity')
+    turn, phase, section = (value.get(key) for key in ('turn_id', 'phase_id', 'section_id'))
+    if turn is not None and not thread_identity(turn):
+        raise ValueError('invalid_turn')
+    if action == 'detail' and (not thread_identity(turn) or not thread_identity(phase)):
+        raise ValueError('invalid_phase')
+    if section is not None and not thread_identity(section):
+        raise ValueError('invalid_section')
+    offset = value.get('offset', 0)
+    if isinstance(offset, str) and len(offset) <= 20 and offset.isdecimal():
+        offset = int(offset)
+    if type(offset) is not int or not 0 <= offset <= 2**63 - 1:
+        raise ValueError('invalid_offset')
+    return {**value, 'offset': offset}
 
 
 class TimelineQuery:
@@ -62,8 +90,12 @@ class TimelineQuery:
                     return None
                 revisions.append(index.revision)
                 quality.update(index.quality)
+                for key, p in list(phases.items()):
+                    if p['thread_id'] == owner:
+                        phases[key] = merge_history_phase(p, index.phases.get(key))
                 for p in index.phases.values():
-                    phases[p['id']] = merge_phase(phases.get(p['id']), p)
+                    if p['id'] not in phases:
+                        phases[p['id']] = p
                     if p.get('call_operation') == 'spawn':
                         spawn_calls.add((p['thread_id'], p['turn_id'], p.get('call_id')))
                 settled = settled_model_items(index.turns.values(), index.phases.values(),
@@ -71,12 +103,11 @@ class TimelineQuery:
                 for key, phase in list(phases.items()):
                     if phase['thread_id'] == owner:
                         phases[key] = apply_model_membership(phase, settled)
+                for key, old in list(turns.items()):
+                    if key[0] == owner:
+                        turns[key] = merge_history_phase(old, index.turns.get(key[1]))
                 for t in index.turns.values():
-                    key = (owner, t['turn_id']); old = turns.get(key, {})
-                    merged = {**old, **{k: v for k, v in t.items() if v is not None}}
-                    if old.get('status') == 'unknown' and t.get('status') == 'active':
-                        merged['status'] = 'unknown'
-                    turns[key] = merged
+                    turns.setdefault((owner, t['turn_id']), t)
                 relations.update(index.relations)
                 loaded[owner] = index
                 return index
@@ -241,8 +272,10 @@ class TimelineQuery:
         observed = self._observed(scope, thread)
         phase = next((p for p in observed['phases'] if p['id'] == phase_id and p['thread_id'] == thread and p['turn_id'] == turn), None)
         historical = index.phases.get(phase_id) if index else None
-        if historical:
-            phase = merge_phase(phase, historical)
+        if historical and (historical['scope_id'], historical['thread_id'], historical['turn_id']) != (scope, thread, turn):
+            historical = None
+        if index:
+            phase = merge_history_phase(phase, historical)
         if phase and index:
             phase = apply_model_membership(phase, settled_model_items(
                 index.turns.values(), index.phases.values(), read_complete=index.read_complete, quality=index.quality))
@@ -301,9 +334,8 @@ class TimelineQuery:
         return result
 
     def query(self, request):
-        scope, thread = request.get('scope_id'), request.get('thread_id')
-        if not isinstance(scope, str) or not isinstance(thread, str) or not thread:
-            raise ValueError('invalid_identity')
+        request = validated_request(request)
+        scope, thread = request['scope_id'], request['thread_id']
         # Serialise each provider's offset/index updates, not the collector event loop.
         with self.history.lock:
             if request.get('action') == 'detail':
@@ -356,6 +388,7 @@ class QueryHandler(socketserver.StreamRequestHandler):
 
 def query_runtime(runtime, request):
     """Does not create runtime, start observation, resume a chat, or change config."""
+    request = validated_request(request)
     runtime = Path(runtime)
     try:
         with socket.socket(socket.AF_UNIX, socket.SOCK_STREAM) as connection:

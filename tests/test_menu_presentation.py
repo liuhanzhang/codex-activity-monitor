@@ -123,6 +123,31 @@ class MenuPresentationTests(unittest.TestCase):
         self.assertEqual(self.menu()['reason'], 'idle')
         self.assertEqual(self.menu()['active_conversation_count'], 0)
 
+    def test_ephemeral_work_cannot_keep_completed_chat_busy(self):
+        main = self.thread('main')
+        main.status = 'completed'
+        helper = self.thread('helper')
+        helper.ephemeral = True
+        activity = self.activity(helper, 'reasoning')
+        for kind in ('reasoning', 'text'):
+            activity.kind = kind
+            with self.subTest(kind=kind):
+                self.assertEqual(self.menu()['reason'], 'idle')
+                self.assertEqual(self.menu()['active_conversation_count'], 0)
+
+    def test_ephemeral_work_does_not_mask_active_chat_mode(self):
+        self.activity(self.thread('main'), 'reasoning')
+        helper = self.thread('helper')
+        helper.ephemeral = True
+        self.activity(helper, 'text')
+        self.assertEqual(self.menu()['mode'], 'thinking')
+        self.assertEqual(self.menu()['active_conversation_count'], 1)
+        # Only an explicit ephemeral flag excludes a thread. Unknown/false
+        # classifications continue to contribute, regardless of its name.
+        for classification in (None, False):
+            helper.ephemeral = classification
+            self.assertEqual(self.menu()['reason'], 'multi_conversation')
+
     def test_mirrored_work_cannot_start_animation(self):
         thread = self.thread()
         self.activity(thread, 'tool', mirrored=True)

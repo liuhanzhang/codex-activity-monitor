@@ -65,6 +65,16 @@ class TimelineTests(unittest.TestCase):
         self.assertIsNone(p['start_ms'])
         self.assertIn('start_unknown', p['quality'])
 
+    def test_waiting_lookup_expires_with_its_phase_after_a_missing_reply(self):
+        self.send({'id': 'request', 'method': 'item/commandExecution/requestApproval',
+                   'params': {'threadId': 't', 'turnId': 'u', 'itemId': 'cmd'}}, 101)
+        self.assertTrue(self.book.waiting)
+        self.send({'method': 'turn/completed', 'params': {'threadId': 't',
+                   'turn': {'id': 'u', 'status': 'completed'}}}, 102)
+        self.book.prune(now=1700000800)
+        self.assertFalse(self.book.phases)
+        self.assertFalse(self.book.waiting)
+
     def test_cross_turn_process_keeps_owner_and_survives_parent_end(self):
         self.item(source='unifiedExecStartup', processId='123')
         self.send({'method': 'turn/completed', 'params': {'threadId': 't', 'turn': {'id': 'u', 'status': 'completed'}}}, 104)

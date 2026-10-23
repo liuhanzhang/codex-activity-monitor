@@ -403,7 +403,11 @@ def presentation(engine, thread, view, now):
                 review_mode=thread.review_mode, subagents=dict(thread.subagents),
                 environment_connected=thread.environment_connected, project_id=thread.project_id,
                 display_seconds=max(0,now-primary.started_at) if primary and primary.started_at and connected else None)
-    for detail, activity in zip(view['activities'], reversed(activities)):
+    # Snapshot construction can omit retired model supplements. Join by identity
+    # so filtering never lends another activity's label, files or visibility.
+    by_id = {activity.id: activity for activity in activities}
+    for detail in view['activities']:
+        activity = by_id[detail['id']]
         descriptor = display_message(activity, ended=not activity.active)
         detail.update(display_message=descriptor,
                       display_label=render_message(descriptor), display_visible=activity.id not in superseded and activity.kind not in ('approval','input','hook') and not (activity.kind=='tool_ready' and is_code_exec(activity.tool_name) and actual),

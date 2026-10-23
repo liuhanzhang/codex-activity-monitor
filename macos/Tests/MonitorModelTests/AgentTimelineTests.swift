@@ -23,27 +23,22 @@ private func agentPhase(_ owner: String, type: String = "reasoning", extra: [Str
     return try JSONDecoder().decode(TimelinePhase.self, from: JSONSerialization.data(withJSONObject: value))
 }
 
-@Test func groupedAgentHeadersDoNotChangeActivityTimeOrViewerLanes() throws {
+@Test func viewerAgentExpansionDoesNotChangeActivityTime() throws {
     let bundle = try agentBundle(), phases = try [agentPhase("root"), agentPhase("child"), agentPhase("nested")]
     let viewer = TimelineLane.lanes(in: bundle, expanded: ["child"])
-    let grouped = TimelineLane.lanes(in: bundle, expanded: ["child"], presentation: .panelGrouped)
+    let collapsed = TimelineLane.lanes(in: bundle, expanded: [])
     #expect(viewer.map(\.track) == ["model", "tool", "header", "model", "tool", "summary"])
-    #expect(grouped.map(\.track) == ["header", "model", "tool", "header", "model", "tool", "header", "summary"])
-    #expect(grouped.first?.label == "主智能体")
-    #expect(grouped.first { $0.threadID == "nested" }?.depth == 2)
+    #expect(collapsed.map(\.track) == ["model", "tool", "summary", "summary"])
     let before = TimelineLayout(origin: 1000, end: 5000, now: 5000, lanes: viewer, activities: phases)
-    let after = TimelineLayout(origin: 1000, end: 5000, now: 5000, lanes: grouped, activities: phases)
+    let after = TimelineLayout(origin: 1000, end: 5000, now: 5000, lanes: collapsed, activities: phases)
     for phase in phases {
         let a = try #require(before.rect(for: phase)), b = try #require(after.rect(for: phase))
         #expect(a.minX == b.minX && a.width == b.width)
         #expect(after.hitTest(CGPoint(x: b.midX, y: b.midY), phases: phases).map(\.id) == [phase.id])
-        for lane in grouped where lane.track == "header" {
-            #expect(b.maxY <= after.laneY(lane.id) || b.minY >= after.laneY(lane.id) + lane.height)
-        }
     }
     #expect(TimelineLane.lanes(in: bundle, expanded: ["child"]) == viewer)
     let rootOnly = try agentBundle(children: false)
-    #expect(TimelineLane.lanes(in: rootOnly, expanded: [], presentation: .panelGrouped) == TimelineLane.lanes(in: rootOnly, expanded: []))
+    #expect(TimelineLane.lanes(in: rootOnly, expanded: []).map(\.track) == ["model", "tool"])
 }
 
 @Test func oldAgentPayloadAndCoordinationKeepConservativeFallbacks() throws {

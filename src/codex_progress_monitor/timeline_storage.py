@@ -15,7 +15,7 @@ FIELDS = frozenset(('id', 'scope_id', 'thread_id', 'turn_id', 'namespace', 'item
                     'start_ms', 'end_ms', 'start_source', 'end_source', 'status', 'quality',
                     'mirrored', 'observation_instance', 'observation_backend', 'observed_until_ms', 'updated_ms',
                     'parent_thread_id', 'parent_turn_id', 'child_thread_id', 'operation', 'execution_confirmed',
-                    'call_operation', 'call_target_scope', 'history_terminal', 'history_retired', 'exit_code'))
+                    'call_operation', 'call_target_scope', 'history_terminal', 'history_retired', 'exit_code', 'observation'))
 
 
 def metadata_path(runtime):
@@ -73,6 +73,10 @@ class TimelineStorage:
 
     def put(self, kind, record):
         safe = {k: deepcopy(v) for k, v in record.items() if k in FIELDS}
+        if isinstance(safe.get('observation'), dict):
+            safe['observation'] = {k: v for k, v in safe['observation'].items() if k in FIELDS and k != 'observation'}
+        else:
+            safe.pop('observation', None)
         # Labels are fixed categories/tool names, never generated command previews.
         with self.lock:
             self.pending[record['id']] = (kind, safe)

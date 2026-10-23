@@ -59,8 +59,8 @@ private func phase(_ id: String) throws -> TimelinePhase {
     store.expandedAgents = ["child"]; store.selectedPhaseID = "selected"; store.selectedPhaseIDs = ["selected"]
     store.followsLatest = false; store.scrollOffset = 40
     let viewer = try #require(store.layout(for: .activityViewer))
-    let panel = try #require(store.layout(for: .panelGrouped))
-    #expect(viewer.lanes.first?.track == "model" && panel.lanes.first?.track == "header")
+    let panel = try #require(store.layout(for: .panelCompact))
+    #expect(viewer.lanes.count == 5 && panel.lanes.map(\.track) == ["model", "tool", "model", "tool"])
     let pending = Task { await store.refresh() }
     await client.waitFor("current")
     await client.resolve("current", bundle: try namedBundle("Lorentz"))
@@ -68,7 +68,7 @@ private func phase(_ id: String) throws -> TimelinePhase {
     #expect(store.expandedAgents == ["child"] && store.selectedPhaseIDs == ["selected"])
     #expect(store.scrollOffset == 40 && !store.followsLatest)
     #expect(store.layout(for: .activityViewer)?.lanes.map(\.track) == viewer.lanes.map(\.track))
-    #expect(store.layout(for: .panelGrouped)?.lanes.map(\.track) == panel.lanes.map(\.track))
+    #expect(store.layout(for: .panelCompact)?.lanes.map(\.track) == panel.lanes.map(\.track))
 }
 
 @Test @MainActor func panelSwitchBackWithinPresentationKeepsHistoricalReadingPosition() throws {
@@ -299,10 +299,13 @@ private func phase(_ id: String) throws -> TimelinePhase {
     #expect(!viewer.followsContent)
 }
 
-private func rawDetail(_ text: String, next: Int? = nil, state: String = "available") throws -> ActivityDetail {
+private func rawDetail(_ text: String, for id: String, offset: Int = 0,
+                       next: Int? = nil, state: String = "available") throws -> ActivityDetail {
     let value: [String: Any] = ["version": 1, "state": state, "source": "codex_history", "attachments": [],
+        "phase": ["id": id, "scope_id": "scope", "thread_id": "root", "turn_id": "turn", "item_id": id,
+                  "namespace": "model", "track": "model", "kind": "text", "label": "正文", "status": "completed"],
         "sections": state == "available" ? [["id": "input", "title": "参数", "format": "text", "text": text,
-            "next_offset": next as Any? ?? NSNull()]] : []]
+            "offset": offset, "next_offset": next as Any? ?? NSNull()]] : []]
     return try JSONDecoder().decode(ActivityDetail.self, from: JSONSerialization.data(withJSONObject: value))
 }
 
@@ -314,8 +317,8 @@ private func rawDetail(_ text: String, next: Int? = nil, state: String = "availa
     #expect(group.entries.map { $0.phase.id } == ["a", "b"])
     let task = Task { await group.refresh() }
     await client.waitFor("a"); await client.waitFor("b")
-    await client.resolve("b", detail: try rawDetail("", state: "unavailable"))
-    await client.resolve("a", detail: try rawDetail("prefix", next: 6))
+    await client.resolve("b", detail: try rawDetail("", for: "b", state: "unavailable"))
+    await client.resolve("a", detail: try rawDetail("prefix", for: "a", next: 6))
     await task.value
     let entry = group.entries[0]
     #expect(entry.detail?.sections[0].text == "prefix")
@@ -323,7 +326,7 @@ private func rawDetail(_ text: String, next: Int? = nil, state: String = "availa
     #expect(group.entries.map { $0.phase.id } == ["a", "b"])
     let paging = Task { await entry.loadMore() }
     await client.waitFor("a")
-    await client.resolve("a", detail: try rawDetail(" tail"))
+    await client.resolve("a", detail: try rawDetail(" tail", for: "a", offset: 6))
     await paging.value
     #expect(entry.detail?.sections[0].text == "prefix tail")
     #expect(group.entries[1].detail?.sections.isEmpty == true)
@@ -340,8 +343,8 @@ private func rawDetail(_ text: String, next: Int? = nil, state: String = "availa
     let pending = Task { await group.refresh() }
     await client.waitFor("a"); await client.waitFor("b")
     group.select([try phase("c")])
-    await client.resolve("a", detail: try rawDetail("old a"))
-    await client.resolve("b", detail: try rawDetail("old b"))
+    await client.resolve("a", detail: try rawDetail("old a", for: "a"))
+    await client.resolve("b", detail: try rawDetail("old b", for: "b"))
     await pending.value
     #expect(group.entries.map { $0.phase.id } == ["c"])
     #expect(group.entries[0].detail == nil)
@@ -388,7 +391,7 @@ private func rawDetail(_ text: String, next: Int? = nil, state: String = "availa
     let window = try #require(controller.window)
     defer { window.close() }
     let timeline = TimelineStore(scope: "scope", thread: "root", title: "test", client: FixtureTimelineClient(path: nil))
-    let screen = try #require(NSScreen.main)
+    let screen = try #require(NSScreen.main ?? NSScreen.screens.first)
     let size = NSSize(width: min(900, screen.visibleFrame.width), height: min(650, screen.visibleFrame.height))
     let frame = NSRect(origin: screen.visibleFrame.origin, size: size)
     window.setFrame(frame, display: false)
