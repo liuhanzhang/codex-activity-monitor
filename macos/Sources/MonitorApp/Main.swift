@@ -206,6 +206,13 @@ enum MonitorApplication {
         value["status_tooltip"] = item.button?.toolTip
         value["connection_label"] = store.connectionLabel
         value["observation_notice"] = store.snapshot?.observationNotice?.rawValue
+        value["chat_speed_observations"] = store.snapshot?.displayedChats.map { chat in
+            var observation: [String: Any] = ["id": chat.threadID]
+            observation["rate"] = chat.generation_rate
+            observation["coverage"] = chat.generation_rate_coverage
+            observation["notice"] = chat.speedObservationNotice?.rawValue
+            return observation
+        }
         value["animating"] = statusContent.animating; value["reduced_motion"] = statusContent.reducedMotion
         value["animation_frames"] = statusContent.frameDiagnostics
         value["build_id"] = store.configuration.build_id

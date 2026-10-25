@@ -9,6 +9,16 @@ public struct Overview: Decodable, Sendable {
     public let active_thread_count: Int?
     public let quality: [String]?
     public let rate_status: String?
+
+    public var displayedRate: Double? {
+        guard version == 1 else { return nil }
+        let value: Double?
+        if coverage == "complete" { value = generation_rate ?? observed_subtotal }
+        else if coverage == "partial", rate_status == "ready" { value = observed_subtotal }
+        else { value = nil }
+        guard let value, value.isFinite, value >= 0 else { return nil }
+        return value
+    }
 }
 
 public struct Usage: Decodable, Sendable {
@@ -55,6 +65,8 @@ public struct Chat: Decodable, Identifiable, Sendable {
     public let generation_rate: Double?
     public let generation_estimated: Bool?
     public let generation_rate_status: String?
+    public let generation_rate_coverage: String?
+    public let generation_rate_issues: [String]?
     public let last_progress_seconds: Double?
     public let usage: Usage?
     public let activities: [Activity]?
@@ -79,11 +91,16 @@ public struct Chat: Decodable, Identifiable, Sendable {
     public var project: String { cwd.map { URL(fileURLWithPath: $0).lastPathComponent } ?? "" }
     public var isKnownSubagent: Bool { thread_source != "user" && (thread_source == "subagent" || parent_thread_id != nil) }
     public var isTerminal: Bool { ["completed", "failed", "interrupted"].contains(status ?? "") }
+    public var speedObservationNotice: ObservationNotice? {
+        guard let issues = generation_rate_issues, !issues.isEmpty else { return nil }
+        return ObservationNotice.speedIssue(Set(issues))
+    }
 
     enum CodingKeys: String, CodingKey {
         case threadID = "id"
         case home, backend, name, cwd, model, status, connected, visible, ephemeral, has_active_work
         case display_label, display_message, display_seconds, generation_rate, generation_estimated, generation_rate_status
+        case generation_rate_coverage, generation_rate_issues
         case last_progress_seconds, usage, activities, subagents, parent_thread_id, parent_source, parent_quality, thread_source, context_only, turn_id
     }
 }
@@ -133,10 +150,8 @@ public struct Snapshot: Decodable, Sendable {
 
     public func menuTitle(at date: Date = Date(), connectionFresh: Bool? = nil, language: MonitorLanguage = .chinese) -> String {
         guard connectionFresh ?? isFresh(at: date) else { return "—" }
-        if isMeasuringSpeed { return DisplayMessage("usage.generation").rendered(in: language) }
-        guard let overview, overview.version == 1,
-              overview.coverage == "complete", let rate = overview.generation_rate,
-              rate.isFinite, rate >= 0 else { return "—" }
+        if let backends, !backends.values.contains(where: { $0.connected == true }) { return "—" }
+        guard let rate = overview?.displayedRate else { return "—" }
         return MetricFormat.speed(rate)
     }
 
@@ -179,6 +194,10 @@ public struct Snapshot: Decodable, Sendable {
         if isMeasuringSpeed { return nil }
         guard overview.coverage != "complete" else { return nil }
         let quality = Set(overview.quality ?? [])
+        if overview.displayedRate != nil {
+            // Attributable current failures belong on the affected chat row.
+            return quality.contains("unassociated_events") ? .associatingEvents : nil
+        }
         if quality.contains("observation_gap") { return .observationGap }
         if !quality.isDisjoint(with: ["identity_conflict", "multiple_active_backends"]) { return .identityConflict }
         if quality.contains("unassociated_events") { return .associatingEvents }
@@ -209,6 +228,16 @@ public enum ObservationNotice: String, Sendable {
     case resourceLimit = "NoticeObservationResourceLimit"
     case speedResourceLimit = "NoticeSpeedResourceLimit"
     case speedCountFailed = "NoticeSpeedCountFailed"
+    case sourceDisconnected = "NoticeSourceDisconnected"
+
+    static func speedIssue(_ quality: Set<String>) -> ObservationNotice {
+        if quality.contains("disconnected") { return .sourceDisconnected }
+        if quality.contains("observation_gap") { return .observationGap }
+        if !quality.isDisjoint(with: ["identity_conflict", "multiple_active_backends"]) { return .identityConflict }
+        if !quality.isDisjoint(with: ["count_budget", "content_limit", "timing_limit", "memory_limit"]) { return .speedResourceLimit }
+        if quality.contains("tokenizer_error") { return .speedCountFailed }
+        return .streamUnavailable
+    }
 }
 
 public struct ChatRow: Identifiable, Sendable {

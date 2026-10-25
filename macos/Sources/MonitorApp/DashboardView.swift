@@ -122,7 +122,7 @@ struct DashboardView: LocalizedView {
             Text(store.fresh ? plural("%d 个活跃聊天", count: store.activeRows.count) : "—")
                 .font(.system(size: 10)).foregroundStyle(.secondary).fixedSize()
             Spacer(minLength: 6)
-            if store.menuTitle != "—", let rate = store.snapshot?.overview?.generation_rate, rate > 0 {
+            if store.menuTitle != "—", let rate = store.snapshot?.overview?.displayedRate, rate > 0 {
                 Text(MetricFormat.compactSpeed(rate)).font(.system(size: 11)).monospacedDigit().fixedSize()
                     .help(L("已接入聊天的生成总速度") + " " + store.menuTitle)
             }

@@ -1,0 +1,66 @@
+{
+  "date_local": "2026-10-25",
+  "starting_commit": "1a49f46",
+  "scope": "implementation, controlled validation and daily GUI/collector cutover; not full resident-bridge update or complete natural-turn acceptance",
+  "python_full_initial": {
+    "tests": 479,
+    "failures": 1,
+    "failed_case": "test_gap_does_not_leave_unconfirmed_old_work_on_the_main_row",
+    "reason": "old expectation prohibited a valid zero after post-gap observation recovered",
+    "elapsed_seconds": 89.159
+  },
+  "python_targeted_final": {
+    "tests": 188,
+    "passed": true,
+    "elapsed_seconds": 2.03,
+    "full_discovery_repeated": false
+  },
+  "swift_model": {
+    "reported": 68,
+    "executed_passed": 66,
+    "skipped": 2
+  },
+  "swift_app": {
+    "reported": 115,
+    "executed_passed": 108,
+    "skipped": 7
+  },
+  "isolated_collector": {
+    "passed": true,
+    "phases": 7,
+    "evidence": "observation-recovery.json"
+  },
+  "native_preview": {
+    "passed": true,
+    "languages": [
+      "en",
+      "zh-CN"
+    ],
+    "states_per_language": 10,
+    "build_ids": [
+      "ef456530840abf89ec3c9cf2347ead78ac0cbf46a68bb81780b262c402a6256b"
+    ],
+    "evidence": "native-presentation.json"
+  },
+  "localization_export_check": true,
+  "whitespace_check": true,
+  "production_runtime_changed": true,
+  "natural_use_accepted": false,
+  "limits": [
+    "Historical oversized_diagnostic records remain unclassified.",
+    "Preview state diagnostics do not measure physical pixels or natural model latency.",
+    "Production GUI and collector restarted; Codex Desktop and four resident bridges retained their processes."
+  ],
+  "daily_cutover_evidence": "daily-cutover.json",
+  "statusbar_placeholder_followup": {
+    "evidence": "statusbar-no-placeholder.json",
+    "normal_sampling_title": "—",
+    "sampling_width_points": 47,
+    "ready_width_points": 47,
+    "gui_loaded_build": "cef77b4566b79ed5fc470db691df7d9b62d396c5246d7049ae415c12c2200350",
+    "daily_reload_verified": true,
+    "swift_model_executed_passed": 66,
+    "swift_app_executed_passed": 108,
+    "default_skipped": 9
+  }
+}

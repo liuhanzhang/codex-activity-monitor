@@ -1,0 +1,349 @@
+{
+  "date_local": "2026-10-25",
+  "scope": "remove menu-bar text placeholders; native fixture and daily GUI reload checks",
+  "native": {
+    "scope": "native Preview applies synthetic read-only fixtures; no production runtime or model calls",
+    "passed": true,
+    "languages": {
+      "en": {
+        "sampling": {
+          "title": "—",
+          "mode": "unavailable",
+          "status_tooltip": "Connected · Click to view live activity",
+          "connection_label": "Connected",
+          "observation_notice": null,
+          "chat_speed_observations": [
+            {
+              "coverage": "unavailable",
+              "id": "chat"
+            }
+          ],
+          "build_id": "cef77b4566b79ed5fc470db691df7d9b62d396c5246d7049ae415c12c2200350",
+          "button_width": 47
+        },
+        "prefix-correction": {
+          "title": "—",
+          "mode": "unavailable",
+          "status_tooltip": "Connected · Click to view live activity",
+          "connection_label": "Connected",
+          "observation_notice": null,
+          "chat_speed_observations": [
+            {
+              "coverage": "unavailable",
+              "id": "chat"
+            }
+          ],
+          "build_id": "cef77b4566b79ed5fc470db691df7d9b62d396c5246d7049ae415c12c2200350",
+          "button_width": 47
+        },
+        "ready": {
+          "title": "100 T/s",
+          "mode": "speed",
+          "status_tooltip": "100 T/s · Click to view live activity",
+          "connection_label": "Connected",
+          "observation_notice": null,
+          "chat_speed_observations": [
+            {
+              "coverage": "complete",
+              "id": "chat",
+              "rate": 100
+            }
+          ],
+          "build_id": "cef77b4566b79ed5fc470db691df7d9b62d396c5246d7049ae415c12c2200350",
+          "button_width": 47
+        },
+        "recovered": {
+          "title": "100 T/s",
+          "mode": "speed",
+          "status_tooltip": "100 T/s · Click to view live activity",
+          "connection_label": "Connected",
+          "observation_notice": null,
+          "chat_speed_observations": [
+            {
+              "coverage": "complete",
+              "id": "chat",
+              "rate": 100
+            }
+          ],
+          "build_id": "cef77b4566b79ed5fc470db691df7d9b62d396c5246d7049ae415c12c2200350",
+          "button_width": 47
+        },
+        "partial": {
+          "title": "100 T/s",
+          "mode": "speed",
+          "status_tooltip": "100 T/s · Click to view live activity",
+          "connection_label": "Partial observation",
+          "observation_notice": null,
+          "chat_speed_observations": [
+            {
+              "coverage": "partial",
+              "id": "chat",
+              "notice": "NoticeObservationGap",
+              "rate": 100
+            }
+          ],
+          "build_id": "cef77b4566b79ed5fc470db691df7d9b62d396c5246d7049ae415c12c2200350",
+          "button_width": 47
+        },
+        "partial-zero": {
+          "title": "0 T/s",
+          "mode": "speed",
+          "status_tooltip": "0 T/s · Click to view live activity",
+          "connection_label": "Partial observation",
+          "observation_notice": null,
+          "chat_speed_observations": [
+            {
+              "coverage": "partial",
+              "id": "chat",
+              "notice": "NoticeObservationGap",
+              "rate": 0
+            }
+          ],
+          "build_id": "cef77b4566b79ed5fc470db691df7d9b62d396c5246d7049ae415c12c2200350",
+          "button_width": 47
+        },
+        "limited": {
+          "title": "—",
+          "mode": "unavailable",
+          "status_tooltip": "Speed measurement reached its resource limit. The affected speed is unknown. · Click to view live activity",
+          "connection_label": "Connected · Total speed unavailable",
+          "observation_notice": "NoticeSpeedResourceLimit",
+          "chat_speed_observations": [
+            {
+              "coverage": "unavailable",
+              "id": "chat",
+              "notice": "NoticeSpeedResourceLimit"
+            }
+          ],
+          "build_id": "cef77b4566b79ed5fc470db691df7d9b62d396c5246d7049ae415c12c2200350",
+          "button_width": 47
+        },
+        "failed": {
+          "title": "—",
+          "mode": "unavailable",
+          "status_tooltip": "Token counting failed. Speed is temporarily unavailable. · Click to view live activity",
+          "connection_label": "Connected · Total speed unavailable",
+          "observation_notice": "NoticeSpeedCountFailed",
+          "chat_speed_observations": [
+            {
+              "coverage": "unavailable",
+              "id": "chat",
+              "notice": "NoticeSpeedCountFailed"
+            }
+          ],
+          "build_id": "cef77b4566b79ed5fc470db691df7d9b62d396c5246d7049ae415c12c2200350",
+          "button_width": 47
+        },
+        "gap": {
+          "title": "—",
+          "mode": "unavailable",
+          "status_tooltip": "Current generation lacks continuous observation. Its speed is unknown. · Click to view live activity",
+          "connection_label": "Connected · Total speed unavailable",
+          "observation_notice": "NoticeObservationGap",
+          "chat_speed_observations": [
+            {
+              "coverage": "unavailable",
+              "id": "chat",
+              "notice": "NoticeObservationGap"
+            }
+          ],
+          "build_id": "cef77b4566b79ed5fc470db691df7d9b62d396c5246d7049ae415c12c2200350",
+          "button_width": 47
+        },
+        "disconnected": {
+          "title": "—",
+          "mode": "unavailable",
+          "status_tooltip": "If Codex is already open, reopen it after your tasks finish to connect. · Click to view live activity",
+          "connection_label": "Waiting for Codex",
+          "observation_notice": "NoticeWaitingForConnection",
+          "chat_speed_observations": [
+            {
+              "coverage": "unavailable",
+              "id": "chat",
+              "notice": "NoticeSourceDisconnected"
+            }
+          ],
+          "build_id": "cef77b4566b79ed5fc470db691df7d9b62d396c5246d7049ae415c12c2200350",
+          "button_width": 47
+        }
+      },
+      "zh-CN": {
+        "sampling": {
+          "title": "—",
+          "mode": "unavailable",
+          "status_tooltip": "已连接 · 点击查看实时活动",
+          "connection_label": "已连接",
+          "observation_notice": null,
+          "chat_speed_observations": [
+            {
+              "coverage": "unavailable",
+              "id": "chat"
+            }
+          ],
+          "build_id": "cef77b4566b79ed5fc470db691df7d9b62d396c5246d7049ae415c12c2200350",
+          "button_width": 47
+        },
+        "prefix-correction": {
+          "title": "—",
+          "mode": "unavailable",
+          "status_tooltip": "已连接 · 点击查看实时活动",
+          "connection_label": "已连接",
+          "observation_notice": null,
+          "chat_speed_observations": [
+            {
+              "coverage": "unavailable",
+              "id": "chat"
+            }
+          ],
+          "build_id": "cef77b4566b79ed5fc470db691df7d9b62d396c5246d7049ae415c12c2200350",
+          "button_width": 47
+        },
+        "ready": {
+          "title": "100 T/s",
+          "mode": "speed",
+          "status_tooltip": "100 T/s · 点击查看实时活动",
+          "connection_label": "已连接",
+          "observation_notice": null,
+          "chat_speed_observations": [
+            {
+              "coverage": "complete",
+              "id": "chat",
+              "rate": 100
+            }
+          ],
+          "build_id": "cef77b4566b79ed5fc470db691df7d9b62d396c5246d7049ae415c12c2200350",
+          "button_width": 47
+        },
+        "recovered": {
+          "title": "100 T/s",
+          "mode": "speed",
+          "status_tooltip": "100 T/s · 点击查看实时活动",
+          "connection_label": "已连接",
+          "observation_notice": null,
+          "chat_speed_observations": [
+            {
+              "coverage": "complete",
+              "id": "chat",
+              "rate": 100
+            }
+          ],
+          "build_id": "cef77b4566b79ed5fc470db691df7d9b62d396c5246d7049ae415c12c2200350",
+          "button_width": 47
+        },
+        "partial": {
+          "title": "100 T/s",
+          "mode": "speed",
+          "status_tooltip": "100 T/s · 点击查看实时活动",
+          "connection_label": "部分观测",
+          "observation_notice": null,
+          "chat_speed_observations": [
+            {
+              "coverage": "partial",
+              "id": "chat",
+              "notice": "NoticeObservationGap",
+              "rate": 100
+            }
+          ],
+          "build_id": "cef77b4566b79ed5fc470db691df7d9b62d396c5246d7049ae415c12c2200350",
+          "button_width": 47
+        },
+        "partial-zero": {
+          "title": "0 T/s",
+          "mode": "speed",
+          "status_tooltip": "0 T/s · 点击查看实时活动",
+          "connection_label": "部分观测",
+          "observation_notice": null,
+          "chat_speed_observations": [
+            {
+              "coverage": "partial",
+              "id": "chat",
+              "notice": "NoticeObservationGap",
+              "rate": 0
+            }
+          ],
+          "build_id": "cef77b4566b79ed5fc470db691df7d9b62d396c5246d7049ae415c12c2200350",
+          "button_width": 47
+        },
+        "limited": {
+          "title": "—",
+          "mode": "unavailable",
+          "status_tooltip": "速度计算达到资源上限，相关速度暂不可确认。 · 点击查看实时活动",
+          "connection_label": "已连接 · 总速度暂不可用",
+          "observation_notice": "NoticeSpeedResourceLimit",
+          "chat_speed_observations": [
+            {
+              "coverage": "unavailable",
+              "id": "chat",
+              "notice": "NoticeSpeedResourceLimit"
+            }
+          ],
+          "build_id": "cef77b4566b79ed5fc470db691df7d9b62d396c5246d7049ae415c12c2200350",
+          "button_width": 47
+        },
+        "failed": {
+          "title": "—",
+          "mode": "unavailable",
+          "status_tooltip": "速度计数失败，暂时无法估算速度。 · 点击查看实时活动",
+          "connection_label": "已连接 · 总速度暂不可用",
+          "observation_notice": "NoticeSpeedCountFailed",
+          "chat_speed_observations": [
+            {
+              "coverage": "unavailable",
+              "id": "chat",
+              "notice": "NoticeSpeedCountFailed"
+            }
+          ],
+          "build_id": "cef77b4566b79ed5fc470db691df7d9b62d396c5246d7049ae415c12c2200350",
+          "button_width": 47
+        },
+        "gap": {
+          "title": "—",
+          "mode": "unavailable",
+          "status_tooltip": "当前生成内容缺少连续观测，相关速度暂不可确认。 · 点击查看实时活动",
+          "connection_label": "已连接 · 总速度暂不可用",
+          "observation_notice": "NoticeObservationGap",
+          "chat_speed_observations": [
+            {
+              "coverage": "unavailable",
+              "id": "chat",
+              "notice": "NoticeObservationGap"
+            }
+          ],
+          "build_id": "cef77b4566b79ed5fc470db691df7d9b62d396c5246d7049ae415c12c2200350",
+          "button_width": 47
+        },
+        "disconnected": {
+          "title": "—",
+          "mode": "unavailable",
+          "status_tooltip": "若 Codex 已经打开，请在任务结束后重开以接入。 · 点击查看实时活动",
+          "connection_label": "等待 Codex 接入",
+          "observation_notice": "NoticeWaitingForConnection",
+          "chat_speed_observations": [
+            {
+              "coverage": "unavailable",
+              "id": "chat",
+              "notice": "NoticeSourceDisconnected"
+            }
+          ],
+          "build_id": "cef77b4566b79ed5fc470db691df7d9b62d396c5246d7049ae415c12c2200350",
+          "button_width": 47
+        }
+      }
+    },
+    "limits": [
+      "Applied AppKit/SwiftUI state and actual status-button tooltip, not a physical screen timing measurement.",
+      "Each independent fixture tests display semantics; these are not natural completion or recovery samples."
+    ]
+  },
+  "daily": {
+    "gui_restarted": true,
+    "loaded_build_id": "cef77b4566b79ed5fc470db691df7d9b62d396c5246d7049ae415c12c2200350",
+    "matches_candidate": true,
+    "collector_restarted": true,
+    "collector_modules_match": true,
+    "fresh_nonce_probes": 2,
+    "sequence_advanced": true,
+    "observed_titles_are_numeric_or_dash": true,
+    "codex_desktop_restarted": false
+  }
+}

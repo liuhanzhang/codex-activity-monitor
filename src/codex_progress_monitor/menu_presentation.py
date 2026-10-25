@@ -1,6 +1,6 @@
 """Evidence-based menu state. Formatting and animation belong to the GUI."""
 
-from .overview import CONFLICTS, LIVE_KINDS, monitored_threads
+from .overview import IDENTITY_CONFLICTS, LIVE_KINDS, monitored_threads
 
 
 def menu_presentation(engine, views, total):
@@ -28,14 +28,17 @@ def menu_presentation(engine, views, total):
     def result(mode, reason):
         return dict(version=1, mode=mode, reason=reason, active_conversation_count=count)
 
+    if total.get('observed_subtotal') is not None and total['coverage'] != 'complete':
+        return result('speed', 'partial_observation')
     if total['coverage'] != 'complete' and total.get('rate_status') != 'sampling':
         return result('unavailable', 'coverage_incomplete')
     if unowned:
-        return result('unavailable', 'parent_identity_unknown')
-    if any(not v.get('connected') or CONFLICTS.intersection(v.get('quality', ())) or
+        return result('speed' if total.get('observed_subtotal') is not None else 'unavailable', 'parent_identity_unknown')
+    if any(not v.get('connected') or IDENTITY_CONFLICTS.intersection(v.get('quality', ())) or
+           v.get('has_unresolved_work') or
            v.get('display_message', {}).get('key') in ('activity.unknown', 'activity.disconnected')
            for v in active):
-        return result('unavailable', 'activity_unavailable')
+        return result('speed' if total.get('observed_subtotal') is not None else 'unavailable', 'activity_unavailable')
     if total.get('rate_status') == 'sampling':
         return result('speed', 'sampling') if count else result('unavailable', 'activity_unavailable')
     if count > 1:

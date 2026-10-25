@@ -72,6 +72,7 @@ class Thread:
     cwd: str = ''
     model: str = 'unknown'
     turn_id: str | None = None
+    turn_start_observed: bool = True
     status: str = 'idle'
     wait_started_at: float = 0
     last_progress_at: float = 0

@@ -4,7 +4,6 @@ from pathlib import Path
 
 from .events import BLOCKING_REQUESTS, SERVER_REQUESTS, brief
 from .i18n import message, phase_message, render_message
-from .overview import CONFLICTS, LIVE_KINDS
 from .tool_labels import command_name, is_code_exec, is_command_tool, is_patch_tool, tool_display
 
 
@@ -386,33 +385,9 @@ def presentation(engine, thread, view, now):
     if not primary and label['key'] in ('activity.disconnected', 'activity.unknown'):
         visible=[]
     visible_ids = {a.id for a in visible}
-    rates, unavailable, sampling, estimated = [], False, False, False
-    seen_rates = set()
-    for activity in actual:
-        if activity.kind in ('text', 'plan', 'tool_input') and not activity.stream_keys:
-            sampling = True
-        for key in activity.stream_keys:
-            if key in seen_rates:
-                continue
-            seen_rates.add(key)
-            stream = engine.streams.get(key)
-            if stream and stream.ended_at is None and not stream.ended_by_history and stream.last_delta_at is not None and stream.kind in LIVE_KINDS:
-                reading = stream.rate_reading(now)
-                rate = reading.value
-                if rate is None:
-                    sampling |= reading.status == 'sampling'
-                    unavailable |= reading.status != 'sampling'
-                else:
-                    rates.append(rate)
-                    estimated |= stream.estimated
-    unavailable |= not connected or label['key'] in ('activity.unknown', 'activity.disconnected')
-    unavailable |= sampling and bool(CONFLICTS.intersection(view.get('quality', ())))
-    rate_status = 'unavailable' if unavailable else 'sampling' if sampling else 'ready' if rates else 'inactive'
     view.update(display_message=label, display_label=render_message(label), visible=thread.visible,
                 display_active_count=len(visible_ids), display_primary_id=primary.id if primary else None,
-                generation_rate=sum(rates) if rate_status == 'ready' else None,
-                generation_rate_status=rate_status,
-                generation_estimated=estimated, plan=list(thread.plan), goal_status=thread.goal_status,
+                plan=list(thread.plan), goal_status=thread.goal_status,
                 review_mode=thread.review_mode, subagents=dict(thread.subagents),
                 environment_connected=thread.environment_connected, project_id=thread.project_id,
                 display_seconds=max(0,now-primary.started_at) if primary and primary.started_at and connected else None)

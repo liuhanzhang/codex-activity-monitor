@@ -5,6 +5,7 @@ import json
 import os
 from pathlib import Path
 import queue
+import re
 import select
 import signal
 import socket
@@ -19,6 +20,15 @@ from .runtime import REAL_CLI
 from .observer_permit import PermitExchange
 
 TRACE_FILTER='warn,codex_api::sse=trace,tungstenite::protocol=trace,tungstenite::protocol::frame=off'
+
+
+def unrelated_diagnostic_prefix(prefix):
+    """Only positively identified outbound frame logs cannot contain received deltas."""
+    prefix = prefix[:4096]
+    if b'tungstenite::protocol' not in prefix:
+        return False
+    match = re.search(rb'"fields"\s*:\s*\{\s*"message"\s*:\s*"([^"\\]*)', prefix)
+    return bool(match and match[1].startswith((b'Sending message ', b'Sending frame ')))
 
 
 def observes_stdio(args):
@@ -55,6 +65,7 @@ class Observer:
         self.cache_sizes={}
         self.cache_bytes=0
         self.dropped=0
+        self.unrelated_dropped=0
         self.framing_drops=0
         self.drop_reasons=Counter()
         self.last_send_error=None
@@ -90,9 +101,10 @@ class Observer:
                 self.framing_drops+=1
                 self.drop_reasons['queue_full']+=1
 
-    def lose(self,reason,*,framing=False):
+    def lose(self,reason,*,framing=False,affects_generation=True):
         with self.queue_lock:
             self.dropped+=1
+            self.unrelated_dropped+=not affects_generation
             if framing:
                 self.framing_drops+=1
             self.drop_reasons[reason]+=1
@@ -100,6 +112,7 @@ class Observer:
     def health(self,kind):
         with self.queue_lock:
             return {'type':kind,'dropped_packets':self.dropped,'parse_errors':self.errors,
+                    'unrelated_dropped_packets':self.unrelated_dropped,
                     'drop_reasons':dict(self.drop_reasons),'last_send_error':self.last_send_error,
                     'send_waits':self.send_waits}
 
@@ -458,9 +471,11 @@ def forward(args,runtime,actual=None):
                     observer.offer('stderr',bytes(observed_lines),observed_at)
                 if len(buffer)>10*1024*1024:
                     # Never retain an unbounded diagnostic line.
+                    unrelated = unrelated_diagnostic_prefix(buffer)
                     buffer=b''
                     discarding_line=True
-                    observer.lose('oversized_diagnostic')
+                    observer.lose('oversized_unrelated_diagnostic' if unrelated else 'oversized_diagnostic',
+                                  affects_generation=not unrelated)
             if buffer and source=='stderr':
                 if is_observation(buffer):
                     observer.offer('stderr',buffer+b'\n')

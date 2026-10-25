@@ -1,0 +1,145 @@
+{
+  "passed": true,
+  "scope": "synthetic events; real isolated collector, state socket and tokenizer IPC",
+  "production_runtime_changed": false,
+  "samples": {
+    "initial": {
+      "overview": {
+        "version": 1,
+        "scope": "observed_local",
+        "coverage": "complete",
+        "rate_status": "ready",
+        "generation_rate": 80.0,
+        "observed_subtotal": 80.0,
+        "estimated": true,
+        "active_thread_count": 1,
+        "known_stream_count": 1,
+        "unknown_stream_count": 0,
+        "quality": []
+      },
+      "chat_issues": [],
+      "historical_gap": false
+    },
+    "gap": {
+      "overview": {
+        "version": 1,
+        "scope": "observed_local",
+        "coverage": "unavailable",
+        "rate_status": "unavailable",
+        "generation_rate": null,
+        "observed_subtotal": null,
+        "estimated": false,
+        "active_thread_count": 1,
+        "known_stream_count": 0,
+        "unknown_stream_count": 1,
+        "quality": [
+          "observation_gap"
+        ]
+      },
+      "chat_issues": [
+        "observation_gap"
+      ],
+      "historical_gap": true
+    },
+    "partial": {
+      "overview": {
+        "version": 1,
+        "scope": "observed_local",
+        "coverage": "partial",
+        "rate_status": "ready",
+        "generation_rate": null,
+        "observed_subtotal": 25.0,
+        "estimated": true,
+        "active_thread_count": 1,
+        "known_stream_count": 1,
+        "unknown_stream_count": 1,
+        "quality": [
+          "observation_gap"
+        ]
+      },
+      "chat_issues": [
+        "observation_gap"
+      ],
+      "historical_gap": true
+    },
+    "historical_only": {
+      "overview": {
+        "version": 1,
+        "scope": "observed_local",
+        "coverage": "complete",
+        "rate_status": "ready",
+        "generation_rate": 25.0,
+        "observed_subtotal": 25.0,
+        "estimated": true,
+        "active_thread_count": 1,
+        "known_stream_count": 1,
+        "unknown_stream_count": 0,
+        "quality": []
+      },
+      "chat_issues": [],
+      "historical_gap": true
+    },
+    "second_gap": {
+      "overview": {
+        "version": 1,
+        "scope": "observed_local",
+        "coverage": "unavailable",
+        "rate_status": "unavailable",
+        "generation_rate": null,
+        "observed_subtotal": null,
+        "estimated": false,
+        "active_thread_count": 1,
+        "known_stream_count": 0,
+        "unknown_stream_count": 1,
+        "quality": [
+          "observation_gap"
+        ]
+      },
+      "chat_issues": [
+        "observation_gap"
+      ],
+      "historical_gap": true
+    },
+    "warming": {
+      "overview": {
+        "version": 1,
+        "scope": "observed_local",
+        "coverage": "unavailable",
+        "rate_status": "unavailable",
+        "generation_rate": null,
+        "observed_subtotal": null,
+        "estimated": false,
+        "active_thread_count": 1,
+        "known_stream_count": 0,
+        "unknown_stream_count": 1,
+        "quality": [
+          "observation_gap"
+        ]
+      },
+      "chat_issues": [
+        "observation_gap"
+      ],
+      "historical_gap": true
+    },
+    "same_stream_recovered": {
+      "overview": {
+        "version": 1,
+        "scope": "observed_local",
+        "coverage": "complete",
+        "rate_status": "ready",
+        "generation_rate": 40.0,
+        "observed_subtotal": 40.0,
+        "estimated": true,
+        "active_thread_count": 1,
+        "known_stream_count": 1,
+        "unknown_stream_count": 0,
+        "quality": []
+      },
+      "chat_issues": [],
+      "historical_gap": true
+    }
+  },
+  "limits": [
+    "Not a natural model stream or a production cutover."
+  ]
+}

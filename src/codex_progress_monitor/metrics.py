@@ -53,6 +53,10 @@ class TextStream:
     window_baseline_chars: int | None = None
     pending: object = None
     count_state: str = 'pending'
+    observation_epoch: int = 0
+    recovery_started_at: float | None = None
+    received_complete: bool = True
+    text_complete: bool = True
 
     def __post_init__(self):
         self.set_model(self.model)
@@ -98,6 +102,28 @@ class TextStream:
                     self.discard_timing()
                 else:
                     self.receipts.append((at, len(self.text)))
+
+    def interrupt_observation(self, reason='observation_gap'):
+        """Invalidate this live baseline; detached jobs remain budgeted by the counter."""
+        self.observation_epoch += 1
+        self.quality = reason
+        self.received_complete = self.text_complete = False
+        self.recovery_started_at = None
+        self.pending = None
+        self.revision += 1
+        self.counted_revision = -1
+        self.tokens = 0
+        self.last_delta_at = self.last_count_at = None
+        self.window_at = self.window_tokens = self.window_baseline_chars = None
+        self.count_state = 'pending'
+        self.text = ''
+        self.receipts.clear()
+
+    def resume_observation(self, at):
+        """An attributed, fresh delta starts a new continuous receive interval."""
+        if self.quality in ('observation_gap', 'disconnected'):
+            self.quality = 'complete'
+            self.recovery_started_at = at
 
     def prune_receipts(self, now):
         cutoff = now-RATE_WINDOW_SECONDS
@@ -154,6 +180,9 @@ class TextStream:
             return RateReading(None, 'unavailable', self.quality)
         if self.count_state in ('budget', 'failed'):
             return RateReading(None, 'unavailable', 'count_budget' if self.count_state == 'budget' else 'tokenizer_error')
+        if self.recovery_started_at is not None and (
+                self.window_at is None or self.window_at-self.recovery_started_at < RATE_WINDOW_SECONDS):
+            return RateReading(None, 'unavailable', 'observation_gap')
         if self.last_delta_at is not None and now-self.last_delta_at >= RATE_WINDOW_SECONDS:
             return RateReading(0.0, 'ready')
         if self.window_at is None:
@@ -174,16 +203,18 @@ class TextStream:
                      now-self.last_delta_at >= RATE_WINDOW_SECONDS else self.window_at)
         return {'kind': self.kind, 'source': self.source, 'chars': self.chars,
                 'utf8_bytes': self.utf8_bytes, 'deltas': self.deltas,
-                'tokens': self.tokens if self.last_count_at is not None and self.quality in ('complete','reconciled') else None,
+                'tokens': self.tokens if self.last_count_at is not None and self.text_complete and
+                    (self.received_complete or final_count) and self.quality in ('complete','reconciled') else None,
                 'token_rate': reading.value, 'rate_status': reading.status, 'rate_reason': reading.reason,
                 'rate_window_seconds': RATE_WINDOW_SECONDS, 'rate_window_at': window_at,
                 'encoding': self.encoding_name,
                 'estimated': self.estimated, 'model': self.model,
                 'tokenizer_version': tiktoken.__version__, 'quality': self.quality,
+                'received_complete': self.received_complete, 'observation_epoch': self.observation_epoch,
                 'count_pending': self.counted_revision!=self.revision,
                 'count_state': self.count_state,
                 'count_cost_ms': self.count_cost_ms, 'corrections': self.corrections,
-                'mean_received_rate': self.tokens/max(.001,(self.last_delta_at or self.started_at)-self.started_at) if final_count and self.ended_at is not None and self.last_count_at is not None and self.quality=='complete' and self.last_delta_at is not None else None,
+                'mean_received_rate': self.tokens/max(.001,(self.last_delta_at or self.started_at)-self.started_at) if self.received_complete and final_count and self.ended_at is not None and self.last_count_at is not None and self.quality=='complete' and self.last_delta_at is not None else None,
                 'duration_seconds': duration, 'finished': self.ended_at is not None or self.ended_by_history}
 
 
@@ -228,6 +259,7 @@ class CountWork:
     encoding: str
     utf8_bytes: int
     baseline_chars: int
+    observation_epoch: int = 0
 
 
 class TokenCounter:
@@ -267,7 +299,8 @@ class TokenCounter:
             if stream is None or stream.pending is None or stream.pending[0] is not future:
                 continue
             stream.pending = None
-            if stream.encoding_name != work.encoding or stream.quality not in ('complete', 'reconciled'):
+            if (stream.observation_epoch != work.observation_epoch or stream.encoding_name != work.encoding or
+                    stream.quality not in ('complete', 'reconciled')):
                 continue
             try:
                 count, cost, baseline = future.result()
@@ -329,7 +362,8 @@ class TokenCounter:
                 future = self.pool.submit(count_window, stream.text, stream.encoding_name, baseline_chars, tokenizer)
                 stream.pending = (future, stream.revision, now)
                 stream.count_state = 'pending'
-                self.jobs[future] = CountWork(weakref.ref(stream), stream.revision, now, stream.encoding_name, size, baseline_chars)
+                self.jobs[future] = CountWork(weakref.ref(stream), stream.revision, now, stream.encoding_name,
+                                              size, baseline_chars, stream.observation_epoch)
                 self.pending_bytes += size
                 self.peak_jobs = max(self.peak_jobs, len(self.jobs))
                 self.peak_bytes = max(self.peak_bytes, self.pending_bytes)

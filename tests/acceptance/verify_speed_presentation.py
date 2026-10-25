@@ -25,7 +25,7 @@ def fixture(phase):
         stream.append('abcde' if phase == 'prefix-correction' else ' x' * 25, 101)
         engine.streams[key] = stream
         thread.activities['input'] = Activity('input', 'turn', 'tool_input', '', 100, stream_keys=[key])
-        if phase in ('ready', 'prefix-correction'):
+        if phase in ('ready', 'prefix-correction', 'recovered', 'partial', 'partial-zero'):
             stream.apply_count(count_text(stream.text, stream.encoding_name)[0], stream.revision, 101, 0)
             stream.append('f' if phase == 'prefix-correction' else ' x' * 75, 101.25)
             stream.apply_count(count_text(stream.text, stream.encoding_name)[0], stream.revision, 101.25, 0)
@@ -35,9 +35,18 @@ def fixture(phase):
             stream.fail_count()
         elif phase == 'gap':
             thread.quality.add('observation_gap')
+            stream.interrupt_observation()
+        if phase in ('recovered', 'partial', 'partial-zero'):
+            thread.quality.add('observation_gap')
+        if phase in ('partial', 'partial-zero'):
+            bad_key = ('fixture', 'unknown', 'tool_input', 0)
+            bad = TextStream(bad_key, 'tool_input', 'upstream', 'unknown', 100)
+            bad.interrupt_observation()
+            engine.streams[bad_key] = bad
+            thread.activities['unknown'] = Activity('unknown', 'turn', 'tool_input', '', 100, stream_keys=[bad_key])
         if phase == 'prefix-correction':
             engine.counter.tick([stream], 102)
-        value = engine.snapshot(102 if phase == 'prefix-correction' else 101.25, time.time())
+        value = engine.snapshot(103 if phase == 'partial-zero' else 102 if phase == 'prefix-correction' else 101.25, time.time())
         value['running'] = True
         return value
     finally:
@@ -66,9 +75,10 @@ def main():
                 '--ui-diagnostics-seconds', '90'], stdin=subprocess.DEVNULL, stdout=log, stderr=log)
             try:
                 checks = {}
-                for phase in ('sampling', 'prefix-correction', 'ready', 'limited', 'failed', 'gap', 'disconnected'):
+                for phase in ('sampling', 'prefix-correction', 'ready', 'recovered', 'partial', 'partial-zero', 'limited', 'failed', 'gap', 'disconnected'):
                     sampling = phase in ('sampling', 'prefix-correction')
-                    expected = ('Generation' if language == 'en' else '生成') if sampling else '100 T/s' if phase == 'ready' else '—'
+                    numeric = phase in ('ready', 'recovered', 'partial', 'partial-zero')
+                    expected = ('0 T/s' if phase == 'partial-zero' else '100 T/s') if numeric else '—'
                     started = time.time()
                     deadline = time.monotonic() + 8
                     observed = None
@@ -89,9 +99,14 @@ def main():
                                 break
                             notice = record.get('observation_notice')
                             matches = (record.get('title') == expected and
-                                (notice is None if sampling or phase == 'ready' else notice == {
+                                (notice is None if sampling or numeric else notice == {
                                     'limited': 'NoticeSpeedResourceLimit', 'failed': 'NoticeSpeedCountFailed',
                                     'gap': 'NoticeObservationGap', 'disconnected': 'NoticeWaitingForConnection'}[phase]))
+                            rows = record.get('chat_speed_observations', [])
+                            if phase in ('recovered', 'partial', 'partial-zero', 'gap', 'disconnected'):
+                                expected_notice = (None if phase == 'recovered' else 'NoticeSourceDisconnected'
+                                                   if phase == 'disconnected' else 'NoticeObservationGap')
+                                matches &= bool(rows and rows[0].get('notice') == expected_notice)
                             if matches:
                                 observed = record
                                 break
@@ -99,11 +114,16 @@ def main():
                             break
                     assert observed is not None, (language, phase, 'presentation_not_applied')
                     if sampling:
-                        tooltip = 'Generation' if language == 'en' else '生成'
+                        tooltip = 'Connected' if language == 'en' else '已连接'
                         assert tooltip in observed['status_tooltip']
+                        assert observed['mode'] == 'unavailable'
                         assert observed['connection_label'] == ('Connected' if language == 'en' else '已连接')
                     checks[phase] = {k: observed.get(k) for k in (
-                        'title', 'mode', 'status_tooltip', 'connection_label', 'observation_notice', 'build_id')}
+                        'title', 'mode', 'status_tooltip', 'connection_label', 'observation_notice',
+                        'chat_speed_observations', 'build_id')}
+                    checks[phase]['button_width'] = observed['button_frame'][2]
+                for phase in ('sampling', 'prefix-correction'):
+                    assert checks[phase]['button_width'] <= checks['ready']['button_width'], (language, phase, 'sampling_widens_menu')
                 results[language] = checks
             finally:
                 gui.terminate()

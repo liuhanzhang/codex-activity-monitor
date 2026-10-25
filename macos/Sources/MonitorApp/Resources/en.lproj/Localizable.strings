@@ -21,11 +21,11 @@
 "Monitor" = "Codex Monitor";
 "Monitor · 动画刷新验证" = "Monitor · Animation preview";
 "NoConnection" = "Waiting for Codex";
-"NoticeAssociatingEvents" = "Some activities have not been associated with a chat. Total speed is unavailable.";
-"NoticeIdentityConflict" = "Duplicate or conflicting connections make total speed unavailable.";
-"NoticeObservationGap" = "Some turns lack continuous observation. Total speed is unavailable.";
+"NoticeAssociatingEvents" = "Some activities have not been associated with a chat. Their speed is unknown.";
+"NoticeIdentityConflict" = "Duplicate or conflicting connections make the affected speed unknown.";
+"NoticeObservationGap" = "Current generation lacks continuous observation. Its speed is unknown.";
 "NoticeObservationResourceLimit" = "Observation reached its resource limit. Pause and resume collection.";
-"NoticeStreamUnavailable" = "Some generation rates are unavailable. Total speed is unavailable.";
+"NoticeStreamUnavailable" = "Some current generation rates are unavailable.";
 "NoticeTotalUnavailable" = "This connection does not currently provide total speed data.";
 "NoticeWaitingForConnection" = "If Codex is already open, reopen it after your tasks finish to connect.";
 "Quit" = "Quit Monitor";
@@ -91,7 +91,7 @@
 "已展开" = "Expanded";
 "已恢复 · 点击配置可重新接入" = "Restored · Choose Configure to reconnect";
 "已折叠" = "Collapsed";
-"已接入聊天的生成总速度" = "Total generation speed of connected chats";
+"已接入聊天的生成总速度" = "Observed generation speed";
 "已观测小计 %@" = "Observed subtotal %@";
 "已观测小计 %@ t/s" = "Observed subtotal %@ t/s";
 "已连接" = "Connected";
@@ -246,5 +246,6 @@
 "重试" = "Retry";
 "隔离验证" = "Isolated preview";
 "当前无法可靠计算速度。" = "Speed cannot currently be measured reliably.";
-"NoticeSpeedResourceLimit" = "The current text is too large to estimate its token speed.";
+"NoticeSpeedResourceLimit" = "Speed measurement reached its resource limit. The affected speed is unknown.";
+"NoticeSourceDisconnected" = "The observation connection for this chat is disconnected.";
 "NoticeSpeedCountFailed" = "Token counting failed. Speed is temporarily unavailable.";

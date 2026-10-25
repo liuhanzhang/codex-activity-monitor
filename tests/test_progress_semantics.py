@@ -337,7 +337,8 @@ class ProgressTests(unittest.TestCase):
         self.assertIsNone(view['generation_rate'])
         self.send('item/agentMessage/delta',{'threadId':'t','turnId':'u','itemId':'text','delta':'继续'},105)
         self.assertEqual(self.view(106)['display_label'],'生成回答')
-        self.assertIsNone(self.view(106)['generation_rate'])
+        self.assertEqual(self.view(106)['generation_rate'], 0)  # A complete post-gap window has no new text.
+        self.assertEqual(self.view(106)['generation_rate_issues'], [])
         self.item({'id':'text','type':'agentMessage','text':'旧流'},107,True)
         self.text('complete-new-stream',108)
         self.assertGreater(self.view(109)['generation_rate'], 0)  # A new complete stream has its own first-second count.

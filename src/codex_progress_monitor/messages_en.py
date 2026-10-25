@@ -1,6 +1,7 @@
 """English UI resources; names and source content remain unchanged."""
 
 MESSAGES = {
+    'speed.partial': 'Some current generation rates are unavailable',
     'diagnostic.tool_unknown': 'Unknown tool',
     'diagnostic.planned': ' · Planned: {commands}',
     'diagnostic.code_mode': '{name} (Code Mode)',

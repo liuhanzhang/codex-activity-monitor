@@ -1,6 +1,7 @@
 """Chinese UI resources. Product names and user content are never translated."""
 
 MESSAGES = {
+    'speed.partial': '部分当前速度暂不可用',
     'diagnostic.tool_unknown': '工具名未知',
     'diagnostic.planned': ' · 拟执行: {commands}',
     'diagnostic.code_mode': '{name}（Code Mode）',

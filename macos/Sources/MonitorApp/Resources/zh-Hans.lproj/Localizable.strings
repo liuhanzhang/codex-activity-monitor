@@ -21,11 +21,11 @@
 "Monitor" = "Codex Monitor";
 "Monitor · 动画刷新验证" = "Monitor · 动画刷新验证";
 "NoConnection" = "等待 Codex 接入";
-"NoticeAssociatingEvents" = "部分活动尚未关联到聊天，暂不显示总速度。";
-"NoticeIdentityConflict" = "有重复或冲突的接入，暂不显示总速度。";
-"NoticeObservationGap" = "部分回合缺少连续观测，暂不显示总速度。";
+"NoticeAssociatingEvents" = "部分活动尚未关联到聊天，其速度暂不可确认。";
+"NoticeIdentityConflict" = "接入身份重复或冲突，相关速度暂不可确认。";
+"NoticeObservationGap" = "当前生成内容缺少连续观测，相关速度暂不可确认。";
 "NoticeObservationResourceLimit" = "观察已达到资源上限，请暂停采集后重新开启。";
-"NoticeStreamUnavailable" = "部分生成速度暂不可用，暂不显示总速度。";
+"NoticeStreamUnavailable" = "部分当前生成速度暂不可用。";
 "NoticeTotalUnavailable" = "当前接入暂不提供总速度数据。";
 "NoticeWaitingForConnection" = "若 Codex 已经打开，请在任务结束后重开以接入。";
 "Quit" = "退出 Monitor";
@@ -91,7 +91,7 @@
 "已展开" = "已展开";
 "已恢复 · 点击配置可重新接入" = "已恢复 · 点击配置可重新接入";
 "已折叠" = "已折叠";
-"已接入聊天的生成总速度" = "已接入聊天的生成总速度";
+"已接入聊天的生成总速度" = "当前观测到的生成速度";
 "已观测小计 %@" = "已观测小计 %@";
 "已观测小计 %@ t/s" = "已观测小计 %@ t/s";
 "已连接" = "已连接";
@@ -246,5 +246,6 @@
 "重试" = "重试";
 "隔离验证" = "隔离验证";
 "当前无法可靠计算速度。" = "当前无法可靠计算速度。";
-"NoticeSpeedResourceLimit" = "当前文本过长，暂时无法估算速度。";
+"NoticeSpeedResourceLimit" = "速度计算达到资源上限，相关速度暂不可确认。";
+"NoticeSourceDisconnected" = "此聊天的采集连接已中断。";
 "NoticeSpeedCountFailed" = "速度计数失败，暂时无法估算速度。";

@@ -1,5 +1,13 @@
 [
   {
+    "expected": "部分当前速度暂不可用",
+    "language": "zh-CN",
+    "message": {
+      "key": "speed.partial",
+      "params": {}
+    }
+  },
+  {
     "expected": "工具名未知",
     "language": "zh-CN",
     "message": {
@@ -1460,6 +1468,14 @@
           }
         }
       }
+    }
+  },
+  {
+    "expected": "Some current generation rates are unavailable",
+    "language": "en",
+    "message": {
+      "key": "speed.partial",
+      "params": {}
     }
   },
   {

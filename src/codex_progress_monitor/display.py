@@ -103,6 +103,8 @@ def render(snapshot, selected=0, detail=False, thread_filter=None, language=DEFA
         token_lines = '\n'.join(f'{label} '+(f'{usage[key]:,}' if usage.get(key) is not None else '—')
                                 for label, key in (('Output', 'output_tokens'), ('Reasoning', 'reasoning_tokens')))
         rates = t('usage.generation')+' '+rate
+        if thread.get('generation_rate_issues'):
+            rates += '\n⚠ ' + t('speed.partial')
         cwd = Path(thread['cwd']).name if thread.get('cwd') else ''
         title = thread['name'] if thread['name'] != thread['id'][:8] else t('view.unnamed')
         name = ('› ' if index == selected else '  ')+title+('\n  '+cwd if cwd else '')

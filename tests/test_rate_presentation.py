@@ -130,16 +130,16 @@ class RatePresentationTests(unittest.TestCase):
                 self.assertEqual(value['overview']['rate_status'], 'unavailable')
                 self.assertEqual(value['menu_presentation']['mode'], 'unavailable')
 
-    def test_one_sampling_chat_does_not_expose_the_other_chat_subtotal_as_total(self):
+    def test_one_sampling_chat_preserves_the_other_chat_observed_subtotal(self):
         known = self.stream()
         self.ready(known)
         self.stream('second', 'other-chat')
         value = self.engine.snapshot(101.3)
-        self.assertEqual(value['overview']['rate_status'], 'sampling')
+        self.assertEqual(value['overview']['rate_status'], 'ready')
         self.assertEqual(value['overview']['coverage'], 'partial')
         self.assertIsNone(value['overview']['generation_rate'])
         self.assertAlmostEqual(value['overview']['observed_subtotal'], 100)
-        self.assertEqual(value['menu_presentation']['reason'], 'sampling')
+        self.assertEqual(value['menu_presentation']['reason'], 'partial_observation')
 
     def test_error_in_one_chat_overrides_normal_sampling_in_another(self):
         self.stream()

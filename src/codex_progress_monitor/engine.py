@@ -92,6 +92,7 @@ class Engine:
                 thread.parent_source = row['parent_source']
             thread.parent_quality.update(row.get('parent_quality', []))
             thread.turn_id, thread.status = row['turn_id'], 'unknown'
+            thread.turn_start_observed = False
             thread.quality.update(row.get('quality', []))
             thread.quality.add('observation_gap')
             age = row.get('last_progress_seconds')
@@ -120,6 +121,7 @@ class Engine:
             # until a subsequently observed turn/started establishes a baseline.
             if self.backends.get(backend,{}).get('gap_at') is not None:
                 self.threads[key].quality.add('observation_gap')
+                self.threads[key].turn_start_observed = False
         return self.threads[key]
 
     def _metadata(self, backend, metadata):
@@ -279,20 +281,34 @@ class Engine:
     def _lifecycle(self,event):
         kind = event.data.get('type')
         backend = self.backends[event.backend]
+        old_drops = backend.get('dropped_packets', 0)-backend.get('unrelated_dropped_packets', 0)
+        old_errors = backend.get('parse_errors', 0)
+        old_reasons = backend.get('drop_reasons', {})
         if isinstance(event.data.get('drop_reasons'),dict):
             backend.update(drop_reasons=event.data['drop_reasons'],last_send_error=event.data.get('last_send_error'),
                            send_waits=event.data.get('send_waits',0))
+        for key in ('dropped_packets', 'unrelated_dropped_packets', 'parse_errors'):
+            if key in event.data:
+                backend[key] = event.data[key]
         if kind=='bridge/heartbeat':
-            drops=event.data.get('dropped_packets',0)
-            errors=event.data.get('parse_errors',0)
-            if drops>backend.get('dropped_packets',0) or errors>backend.get('parse_errors',0):
+            drops=backend.get('dropped_packets',0)-backend.get('unrelated_dropped_packets',0)
+            errors=backend.get('parse_errors',0)
+            if drops>old_drops or errors>old_errors:
                 kind='bridge/gap'
-            backend.update(dropped_packets=drops,parse_errors=errors)
+                event.data['type'] = kind
         if kind=='bridge/started':
             backend.update(connected=True,home=event.data.get('home'),cli=event.data.get('cli'),
                            bridge_pid=event.data.get('bridge_pid'),implementation=event.data.get('implementation'))
         elif kind in ('bridge/gap','bridge/reconnected'):
             backend['gap_at']=event.at
+            reasons = [key for key, count in backend.get('drop_reasons', {}).items()
+                       if count > old_reasons.get(key, 0) and key != 'oversized_unrelated_diagnostic']
+            if backend.get('parse_errors', 0) > old_errors:
+                reasons.append('parse_error')
+            recent = backend.setdefault('recent_observation_gaps', [])
+            recent.append({'at': event.at, 'timestamp': event.wall_time,
+                           'reasons': reasons[:16] or [event.data.get('reason') or kind], 'scope': 'backend'})
+            del recent[:-16]
             for thread in self.threads.values():
                 if thread.backend==event.backend and (thread.status=='inProgress' or any(a.active for a in thread.activities.values())):
                     thread.quality.add('observation_gap')
@@ -302,8 +318,7 @@ class Engine:
                             activity.observation_lost = True
             for stream in self.streams.values():
                 if stream.key[0]==event.backend and stream.ended_at is None and not stream.ended_by_history:
-                    stream.quality='observation_gap'
-                    stream.text=''
+                    stream.interrupt_observation()
             backend['gaps'] = event.data.get('dropped_packets',backend.get('gaps',0)+1)
         elif kind in ('bridge/disconnected','bridge/stopped'):
             backend['connected']=False
@@ -324,9 +339,7 @@ class Engine:
                             activity.observation_lost=True
                 for stream in self.streams.values():
                     if stream.key[0]==event.backend and stream.ended_at is None and not stream.ended_by_history:
-                        stream.quality='disconnected'
-                        stream.ended_at=event.at
-                        stream.text=''
+                        stream.interrupt_observation('disconnected')
 
     def _protocol(self,event):
         value, backend, at = event.data,event.backend,event.at
@@ -411,6 +424,7 @@ class Engine:
                             stream.quality='missing_termination'
                             stream.text=''
             thread.turn_id,thread.status=turn_id,'inProgress'
+            thread.turn_start_observed = True
             thread.history_turn = None
             thread.history_progress_ms=None
             thread.wait_started_at=thread.last_progress_at=at
@@ -769,6 +783,11 @@ class Engine:
         if existing and (existing.history_retired or (existing.history and existing.history.get('history_terminal'))):
             self.counts['late_terminal_deltas'] += 1
             return True
+        if (thread.status == 'unknown' and thread.turn_id == turn_id and delta and not event.replayed and
+                (event.backend, turn_id) not in self.ended_turns and
+                self.backends[event.backend].get('connected') and
+                event.at > self.backends[event.backend].get('gap_at', event.at)):
+            thread.status = 'inProgress'
         if (event.backend,turn_id) in self.ended_turns or thread.status not in ('inProgress','idle'):
             self.counts['late_terminal_deltas']+=1
             return True
@@ -802,7 +821,10 @@ class Engine:
             activity.stream_keys.append(key)
             if 'identity_conflict' in thread.quality or ('observation_gap' in thread.quality and
                     stream.started_at <= self.backends[event.backend].get('gap_at',event.at)):
-                stream.quality='observation_gap'
+                stream.interrupt_observation()
+        if (delta and not event.replayed and self.backends[event.backend].get('connected') and
+                event.at > self.backends[event.backend].get('gap_at', event.at)):
+            stream.resume_observation(event.at)
         stream.append(delta,event.at)
         if delta:
             if (activity.observation_lost and not event.replayed and
@@ -832,6 +854,7 @@ class Engine:
             elif stream.text!=final and stream.text:
                 stream.quality='reconciled'
             if len(final.encode())<=8*1024*1024:
+                stream.text_complete = True
                 stream.text=final
                 stream.chars=len(final)
                 stream.utf8_bytes=len(final.encode())

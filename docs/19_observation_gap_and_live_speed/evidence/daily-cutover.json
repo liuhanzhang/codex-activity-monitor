@@ -1,0 +1,39 @@
+{
+  "date_local": "2026-10-25",
+  "scope": "daily GUI and collector cutover; bounded live checks during an already active chat",
+  "gui": {
+    "restarted": true,
+    "loaded_build_id": "ef456530840abf89ec3c9cf2347ead78ac0cbf46a68bb81780b262c402a6256b",
+    "matches_candidate": true,
+    "transport_fresh": true
+  },
+  "collector": {
+    "restarted": true,
+    "instance_changed": true,
+    "lifetime_lock_owned": true,
+    "fresh_nonce_probes": 2,
+    "sequence_advanced": true,
+    "loaded_modules_checked": 37,
+    "all_loaded_modules_match": true
+  },
+  "bridges": {
+    "connected": 4,
+    "existing_identities_retained": 4,
+    "still_using_previous_source": 4,
+    "classification_update_pending": true
+  },
+  "live_presentation": {
+    "partial_numeric_observed": true,
+    "partial_numeric_title": "46 T/s",
+    "current_warning_localized_to_affected_chat": true,
+    "latest_menu_title": "46 T/s",
+    "latest_mode": "speed"
+  },
+  "codex_desktop_restarted": false,
+  "natural_complete_turn_acceptance": false,
+  "limits": [
+    "Resident bridges keep their loaded source until their next restart.",
+    "This chat spans the cutover; bounded live observations do not establish a complete natural turn.",
+    "Raw process IDs, thread identities and runtime snapshots remain in ignored private diagnostics."
+  ]
+}

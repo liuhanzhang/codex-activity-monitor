@@ -71,13 +71,13 @@ import MonitorModel
     #expect(!view.animating)
 }
 
-@Test @MainActor func initialGenerationTitleStaysStaticWithoutEllipsis() {
-    let width = StatusContentView.itemWidth(for: .speed, title: "生成")
+@Test @MainActor func missingSpeedStaysCompactWithoutPlaceholderText() {
+    let width = StatusContentView.itemWidth(for: .unavailable, title: "—")
     #expect(width == StatusContentView.itemWidth(for: .speed, title: "100 T/s"))
     let view = StatusContentView(frame: NSRect(x: 0, y: 0, width: width, height: 24))
-    view.update(mode: .speed, title: "生成")
+    view.update(mode: .unavailable, title: "—")
     #expect(!view.animating)
-    #expect(view.boundedTitle("生成", availableWidth: width - StatusContentView.horizontalInset * 2) == "生成")
+    #expect(view.boundedTitle("—", availableWidth: width - StatusContentView.horizontalInset * 2) == "—")
     view.stop()
 }
 
@@ -91,7 +91,8 @@ import MonitorModel
     for language: MonitorLanguage in [.chinese, .english] {
         store.setLanguage(language)
         store.updatePresentation()
-        #expect(store.menuTitle == (language == .english ? "Generation" : "生成"))
+        #expect(store.menuTitle == "—")
+        #expect(store.menuMode == .unavailable)
         #expect(store.connectionLabel == L("已连接", language: language))
         #expect(store.compactConnectionLabel == L("已连接", language: language))
         #expect(store.connectionDetail == nil)

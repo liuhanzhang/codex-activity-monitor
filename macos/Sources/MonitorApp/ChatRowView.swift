@@ -41,6 +41,11 @@ struct ChatRowView: LocalizedView {
                     Text(chat.localizedTitle(language)).font(.system(size: 12, weight: selected ? .medium : .regular))
                         .lineLimit(1).truncationMode(.tail)
                     Spacer(minLength: 0)
+                    if working, let notice = chat.speedObservationNotice {
+                        Image(systemName: "exclamationmark.circle")
+                            .font(.system(size: 11)).foregroundStyle(.orange)
+                            .help(L(notice.rawValue)).accessibilityLabel(L(notice.rawValue))
+                    }
                     if let speedTitle {
                         Text(speedTitle).font(.system(size: 11)).monospacedDigit().fixedSize()
                             .help(speedHelp)
