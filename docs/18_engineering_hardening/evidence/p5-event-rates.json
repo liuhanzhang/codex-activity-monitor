@@ -1,0 +1,523 @@
+{
+  "version": 1,
+  "python": "3.14.7",
+  "platform": "Darwin",
+  "note": "Paced synthetic engine and encoding only, counting child warmed before each case; not natural soak, transport or native draw.",
+  "cases": [
+    {
+      "streams": 1,
+      "target_events_per_second": 10,
+      "duration_seconds": 3,
+      "events": 30,
+      "tokenizer_startup_ms": 224.83633388765156,
+      "ingestion": {
+        "samples": 30,
+        "p50_ms": 0.27425005100667477,
+        "p95_ms": 0.4005839582532644,
+        "max_ms": 0.5056669469922781
+      },
+      "scheduler_lateness": {
+        "samples": 30,
+        "p50_ms": 0.1587499864399433,
+        "p95_ms": 0.3024998586624861,
+        "max_ms": 0.6924998015165329
+      },
+      "tick_and_snapshot": {
+        "samples": 29,
+        "p50_ms": 0.48266700468957424,
+        "p95_ms": 0.7640419062227011,
+        "max_ms": 1.0705830063670874
+      },
+      "detach": {
+        "samples": 29,
+        "p50_ms": 0.11583277955651283,
+        "p95_ms": 0.3397080581635237,
+        "max_ms": 0.5515420343726873
+      },
+      "encode": {
+        "samples": 29,
+        "p50_ms": 0.12208311818540096,
+        "p95_ms": 0.2747501712292433,
+        "max_ms": 0.6555411964654922
+      },
+      "max_frame_bytes": 3318,
+      "counter": {
+        "jobs": 1,
+        "pending_bytes": 493,
+        "max_jobs": 2,
+        "max_pending_bytes": 2097152,
+        "max_input_bytes": 1048576,
+        "peak_jobs": 1,
+        "peak_pending_bytes": 493,
+        "budget_deferrals": 0,
+        "worker": {
+          "starts": 1,
+          "timeouts": 0,
+          "deadline_seconds": 3,
+          "running": false,
+          "closed": false
+        }
+      },
+      "end_all_and_snapshot_ms": 0.338749960064888,
+      "close_ms": 3.0557920690625906
+    },
+    {
+      "streams": 1,
+      "target_events_per_second": 100,
+      "duration_seconds": 3,
+      "events": 300,
+      "tokenizer_startup_ms": 238.5418340563774,
+      "ingestion": {
+        "samples": 300,
+        "p50_ms": 0.1554166665300727,
+        "p95_ms": 0.40037487633526325,
+        "max_ms": 3.3602500334382057
+      },
+      "scheduler_lateness": {
+        "samples": 300,
+        "p50_ms": 0.21110405214130878,
+        "p95_ms": 0.2816249616444111,
+        "max_ms": 4.22474998049438
+      },
+      "tick_and_snapshot": {
+        "samples": 30,
+        "p50_ms": 0.30504155438393354,
+        "p95_ms": 0.6542080081999302,
+        "max_ms": 2.5467080995440483
+      },
+      "detach": {
+        "samples": 30,
+        "p50_ms": 0.09129196405410767,
+        "p95_ms": 0.19695796072483063,
+        "max_ms": 0.21066609770059586
+      },
+      "encode": {
+        "samples": 30,
+        "p50_ms": 0.07266656029969454,
+        "p95_ms": 0.16333302482962608,
+        "max_ms": 0.2802920062094927
+      },
+      "max_frame_bytes": 3324,
+      "counter": {
+        "jobs": 0,
+        "pending_bytes": 0,
+        "max_jobs": 2,
+        "max_pending_bytes": 2097152,
+        "max_input_bytes": 1048576,
+        "peak_jobs": 1,
+        "peak_pending_bytes": 4794,
+        "budget_deferrals": 0,
+        "worker": {
+          "starts": 1,
+          "timeouts": 0,
+          "deadline_seconds": 3,
+          "running": false,
+          "closed": false
+        }
+      },
+      "end_all_and_snapshot_ms": 0.7427909877151251,
+      "close_ms": 5.140624940395355
+    },
+    {
+      "streams": 1,
+      "target_events_per_second": 1000,
+      "duration_seconds": 3,
+      "events": 3000,
+      "tokenizer_startup_ms": 239.67174999415874,
+      "ingestion": {
+        "samples": 3000,
+        "p50_ms": 0.04635448567569256,
+        "p95_ms": 0.2212498802691698,
+        "max_ms": 89.03112495318055
+      },
+      "scheduler_lateness": {
+        "samples": 3000,
+        "p50_ms": 0.19749999046325684,
+        "p95_ms": 52.886374993249774,
+        "max_ms": 155.88712505996227
+      },
+      "tick_and_snapshot": {
+        "samples": 30,
+        "p50_ms": 0.24760444648563862,
+        "p95_ms": 0.5687079392373562,
+        "max_ms": 8.445624960586429
+      },
+      "detach": {
+        "samples": 30,
+        "p50_ms": 0.05662499461323023,
+        "p95_ms": 0.13387505896389484,
+        "max_ms": 5.325583042576909
+      },
+      "encode": {
+        "samples": 30,
+        "p50_ms": 0.05097954999655485,
+        "p95_ms": 0.095415860414505,
+        "max_ms": 2.7864580042660236
+      },
+      "max_frame_bytes": 3328,
+      "counter": {
+        "jobs": 0,
+        "pending_bytes": 0,
+        "max_jobs": 2,
+        "max_pending_bytes": 2097152,
+        "max_input_bytes": 1048576,
+        "peak_jobs": 1,
+        "peak_pending_bytes": 47515,
+        "budget_deferrals": 0,
+        "worker": {
+          "starts": 1,
+          "timeouts": 0,
+          "deadline_seconds": 3,
+          "running": false,
+          "closed": false
+        }
+      },
+      "end_all_and_snapshot_ms": 0.37004100158810616,
+      "close_ms": 5.72558306157589
+    },
+    {
+      "streams": 10,
+      "target_events_per_second": 10,
+      "duration_seconds": 3,
+      "events": 30,
+      "tokenizer_startup_ms": 369.2727501038462,
+      "ingestion": {
+        "samples": 30,
+        "p50_ms": 0.17754139844328165,
+        "p95_ms": 0.4427500534802675,
+        "max_ms": 0.5971661303192377
+      },
+      "scheduler_lateness": {
+        "samples": 30,
+        "p50_ms": 0.18606206867843866,
+        "p95_ms": 1.1579578276723623,
+        "max_ms": 5.905624944716692
+      },
+      "tick_and_snapshot": {
+        "samples": 29,
+        "p50_ms": 0.8136660326272249,
+        "p95_ms": 2.569042146205902,
+        "max_ms": 4.615250043570995
+      },
+      "detach": {
+        "samples": 29,
+        "p50_ms": 0.5028748419135809,
+        "p95_ms": 1.0072921868413687,
+        "max_ms": 1.0751669760793447
+      },
+      "encode": {
+        "samples": 29,
+        "p50_ms": 0.2942499704658985,
+        "p95_ms": 0.5048750899732113,
+        "max_ms": 0.519957859069109
+      },
+      "max_frame_bytes": 22838,
+      "counter": {
+        "jobs": 1,
+        "pending_bytes": 51,
+        "max_jobs": 2,
+        "max_pending_bytes": 2097152,
+        "max_input_bytes": 1048576,
+        "peak_jobs": 2,
+        "peak_pending_bytes": 51,
+        "budget_deferrals": 0,
+        "worker": {
+          "starts": 1,
+          "timeouts": 0,
+          "deadline_seconds": 3,
+          "running": false,
+          "closed": false
+        }
+      },
+      "end_all_and_snapshot_ms": 1.2309998273849487,
+      "close_ms": 4.821958020329475
+    },
+    {
+      "streams": 10,
+      "target_events_per_second": 100,
+      "duration_seconds": 3,
+      "events": 300,
+      "tokenizer_startup_ms": 243.43395791947842,
+      "ingestion": {
+        "samples": 300,
+        "p50_ms": 0.1257086405530572,
+        "p95_ms": 0.27050008065998554,
+        "max_ms": 0.772666884586215
+      },
+      "scheduler_lateness": {
+        "samples": 300,
+        "p50_ms": 0.2171871019527316,
+        "p95_ms": 0.2734579611569643,
+        "max_ms": 2.2239580284804106
+      },
+      "tick_and_snapshot": {
+        "samples": 30,
+        "p50_ms": 0.7008755346760154,
+        "p95_ms": 1.3044588267803192,
+        "max_ms": 3.0021669808775187
+      },
+      "detach": {
+        "samples": 30,
+        "p50_ms": 0.3550625406205654,
+        "p95_ms": 0.6000418215990067,
+        "max_ms": 0.6721247918903828
+      },
+      "encode": {
+        "samples": 30,
+        "p50_ms": 0.2295414451509714,
+        "p95_ms": 0.3527919761836529,
+        "max_ms": 0.4257909022271633
+      },
+      "max_frame_bytes": 22727,
+      "counter": {
+        "jobs": 2,
+        "pending_bytes": 986,
+        "max_jobs": 2,
+        "max_pending_bytes": 2097152,
+        "max_input_bytes": 1048576,
+        "peak_jobs": 2,
+        "peak_pending_bytes": 986,
+        "budget_deferrals": 122,
+        "worker": {
+          "starts": 1,
+          "timeouts": 0,
+          "deadline_seconds": 3,
+          "running": false,
+          "closed": false
+        }
+      },
+      "end_all_and_snapshot_ms": 2.460834104567766,
+      "close_ms": 2.052375115454197
+    },
+    {
+      "streams": 10,
+      "target_events_per_second": 1000,
+      "duration_seconds": 3,
+      "events": 3000,
+      "tokenizer_startup_ms": 233.37012506090105,
+      "ingestion": {
+        "samples": 3000,
+        "p50_ms": 0.051520997658371925,
+        "p95_ms": 0.19625015556812286,
+        "max_ms": 13.722582953050733
+      },
+      "scheduler_lateness": {
+        "samples": 3000,
+        "p50_ms": 0.19675004296004772,
+        "p95_ms": 0.561750028282404,
+        "max_ms": 20.372125087305903
+      },
+      "tick_and_snapshot": {
+        "samples": 30,
+        "p50_ms": 0.6060205632820725,
+        "p95_ms": 2.0110001787543297,
+        "max_ms": 3.938624868169427
+      },
+      "detach": {
+        "samples": 30,
+        "p50_ms": 0.34885434433817863,
+        "p95_ms": 0.8407498244196177,
+        "max_ms": 2.4297500494867563
+      },
+      "encode": {
+        "samples": 30,
+        "p50_ms": 0.19356247503310442,
+        "p95_ms": 0.5749999545514584,
+        "max_ms": 1.2874589301645756
+      },
+      "max_frame_bytes": 22774,
+      "counter": {
+        "jobs": 2,
+        "pending_bytes": 9894,
+        "max_jobs": 2,
+        "max_pending_bytes": 2097152,
+        "max_input_bytes": 1048576,
+        "peak_jobs": 2,
+        "peak_pending_bytes": 9894,
+        "budget_deferrals": 122,
+        "worker": {
+          "starts": 1,
+          "timeouts": 0,
+          "deadline_seconds": 3,
+          "running": false,
+          "closed": false
+        }
+      },
+      "end_all_and_snapshot_ms": 1.3796670828014612,
+      "close_ms": 3.530625021085143
+    },
+    {
+      "streams": 50,
+      "target_events_per_second": 10,
+      "duration_seconds": 3,
+      "events": 30,
+      "tokenizer_startup_ms": 257.1692920755595,
+      "ingestion": {
+        "samples": 30,
+        "p50_ms": 0.15022896695882082,
+        "p95_ms": 0.3672081511467695,
+        "max_ms": 0.4182499833405018
+      },
+      "scheduler_lateness": {
+        "samples": 30,
+        "p50_ms": 0.1415829174220562,
+        "p95_ms": 3.803290892392397,
+        "max_ms": 4.614083096385002
+      },
+      "tick_and_snapshot": {
+        "samples": 29,
+        "p50_ms": 1.891499850898981,
+        "p95_ms": 9.394749999046326,
+        "max_ms": 10.185000021010637
+      },
+      "detach": {
+        "samples": 29,
+        "p50_ms": 1.439166022464633,
+        "p95_ms": 3.754165954887867,
+        "max_ms": 5.2922500763088465
+      },
+      "encode": {
+        "samples": 29,
+        "p50_ms": 0.6253330502659082,
+        "p95_ms": 1.4052088372409344,
+        "max_ms": 2.6865829713642597
+      },
+      "max_frame_bytes": 100351,
+      "counter": {
+        "jobs": 1,
+        "pending_bytes": 17,
+        "max_jobs": 2,
+        "max_pending_bytes": 2097152,
+        "max_input_bytes": 1048576,
+        "peak_jobs": 2,
+        "peak_pending_bytes": 34,
+        "budget_deferrals": 0,
+        "worker": {
+          "starts": 1,
+          "timeouts": 0,
+          "deadline_seconds": 3,
+          "running": false,
+          "closed": false
+        }
+      },
+      "end_all_and_snapshot_ms": 15.887999907135963,
+      "close_ms": 5.835875170305371
+    },
+    {
+      "streams": 50,
+      "target_events_per_second": 100,
+      "duration_seconds": 3,
+      "events": 300,
+      "tokenizer_startup_ms": 299.7291670180857,
+      "ingestion": {
+        "samples": 300,
+        "p50_ms": 0.1740835141390562,
+        "p95_ms": 0.28908299282193184,
+        "max_ms": 2.425125101581216
+      },
+      "scheduler_lateness": {
+        "samples": 300,
+        "p50_ms": 0.21562492474913597,
+        "p95_ms": 5.125083029270172,
+        "max_ms": 11.119707953184843
+      },
+      "tick_and_snapshot": {
+        "samples": 30,
+        "p50_ms": 4.864187561906874,
+        "p95_ms": 5.854459013789892,
+        "max_ms": 14.02008393779397
+      },
+      "detach": {
+        "samples": 30,
+        "p50_ms": 3.5360000329092145,
+        "p95_ms": 4.820666974410415,
+        "max_ms": 5.671749822795391
+      },
+      "encode": {
+        "samples": 30,
+        "p50_ms": 1.3845419744029641,
+        "p95_ms": 1.7007498536258936,
+        "max_ms": 2.1097089629620314
+      },
+      "max_frame_bytes": 108225,
+      "counter": {
+        "jobs": 2,
+        "pending_bytes": 204,
+        "max_jobs": 2,
+        "max_pending_bytes": 2097152,
+        "max_input_bytes": 1048576,
+        "peak_jobs": 2,
+        "peak_pending_bytes": 204,
+        "budget_deferrals": 1154,
+        "worker": {
+          "starts": 1,
+          "timeouts": 0,
+          "deadline_seconds": 3,
+          "running": false,
+          "closed": false
+        }
+      },
+      "end_all_and_snapshot_ms": 15.10516693815589,
+      "close_ms": 3.3120838925242424
+    },
+    {
+      "streams": 50,
+      "target_events_per_second": 1000,
+      "duration_seconds": 3,
+      "events": 3000,
+      "tokenizer_startup_ms": 279.70224991440773,
+      "ingestion": {
+        "samples": 3000,
+        "p50_ms": 0.06425008177757263,
+        "p95_ms": 0.20149978809058666,
+        "max_ms": 4.698292119428515
+      },
+      "scheduler_lateness": {
+        "samples": 3000,
+        "p50_ms": 0.19689591135829687,
+        "p95_ms": 5.865207873284817,
+        "max_ms": 17.73283281363547
+      },
+      "tick_and_snapshot": {
+        "samples": 30,
+        "p50_ms": 5.659457994624972,
+        "p95_ms": 10.300958063453436,
+        "max_ms": 10.861999820917845
+      },
+      "detach": {
+        "samples": 30,
+        "p50_ms": 2.6442086091265082,
+        "p95_ms": 4.746041959151626,
+        "max_ms": 6.951375165954232
+      },
+      "encode": {
+        "samples": 30,
+        "p50_ms": 1.1450834572315216,
+        "p95_ms": 1.6846249345690012,
+        "max_ms": 2.021041000261903
+      },
+      "max_frame_bytes": 108278,
+      "counter": {
+        "jobs": 2,
+        "pending_bytes": 2006,
+        "max_jobs": 2,
+        "max_pending_bytes": 2097152,
+        "max_input_bytes": 1048576,
+        "peak_jobs": 2,
+        "peak_pending_bytes": 2006,
+        "budget_deferrals": 1282,
+        "worker": {
+          "starts": 1,
+          "timeouts": 0,
+          "deadline_seconds": 3,
+          "running": false,
+          "closed": false
+        }
+      },
+      "end_all_and_snapshot_ms": 9.618708863854408,
+      "close_ms": 4.607875132933259
+    }
+  ],
+  "parent_peak_rss_bytes": 33095680,
+  "children_peak_rss_bytes": 113295360
+}

@@ -1,23 +1,22 @@
-# 待办清单
+# 待办索引
 
-更新：2026-10-23。系统审查及发行前清单见[第 17 章](17_review_and_refactor/review.md)，建议执行顺序见[后续计划](17_review_and_refactor/next-steps.md)。
+更新：2026-10-23。代码基线 `c3996dc`。本页只索引当前待办，技术方案、参数和阶段状态统一维护在[第 18 章](18_engineering_hardening/README.md)。历史 CR 与已完成修正见[第 17 章](17_review_and_refactor/README.md)。
 
-## GUI 实时同步迁移到本地 IPC
+## 入口验收
 
-- [ ] 拆分实时状态传输与恢复持久化：collector 通过本地 IPC 更新 GUI 内存状态，磁盘快照只用于恢复和诊断。
+P0 的入口样本与历史交接验证见[实施记录](18_engineering_hardening/implementation-results.md)。菜单栏调查保留在[第 17 章](17_review_and_refactor/status-regression.md)，新版本切换与长期样本按第 18 章继续验收。
 
-当前过渡措施：内存状态维护／速度采样保持约 250 ms；菜单状态变化在下一次采样发布，纯数值更新约每秒发布，启动时首次发布与正常退出时最终保存保留。GUI 监听目录通知以跟随快照的原子替换，并保留约每秒刷新用于新鲜度和恢复；超过 3 秒的快照仍按过期处理。SQLite 的事件写入和约 5 秒的过期回收保持原规则。后续菜单栏修复见[状态延迟记录](17_review_and_refactor/status-latency.md)。
+## 六项工程工作
 
-本轮已处理：快照写入的 `OSError` 降级并重试，不再使 collector 退出；启动额外检查进程生命周期锁，快照过期不再直接导致重复启动；成功发布后可查看累计写入失败诊断。
+- EH01：实时通信与恢复持久化解耦，含租约、bridge 热路径和 GUI／终端读端迁移。
+- EH02：统一子进程执行、输出预算、取消、超时和清理。
+- EH03：详情分页的稳定内容版本和源变化处理。
+- EH04：长期规模测量、资源预算与安全降级。
+- EH05：边界类型、状态所有权和职责收敛。
+- EH06：测量并消除 GUI 分组投影的重复成本。
 
-仍需消除的耦合：GUI 展示及恢复尝试仍依赖快照新鲜度，快照序列化、写入仍在 collector 主循环同步执行，阻塞型慢 IO 会拖延事件处理。异常重试及锁探测没有完成实时 IPC／独立心跳，也没有证明慢盘条件下的延迟上界。
+状态详见[第 18 章入口](18_engineering_hardening/README.md)，方案见[技术设计](18_engineering_hardening/technical-design.md)、[实施阶段 P0–P7](18_engineering_hardening/implementation-plan.md)和[验证计划](18_engineering_hardening/validation-plan.md)。本页不维护第二份完成勾选表。
 
-后续实现需要覆盖：
+## 并行发行准备
 
-- 优先评估本地 Unix socket，直接连接 GUI 与 collector；接入后首次发送完整状态，后续通知合并、限频，并设置有界背压，避免慢 GUI 阻塞采集。
-- 实时连接、心跳、断开与自动重连替代 GUI／CLI 依赖快照文件更新时间的存活判断；重连不把观测缺口解释为连续采集。
-- GUI 正常实时展示不再周期读取 `snapshot.json`；恢复快照单独确定低频保存及关键状态／退出保存策略，不因每次刷新写盘。
-- 持久化慢 IO／失败与采集事件循环隔离，异常明确降级；用慢写入、失败写入及延迟消息验证采集与健康判断，不靠延长固定 sleep 掩盖问题。
-- 时间线元数据继续按事件持久化，原始正文／工具详情继续读 Codex 历史；保留只读 fixture、诊断及恢复路径。
-
-验收重点：实时状态与速度语义保持，空闲和活跃场景均减少文件读写；collector／GUI 重启、断连、慢消费者及正常退出可恢复。传输协议与最终持久化间隔留待该项实施时确定。
+许可证／素材范围、兼容承诺、独立发行包、CI、干净环境、Remote、辅助功能及隐私复核见[发行准备与维护者决策](18_engineering_hardening/requirements-and-decisions.md#发行准备与维护者决策)。六项工程验收不自动等于公开发行完成。

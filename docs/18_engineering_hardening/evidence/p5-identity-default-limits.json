@@ -1,0 +1,57 @@
+{
+  "version": 1,
+  "python": "3.14.7",
+  "platform": "Darwin",
+  "cases": [
+    {
+      "limit": "entries",
+      "admitted_terminal_identities": 65536,
+      "fill_instrumented_ms": 1710.1251659914851,
+      "fill_peak_allocated_bytes": 6358914,
+      "ledger_sets_and_digests_heap_bytes": 6357424,
+      "before_rejection": {
+        "entries": 65536,
+        "terminal_entries": 65536,
+        "identity_bytes": 524288,
+        "max_identity_bytes": 8388608,
+        "max_entries": 65536,
+        "admission_closed": false
+      },
+      "after_rejection": {
+        "entries": 65536,
+        "terminal_entries": 65536,
+        "identity_bytes": 524288,
+        "max_identity_bytes": 8388608,
+        "max_entries": 65536,
+        "admission_closed": true
+      },
+      "terminal_probes_retained": 3
+    },
+    {
+      "limit": "utf8_bytes",
+      "admitted_terminal_identities": 2048,
+      "fill_instrumented_ms": 86.28595806658268,
+      "fill_peak_allocated_bytes": 275180,
+      "ledger_sets_and_digests_heap_bytes": 264624,
+      "before_rejection": {
+        "entries": 2048,
+        "terminal_entries": 2048,
+        "identity_bytes": 8388608,
+        "max_identity_bytes": 8388608,
+        "max_entries": 65536,
+        "admission_closed": false
+      },
+      "after_rejection": {
+        "entries": 2048,
+        "terminal_entries": 2048,
+        "identity_bytes": 8388608,
+        "max_identity_bytes": 8388608,
+        "max_entries": 65536,
+        "admission_closed": true
+      },
+      "terminal_probes_retained": 3
+    }
+  ],
+  "benchmark_peak_rss_bytes": 41533440,
+  "note": "Direct admission-ledger measurement with unchanged production defaults. Fill timings include tracemalloc. Heap counts sets/digests, not allocator or RSS. Engine gap/presentation/replay behavior is covered by the separate resource tests; this is neither an Engine event-load nor a natural-use soak."
+}

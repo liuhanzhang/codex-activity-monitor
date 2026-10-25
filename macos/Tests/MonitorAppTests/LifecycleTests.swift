@@ -17,7 +17,7 @@ private actor FakeBackend: BackendManaging {
 }
 
 private func state(_ name: String, session: Bool = false) throws -> ManagementState {
-    let lease = session ? ",\"session\":{\"version\":1,\"id\":\"test\",\"owner_pid\":123,\"heartbeat_at\":1,\"active\":true}" : ""
+    let lease = session ? ",\"session\":{\"version\":2,\"id\":\"test\",\"secret\":\"fixture-secret\",\"owner_pid\":123,\"created_at\":1,\"active\":true}" : ""
     return try JSONDecoder().decode(ManagementState.self, from: Data("{\"version\":1,\"ok\":true,\"state\":\"\(name)\"\(lease)}".utf8))
 }
 

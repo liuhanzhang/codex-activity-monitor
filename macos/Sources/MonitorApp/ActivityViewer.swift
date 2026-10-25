@@ -214,7 +214,7 @@ private struct ActivityDetailView: LocalizedView {
                         .id(store.phase.id + "-" + section.id)
                         .accessibilityIdentifier("monitor.activity.content")
                 }
-                if section.next_offset != nil {
+                if detail.pageCursor(for: section.id) != nil {
                     Button(L("继续加载完整内容")) { Task { await store.loadMore() } }
                         .disabled(store.loadingMore).padding(.horizontal, 20).padding(.vertical, 8)
                 }
@@ -229,7 +229,7 @@ private struct ActivityDetailView: LocalizedView {
                 if store.detail == nil && store.error == nil { ProgressView().controlSize(.small) }
                 Text(store.error.map { L($0) } ?? detailNotice).font(.system(size: 12)).foregroundStyle(.secondary)
                 if store.detail?.state != "no_content" {
-                    Button(L("重新读取")) { Task { await store.refresh() } }.buttonStyle(.bordered)
+                    Button(L("重新读取")) { Task { await store.refresh(reload: true) } }.buttonStyle(.bordered)
                 }
             }.frame(maxWidth: .infinity, maxHeight: .infinity)
         }
@@ -238,7 +238,7 @@ private struct ActivityDetailView: LocalizedView {
     private var statusBar: some View {
         HStack(spacing: 8) {
             if let error = store.error { Text(L(error)).foregroundStyle(.red) }
-            else if !isEmptyReasoning && store.detail?.state != "available" && store.detail?.state != "no_content" {
+            else if store.detail?.requiresReload == true || (!isEmptyReasoning && store.detail?.state != "available" && store.detail?.state != "no_content") {
                 Image(systemName: "info.circle"); Text(detailNotice)
             }
             else {
@@ -246,6 +246,10 @@ private struct ActivityDetailView: LocalizedView {
                        store.detail?.source == "observed_metadata" ? "本地观测的活动元数据" : "Codex 保留的活动记录"))
             }
             Spacer(minLength: 8)
+            if store.detail?.requiresReload == true || store.error != nil ||
+               (store.detail != nil && !["available", "no_content", "partial", "source_truncated"].contains(store.detail!.state)) {
+                Button(L("重新读取")) { Task { await store.refresh(reload: true) } }.buttonStyle(.plain)
+            }
             if let related = store.phase.related_phase_ids?.first,
                let phase = store.timeline.bundle?.allActivities.first(where: { $0.id == related }) {
                 Button(L("查看执行")) { onSelect(phase) }.buttonStyle(.plain)
@@ -270,7 +274,11 @@ private struct ActivityDetailView: LocalizedView {
         if store.phase.thread_id == store.timeline.thread { return L("主智能体") }
         return store.timeline.bundle?.agents.first { $0.thread_id == store.phase.thread_id }?.displayName ?? L("所属智能体") }
     private var detailNotice: String {
-        switch store.detail?.state {
+        if store.detail?.version == 1 && store.detail?.requiresReload == true {
+            return L("当前来源不支持继续加载，请更新 Monitor 后重新读取。")
+        }
+        return switch store.detail?.state {
+        case "content_changed": L("源内容已变化。保留已加载内容，请重新读取。")
         case "source_truncated": L("来源已截断，以下是 Codex 保留的全部可用内容。")
         case "partial": L("当前内容为部分观测，完成后将从历史补齐。")
         case "pending": L("完整内容尚未写入历史。")

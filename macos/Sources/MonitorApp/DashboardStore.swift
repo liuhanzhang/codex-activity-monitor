@@ -14,7 +14,21 @@ struct BackendConfiguration: Decodable, Sendable {
 
 @MainActor @Observable
 final class DashboardStore {
-    var snapshot: Snapshot?
+    var snapshot: Snapshot? {
+        didSet {
+            if oldValue?.projection !== snapshot?.projection {
+                projectionAcceptedAt = .now
+                chatSelection = snapshot?.projection.initial
+            }
+        }
+    }
+    private(set) var chatSelection: SnapshotProjection.Selection?
+    @ObservationIgnored private var projectionAcceptedAt = ContinuousClock.now
+    private var projectionElapsed: Double {
+        let duration = projectionAcceptedAt.duration(to: .now).components
+        return Double(duration.seconds) + Double(duration.attoseconds)/1e18
+    }
+    private var selectionExpired: Bool { chatSelection?.nextExpiry.map { projectionElapsed >= $0 } == true }
     var readError: String?
     var menuTitle = "—"
     var menuMode: MenuMode = .unavailable
@@ -51,6 +65,11 @@ final class DashboardStore {
     }
     func waitForLanguageSave() async { await languageSaveTask?.value }
     private func recordError(_ error: any Error, prefix: String? = nil) {
+        if let state = (error as? BackendFailure)?.stateAfterFailure {
+            management = state
+            if let runtime = state.runtime { runtimePath = runtime }
+            if state.configured != true { lease = nil }
+        }
         operationFailure = PresentationFailure(error: error, prefix: prefix)
     }
     var busy = false
@@ -65,7 +84,7 @@ final class DashboardStore {
         didSet {
             guard oldValue != showRecent else { return }
             if !showRecent, let chat = selectedChat, !activeRows.contains(where: { $0.chat.id == chat.id }),
-               !(showUnassigned && snapshot?.unassignedChats.contains(where: { $0.id == chat.id }) == true) {
+               !(showUnassigned && isUnassigned(chat)) {
                 selectChat(activeRows.first?.chat)
             } else { reconcileSelection() }
         }
@@ -105,6 +124,7 @@ final class DashboardStore {
     private var runtimePath: String
     private var nextCleanup = Date.distantPast
     private var nextResume = Date.distantPast
+    private var nextManagement = Date.distantPast
     private var closing = false
     var onUpdate: (() -> Void)?
     var onActivitySelected: ((TimelineStore, [TimelinePhase]) -> Void)?
@@ -115,10 +135,22 @@ final class DashboardStore {
     private var watchedSnapshotPath: String?
     private var snapshotReadGeneration = 0
     private let injectedClient: (any BackendManaging)?
+    private let stateSubscriber: (any StateSubscribing)?
+    @ObservationIgnored private var stateWatching: Task<Void, Never>?
+    @ObservationIgnored private var stateConnection: StateSubscription?
+    @ObservationIgnored private var stateSubscriptionKey: String?
+    @ObservationIgnored private var stateSubscriptionGeneration = 0
+    @ObservationIgnored private var healthClock: Task<Void, Never>?
+    private var liveState: StateUpdate?
+    var liveInstanceID: String? { liveState?.instanceID }
+    var liveSequence: UInt64? { liveState?.sequence }
+    private var usesLiveState: Bool { stateSubscriber != nil || !readOnly }
 
-    init(configuration: BackendConfiguration, arguments: [String], client: (any BackendManaging)? = nil) {
+    init(configuration: BackendConfiguration, arguments: [String], client: (any BackendManaging)? = nil,
+         stateSubscriber: (any StateSubscribing)? = nil) {
         self.configuration = configuration
         injectedClient = client
+        self.stateSubscriber = stateSubscriber
         readOnly = arguments.contains("--read-only") || arguments.contains("--snapshot")
         previewRestore = readOnly && arguments.contains("--preview-restore")
         if readOnly, let index = arguments.firstIndex(of: "--preview-max-height"), index + 1 < arguments.count,
@@ -153,18 +185,31 @@ final class DashboardStore {
     private var client: any BackendManaging { injectedClient ?? BackendClient(configuration: configuration, dataRoot: dataRoot, testProfile: testProfile) }
 
     func start() {
+        watchState()
+        healthClock = Task { [weak self] in
+            while !Task.isCancelled {
+                if let self, selectionExpired || (usesLiveState && fresh != (readError == nil && liveState?.isFresh == true)) {
+                    updatePresentation(); onUpdate?()
+                }
+                try? await Task.sleep(for: .milliseconds(250))
+            }
+        }
         polling = Task {
             if !readOnly { await bootstrap() }
             while !Task.isCancelled {
-                if let lease { await client.heartbeat(lease) }
-                if !readOnly { await readManagement() }
+                if !readOnly && Date() >= nextManagement {
+                    nextManagement = Date().addingTimeInterval(5)
+                    await readManagement()
+                }
                 if management?.waitingForCleanup == true && !busy && Date() >= nextCleanup {
                     nextCleanup = Date().addingTimeInterval(5)
                     await cleanup()
                 }
                 guard !Task.isCancelled else { break }
-                watchSnapshot()
-                await readSnapshot()
+                if !usesLiveState {
+                    watchSnapshot()
+                    await readSnapshot()
+                } else { watchState(); updatePresentation() }
                 if !readOnly && management?.configured == true && !fresh && !busy && !closing && Date() >= nextResume {
                     nextResume = Date().addingTimeInterval(5)
                     busy = true
@@ -174,6 +219,52 @@ final class DashboardStore {
                 }
                 onUpdate?()
                 try? await Task.sleep(for: .seconds(1))
+            }
+        }
+    }
+
+    private func watchState() {
+        guard usesLiveState, !closing else { return }
+        let subscriber: any StateSubscribing
+        let identity: String
+        if let stateSubscriber { subscriber = stateSubscriber; identity = "injected" }
+        else {
+            guard let lease, lease.version == 2, let secret = lease.secret else { return }
+            subscriber = UnixStateSubscriber(options: .init(owner: StateOwnerCredential(sessionID: lease.id, secret: secret)))
+            identity = lease.id
+        }
+        let path = runtimePath + "/state.sock"
+        let key = path + "\u{0}" + identity
+        guard stateSubscriptionKey != key else { return }
+        stateConnection?.cancel()
+        stateWatching?.cancel()
+        stateSubscriptionGeneration += 1
+        let generation = stateSubscriptionGeneration
+        stateSubscriptionKey = key
+        liveState = nil
+        stateWatching = Task { [weak self] in
+            var delay = 0.1
+            while !Task.isCancelled {
+                let connection = subscriber.subscribe(at: path)
+                self?.stateConnection = connection
+                do {
+                    for try await update in connection.updates {
+                        guard !Task.isCancelled, let self, !closing, generation == stateSubscriptionGeneration else { break }
+                        if liveState?.instanceID != update.instanceID || liveState?.sequence != update.sequence {
+                            if let snapshot = update.snapshot { self.snapshot = snapshot; delay = 0.1 }
+                        }
+                        liveState = update; readError = nil
+                        updatePresentation(); onUpdate?()
+                    }
+                } catch { /* Reconnect below; transport errors never become file health. */ }
+                connection.cancel()
+                guard !Task.isCancelled, let self, !closing, generation == stateSubscriptionGeneration else { return }
+                stateConnection = nil; liveState = nil
+                readError = "暂时无法读取采集数据"
+                updatePresentation(); onUpdate?()
+                do { try await Task.sleep(for: .seconds(delay * Double.random(in: 0.8...1.2))) }
+                catch { return }
+                delay = min(2, delay*2)
             }
         }
     }
@@ -210,10 +301,15 @@ final class DashboardStore {
         onUpdate?()
     }
 
-    func updatePresentation(at date: Date = Date()) {
-        fresh = readError == nil && snapshot?.isFresh(at: date) == true
-        menuTitle = fresh ? (snapshot?.menuTitle(at: date) ?? "—") : "—"
-        menuMode = fresh ? (snapshot?.menuMode(at: date) ?? .unavailable) : .unavailable
+    func updatePresentation(at date: Date = Date(), projectionElapsed elapsed: Double? = nil) {
+        let elapsed = elapsed ?? projectionElapsed
+        if chatSelection?.nextExpiry.map({ elapsed >= $0 }) == true {
+            chatSelection = snapshot?.projection.selection(elapsed: elapsed)
+        }
+        let connectionFresh = usesLiveState ? liveState?.isFresh == true : nil
+        fresh = readError == nil && (connectionFresh ?? (snapshot?.isFresh(at: date) == true))
+        menuTitle = fresh ? (snapshot?.menuTitle(at: date, connectionFresh: connectionFresh) ?? "—") : "—"
+        menuMode = fresh ? (snapshot?.menuMode(at: date, connectionFresh: connectionFresh) ?? .unavailable) : .unavailable
         let chats = snapshot?.threads ?? []
         let ids = Set(chats.map(\.id))
         chatOrder = chatOrder.filter { ids.contains($0.key) }
@@ -226,7 +322,7 @@ final class DashboardStore {
     }
 
     var selectedChat: Chat? {
-        let chat = snapshot?.threads.first { $0.id == selectedChatKey } ?? retainedSelection
+        let chat = selectedChatKey.flatMap { snapshot?.projection.chat(id: $0) } ?? retainedSelection
         return chat?.ephemeral == true ? nil : chat
     }
 
@@ -260,12 +356,12 @@ final class DashboardStore {
     }
 
     func sourceAvailable(for chat: Chat) -> Bool {
-        fresh && chat.connected != false && snapshot?.threads.contains(where: { $0.id == chat.id }) == true
+        fresh && chat.connected != false && snapshot?.projection.chat(id: chat.id) != nil
     }
 
     var activeRows: [ChatRow] {
         guard let snapshot else { return [] }
-        let roots = snapshot.rootChats.filter { snapshot.hasActiveWork(in: $0) }.sorted {
+        let roots = (chatSelection?.roots ?? []).filter { snapshot.hasActiveWork(in: $0) }.sorted {
             (chatOrder[$0.id] ?? Int.max) < (chatOrder[$1.id] ?? Int.max)
         }
         return snapshot.rows(roots: roots, expanded: [], order: chatOrder)
@@ -273,7 +369,7 @@ final class DashboardStore {
 
     var recentRoots: [Chat] {
         guard let snapshot else { return [] }
-        return snapshot.rootChats.filter { !snapshot.hasActiveWork(in: $0) }
+        return (chatSelection?.roots ?? []).filter { !snapshot.hasActiveWork(in: $0) }
     }
 
     var recentRows: [ChatRow] {
@@ -283,8 +379,10 @@ final class DashboardStore {
 
     var unassignedRows: [ChatRow] {
         guard showUnassigned, let snapshot else { return [] }
-        return snapshot.rows(roots: snapshot.unassignedChats, expanded: [], order: chatOrder)
+        return snapshot.rows(roots: chatSelection?.unassigned ?? [], expanded: [], order: chatOrder)
     }
+
+    func isUnassigned(_ chat: Chat) -> Bool { chatSelection?.unassignedIDs.contains(chat.id) == true }
 
     func timeline(for chat: Chat) -> TimelineStore {
         if let existing = timelines[chat.id] { return existing }
@@ -310,7 +408,8 @@ final class DashboardStore {
     }
 
     var bridgeNeedsRestart: Bool {
-        snapshot?.backends?.values.contains { $0.connected == true && !$0.supportsObservationLease } == true
+        management?.bridge_restart_required == true ||
+            snapshot?.backends?.values.contains { $0.connected == true && !$0.supportsObservationLease } == true
     }
 
     var compactConnectionLabel: String {
@@ -367,8 +466,12 @@ final class DashboardStore {
         guard !closing else { return }
         let result = try await client.command("resume", extra: ["--owner-pid", String(ProcessInfo.processInfo.processIdentifier)])
         management = result
-        lease = result.session
+        guard let session = result.session, session.version == 2, session.secret != nil else {
+            throw BackendFailure(message: "", displayMessage: DisplayMessage("control.gui_upgrade_required"))
+        }
+        lease = session
         if let runtime = result.runtime { runtimePath = runtime }
+        watchState()
     }
 
     func restore(purge: Bool) async {
@@ -377,6 +480,9 @@ final class DashboardStore {
         defer { busy = false }
         do {
             await waitForLanguageSave()
+            if let stateConnection { _ = await stateConnection.release() }
+            stateConnection?.cancel(); stateWatching?.cancel()
+            stateSubscriptionKey = nil; liveState = nil
             lease = nil
             management = try await client.command("restore", extra: purge ? ["--purge"] : [])
             if management?.state == "purged" { finishPurge() }
@@ -399,6 +505,8 @@ final class DashboardStore {
         closing = true
         polling?.cancel()
         snapshotWatching?.cancel()
+        stateWatching?.cancel()
+        healthClock?.cancel()
         lease = nil
         onPurgeComplete?()
     }
@@ -408,19 +516,24 @@ final class DashboardStore {
         let ownedSession = lease != nil
         closing = true
         await waitForLanguageSave()
+        if let stateConnection { _ = await stateConnection.release() }
         guard !readOnly, management?.state != "purged" else {
             polling?.cancel()
             snapshotWatching?.cancel()
+            stateWatching?.cancel()
+            healthClock?.cancel()
             return true
         }
         do {
             if ownedSession { _ = try await client.command("stop", extra: ["--owner-pid", String(ProcessInfo.processInfo.processIdentifier)]) }
             polling?.cancel()
             snapshotWatching?.cancel()
+            stateWatching?.cancel()
+            healthClock?.cancel()
             lease = nil
             return true
         }
-        catch { closing = false; recordError(error); return false }
+        catch { closing = false; stateSubscriptionKey = nil; watchState(); recordError(error); return false }
     }
 
     func setLogin(_ enabled: Bool) async {
@@ -441,12 +554,9 @@ final class DashboardStore {
     }
 
     private func readManagement() async {
-        let path = dataRoot + "/integration.json"
-        let result = await Task.detached(priority: .utility) { () -> ManagementState? in
-            guard let data = try? Data(contentsOf: URL(fileURLWithPath: path)) else { return nil }
-            guard let state = try? JSONDecoder().decode(ManagementState.self, from: data), state.version == 1 else { return nil }
-            return state
-        }.value
+        // Finite management I/O runs independently of state subscription and its
+        // health clock. A failed refresh preserves the last acknowledged config.
+        let result = try? await client.command("status")
         if let result { management = result }
     }
 }

@@ -24,6 +24,7 @@
 "NoticeAssociatingEvents" = "Some activities have not been associated with a chat. Total speed is unavailable.";
 "NoticeIdentityConflict" = "Duplicate or conflicting connections make total speed unavailable.";
 "NoticeObservationGap" = "Some turns lack continuous observation. Total speed is unavailable.";
+"NoticeObservationResourceLimit" = "Observation reached its resource limit. Pause and resume collection.";
 "NoticeStreamUnavailable" = "Some generation rates are unavailable. Total speed is unavailable.";
 "NoticeTotalUnavailable" = "This connection does not currently provide total speed data.";
 "NoticeWaitingForConnection" = "If Codex is already open, reopen it after your tasks finish to connect.";
@@ -55,6 +56,12 @@
 "取消" = "Cancel";
 "可见时间范围" = "Visible time range";
 "合成预览记录" = "Synthetic preview records";
+"后台命令已取消。" = "The background command was cancelled.";
+"后台命令未能退出，请重试。" = "The background command could not exit. Try again.";
+"后台命令超时，请重试。" = "The background command timed out. Try again.";
+"后台命令输出超过限制。" = "The background command output exceeded its limit.";
+"后台命令返回的数据无效。" = "The background command returned invalid data.";
+"后台命令配置无效。" = "The background command configuration is invalid.";
 "含推理 %@" = "Including reasoning %@";
 "回到最新" = "Back to latest";
 "在系统设置中允许登录启动" = "Allow launch at login in System Settings";
@@ -97,6 +104,7 @@
 "归属待确认的子任务（%d）.one" = "Unassigned subtask (%d)";
 "当前内容为部分观测，完成后将从历史补齐。" = "Content is partially observed. History will fill it in after completion.";
 "当前找不到可读取的源历史。" = "No readable source history was found.";
+"当前来源不支持继续加载，请更新 Monitor 后重新读取。" = "This source cannot load more content. Update Monitor and reload.";
 "当前来源不支持读取此类内容。" = "This source does not support reading this content type.";
 "当前模型" = "Current model";
 "当前没有活跃聊天" = "No active chats";
@@ -108,6 +116,7 @@
 "恢复接入前的配置并停止采集。用户后来的设置会保留，Codex 任务不会被强制结束。" = "Restore the configuration from before integration and stop collection. Your later settings are preserved; Codex tasks will not be terminated.";
 "恢复配置" = "Restore configuration";
 "所属智能体" = "Owning agent";
+"所选内容过多，暂时无法一次载入。" = "The selected content is too large to load at once.";
 "所选轮次没有可读取的初始输入" = "No readable initial input for the selected turn";
 "所选轮次的官方用量；输出已包含推理。" = "Official usage for the selected turn; Output includes Reasoning.";
 "所选轮次统计暂不可用" = "Statistics for the selected turn are unavailable";
@@ -120,6 +129,8 @@
 "压缩" = "Compacting";
 "整理上下文" = "Compacting context";
 "无法启动 Codex Monitor" = "Cannot start Codex Monitor";
+"无法启动后台命令。" = "Could not start the background command.";
+"无法读取后台命令结果。" = "Could not read the background command result.";
 "旧接入仍在运行；任务结束后重开 Codex，以启用退出暂停采集。" = "A previous integration is still running. Reopen Codex after tasks finish to enable pausing collection when Monitor quits.";
 "时间线暂不可用" = "Timeline unavailable";
 "显示最近完成（%d）" = "Show recently completed (%d)";
@@ -175,6 +186,7 @@
 "活动身份不匹配" = "Activity identity mismatch";
 "活动轨迹" = "Activity timeline";
 "清理本机数据并退出，用于卸载" = "Remove local data and quit to uninstall";
+"源内容已变化。保留已加载内容，请重新读取。" = "The source content changed. Your loaded content is preserved; reload to continue.";
 "源历史中尚无这项活动的可用内容，可稍后重新读取。" = "The source history has no content for this activity yet. Try reading it again later.";
 "源历史已移除或当前内容不可用。" = "Source history was removed or this content is unavailable.";
 "源记录未提供独立参数。" = "The source record provides no separate input.";

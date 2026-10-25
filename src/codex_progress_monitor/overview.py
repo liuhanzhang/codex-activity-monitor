@@ -50,6 +50,9 @@ def overview(engine, views, now):
     if engine.pending_generation_count:
         unknown += 1
         quality.add('unassociated_events')
+    if engine.identity_budget.sealed:
+        unknown += 1
+        quality.add('identity_budget')
     connected = any(b.get('connected', False) for b in engine.backends.values())
     if not connected:
         quality.add('no_backend')

@@ -16,7 +16,7 @@ import uuid
 
 from .events import decode_log, filter_event, BLOCKING_REQUESTS
 from .runtime import REAL_CLI
-from .app_session import observing
+from .observer_permit import PermitExchange
 
 TRACE_FILTER='warn,codex_api::sse=trace,tungstenite::protocol=trace,tungstenite::protocol::frame=off'
 
@@ -49,7 +49,7 @@ class Observer:
         self.runtime,self.backend=runtime,backend
         from .runtime import source_identity
         self.info={'type':'bridge/started','home':home,'cli':str(cli),'bridge_pid':os.getpid(),
-                   'implementation':source_identity('bridge','app_session','events','usage','tool_labels','runtime','i18n','messages_zh_cn')}
+                   'implementation':source_identity('bridge','observer_permit','events','usage','tool_labels','runtime','i18n','messages_zh_cn')}
         self.packets=queue.Queue(maxsize=queue_size)
         self.cache=OrderedDict()
         self.cache_sizes={}
@@ -66,18 +66,15 @@ class Observer:
         self.stopping=False
         self.queued_bytes=0
         self.queue_lock=threading.Lock()
-        self.observe_until=0.0
-        self.observe_enabled=True
+        self.permits=PermitExchange()
+        self.initial_attempt=threading.Event()
 
     def observing(self):
-        now=time.monotonic()
-        if now>=self.observe_until:
-            self.observe_enabled=observing(self.runtime)
-            self.observe_until=now+0.5
-        return self.observe_enabled
+        return time.monotonic()<self.permits.until
 
     def offer(self,source,data,at=None):
         if not self.observing():
+            self.lose('observation_inactive', framing=True)
             return
         with self.queue_lock:
             if self.queued_bytes+len(data)>8*1024*1024:
@@ -93,9 +90,11 @@ class Observer:
                 self.framing_drops+=1
                 self.drop_reasons['queue_full']+=1
 
-    def lose(self,reason):
+    def lose(self,reason,*,framing=False):
         with self.queue_lock:
             self.dropped+=1
+            if framing:
+                self.framing_drops+=1
             self.drop_reasons[reason]+=1
 
     def health(self,kind):
@@ -194,18 +193,31 @@ class Observer:
         self.cache_bytes-=self.cache_sizes.pop(key,0)
 
     def send(self,row):
+        raw=json.dumps(row,ensure_ascii=False,separators=(',',':')).encode()+b'\n'
+        return self.send_bytes(raw, requires_permit=True)
+
+    def disconnect(self):
+        if self.sock:
+            self.sock.close()
+        self.sock=None
+        self.permits.reset()
+
+    def send_bytes(self,raw,*,requires_permit=False):
         if self.sock is None:
             return False
+        deadline=time.monotonic()+1
         try:
-            view=memoryview(json.dumps(row,ensure_ascii=False,separators=(',',':')).encode()+b'\n')
+            view=memoryview(raw)
             while view:
                 # A slow observer is disposable, but a brief scheduler/encoding
                 # pause is not a broken connection. Preserve the partial frame;
                 # only this worker waits, while producers retain finite limits.
-                if self.drain_deadline is not None and time.monotonic()>=self.drain_deadline:
-                    self.lose('shutdown_pending')
-                    self.sock.close()
-                    self.sock=None
+                now=time.monotonic()
+                reason=('shutdown_pending' if self.drain_deadline is not None and now>=self.drain_deadline else
+                        'send_timeout' if now>=deadline else 'permit_expired' if requires_permit and not self.observing() else None)
+                if reason:
+                    self.lose(reason)
+                    self.disconnect()
                     return False
                 try:
                     written=self.sock.send(view)
@@ -218,8 +230,7 @@ class Observer:
             return True
         except (OSError,ValueError) as error:
             self.last_send_error={'type':type(error).__name__,'errno':getattr(error,'errno',None)}
-            self.sock.close()
-            self.sock=None
+            self.disconnect()
             self.lose('send_error')
             return False
 
@@ -230,52 +241,78 @@ class Observer:
             sock.connect(str(self.runtime/'events.sock'))
             sock.setblocking(False)
             self.sock=sock
-            self.send(self.row('lifecycle',self.info))
-            for row in self.cache.values():
-                if not self.send({**row,'replayed':True}):
-                    return
-            self.send(self.row('lifecycle',self.health('bridge/reconnected')))
+            self.permits.reset()
+            self.send_bytes(self.permits.request(self.backend))
         except OSError:
             sock.close()
             self.sock=None
+
+    def replay(self):
+        self.send(self.row('lifecycle',self.info))
+        for row in self.cache.values():
+            if not self.send({**row,'replayed':True}):
+                return
+        self.send(self.row('lifecycle',self.health('bridge/reconnected')))
+
+    def refresh_permit(self):
+        try:
+            for _ in range(4):
+                try:
+                    data=self.sock.recv(4096)
+                except BlockingIOError:
+                    break
+                if not data:
+                    raise ConnectionError('Observation control closed')
+                self.permits.receive(data)
+            request=self.permits.request(self.backend)
+            if request:
+                self.send_bytes(request)
+        except (OSError, ValueError, TypeError, UnicodeError):
+            self.disconnect()
 
     def run(self):
         buffers={'stdin':b'','stdout':b'','stderr':b''}
         observed_drops=self.framing_drops
         next_connect=next_heartbeat=0
-        paused=False
+        active=False
+        ever_active=False
         while not self.stopping or not self.packets.empty():
             now=time.monotonic()
             if self.drain_deadline is not None and now>=self.drain_deadline:
                 break
+            if self.sock is None and now>=next_connect:
+                self.connect()
+                if self.sock is None:
+                    self.initial_attempt.set()
+                next_connect=now+1
+            if self.sock is not None:
+                self.refresh_permit()
+                if self.permits.instance is not None:
+                    self.initial_attempt.set()
             if not self.observing():
-                paused=True
-                if self.sock:
-                    self.sock.close()
-                    self.sock=None
+                active=False
                 buffers={k:b'' for k in buffers}
                 self.cache.clear()
                 self.cache_sizes.clear()
                 self.cache_bytes=0
                 try:
-                    _,_,_,data,_=self.packets.get(timeout=0.1)
+                    _,_,_,data,_=self.packets.get(timeout=0.025)
                     with self.queue_lock:
                         self.queued_bytes-=len(data)
                 except queue.Empty:
                     pass
                 continue
-            if paused:
-                paused=False
-                self.lose('observation_resumed')
-                next_connect=next_heartbeat=0
-            if self.sock is None and now>=next_connect:
-                self.connect()
-                next_connect=now+1
+            if not active:
+                if ever_active:
+                    self.lose('observation_resumed')
+                active=ever_active=True
+                self.replay()
+                next_heartbeat=0
             if self.sock is not None and now>=next_heartbeat:
                 self.send(self.row('lifecycle',self.health('bridge/heartbeat')))
                 next_heartbeat=now+2
             try:
-                source,at,wall,data,drops=self.packets.get(timeout=0.1)
+                source,at,wall,data,drops=self.packets.get(timeout=0.025)
                 with self.queue_lock:
                     self.queued_bytes-=len(data)
             except queue.Empty:
@@ -319,6 +356,9 @@ class Observer:
 
     def start(self):
         self.thread.start()
+        # Before launching the original backend, give an available collector a
+        # finite chance to authorize its first events. No transport pump waits.
+        self.initial_attempt.wait(.15)
 
     def close(self):
         self.drain_deadline=time.monotonic()+.75
@@ -334,9 +374,14 @@ def forward(args,runtime,actual=None):
         os.execv(str(actual),[str(actual),*args])
     env=dict(os.environ)
     env.update(CODEX_CLI_PATH=str(actual),LOG_FORMAT='json',RUST_LOG=TRACE_FILTER)
-    child=subprocess.Popen([str(actual),*args],stdin=subprocess.PIPE,stdout=subprocess.PIPE,stderr=subprocess.PIPE,
-                           env=env,start_new_session=True)
     observer=Observer(runtime,uuid.uuid4().hex,env.get('CODEX_HOME',str(Path.home()/'.codex')),actual)
+    observer.start()
+    try:
+        child=subprocess.Popen([str(actual),*args],stdin=subprocess.PIPE,stdout=subprocess.PIPE,stderr=subprocess.PIPE,
+                               env=env,start_new_session=True)
+    except BaseException:
+        observer.close()
+        raise
     registration=None
     if (runtime/'app-managed.json').exists():
         from .app_session import process_identity
@@ -346,10 +391,9 @@ def forward(args,runtime,actual=None):
             directory.mkdir(mode=0o700,exist_ok=True)
             registration=directory/f'{os.getpid()}.json'
             atomic_json(registration,{'pid':os.getpid(),'identity':process_identity(os.getpid()),
-                                      'cli_pid':child.pid,'started_at':time.time()})
+                                      'cli_pid':child.pid,'started_at':time.time(),'observation_protocol':1})
         except OSError:
             registration=None
-    observer.start()
     def stop(signum,_):
         try:
             os.killpg(child.pid,signum)

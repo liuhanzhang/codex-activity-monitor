@@ -1,6 +1,6 @@
 # Codex Progress Monitor
 
-[简体中文](README.zh-CN.md) · [Contributing](CONTRIBUTING.md) · [Architecture](docs/17_review_and_refactor/architecture.md)
+[简体中文](README.zh-CN.md) · [Contributing](CONTRIBUTING.md) · [Architecture](docs/18_engineering_hardening/implemented-architecture.md) · [Docs](docs/README.md)
 
 A local macOS menu bar companion for Codex Desktop. See what your connected chats are doing, inspect model and tool activity on a timeline, and view received-text token speed alongside official turn usage.
 
@@ -52,14 +52,14 @@ Codex Desktop ⇄ stdio wrapper ⇄ original Codex app-server
                        │
                  bounded event copy
                        ↓
-                Python collector → snapshot → Swift menu bar app
+                Python collector → state.sock → Swift menu bar app
                        │                            │
                  phase metadata                read-only queries
                        ↓                            ↓
                 SQLite sidecar ← timeline query → Codex session JSONL
 ```
 
-The wrapper keeps the original backend and forwards its stdio. Observation uses a separate bounded queue and Unix socket. The collector combines protocol lifecycle events and selected upstream deltas; read-only JSONL history reconciles persisted activity. The sidecar stores phase metadata, while full historical content stays in Codex-owned files.
+The wrapper keeps the original backend and forwards its stdio. Observation uses a separate bounded queue and Unix socket. The collector combines protocol lifecycle events and selected upstream deltas; the GUI subscribes to full state and nonce-bound health through `state.sock`. A bounded worker writes disposable recovery checkpoints independently. Read-only JSONL history reconciles persisted activity. The sidecar stores phase metadata, while full historical content stays in Codex-owned files.
 
 Monitor keeps local metadata, snapshots, and integration backups. Snapshots can contain chat titles, paths, command previews, and numeric metrics; they are not anonymous. Transient text is used for local tokenization and selected live details. Monitor does not upload conversations. Dependency installation and the tokenizer's initial asset download may require network access. Keep runtime data out of issue reports and Git.
 
@@ -67,4 +67,4 @@ Monitor keeps local metadata, snapshots, and integration backups. Snapshots can 
 
 See [CONTRIBUTING.md](CONTRIBUTING.md) for checks and safe fixtures. The product is in `src/`, `macos/Sources/`, and `bin/`; numbered `docs/` folders preserve decisions and validation history. `experiments/` and `analysis/` are research material. `.local/` is ignored machine state.
 
-Current limits include local observed chats only, version-dependent upstream trace parsing, file-based GUI polling, and no fresh-machine or distribution acceptance yet. Tests and local builds do not establish long-run, Remote, signing, notarization, or asset-distribution readiness. The [review](docs/17_review_and_refactor/review.md), [validation record](docs/17_review_and_refactor/validation.md), and [remaining work](docs/TODO.md) track those boundaries.
+Current limits include local observed chats only, version-dependent upstream trace parsing, and no fresh-machine or distribution acceptance yet. The state transport has isolated native acceptance, and the daily GUI/collector/resident-bridge update has been verified after a full Desktop restart; new natural-use samples remain pending. Tests and local builds do not establish long-run, Remote, signing, notarization, or asset-distribution readiness. The [baseline review](docs/17_review_and_refactor/review.md), [current implementation record](docs/18_engineering_hardening/implementation-results.md), and [remaining work](docs/TODO.md) track those boundaries.

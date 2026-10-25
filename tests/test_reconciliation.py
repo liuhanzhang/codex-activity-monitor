@@ -9,7 +9,8 @@ from unittest.mock import Mock
 from codex_progress_monitor.engine import Engine
 from codex_progress_monitor.events import Event
 from codex_progress_monitor.history import HistoryProvider
-from codex_progress_monitor.reconciliation import HistoryRefresh
+from codex_progress_monitor.history_refresh import HistoryRefresh
+from codex_progress_monitor.history_contract import HistorySelection
 from codex_progress_monitor.timeline import TimelineBook
 from codex_progress_monitor.timeline_query import TimelineQuery
 
@@ -73,6 +74,64 @@ class ReconciliationTests(unittest.TestCase):
         summary = self.summary(turns)
         self.engine.apply_history(summary)
         return summary
+
+    def test_scoped_absence_does_not_withdraw_history_outside_the_selection(self):
+        self.command('other', at=101.1)
+        self.write([self.completion(), self.completion(item='other')], 'a')
+        self.engine.apply_history(self.summary())
+        thread = self.engine.threads[('b', 't')]
+        self.assertIsNotNone(thread.activities['other'].history)
+        self.write([self.row('session_meta', {'id': 't', 'history_mode': 'paginated'}),
+                    self.row('event_msg', {'type': 'task_started', 'turn_id': 'u', 'started_at': self.wall})])
+        partial = self.provider.reconciliation(str(self.home), 't', {'u'}, items=frozenset({('u', 'cmd')}))
+        self.engine.apply_history(partial)
+        self.assertIsNone(thread.activities['cmd'].history)
+        self.assertIsNotNone(thread.activities['other'].history)
+        other = next(p for p in self.book.phases.values() if p['item_id'] == 'other')
+        self.assertTrue(other['history_terminal'])
+        next_selection = self.provider.reconciliation(str(self.home), 't', {'u'}, items=frozenset({('u', 'other')}))
+        self.engine.apply_history(next_selection)
+        self.assertIsNone(thread.activities['other'].history)
+        self.assertFalse(next(p for p in self.book.phases.values() if p['item_id'] == 'other').get('history_terminal', False))
+
+    def test_scoped_model_membership_only_retires_the_requested_item(self):
+        self.thinking('selected'); self.thinking('outside', at=102)
+        self.write([self.row('event_msg', {'type': 'task_complete', 'turn_id': 'u'})], 'a')
+        summary = self.provider.reconciliation(str(self.home), 't', {'u'}, items=frozenset({('u', 'selected')}))
+        self.engine.apply_history(summary)
+        activities = self.engine.threads[('b', 't')].activities
+        self.assertTrue(activities['selected'].history_retired)
+        self.assertFalse(activities['outside'].history_retired)
+        phases = {p['item_id']: p for p in self.book.phases.values()}
+        self.assertTrue(phases['selected']['history_retired'])
+        self.assertFalse(phases['outside'].get('history_retired', False))
+
+    def test_engine_requests_cover_its_activities_and_retained_timeline_items(self):
+        from codex_progress_monitor.timeline import item_phase
+        self.book._put(item_phase(str(self.home), 't', 'u',
+            {'id': 'retained-only', 'type': 'agentMessage'}, self.wall*1000))
+        request, = self.engine.history_requests()
+        self.assertEqual(request.key, (str(self.home), 't'))
+        self.assertIn(('u', 'cmd'), request.items)
+        self.assertIn(('u', 'retained-only'), request.items)
+        self.assertIsInstance(request.items, frozenset)
+
+    def test_separate_scoped_results_rebase_each_item_after_source_replacement(self):
+        self.command('other', at=101.1)
+        self.write([self.completion(), self.completion(item='other')], 'a')
+        self.engine.apply_history(self.summary())
+        self.write([self.row('session_meta', {'id': 't', 'history_mode': 'paginated'}),
+            self.row('event_msg', {'type': 'task_started', 'turn_id': 'u', 'started_at': self.wall}),
+            self.completion(start=self.wall*1000+2000, end=self.wall*1000+2500),
+            self.completion(item='other', start=self.wall*1000+3000, end=self.wall*1000+3500)])
+        for item in ('cmd', 'other'):
+            summary = self.provider.reconciliation(str(self.home), 't', {'u'}, items=frozenset({('u', item)}))
+            # Other facts may be seeds; deliberately test disjoint result scopes.
+            summary['phases'] = [p for p in summary['phases'] if p['item_id'] == item]
+            self.engine.apply_history(summary)
+        history = self.engine.threads[('b', 't')].activities['other'].history
+        self.assertEqual(history['start_ms'], self.wall*1000+3000)
+        self.assertEqual(history['end_ms'], self.wall*1000+3500)
 
     def snapshot(self):
         return self.engine.snapshot(105, self.wall+5)
@@ -410,7 +469,7 @@ class ReconciliationTests(unittest.TestCase):
         self.assertEqual(phase['status'], 'unknown')
         self.assertIsNone(phase['end_ms'])
 
-    def test_stopped_sidecar_retains_observation_basis_for_source_replacement(self):
+    def test_stopped_sidecar_invalidates_removed_authoritative_history(self):
         from codex_progress_monitor.timeline_storage import TimelineStorage
         self.reconcile([self.completion()])
         path = self.home/'metadata.sqlite3'
@@ -427,10 +486,10 @@ class ReconciliationTests(unittest.TestCase):
         self.assertIsNone(phase['end_ms'])
         self.assertNotIn('observation', phase)
 
-    def test_legacy_history_overlay_degrades_when_its_source_is_removed(self):
+    def test_legacy_shadow_completion_cannot_override_replaced_history(self):
         self.reconcile([self.completion()])
         for record in self.book.phases.values():
-            record.pop('observation', None)
+            record['observation'] = {**record, 'status': 'completed', 'end_source': 'receipt'}
         self.write([self.row('session_meta', {'id': 't', 'history_mode': 'paginated'})])
         bundle = TimelineQuery(self.book, history=self.provider).bundle(str(self.home), 't', 'u')
         phase = next(p for p in bundle['phases'] if p['item_id'] == 'cmd')
@@ -438,7 +497,23 @@ class ReconciliationTests(unittest.TestCase):
         self.assertIsNone(phase['start_ms'])
         self.assertIsNone(phase['end_ms'])
 
-    def test_source_loss_keeps_independently_observed_completion(self):
+    def test_partial_replacement_waits_before_invalidating_prior_history(self):
+        self.reconcile([self.completion(), self.row('event_msg', {'type': 'task_complete', 'turn_id': 'u'})])
+        header = json.dumps(self.row('session_meta', {'id': 't', 'history_mode': 'paginated'}))+'\n'
+        unfinished = json.dumps(self.row('event_msg', {'type': 'task_started', 'turn_id': 'u'}))
+        self.path.write_text(header+unfinished[:20])
+        self.reconcile()
+        self.assertEqual(self.activity()['status'], 'completed')
+        self.assertIn('history_incomplete', self.snapshot()['threads'][0]['history_quality'])
+        query = TimelineQuery(self.book, history=self.provider)
+        bundle = query.bundle(str(self.home), 't', 'u')
+        self.assertEqual(next(p for p in bundle['phases'] if p['item_id']=='cmd')['status'], 'completed')
+        self.path.write_text(header+unfinished+'\n')
+        self.reconcile()
+        self.assertEqual(self.activity()['status'], 'unknown')
+        self.assertEqual(self.snapshot()['threads'][0]['status'], 'unknown')
+
+    def test_source_replacement_does_not_resurrect_a_live_completion(self):
         self.send({'method': 'item/completed', 'params': {'threadId': 't', 'turnId': 'u',
             'item': {'id': 'cmd', 'type': 'commandExecution', 'status': 'completed'}}}, 102)
         self.reconcile([self.completion()])
@@ -446,9 +521,9 @@ class ReconciliationTests(unittest.TestCase):
         self.reconcile()
         bundle = TimelineQuery(self.book, history=self.provider).bundle(str(self.home), 't', 'u')
         phase = next(p for p in bundle['phases'] if p['item_id'] == 'cmd')
-        self.assertEqual(phase['status'], 'completed')
-        self.assertEqual(phase['end_source'], 'receipt')
-        self.assertAlmostEqual(phase['end_ms'], (self.wall+2)*1000, places=3)
+        self.assertEqual(phase['status'], 'unknown')
+        self.assertIsNone(phase['end_ms'])
+        self.assertEqual(self.activity()['status'], 'unknown')
 
     def test_replacement_cannot_keep_a_borrowed_turn_completion(self):
         self.reconcile([self.completion(), self.row('event_msg', {'type': 'task_complete', 'turn_id': 'u'})])
@@ -461,16 +536,16 @@ class ReconciliationTests(unittest.TestCase):
         self.assertEqual(turn['status'], 'unknown')
         self.assertIsNone(turn['end_ms'])
 
-    def test_replacement_keeps_independently_observed_turn_completion(self):
+    def test_replacement_does_not_resurrect_a_live_turn_completion(self):
         self.finish_turn()
         self.reconcile([self.completion(), self.row('event_msg', {'type': 'task_complete', 'turn_id': 'u'})])
         self.write([self.row('session_meta', {'id': 't', 'history_mode': 'paginated'})])
         self.reconcile()
-        self.assertEqual(self.snapshot()['threads'][0]['status'], 'completed')
+        self.assertEqual(self.snapshot()['threads'][0]['status'], 'unknown')
         bundle = TimelineQuery(self.book, history=self.provider).bundle(str(self.home), 't', 'u')
         turn = next(t for t in bundle['turns'] if t['turn_id'] == 'u')
-        self.assertEqual(turn['status'], 'completed')
-        self.assertAlmostEqual(turn['end_ms'], (self.wall+3)*1000, places=3)
+        self.assertEqual(turn['status'], 'unknown')
+        self.assertIsNone(turn['end_ms'])
 
     def test_conflicting_terminal_sources_are_reported(self):
         self.send({'method': 'item/completed', 'params': {'threadId': 't', 'turnId': 'u',
@@ -573,7 +648,7 @@ class ReconciliationTests(unittest.TestCase):
 
     def test_background_reader_is_bounded_and_does_not_own_live_lock(self):
         entered, release = threading.Event(), threading.Event()
-        def slow(*_):
+        def slow(*_, **__):
             entered.set()
             release.wait(2)
             return {'scope_id': str(self.home), 'thread_id': 't', 'quality': []}
@@ -581,7 +656,7 @@ class ReconciliationTests(unittest.TestCase):
         provider.reconciliation.side_effect = slow
         reader = HistoryRefresh(provider=provider)
         try:
-            reader.schedule([(str(self.home), 't', {'u'}, True)]*128)
+            reader.schedule([HistorySelection(str(self.home), 't', frozenset({'u'}), True)]*128)
             self.assertTrue(entered.wait(1))
             self.assertEqual(reader.drain(), [])
             self.assertTrue(self.snapshot()['threads'][0]['has_active_work'])
@@ -593,14 +668,14 @@ class ReconciliationTests(unittest.TestCase):
 
     def test_bounded_queue_does_not_starve_later_threads(self):
         entered, release = threading.Event(), threading.Event()
-        def slow(*_):
+        def slow(*_, **__):
             entered.set()
             release.wait(2)
             return {'quality': []}
         provider = Mock()
         provider.reconciliation.side_effect = slow
         reader = HistoryRefresh(provider=provider, capacity=2)
-        requests = [(str(self.home), t, {'u'}, True) for t in ('a', 'b', 'c')]
+        requests = [HistorySelection(str(self.home), t, frozenset({'u'}), True) for t in ('a', 'b', 'c')]
         try:
             now = time.monotonic()
             reader.schedule(requests, now)

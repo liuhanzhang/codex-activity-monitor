@@ -12,6 +12,8 @@ from .menu_presentation import menu_presentation
 from .agent_relations import raw_coordination, SPAWN_OPERATIONS, thread_identity
 from .usage import UsageBook
 from .state import Activity, Thread
+from .identity_budget import IdentityBudget, observation_identities
+from .history_contract import HistorySelection
 from .reconciliation import apply_history
 from .i18n import PHASE_KEYS, phase_message, render_message, tr
 from .tool_labels import code_tool_names, command_name, command_previews, command_summary, file_edit_preview, is_code_exec, is_command_tool, is_patch_tool, tool_display, tool_label, tool_name
@@ -46,18 +48,30 @@ class Engine:
         self.resolved_requests = OrderedDict()
         self.usage = UsageBook()
         self.history_versions = {}
+        self.identity_budget = IdentityBudget()
+        self.identity_gap = False
 
     def history_requests(self):
         requests = []
+        retained = defaultdict(set)
+        if self.timeline:
+            for phase in self.timeline.phases.values():
+                if phase.get('turn_id') and phase.get('item_id'):
+                    retained[(phase['scope_id'], phase['thread_id'])].add((phase['turn_id'], phase['item_id']))
         for thread in self.threads.values():
             if thread.context_only:
+                continue
+            scope = self.backends.get(thread.backend, {}).get('home')
+            if not isinstance(scope, str):
                 continue
             turns = {a.turn_id for a in thread.activities.values() if a.turn_id}
             if thread.turn_id:
                 turns.add(thread.turn_id)
-            requests.append((self.backends.get(thread.backend, {}).get('home'), thread.id, turns,
-                             thread.status in ('inProgress', 'unknown') or
-                             any(a.active or a.unresolved for a in thread.activities.values())))
+            items = {(a.turn_id, a.id) for a in thread.activities.values() if a.turn_id}
+            items.update(pair for pair in retained[(scope, thread.id)] if pair[0] in turns)
+            requests.append(HistorySelection(scope, thread.id, frozenset(turns),
+                thread.status in ('inProgress', 'unknown') or
+                any(a.active or a.unresolved for a in thread.activities.values()), frozenset(items)))
         return requests
 
     def restore_unresolved(self, rows, updated_at):
@@ -125,6 +139,9 @@ class Engine:
         if not turn_id or not thread_id:
             return False
         key = (backend,turn_id)
+        if key not in self.turns and self.identity_budget.contains('turn', backend, turn_id):
+            self.counts['late_terminal_items'] += 1
+            return False
         if key in self.conflicted_turns:
             self.counts['quarantined_events']+=1
             return False
@@ -211,6 +228,23 @@ class Engine:
     def ingest(self, row):
         event = row if isinstance(row,Event) else Event.from_row(row)
         self.clock=max(self.clock,event.at)
+        if self.identity_budget.sealed:
+            self._identity_budget_gap()
+            self.counts['identity_budget_dropped'] += 1
+            return
+        if self.identity_budget.contains('backend', event.backend, event.backend):
+            self.counts['retired_backend_events'] += 1
+            return
+        try:
+            admitted = all(self.identity_budget.reserve(kind, event.backend, identity)
+                           for kind, identity in observation_identities(event))
+        except ValueError:
+            self.counts['invalid_observation_identity'] += 1
+            return
+        if not admitted:
+            self._identity_budget_gap()
+            self.counts['identity_budget_dropped'] += 1
+            return
         self.backends.setdefault(event.backend,{'connected':True,'model':'unknown','last_seen':event.at})
         self.backends[event.backend]['last_seen'] = event.at
         if event.direction=='lifecycle':
@@ -222,6 +256,18 @@ class Engine:
         self._resolve(event.backend)
         self.usage.ingest(event,self)
         self._observe_timeline(event)
+
+    def _identity_budget_gap(self, at=None):
+        if self.identity_gap:
+            return
+        self.identity_gap = True
+        for backend in self.backends:
+            gap = Event(backend, 'lifecycle', {'type': 'bridge/gap', 'reason': 'identity_budget'},
+                        self.clock if at is None else at, time.time())
+            self._lifecycle(gap)
+            self._observe_timeline(gap)
+        for thread in self.threads.values():
+            thread.quality.add('identity_budget')
 
     def _observe_timeline(self,event):
         if self.timeline is not None:
@@ -262,6 +308,10 @@ class Engine:
         elif kind in ('bridge/disconnected','bridge/stopped'):
             backend['connected']=False
             backend['ended_at']=event.at
+            if kind == 'bridge/stopped':
+                # A transport timeout is not evidence that this backend died.
+                # Only the wrapper's explicit final stop retires the instance.
+                self.identity_budget.retire('backend', event.backend, event.backend)
             for thread in self.threads.values():
                 if thread.backend!=event.backend:
                     continue
@@ -361,7 +411,6 @@ class Engine:
                             stream.quality='missing_termination'
                             stream.text=''
             thread.turn_id,thread.status=turn_id,'inProgress'
-            thread.observed_turn = (turn_id, 'inProgress')
             thread.history_turn = None
             thread.history_progress_ms=None
             thread.wait_started_at=thread.last_progress_at=at
@@ -370,10 +419,10 @@ class Engine:
             thread.error_status=None
             thread.plan=[]
         elif method=='turn/completed':
+            self.identity_budget.retire('turn', backend, turn_id)
             self.ended_turns[(backend,turn_id)]=params.get('turn',{}).get('status','unknown')
             if thread.turn_id and thread.turn_id!=turn_id:
                 return
-            thread.observed_turn = (turn_id, params.get('turn', {}).get('status', 'unknown'))
             if thread.turn_id==turn_id and thread.status not in ('idle','inProgress','unknown'):
                 self.counts['duplicate_lifecycle_ignored']+=1
                 return
@@ -414,6 +463,11 @@ class Engine:
         if not item_id:
             return
         key=(thread.backend,item_id)
+        if key not in self.items and self.identity_budget.contains('item', thread.backend, item_id):
+            self.counts['late_terminal_items'] += 1
+            return
+        if method == 'item/completed':
+            self.identity_budget.retire('item', thread.backend, item_id)
         known=self.items.setdefault(key,{'turn_id':turn_id,'type':item.get('type'),'upstream':False})
         known.setdefault('started_at',at if method=='item/started' else None)
         known['turn_id']=turn_id or known.get('turn_id')
@@ -580,6 +634,9 @@ class Engine:
             if not item_id:
                 return
             key=(backend,item_id)
+            if key not in self.items and self.identity_budget.contains('item', backend, item_id):
+                self.counts['late_terminal_items'] += 1
+                return
             known=self.items.setdefault(key,{'started_at':at if kind.endswith('.added') else None})
             if known.get('mirrored'):
                 self.counts['mirrors_ignored']+=1
@@ -640,6 +697,7 @@ class Engine:
                 return
             known['ended_at']=at
             known['upstream_completed']=True
+            self.identity_budget.retire('item', backend, item_id)
             if phase=='tool_input' and activity.item_type == 'fileChange':
                 pass  # Input completion must not reopen or end canonical editing.
             elif phase=='tool_input' and terminal is None:
@@ -785,6 +843,8 @@ class Engine:
                 stream.text=''
 
     def tick(self,now):
+        if self.identity_budget.sealed:
+            self._identity_budget_gap(now)
         self.usage.tick(now,self)
         for key in list(self.pending):
             kept=[e for e in self.pending[key] if now-e.at<10]
@@ -840,8 +900,9 @@ class Engine:
         self.turns={k:v for k,v in self.turns.items() if k in alive_turns or k in pending_turns}
         self.ended_turns={k:v for k,v in self.ended_turns.items() if k in alive_turns or k in pending_turns}
         self.conflicted_turns.intersection_update(alive_turns | pending_turns)
-        self.items={k:v for k,v in self.items.items() if k in alive_items or k in self.pending
-                    or (k[0],v.get('turn_id')) in self.turns}
+        retained_items = {(t.backend, a.id) for t in self.threads.values() for a in t.activities.values()}
+        self.items={k:v for k,v in self.items.items() if k in retained_items or k in self.pending or
+                    ((k[0],v.get('turn_id')) in self.turns and not self.identity_budget.contains('item', *k))}
         if len(self.requests)>512:
             self.requests=dict(list(self.requests.items())[-512:])
         self.approvals={k:v for k,v in self.approvals.items() if v[0] in self.threads}
@@ -850,13 +911,16 @@ class Engine:
                 self.backends.pop(backend,None)
         history_keys = {(self.backends.get(t.backend, {}).get('home'), t.id) for t in self.threads.values()}
         self.history_versions = {k: v for k, v in self.history_versions.items() if k in history_keys}
-        if sum(len(s.text.encode()) for s in self.streams.values())>32*1024*1024:
-            for stream in sorted(self.streams.values(),key=lambda s:len(s.text),reverse=True):
+        text_sizes = [(len(s.text.encode('utf-8')), s) for s in self.streams.values()]
+        retained = sum(size for size, _ in text_sizes)
+        if retained > 32*1024*1024:
+            for size, stream in sorted(text_sizes,key=lambda pair:pair[0],reverse=True):
                 if not stream.text:
                     continue
                 stream.text=''
                 stream.quality='memory_limit'
-                if sum(len(s.text) for s in self.streams.values())<16*1024*1024:
+                retained -= size
+                if retained <= 16*1024*1024:
                     break
         self.counter.tick(list(self.streams.values()),now)
 
@@ -904,7 +968,8 @@ class Engine:
             unavailable_rates=set()
             # History availability is independent of live stream continuity.
             quality=set(thread.quality) | (thread.history_quality - {
-                'history_unavailable', 'history_identity_mismatch', 'malformed_history_record'})
+                'history_unavailable', 'history_budget', 'history_read_error',
+                'history_identity_mismatch', 'malformed_history_record'})
             if unresolved:
                 quality.add('observation_gap')
             for activity in thread.activities.values():
@@ -960,6 +1025,8 @@ class Engine:
                 'overview':total,'menu_presentation':menu_presentation(self, views, total),
                 'backends':self.backends,'unassociated_events':self.pending_count,'counters':dict(self.counts),
                 'unassociated_live_events':self.pending_generation_count,
+                'resource_diagnostics': {'tokenizer': self.counter.diagnostics(),
+                                         'identity_budget': self.identity_budget.diagnostics()},
                 'usage_recovery':self.usage.dump(),'usage_diagnostics':dict(self.usage.diagnostics)}
 
     def close(self):

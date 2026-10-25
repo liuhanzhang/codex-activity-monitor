@@ -3,6 +3,8 @@ from contextlib import closing
 from pathlib import Path
 import sqlite3
 import tempfile
+import threading
+import time
 import unittest
 from unittest.mock import patch
 
@@ -88,6 +90,75 @@ class StorageTests(unittest.TestCase):
             self.addCleanup(unexpected.close)
         self.assertEqual(self.path.read_bytes(), before)
         self.assertEqual(list(self.path.parent.glob('metadata-unavailable-*')), [])
+
+    def test_slow_writer_bounds_pending_records_and_invalidates_partial_old_cache(self):
+        entered, release = threading.Event(), threading.Event()
+        original = TimelineStorage._write_batch
+        def blocked(store, batch, reset):
+            entered.set(); release.wait(3)
+            return original(store, batch, reset)
+        with patch.object(TimelineStorage, '_write_batch', blocked):
+            store = TimelineStorage(self.path, max_pending_records=2, max_pending_bytes=1024)
+            try:
+                store.put('phase', {'id': 'old', 'status': 'active'})
+                self.assertTrue(entered.wait(1))
+                for number in range(10): store.put('phase', {'id': str(number), 'status': 'completed'})
+                diagnostics = store.diagnostics()
+                self.assertLessEqual(diagnostics['pending_records'], 2)
+                self.assertLessEqual(diagnostics['pending_bytes'], 1024)
+                self.assertEqual(diagnostics['inflight_records'], 1)
+                self.assertGreater(diagnostics['queue_resets'], 0)
+                self.assertEqual(store.error, 'metadata_queue_limit')
+            finally:
+                release.set(); store.close()
+        records = read_records(self.path)
+        self.assertNotIn('old', [value['id'] for _, value in records])
+        self.assertIn('9', [value['id'] for _, value in records])
+
+    def test_oversized_metadata_cannot_enter_the_queue_and_bodies_stay_excluded(self):
+        store = TimelineStorage(self.path, max_pending_bytes=128)
+        try:
+            store.put('phase', {'id': 'too-large', 'label': 'x'*256})
+            self.assertEqual(store.diagnostics()['pending_bytes'], 0)
+            self.assertEqual(store.error, 'metadata_queue_limit')
+            store.put('phase', {'id': 'safe', 'text': 'PRIVATE_BODY'*1024})
+        finally: store.close()
+        self.assertEqual(read_records(self.path), [('phase', {'id': 'safe'})])
+
+    def test_failed_batch_cannot_resurrect_stale_rows_on_later_recovery(self):
+        store = TimelineStorage(self.path)
+        store.put('phase', {'id': 'old', 'status': 'active'}); store.close()
+        failed = threading.Event()
+        original = TimelineStorage._write_batch
+        def fail_once(store, batch, reset):
+            if not failed.is_set():
+                failed.set(); raise sqlite3.OperationalError('synthetic disk failure')
+            return original(store, batch, reset)
+        with patch.object(TimelineStorage, '_write_batch', fail_once):
+            store = TimelineStorage(self.path)
+            store.put('phase', {'id': 'lost'})
+            self.assertTrue(failed.wait(1))
+            store.put('phase', {'id': 'latest'})
+            store.close()
+        self.assertEqual(read_records(self.path), [('phase', {'id': 'latest'})])
+
+    def test_bounded_close_does_not_release_worker_ownership_before_io_ends(self):
+        entered, release, exited = threading.Event(), threading.Event(), threading.Event()
+        original = TimelineStorage._write_batch
+        def blocked(store, batch, reset):
+            entered.set(); release.wait(4)
+            return original(store, batch, reset)
+        with patch.object(TimelineStorage, '_write_batch', blocked):
+            store = TimelineStorage(self.path, on_exit=exited.set)
+            try:
+                store.put('phase', {'id': 'p'})
+                self.assertTrue(entered.wait(1))
+                begin = time.monotonic(); store.close()
+                self.assertLess(time.monotonic()-begin, 2.5)
+                self.assertFalse(exited.is_set())
+            finally: release.set()
+            self.assertTrue(exited.wait(1))
+            store.close()
 
 
 if __name__ == '__main__':

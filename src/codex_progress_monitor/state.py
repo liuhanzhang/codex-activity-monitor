@@ -2,6 +2,9 @@
 
 These domain objects are not the snapshot wire schema. Presentation and history
 projection read them; only event intake, recovery and reconciliation mutate them.
+Runtime *_at fields and display_since use observed monotonic seconds. Source
+review_started_ms/history_progress_ms and history *_ms fields use wall-clock
+milliseconds; they never supply a missing observation timestamp.
 """
 
 from collections import OrderedDict
@@ -94,5 +97,4 @@ class Thread:
     context_only: bool = False
     history_progress_ms: float | None = None
     history_quality: set = field(default_factory=set)
-    observed_turn: tuple[str, str] | None = None
     history_turn: dict | None = None

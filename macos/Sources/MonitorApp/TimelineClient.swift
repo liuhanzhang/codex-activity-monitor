@@ -3,71 +3,72 @@ import MonitorModel
 
 protocol TimelineReading: Sendable {
     func timeline(scope: String, thread: String, turn: String?) async throws -> TimelineBundle
-    func detail(phase: TimelinePhase, section: String?, offset: Int) async throws -> ActivityDetail
+    func detail(phase: TimelinePhase, page: ActivityPageCursor?) async throws -> ActivityDetail
 }
 
-private final class QueryProcess: @unchecked Sendable {
-    private let lock = NSLock()
-    private var process: Process?
-    private var cancelled = false
+func queryFailureKey(_ error: any Error, fallback: String) -> String {
+    (error as? BackendFailure)?.presentationKey ?? fallback
+}
 
-    func run(configuration: BackendConfiguration, runtime: String, request: [String: Any]) throws -> Data {
-        let child = Process()
-        child.executableURL = URL(fileURLWithPath: configuration.python)
-        let payload = String(decoding: try JSONSerialization.data(withJSONObject: request), as: UTF8.self)
-        child.arguments = ["-m", "codex_progress_monitor.cli", "--runtime", runtime, "timeline-query", payload]
-        child.currentDirectoryURL = URL(fileURLWithPath: configuration.source_root)
-        var environment = ProcessInfo.processInfo.environment
-        environment["PYTHONPATH"] = configuration.source_root + "/src"
-        child.environment = environment
-        let output = Pipe()
-        child.standardOutput = output; child.standardError = FileHandle.nullDevice
-        lock.lock()
-        if cancelled { lock.unlock(); throw CancellationError() }
-        process = child
-        do { try child.run() } catch { process = nil; lock.unlock(); throw error }
-        lock.unlock()
-        DispatchQueue.global().asyncAfter(deadline: .now() + 12) { [weak self] in self?.cancel() }
-        defer { lock.lock(); process = nil; lock.unlock() }
-        let data = try output.fileHandleForReading.readToEnd() ?? Data()
-        child.waitUntilExit()
-        guard child.terminationStatus == 0 else { throw BackendFailure(message: L("暂时无法读取轨迹")) }
-        return data
+private struct TimelineQueryRequest: Encodable, Sendable {
+    enum Action: String, Encodable { case timeline, detail }
+    let action: Action
+    let scope_id: String
+    let thread_id: String
+    let turn_id: String?
+    let phase_id: String?
+    let section_id: String?
+    let offset: Int?
+    let page_token: String?
+
+    init(action: Action, scope: String, thread: String, turn: String?, phase: String? = nil, page: ActivityPageCursor? = nil) {
+        self.action = action; scope_id = scope; thread_id = thread; turn_id = turn; phase_id = phase
+        section_id = page?.sectionID; offset = action == .detail ? page?.offset ?? 0 : nil; page_token = page?.token
     }
+}
 
-    func cancel() {
-        lock.lock(); defer { lock.unlock() }
-        cancelled = true
-        if process?.isRunning == true { process?.terminate() }
+private struct TimelineQueryResponse<Value: Decodable>: Decodable {
+    let value: Value
+    private enum CodingKeys: String, CodingKey { case version, error }
+    init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        if let error = try container.decodeIfPresent(String.self, forKey: .error) {
+            guard try container.decode(Int.self, forKey: .version) == 1 else { throw SnapshotError.unsupportedVersion }
+            throw BackendFailure(message: "", presentationKey: error == "query_too_large"
+                ? "所选内容过多，暂时无法一次载入。" : "时间线暂不可用")
+        }
+        value = try Value(from: decoder)
     }
 }
 
 struct SystemTimelineClient: TimelineReading {
     let configuration: BackendConfiguration
     let runtime: String
+    var executor: any ProcessExecuting = ProcessExecutor()
 
-    private func request(_ value: [String: String]) async throws -> Data {
-        let operation = QueryProcess()
-        return try await withTaskCancellationHandler {
-            let result = try await Task.detached(priority: .utility) {
-                try operation.run(configuration: configuration, runtime: runtime, request: value)
-            }.value
-            try Task.checkCancellation()
-            return result
-        } onCancel: { operation.cancel() }
+    private func request(_ value: TimelineQueryRequest) async throws -> Data {
+        let payload = String(decoding: try JSONEncoder().encode(value), as: UTF8.self)
+        var request = ProcessRequest(executable: configuration.python,
+            arguments: ["-m", "codex_progress_monitor.cli", "--runtime", runtime, "timeline-query", payload])
+        request.directory = configuration.source_root
+        request.environment["PYTHONPATH"] = configuration.source_root + "/src"
+        request.timeout = 12; request.stdoutLimit = 8 * 1_048_576
+        let result = try await executor.execute(request)
+        guard result.exitCode == 0 else { throw BackendFailure(message: "", presentationKey: "暂时无法读取轨迹") }
+        return result.stdout
     }
 
     func timeline(scope: String, thread: String, turn: String?) async throws -> TimelineBundle {
-        var value = ["action": "timeline", "scope_id": scope, "thread_id": thread]
-        if let turn { value["turn_id"] = turn }
-        return try TimelineBundle.decode(await request(value))
+        let value = TimelineQueryRequest(action: .timeline, scope: scope, thread: thread, turn: turn)
+        let bundle = try JSONDecoder().decode(TimelineQueryResponse<TimelineBundle>.self, from: await request(value)).value
+        guard bundle.version == 1 else { throw SnapshotError.unsupportedVersion }
+        return bundle
     }
 
-    func detail(phase: TimelinePhase, section: String?, offset: Int) async throws -> ActivityDetail {
-        var value = ["action": "detail", "scope_id": phase.scope_id, "thread_id": phase.thread_id,
-                     "turn_id": phase.turn_id, "phase_id": phase.id, "offset": String(offset)]
-        if let section { value["section_id"] = section }
-        return try JSONDecoder().decode(ActivityDetail.self, from: await request(value))
+    func detail(phase: TimelinePhase, page: ActivityPageCursor?) async throws -> ActivityDetail {
+        let value = TimelineQueryRequest(action: .detail, scope: phase.scope_id, thread: phase.thread_id,
+                                         turn: phase.turn_id, phase: phase.id, page: page)
+        return try JSONDecoder().decode(TimelineQueryResponse<ActivityDetail>.self, from: await request(value)).value
     }
 }
 
@@ -88,7 +89,8 @@ struct FixtureTimelineClient: TimelineReading {
         }
         return try TimelineBundle.decode(JSONSerialization.data(withJSONObject: value))
     }
-    func detail(phase: TimelinePhase, section: String?, offset: Int) async throws -> ActivityDetail {
+    func detail(phase: TimelinePhase, page: ActivityPageCursor?) async throws -> ActivityDetail {
+        guard page == nil else { throw ActivityContentError.invalidPage }
         let data = try await fixture()
         let object = try JSONSerialization.jsonObject(with: data) as? [String: Any] ?? [:]
         let details = object["details"] as? [String: Any] ?? [:]

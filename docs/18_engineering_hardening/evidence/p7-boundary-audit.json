@@ -1,0 +1,37 @@
+{
+  "version": 1,
+  "modules": 49,
+  "eager_import_cycle_members": [],
+  "reader_imports": {
+    "history": [
+      "history_content",
+      "history_index",
+      "history_read",
+      "resource_budget",
+      "timeline"
+    ],
+    "history_index": [
+      "agent_presentation",
+      "history_content",
+      "history_read",
+      "timeline"
+    ],
+    "history_read": [],
+    "history_content": [
+      "events",
+      "i18n"
+    ],
+    "history_refresh": [
+      "history",
+      "history_contract",
+      "json_encoding"
+    ],
+    "history_contract": []
+  },
+  "retained_lazy_edges": {
+    "tokenizer_process->metrics": "Child target imports only when counting begins; process adapter does not own Engine or session state.",
+    "app_control/integration->cli": "Existing management commands invoke lifecycle operations inside methods.",
+    "cli->test_profile/app_control": "Command dispatch chooses explicit production or isolated test adapter."
+  },
+  "note": "AST audit of relative imports outside function/class definitions; dynamic import execution and third-party dependencies are not an exhaustive dependency proof."
+}

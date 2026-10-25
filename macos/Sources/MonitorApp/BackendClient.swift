@@ -1,10 +1,8 @@
 import Foundation
 import MonitorModel
-import Darwin
 
 protocol BackendManaging: Sendable {
     func command(_ action: String, extra: [String]) async throws -> ManagementState
-    func heartbeat(_ session: ObservationLease) async
 }
 
 extension BackendManaging {
@@ -15,57 +13,47 @@ struct BackendClient: BackendManaging {
     let configuration: BackendConfiguration
     let dataRoot: String
     let testProfile: String?
+    var executor: any ProcessExecuting = ProcessExecutor()
 
     func command(_ action: String, extra: [String] = []) async throws -> ManagementState {
-        let config = configuration
-        let root = dataRoot
-        let app = Bundle.main.bundleURL.path
-        let profile = testProfile
-        return try await Task.detached(priority: .userInitiated) {
-            let process = Process()
-            process.executableURL = URL(fileURLWithPath: config.python)
-            process.arguments = ["-m", "codex_progress_monitor.cli", "app", action,
-                                 "--data-root", root, "--app", app] + extra + (profile.map { ["--test-profile", $0] } ?? [])
-            process.currentDirectoryURL = URL(fileURLWithPath: config.source_root)
-            var environment = ProcessInfo.processInfo.environment
-            environment["PYTHONPATH"] = config.source_root + "/src"
-            process.environment = environment
-            let output = Pipe(), diagnostics = Pipe()
-            process.standardOutput = output
-            process.standardError = diagnostics
-            try process.run()
-            let data = try output.fileHandleForReading.readToEnd() ?? Data()
-            _ = try diagnostics.fileHandleForReading.readToEnd()
-            process.waitUntilExit()
-            let result = try JSONDecoder().decode(ManagementState.self, from: data)
-            if result.ok == false || process.terminationStatus != 0 {
-                throw BackendFailure(message: result.error ?? "", displayMessage: result.display_message)
+        do { return try await perform(action, extra: extra, timeout: action == "status" ? 5 : 30) }
+        catch {
+            guard action != "status" else { throw error }
+            // A cancelled CLI may already have changed configuration or started
+            // a separately owned collector. Query, never guess or undo it.
+            let state = await Task.detached { try? await perform("status", extra: [], timeout: 5) }.value
+            if var failure = error as? BackendFailure {
+                failure.stateAfterFailure = state
+                throw failure
             }
-            return result
-        }.value
+            throw BackendFailure(message: "", presentationKey: error is CancellationError ? "后台命令已取消。" :
+                (error as? ProcessExecutionError)?.presentationKey ?? "后台命令返回的数据无效。", stateAfterFailure: state)
+        }
     }
 
-    func heartbeat(_ session: ObservationLease) async {
-        let root = dataRoot
-        await Task.detached(priority: .utility) {
-            let descriptor = Darwin.open(root + "/management.lock", O_WRONLY | O_CLOEXEC)
-            guard descriptor >= 0 else { return }
-            defer { Darwin.close(descriptor) }
-            guard flock(descriptor, LOCK_EX | LOCK_NB) == 0 else { return }
-            defer { flock(descriptor, LOCK_UN) }
-            let url = URL(fileURLWithPath: root + "/observation.json")
-            guard let data = try? Data(contentsOf: url),
-                  let current = try? JSONDecoder().decode(ObservationLease.self, from: data),
-                  current.id == session.id, current.active else { return }
-            var next = session
-            next.heartbeat_at = Date().timeIntervalSince1970
-            try? JSONEncoder().encode(next).write(to: url, options: .atomic)
-        }.value
+    private func perform(_ action: String, extra: [String], timeout: TimeInterval) async throws -> ManagementState {
+        var request = ProcessRequest(executable: configuration.python,
+            arguments: ["-m", "codex_progress_monitor.cli", "app", action,
+                        "--data-root", dataRoot, "--app", Bundle.main.bundleURL.path]
+                + extra + (["configure", "resume"].contains(action) ? ["--state-protocol", "1"] : [])
+                + (testProfile.map { ["--test-profile", $0] } ?? []))
+        request.directory = configuration.source_root
+        request.environment["PYTHONPATH"] = configuration.source_root + "/src"
+        request.timeout = timeout
+        let output = try await executor.execute(request)
+        let result = try JSONDecoder().decode(ManagementState.self, from: output.stdout)
+        if result.ok == false || output.exitCode != 0 {
+            throw BackendFailure(message: result.error ?? "", displayMessage: result.display_message)
+        }
+        return result
     }
+
 }
 
 struct BackendFailure: LocalizedError {
     let message: String
     var displayMessage: DisplayMessage? = nil
+    var presentationKey: String? = nil
+    var stateAfterFailure: ManagementState? = nil
     var errorDescription: String? { message }
 }

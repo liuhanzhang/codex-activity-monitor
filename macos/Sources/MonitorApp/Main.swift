@@ -198,6 +198,10 @@ enum MonitorApplication {
         var value = panel.diagnostics
         value["event"] = event; value["at"] = Date().timeIntervalSince1970
         value["snapshot_updated_at"] = store.snapshot?.updated_at
+        value["state_instance_id"] = store.liveInstanceID
+        value["state_sequence"] = store.liveSequence
+        value["transport_fresh"] = store.fresh
+        value["management_state"] = store.management?.state
         value["mode"] = store.menuMode.rawValue; value["title"] = store.menuTitle
         value["animating"] = statusContent.animating; value["reduced_motion"] = statusContent.reducedMotion
         value["animation_frames"] = statusContent.frameDiagnostics

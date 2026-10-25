@@ -11,9 +11,9 @@ import sys
 import time
 
 from .runtime import (
-    ROOT, REAL_CLI, atomic_json, collector_alive, read_snapshot,
-    runtime_dir, snapshot_fresh, ui_language,
+    ROOT, REAL_CLI, atomic_json, collector_alive, runtime_dir, ui_language,
 )
+from .state_client import current_state
 
 from .i18n import DEFAULT_LANGUAGE, available_languages, tr
 
@@ -21,7 +21,7 @@ _children={}
 
 
 def start(runtime, language=DEFAULT_LANGUAGE):
-    if running(runtime) or collector_alive(runtime):
+    if collector_alive(runtime):
         return
     log=runtime/'collector.log'
     if log.exists() and log.stat().st_size>1024*1024:
@@ -44,8 +44,7 @@ def start(runtime, language=DEFAULT_LANGUAGE):
 
 
 def running(runtime):
-    snapshot=read_snapshot(runtime)
-    return snapshot.get('running') is True and snapshot_fresh(snapshot) and (runtime/'events.sock').exists()
+    return current_state(runtime, timeout=.5)['connection']['healthy']
 
 
 def stop(runtime):
@@ -58,7 +57,7 @@ def stop(runtime):
     except (OSError,ValueError,KeyError):
         return
     deadline=time.monotonic()+5
-    while (runtime/'collector.json').exists() and time.monotonic()<deadline:
+    while collector_alive(runtime) and time.monotonic()<deadline:
         time.sleep(0.05)
     child=_children.pop(str(runtime),None)
     if child:
@@ -144,14 +143,21 @@ def main(argv=None):
     p.add_argument('--launch-at-login', choices=('on','off'))
     p.add_argument('--ui-language', choices=available_languages(), help=argparse.SUPPRESS)
     p.add_argument('--test-profile', type=Path, help=argparse.SUPPRESS)
+    p.add_argument('--state-protocol', type=int, help=argparse.SUPPRESS)
     args=parser.parse_args(argv)
     if args.command == 'timeline-query':
         from .timeline_query import query_runtime
+        from .query_response import encode_response
         try:
             # Deliberately bypass runtime_dir(): browsing cannot create or resume observation.
             query_path=Path(args.runtime or os.environ.get('CODEX_PROGRESS_RUNTIME', ROOT/'.local/runtime')).expanduser().resolve()
             value=query_runtime(query_path,json.loads(args.request))
-            print(json.dumps(value,ensure_ascii=False))
+            frame = encode_response(value)
+            # This is a UTF-8 protocol, independent of terminal output encoding.
+            if hasattr(sys.stdout, 'buffer'):
+                sys.stdout.buffer.write(frame)
+            else:
+                sys.stdout.write(frame.decode('utf-8'))
             return 0
         except (OSError,ValueError,TypeError,KeyError) as exc:
             print(json.dumps({'version':1,'error':'query_unavailable'}))
@@ -159,6 +165,8 @@ def main(argv=None):
     if args.command == 'app':
         from .app_control import AppController, ControlError, DATA_ROOT
         try:
+            if args.action in ('configure', 'resume') and args.state_protocol != 1:
+                raise ControlError('gui_upgrade_required', 'control.gui_upgrade_required')
             control = AppController(args.data_root or DATA_ROOT, runtime=args.runtime, current_app=args.app)
             if args.test_profile:
                 from .test_profile import controller
@@ -201,8 +209,9 @@ def main(argv=None):
             stop(runtime)
             print(tr('cli.stopped', language))
         elif args.command=='status':
-            value=read_snapshot(runtime)
-            print(json.dumps({'running':running(runtime),'collector_alive':collector_alive(runtime),
+            value=current_state(runtime)
+            print(json.dumps({'running':value['connection']['healthy'],'collector_alive':collector_alive(runtime),
+                              'connection':value['connection'],'persistence':value.get('persistence'),
                               'runtime':str(runtime),'updated_at':value.get('updated_at'),
                               'backends':value.get('backends',{}),'threads':len(value.get('threads',[])),
                               'counters':value.get('counters',{})},ensure_ascii=False,indent=2))

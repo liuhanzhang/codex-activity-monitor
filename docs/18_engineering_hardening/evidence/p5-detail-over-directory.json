@@ -1,0 +1,33 @@
+{
+  "version": 1,
+  "python": "3.14.7",
+  "platform": "Darwin",
+  "mode": "detail",
+  "source_rows": 700004,
+  "source_bytes": 134989184,
+  "turns": 1,
+  "phases": 700000,
+  "directory_ms": 12080.65937506035,
+  "body_repeats": 1,
+  "cache_after_initial_directory": {
+    "indices": 0,
+    "cache_bytes": 0,
+    "max_cache_bytes": 67108864,
+    "evictions": 1,
+    "measured_monotonic": 1159339.358688583
+  },
+  "first_detail_instrumented_ms": 82444.87429200672,
+  "first_detail_peak_allocated_bytes": 147854800,
+  "hot_detail_ms": 0.16845809295773506,
+  "append_detail_ms": 16816.862375009805,
+  "response_bytes": 1371,
+  "cache": {
+    "indices": 1,
+    "cache_bytes": 7142,
+    "max_cache_bytes": 67108864,
+    "evictions": 3,
+    "measured_monotonic": 1159438.623105583
+  },
+  "note": "Synthetic single-message detail; first read uses tracemalloc, hot/append do not. Source directory built separately; full mode adapts the former full-turn reader.",
+  "benchmark_peak_rss_bytes": 327843840
+}

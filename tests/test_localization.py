@@ -87,20 +87,26 @@ class LocalizationTests(unittest.TestCase):
         self.assertEqual(render_message(error.display_message, 'en'), 'Cannot read launch setting: TEST_KEY')
         output = io.StringIO()
         with tempfile.TemporaryDirectory() as root, patch('sys.stdout', output):
-            self.assertEqual(main(['app', 'configure', '--data-root', root]), 1)
+            self.assertEqual(main(['app', 'configure', '--state-protocol', '1', '--data-root', root]), 1)
         result = json.loads(output.getvalue())
         self.assertEqual(result['code'], 'app_missing')
         self.assertEqual(render_message(result['display_message'], 'en'), 'Configuration requires the Monitor App path.')
 
     def test_cli_english_and_machine_output_preserve_source_content(self):
-        with tempfile.TemporaryDirectory() as tmp:
-            snapshot = {'updated_at': 0, 'threads': [], 'source': '原始内容'}
-            (Path(tmp)/'snapshot.json').write_text(json.dumps(snapshot))
+        with tempfile.TemporaryDirectory(dir='/tmp') as tmp:
+            snapshot = {'schema_version': 1, 'running': True, 'updated_at': 0, 'threads': [], 'source': '原始内容'}
+            from codex_progress_monitor.state_transport import StateServer
+            from codex_progress_monitor.publication import DetachedSnapshot
+            server = StateServer(Path(tmp)/'state.sock')
+            self.addCleanup(server.close)
+            server.publish(DetachedSnapshot.capture(snapshot))
             for language in ['zh-CN', 'en']:
                 output = io.StringIO()
                 with patch('sys.stdout', output):
                     self.assertEqual(main(['--runtime', tmp, '--lang', language, 'watch', '--once', '--json']), 0)
-                self.assertEqual(json.loads(output.getvalue()), snapshot)
+                result = json.loads(output.getvalue())
+                self.assertEqual({key: result[key] for key in snapshot}, snapshot)
+                self.assertTrue(result['connection']['healthy'])
             output = io.StringIO()
             with patch('sys.stdout', output):
                 self.assertEqual(main(['--runtime', tmp, 'watch', '--once', '--lang', 'en']), 0)

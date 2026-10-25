@@ -1,0 +1,45 @@
+{
+  "version": 1,
+  "verified_at_utc": "2026-10-23T14:31:07Z",
+  "scope": "daily GUI and collector cutover; Desktop restart and clean natural samples pending",
+  "candidate_gui_build_id": "4dd4eeea6ff8fa4e8028397ad74279dcb84ac05842dd2460b397f56b85aeac05",
+  "collector_source_sha256": "a9e46bd7e3744f6d83612075102a2f68d68a2653a4e5e7650d559e4cc29a22e0",
+  "expected_bridge_source_sha256": "cc86589030d7e6334e048e1b65014884f78223ea3b5d123cdaf3303abd6be441",
+  "checks": {
+    "candidate_source_fingerprints_match": true,
+    "installed_signature_verified": true,
+    "fresh_private_recovery_saved": true,
+    "sqlite_backup_quick_check": "ok",
+    "old_gui_exited_normally": true,
+    "old_collector_exited_and_lock_released": true,
+    "actual_gui_diagnostic_build_matches": true,
+    "actual_gui_process_exists": true,
+    "collector_startup_source_matches": true,
+    "collector_process_exists_and_lock_owned": true,
+    "state_protocol": 1,
+    "lease_protocol": 2,
+    "snapshot_schema": 1,
+    "new_nonce_probes_healthy": true,
+    "same_instance_gui_and_collector": true,
+    "sequence_advanced": true,
+    "connected_owner_matches_gui_and_session": true,
+    "owner_stayed_connected_seconds": 56.59,
+    "integration_enabled": true,
+    "gui_management_state": "configured",
+    "bridge_restart_required": true,
+    "desktop_restarted": false
+  },
+  "live_registered_bridges": {
+    "verified_identities": 3,
+    "old_observation_protocol": 2,
+    "protocol_1": 1
+  },
+  "measurement_limits": [
+    "This chat crosses the upgrade and is not a complete natural sample.",
+    "Bridge records and GUI transport health do not prove all resident bridges upgraded.",
+    "No full Desktop restart, natural completion latency or long-use acceptance is claimed.",
+    "Existing observation gaps are preserved; recovery copies do not authorize a lease.",
+    "Rollback materials verified but rollback not executed."
+  ],
+  "private_evidence": ".local/rollout-preparation/latest-preparation.json -> active-cutover.json"
+}

@@ -1,0 +1,88 @@
+{
+  "version": 1,
+  "note": "Default queue limits, synthetic metadata; not ingestion or native UI latency.",
+  "offered_requests": 200,
+  "admitted_requests": 69,
+  "pending_pressure": {
+    "pending": 68,
+    "pending_bytes": 1020807,
+    "ready": 0,
+    "ready_bytes": 0,
+    "peak_pending_bytes": 1035818,
+    "peak_ready_bytes": 0,
+    "max_pending_bytes": 1048576,
+    "max_request_bytes": 65536,
+    "max_ready_bytes": 33554432,
+    "max_result_bytes": 8388608,
+    "max_drain_bytes": 8388608,
+    "deferred_requests": 1,
+    "oversized_results": 0,
+    "discarded_results": 0,
+    "processed": 0
+  },
+  "ready_pressure": {
+    "pending": 0,
+    "pending_bytes": 0,
+    "ready": 55,
+    "ready_bytes": 33437030,
+    "peak_pending_bytes": 1035818,
+    "peak_ready_bytes": 33437030,
+    "max_pending_bytes": 1048576,
+    "max_request_bytes": 65536,
+    "max_ready_bytes": 33554432,
+    "max_result_bytes": 8388608,
+    "max_drain_bytes": 8388608,
+    "deferred_requests": 1,
+    "oversized_results": 0,
+    "discarded_results": 14,
+    "processed": 69
+  },
+  "drains": [
+    {
+      "results": 13,
+      "encoded_bytes": 7903298,
+      "decode_ms": 8.448624983429909
+    },
+    {
+      "results": 13,
+      "encoded_bytes": 7903298,
+      "decode_ms": 8.231916930526495
+    },
+    {
+      "results": 13,
+      "encoded_bytes": 7903298,
+      "decode_ms": 8.554083062335849
+    },
+    {
+      "results": 13,
+      "encoded_bytes": 7903298,
+      "decode_ms": 8.15770891495049
+    },
+    {
+      "results": 3,
+      "encoded_bytes": 1823838,
+      "decode_ms": 2.2481658961623907
+    }
+  ],
+  "oversized_outcome": [
+    "history_unavailable",
+    "history_budget"
+  ],
+  "final": {
+    "pending": 0,
+    "pending_bytes": 0,
+    "ready": 0,
+    "ready_bytes": 0,
+    "peak_pending_bytes": 1035818,
+    "peak_ready_bytes": 33437030,
+    "max_pending_bytes": 1048576,
+    "max_request_bytes": 65536,
+    "max_ready_bytes": 33554432,
+    "max_result_bytes": 8388608,
+    "max_drain_bytes": 8388608,
+    "deferred_requests": 1,
+    "oversized_results": 1,
+    "discarded_results": 14,
+    "processed": 70
+  }
+}

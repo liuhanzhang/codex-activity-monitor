@@ -43,7 +43,23 @@ struct PresentationFailure {
         self.prefix = prefix
         if let failure = error as? BackendFailure {
             message = failure.displayMessage
-            if message == nil { diagnostic = failure.message }
+            key = failure.presentationKey
+            if message == nil && key == nil && !failure.message.isEmpty { diagnostic = failure.message }
+        } else if let failure = error as? ProcessExecutionError {
+            key = failure.presentationKey
         } else { diagnostic = error.localizedDescription }
+    }
+}
+
+extension ProcessExecutionError {
+    var presentationKey: String {
+        switch self {
+        case .invalidRequest: "后台命令配置无效。"
+        case .launchFailed: "无法启动后台命令。"
+        case .ioFailed: "无法读取后台命令结果。"
+        case .timedOut: "后台命令超时，请重试。"
+        case .outputLimit: "后台命令输出超过限制。"
+        case .terminationFailed: "后台命令未能退出，请重试。"
+        }
     }
 }

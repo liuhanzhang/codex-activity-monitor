@@ -4,6 +4,29 @@ import Testing
 import MonitorModel
 @testable import MonitorApp
 
+@Test @MainActor func recentExpiryAndHealthRefreshKeepTheProjectionAndReadingSelection() throws {
+    let store = DashboardStore(configuration: BackendConfiguration(python: "/unused", source_root: "/unused", runtime: "/unused",
+        data_root: "/unused", build_id: "test"), arguments: ["--read-only"])
+    let snapshot = try Snapshot.decode(Data("""
+        {"schema_version":1,"threads":[{"id":"active","has_active_work":true},
+        {"id":"recent","status":"completed","last_progress_seconds":599}]}
+        """.utf8))
+    store.snapshot = snapshot; store.updatePresentation(projectionElapsed: 0)
+    store.panelVisible = true; store.showRecent = true; store.selectChat(snapshot.threads[1])
+    let selected = store.selectedChatKey
+    #expect(store.recentRoots.map(\.threadID) == ["recent"])
+    store.updatePresentation(projectionElapsed: 1)
+    #expect(store.recentRoots.isEmpty && store.selectedChatKey == selected)
+    store.snapshot = snapshot // A coalesced health refresh reuses the same immutable state.
+    store.updatePresentation(projectionElapsed: 2); store.setLanguage(.english)
+    #expect(store.snapshot?.projection === snapshot.projection)
+    #expect(store.recentRoots.isEmpty && store.selectedChatKey == selected)
+    store.snapshot = try Snapshot.decode(Data("{\"schema_version\":1,\"threads\":[{\"id\":\"new\",\"has_active_work\":true}]}".utf8))
+    store.updatePresentation()
+    #expect(store.snapshot?.projection !== snapshot.projection)
+    #expect(store.activeRows.map(\.chat.threadID) == ["new"] && store.selectedChatKey == selected)
+}
+
 @Test @MainActor func refreshedMetricsDoNotReorderRowsOrResetSelection() throws {
     let store = DashboardStore(configuration: BackendConfiguration(python: "/unused", source_root: "/unused", runtime: "/unused", data_root: "/unused", build_id: "test"), arguments: ["--read-only"])
     func snapshot(_ ids: [String]) throws -> Snapshot {

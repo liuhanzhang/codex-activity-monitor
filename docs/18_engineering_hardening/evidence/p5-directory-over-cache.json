@@ -1,0 +1,114 @@
+{
+  "version": 1,
+  "label": "directory-with-working-set-protection",
+  "seed": 20261023,
+  "python": "3.14.7",
+  "platform": "Darwin",
+  "machine": "arm64",
+  "index": [
+    {
+      "turns": 12000,
+      "phases": 48000,
+      "source_rows": 72002,
+      "items_per_turn": 4,
+      "repetitions": 3,
+      "source_bytes": 92877063,
+      "cold_index_ms": 1554.2706660926342,
+      "hot_view_ms": {
+        "p50": 0.19920896738767624,
+        "p95": 0.19920896738767624
+      },
+      "hot_view_returned_phases": 4,
+      "hot_view_peak_allocated_bytes": 152802,
+      "hot_view_remaining_allocated_bytes": 14658,
+      "append_and_view_ms": 134.73166688345373,
+      "cache": {
+        "indices": 2,
+        "cache_bytes": 19848278,
+        "max_cache_bytes": 67108864,
+        "evictions": 0,
+        "measured_monotonic": 1154093.679201583
+      }
+    }
+  ],
+  "counter": {
+    "streams": 256,
+    "text_bytes_per_stream": 65536,
+    "submit_ms": 0.8466660510748625,
+    "blocked_tasks_after_tick": 2,
+    "blocked_tasks_after_model_changes": 2,
+    "blocked_input_bytes_after_model_changes": 131072,
+    "diagnostics": {
+      "jobs": 2,
+      "pending_bytes": 131072,
+      "max_jobs": 2,
+      "max_pending_bytes": 2097152,
+      "max_input_bytes": 1048576,
+      "peak_jobs": 2,
+      "peak_pending_bytes": 131072,
+      "budget_deferrals": 766,
+      "worker": null
+    },
+    "note": "Blocked synthetic counter; input bytes inferred from equal-size work, not Python RSS."
+  },
+  "tokenizer": {
+    "65536": {
+      "actual_utf8_bytes": 65536,
+      "count_ms": 1.479458063840866
+    },
+    "1048576": {
+      "actual_utf8_bytes": 1048576,
+      "count_ms": 25.172875029966235
+    }
+  },
+  "snapshot": {
+    "chats": 100,
+    "activities": 800,
+    "copy_ms": 0.7282078731805086,
+    "json_encode_ms": 0.2684581559151411,
+    "json_bytes": 43003
+  },
+  "events": {
+    "turns": 1000,
+    "events": 5000,
+    "wall_seconds": 0.16647600010037422,
+    "batch_ms": {
+      "p50": 0.15191687270998955,
+      "p95": 0.2315831370651722,
+      "p99": 0.3789158072322607
+    },
+    "max_streams": 21,
+    "max_items": 20,
+    "identity_budget": {
+      "entries": 2002,
+      "terminal_entries": 2000,
+      "identity_bytes": 7782,
+      "max_identity_bytes": 8388608,
+      "max_entries": 65536,
+      "admission_closed": false
+    },
+    "identity_ledger_heap_bytes": 262146,
+    "note": "Synthetic accelerated turns, synchronous small counts; not a natural soak or GUI draw measurement."
+  },
+  "metadata": {
+    "narrow_records": 20000,
+    "wide_records": 2000,
+    "producer_ms": 80.18441614694893,
+    "recovery_drain_ms": 11.034709168598056,
+    "blocked_diagnostics": {
+      "pending_records": 156,
+      "pending_bytes": 479388,
+      "inflight_records": 1,
+      "inflight_bytes": 43,
+      "max_pending_records": 4096,
+      "max_pending_bytes": 2097152,
+      "peak_pending_records": 4096,
+      "peak_pending_bytes": 2095786,
+      "queue_resets": 7,
+      "discarded_records": 21844
+    },
+    "derived_database_bytes": 651264,
+    "note": "Synthetic blocked metadata write; overflow invalidates only the derived sidecar."
+  },
+  "benchmark_peak_rss_bytes": 149323776
+}

@@ -1,0 +1,108 @@
+{
+  "version": 1,
+  "label": "p5-current",
+  "seed": 20261023,
+  "python": "3.14.7",
+  "platform": "Darwin",
+  "machine": "arm64",
+  "index": [
+    {
+      "turns": 100,
+      "phases": 400,
+      "source_bytes": 771961,
+      "cold_index_ms": 27.200500015169382,
+      "hot_view_ms": {
+        "p50": 0.23822940420359373,
+        "p95": 0.25370786897838116
+      },
+      "hot_view_returned_phases": 4,
+      "hot_view_peak_allocated_bytes": 139594,
+      "hot_view_remaining_allocated_bytes": 5108,
+      "append_and_view_ms": 7.842709077522159,
+      "cache": {
+        "indices": 1,
+        "cache_bytes": 653699,
+        "max_cache_bytes": 67108864,
+        "evictions": 0
+      }
+    },
+    {
+      "turns": 1000,
+      "phases": 4000,
+      "source_bytes": 7728062,
+      "cold_index_ms": 109.91224995814264,
+      "hot_view_ms": {
+        "p50": 0.5203955806791782,
+        "p95": 0.5776248872280121
+      },
+      "hot_view_returned_phases": 4,
+      "hot_view_peak_allocated_bytes": 139538,
+      "hot_view_remaining_allocated_bytes": 5052,
+      "append_and_view_ms": 40.281291119754314,
+      "cache": {
+        "indices": 1,
+        "cache_bytes": 6440383,
+        "max_cache_bytes": 67108864,
+        "evictions": 0
+      }
+    }
+  ],
+  "counter": {
+    "streams": 256,
+    "text_bytes_per_stream": 65536,
+    "submit_ms": 0.1790409442037344,
+    "blocked_tasks_after_tick": 2,
+    "blocked_tasks_after_model_changes": 2,
+    "blocked_input_bytes_after_model_changes": 131072,
+    "diagnostics": {
+      "jobs": 2,
+      "pending_bytes": 131072,
+      "max_jobs": 2,
+      "max_pending_bytes": 16777216,
+      "peak_jobs": 2,
+      "peak_pending_bytes": 131072,
+      "budget_deferrals": 766
+    },
+    "note": "Blocked synthetic counter; input bytes inferred from equal-size work, not Python RSS."
+  },
+  "tokenizer": {
+    "65536": {
+      "actual_utf8_bytes": 65536,
+      "count_ms": 1.4723329804837704
+    },
+    "1048576": {
+      "actual_utf8_bytes": 1048576,
+      "count_ms": 23.153250105679035
+    }
+  },
+  "snapshot": {
+    "chats": 100,
+    "activities": 800,
+    "copy_ms": 0.6007920019328594,
+    "json_encode_ms": 0.23654219694435596,
+    "json_bytes": 43003
+  },
+  "events": {
+    "turns": 1000,
+    "events": 5000,
+    "wall_seconds": 0.14967308402992785,
+    "batch_ms": {
+      "p50": 0.14883303083479404,
+      "p95": 0.15583285130560398,
+      "p99": 0.16454095020890236
+    },
+    "max_streams": 21,
+    "max_items": 20,
+    "identity_budget": {
+      "entries": 2002,
+      "terminal_entries": 2000,
+      "identity_bytes": 7782,
+      "max_identity_bytes": 8388608,
+      "max_entries": 65536,
+      "admission_closed": false
+    },
+    "identity_ledger_heap_bytes": 262146,
+    "note": "Synthetic accelerated turns, synchronous small counts; not a natural soak or GUI draw measurement."
+  },
+  "benchmark_peak_rss_bytes": 143097856
+}

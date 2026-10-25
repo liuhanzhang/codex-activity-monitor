@@ -4,6 +4,7 @@ from contextlib import contextmanager
 import base64
 import fcntl
 import json
+import secrets
 import os
 from pathlib import Path
 import plistlib
@@ -15,7 +16,8 @@ import time
 import uuid
 
 from .integration import KEYS, LABEL
-from .runtime import ROOT, REAL_CLI, atomic_json
+from .runtime import ROOT, REAL_CLI, atomic_json, collector_alive
+from .state_client import state_once, authorize_session, StateClientError
 from .i18n import CATALOGS, DEFAULT_LANGUAGE, message, render_message, validate_language
 
 DATA_ROOT = Path.home() / 'Library/Application Support/CodexProgressMonitor'
@@ -158,6 +160,32 @@ def process_alive(pid):
         return True
 
 
+def bridge_upgrade_required(runtime):
+    """Management-only diagnostic for resident bridges that cannot handshake.
+
+    Old bridges stop offering when the v2 session is installed, so they may never
+    announce themselves to the replacement collector. Verify their registered
+    process identity here rather than inferring absence from the live snapshot.
+    """
+    if not runtime:
+        return False
+    try:
+        for path in (Path(runtime)/'bridges').glob('*.json'):
+            record = read_json(path)
+            if record.get('observation_protocol') == 1:
+                continue
+            pid = record.get('pid')
+            if type(pid) is not int or pid <= 1 or not process_alive(pid):
+                continue
+            from .app_session import process_identity
+            identity = process_identity(pid)
+            if identity is None or record.get('identity') is None or identity == record['identity']:
+                return True
+        return False
+    except (OSError, ControlError):
+        return None
+
+
 class AppController:
     def __init__(self, root=DATA_ROOT, runtime=None, environment=None, services=None, current_app=None):
         self.root = Path(root).expanduser().resolve()
@@ -211,6 +239,7 @@ class AppController:
         return {'version': 1, 'ok': True, 'state': state,
                 'configured': state == 'configured', 'runtime': receipt.get('runtime'),
                 'purge': receipt.get('purge', False), 'pending': receipt.get('pending', []),
+                'bridge_restart_required': bridge_upgrade_required(receipt.get('runtime')),
                 'data_root': str(self.root), 'error': receipt.get('error')}
 
     def _write(self, receipt):
@@ -312,7 +341,8 @@ class AppController:
                 if legacy_launcher:
                     legacy_launcher.write_text(self._launcher(app, actual, python, source, runtime))
                     legacy_launcher.chmod(0o700)
-                atomic_json(runtime / 'app-managed.json', {'version': 1, 'session_file': str(self.session), 'enabled_file': str(self.enabled)})
+                atomic_json(runtime / 'app-managed.json', {'version': 1, 'lease_protocol': 2,
+                                                         'session_file': str(self.session), 'enabled_file': str(self.enabled)})
                 self.services.disable_legacy(runtime)
                 if legacy_login_before is not None:
                     legacy_login.write_text('#!/bin/sh\n# Migrated to GUI login management; never reapply Codex environment.\nexit 0\n')
@@ -382,18 +412,58 @@ class AppController:
             receipt = self._receipt()
             if receipt.get('state') != 'configured':
                 raise ControlError('not_configured', 'control.not_configured')
-            if owner_pid <= 1 or not process_alive(owner_pid):
+            if type(owner_pid) is not int or owner_pid <= 1 or not process_alive(owner_pid):
                 raise ControlError('owner_missing', 'control.owner_missing')
             current = read_json(self.session)
-            if (current.get('owner_pid') != owner_pid and current.get('active') is True and
-                    isinstance(current.get('owner_pid'), int) and process_alive(current['owner_pid']) and
-                    -5 <= time.time() - current.get('heartbeat_at', 0) < 5):
+            runtime = Path(receipt['runtime'])
+            from .cli import start, stop
+            owned = collector_alive(runtime)
+            control = read_json(runtime/'collector.json') if owned else None
+            if owned and not control:
+                raise ControlError('state_unavailable', 'control.state_unavailable')
+            if control and (control.get('state_protocol') != 1 or control.get('lease_protocol') != 2):
+                # Verified older collector, not an unavailable new transport.
+                stop(runtime)
+                if collector_alive(runtime):
+                    raise ControlError('stop_timeout', 'control.stop_timeout')
+                control = None
+            if control:
+                if not isinstance(control.get('token'), str) or not isinstance(control.get('instance_id'), str):
+                    raise ControlError('state_unavailable', 'control.state_unavailable')
+                try:
+                    live = state_once(runtime)
+                except (OSError, ValueError):
+                    raise ControlError('state_unavailable', 'control.state_unavailable') from None
+                observed = live.observation or {}
+                if (observed.get('owner_pid') != owner_pid and observed.get('expires_in_ms', 0) > 0):
+                    raise ControlError('another_gui_running', 'control.another_gui_running')
+            elif (current.get('owner_pid') != owner_pid and current.get('active') is True and
+                    type(current.get('owner_pid')) is int and process_alive(current['owner_pid']) and
+                    -5 <= time.time() - current.get('created_at', current.get('heartbeat_at', 0)) < 5):
                 raise ControlError('another_gui_running', 'control.another_gui_running')
-            session = {'version': 1, 'id': uuid.uuid4().hex, 'owner_pid': owner_pid,
-                       'heartbeat_at': time.time(), 'active': True}
+            from .observation_lease import SessionGrant, LeaseError
+            try:
+                grant = SessionGrant.from_record(current)
+            except LeaseError:
+                grant = None
+            session = {'version': 2, 'id': grant.id if grant and grant.owner_pid == owner_pid else uuid.uuid4().hex,
+                       'secret': grant.secret if grant and grant.owner_pid == owner_pid else secrets.token_hex(32),
+                       'owner_pid': owner_pid, 'created_at': time.time(), 'active': True}
             atomic_json(self.session, session)
-            from .cli import start
-            start(Path(receipt['runtime']))
+            if control:
+                try:
+                    authorize_session(runtime, session, control)
+                except (OSError, ValueError) as error:
+                    # A definite rejection changed nothing. A timeout may have
+                    # applied: retain the same credential for an idempotent retry.
+                    if isinstance(error, StateClientError) and error.code in ('owner_busy', 'invalid_lease', 'unmanaged_runtime'):
+                        if current:
+                            atomic_json(self.session, current)
+                        else:
+                            self.session.unlink(missing_ok=True)
+                    raise ControlError('state_unavailable', 'control.state_unavailable') from None
+            else:
+                start(runtime)
         return {**self.status(), 'session': session}
 
     def _stop(self, receipt):
@@ -490,7 +560,7 @@ class AppController:
         managed = runtime / 'app-managed.json'
         record = read_json(managed)
         if record.get('session_file') == str(self.session) or receipt.get('imported_legacy'):
-            for name in ('app-managed.json', 'snapshot.json', 'collector.json', 'events.sock', 'tl.sock',
+            for name in ('app-managed.json', 'snapshot.json', 'collector.json', 'events.sock', 'state.sock', 'tl.sock',
                          'collector.log', 'collector.previous.log'):
                 (runtime / name).unlink(missing_ok=True)
         if receipt.get('imported_legacy'):

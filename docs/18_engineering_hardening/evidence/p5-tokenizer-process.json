@@ -1,0 +1,40 @@
+{
+  "version": 1,
+  "python": "3.14.7",
+  "platform": "Darwin",
+  "note": "One persistent owned child, synthetic text; wall includes IPC, child startup for first count only.",
+  "counts": [
+    {
+      "utf8_bytes": 65536,
+      "kind": "mixed",
+      "tokens": 15421,
+      "native_ms": 143.28025002032518,
+      "wall_ms": 237.0380419306457
+    },
+    {
+      "utf8_bytes": 1048576,
+      "kind": "mixed",
+      "tokens": 246723,
+      "native_ms": 24.880042066797614,
+      "wall_ms": 28.749332996085286
+    },
+    {
+      "utf8_bytes": 1048576,
+      "kind": "ascii",
+      "tokens": 131072,
+      "native_ms": 227.70254197530448,
+      "wall_ms": 229.23404211178422
+    }
+  ],
+  "forced_deadline_wall_ms": 108.70545799843967,
+  "recovery_wall_ms": 222.1198750194162,
+  "worker": {
+    "starts": 2,
+    "timeouts": 1,
+    "deadline_seconds": 3,
+    "running": false,
+    "closed": false
+  },
+  "idle_close_ms": 2.011124975979328,
+  "terminated_child_peak_rss_bytes": 165052416
+}

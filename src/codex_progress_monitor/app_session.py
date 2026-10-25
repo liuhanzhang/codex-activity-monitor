@@ -1,37 +1,48 @@
-"""Bounded GUI observation lease; legacy terminal-only runtimes stay unchanged."""
+"""Startup authorization and process identity; connected leases are memory only."""
 
 import json
+import math
 import os
 from pathlib import Path
 import time
 
+from .observation_lease import LeaseError, ObservationLease, SessionGrant
 
-def observing(runtime, now=None):
-    marker = Path(runtime) / 'app-managed.json'
+
+def load_lease(runtime):
+    """Read configuration once, before the collector accepts live connections.
+
+    Files authorize a finite bootstrap only. Connected ownership is renewed
+    exclusively through state.sock; this object performs no later file reads.
+    """
     try:
-        raw = marker.read_text()
+        raw = (Path(runtime)/'app-managed.json').read_text()
     except FileNotFoundError:
-        return True
-    except OSError:
-        return False
+        return ObservationLease(managed=False)
     try:
-        managed = json.loads(raw)
-        if managed.get('version') != 1 or not Path(managed['enabled_file']).is_file():
-            return False
-        session = json.loads(Path(managed['session_file']).read_text())
-        age = (time.time() if now is None else now) - session['heartbeat_at']
-        pid = session['owner_pid']
-        if (session.get('version') != 1 or session.get('active') is not True or
-                not isinstance(pid, int) or isinstance(pid, bool) or pid <= 1 or
-                not (-5 <= age < 5)):
-            return False
-        os.kill(pid, 0)
-        return True
-    except (OSError, ValueError, KeyError, TypeError, AttributeError):
-        return False
+        marker = json.loads(raw)
+        if (not isinstance(marker, dict) or type(marker.get('version')) is not int or marker['version'] != 1 or
+                type(marker.get('lease_protocol')) is not int or marker['lease_protocol'] != 2):
+            raise LeaseError('unsupported_lease_protocol')
+        if not Path(marker['enabled_file']).is_file():
+            raise LeaseError('observation_disabled')
+        record = json.loads(Path(marker['session_file']).read_text())
+        grant = SessionGrant.from_record(record)
+        created = record.get('created_at')
+        if type(created) not in (int, float) or not math.isfinite(created) or not -5 <= time.time()-created < 10:
+            raise LeaseError('lease_expired')
+        os.kill(grant.owner_pid, 0)
+        return ObservationLease(managed=True, grant=grant)
+    except (OSError, ValueError, TypeError, KeyError, OverflowError) as error:
+        if isinstance(error, LeaseError):
+            raise
+        raise LeaseError('invalid_lease') from None
 
 
 def process_identity(pid):
     import subprocess
-    result = subprocess.run(['/bin/ps', '-p', str(pid), '-o', 'lstart=,comm='], capture_output=True, text=True)
+    try:
+        result = subprocess.run(['/bin/ps', '-p', str(pid), '-o', 'lstart=,comm='], capture_output=True, text=True, timeout=1)
+    except (OSError, subprocess.TimeoutExpired):
+        return None
     return result.stdout.strip() if result.returncode == 0 and result.stdout.strip() else None

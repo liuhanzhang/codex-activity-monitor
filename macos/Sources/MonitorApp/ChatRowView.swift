@@ -9,7 +9,7 @@ struct ChatRowView: LocalizedView {
     private var selected: Bool { store.selectedChatKey == chat.id }
     private var live: Bool { store.sourceAvailable(for: chat) }
     private var working: Bool { store.snapshot?.hasActiveWork(in: chat) == true }
-    private var unassigned: Bool { store.snapshot?.unassignedChats.contains(where: { $0.id == chat.id }) == true }
+    private var unassigned: Bool { store.isUnassigned(chat) }
     private var actionLabel: String {
         if !live { return L("状态暂不可用") }
         if working {

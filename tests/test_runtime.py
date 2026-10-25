@@ -11,6 +11,7 @@ import unittest
 from unittest.mock import patch, MagicMock
 
 from codex_progress_monitor.cli import start,stop
+from codex_progress_monitor.state_client import current_state
 from codex_progress_monitor.runtime import runtime_dir,read_snapshot,atomic_json
 from codex_progress_monitor.bridge import observes_stdio,Observer
 from codex_progress_monitor.events import filter_event
@@ -128,6 +129,27 @@ class RuntimeTests(unittest.TestCase):
             phase = next(p for p in bundle['phases'] if p['item_id']=='cmd')
             self.assertEqual(phase['status'],'completed')
 
+    def test_large_turn_corrects_current_item_without_a_full_metadata_packet(self):
+        home, complete = self.history_fixture()
+        path = home/'sessions/probe-t.jsonl'
+        with path.open('a') as stream:
+            for n in range(20000):
+                stream.write(json.dumps({'type': 'event_msg', 'timestamp': time.time(), 'payload': {
+                    'type': 'item_completed', 'thread_id': 't', 'turn_id': 'u',
+                    'item': {'id': f'synthetic-{n}', 'type': 'AgentMessage', 'text': 'synthetic'}}})+'\n')
+        start(self.runtime)
+        with socket.socket(socket.AF_UNIX, socket.SOCK_STREAM) as sock:
+            sock.connect(str(self.runtime/'events.sock'))
+            self.send_history_work(sock, home)
+            self.wait_snapshot(lambda s:any(t.get('has_unresolved_work') for t in s['threads']))
+            complete()
+            result = self.wait_snapshot(lambda s:any(any(a['id'] == 'cmd' and a['status'] == 'completed'
+                for a in t['activities']) for t in s['threads']), timeout=8)
+            stats = result['resource_diagnostics']
+            self.assertEqual(stats['history_refresh']['oversized_results'], 0)
+            self.assertLess(stats['history_cache']['cache_bytes'], 64*1024*1024)
+            self.assertFalse(next(t for t in result['threads'] if t['id'] == 't')['has_active_work'])
+
     def test_history_corrects_restored_unknown_without_starting_new_turn(self):
         home, complete = self.history_fixture()
         start(self.runtime)
@@ -177,10 +199,10 @@ from pathlib import Path
 from codex_progress_monitor.history import HistoryProvider
 from codex_progress_monitor.collector import serve
 original=HistoryProvider.reconciliation
-def blocked(self,*args):
+def blocked(self,*args,**kwargs):
     Path(ENTERED).touch()
     while not Path(RELEASE).exists(): time.sleep(.01)
-    return original(self,*args)
+    return original(self,*args,**kwargs)
 HistoryProvider.reconciliation=blocked
 serve(Path(RUNTIME))
 '''.replace('ENTERED',repr(str(entered))).replace('RELEASE',repr(str(release))).replace('RUNTIME',repr(str(self.runtime)))
@@ -192,7 +214,7 @@ serve(Path(RUNTIME))
                     sock.connect(str(self.runtime/'events.sock'))
                     send = self.send_history_work(sock,home)
                     self.wait_snapshot(lambda s:entered.exists(),timeout=4)
-                    blocked_at = read_snapshot(self.runtime)['updated_at']
+                    blocked_at = current_state(self.runtime)['updated_at']
                     send('protocol_out',{'method':'turn/started','params':{'threadId':'t','turn':{'id':'new'}}})
                     send('protocol_out',{'method':'turn/started','params':{'threadId':'other','turn':{'id':'independent'}}})
                     during = self.wait_snapshot(lambda s:s.get('updated_at',0)>blocked_at and
@@ -248,7 +270,7 @@ serve(Path(RUNTIME))
                     self.assertFalse((self.runtime/'snapshot.json').exists())
                     self.assertIsNone(process.poll())
                     blocked.unlink()
-                    recovered = self.wait_snapshot(lambda s: bool(s.get('running')))
+                    recovered = self.wait_archive(lambda s: bool(s.get('running')))
                     self.assertGreaterEqual(recovered['persistence']['snapshot_write_failures'], 1)
                     self.assertEqual(recovered['persistence']['last_snapshot_error']['errno'], 28)
             finally:
@@ -259,10 +281,19 @@ serve(Path(RUNTIME))
     def command(self,actual,*args):
         return [sys.executable,'-m','codex_progress_monitor.cli','--runtime',str(self.runtime),'bridge','--real-cli',str(actual),'--',*args]
 
+    def wait_archive(self, predicate, timeout=3):
+        deadline=time.monotonic()+timeout
+        while time.monotonic()<deadline:
+            value=read_snapshot(self.runtime)
+            if predicate(value):
+                return value
+            time.sleep(.02)
+        self.fail('Expected recovery checkpoint was not written')
+
     def wait_snapshot(self, predicate, timeout=3):
         deadline=time.monotonic()+timeout
         while time.monotonic()<deadline:
-            snapshot=read_snapshot(self.runtime)
+            snapshot=current_state(self.runtime)
             if predicate(snapshot):
                 return snapshot
             time.sleep(.05)
@@ -349,20 +380,20 @@ serve(Path(RUNTIME))
             offer('turn/completed',{'threadId':'t','turn':{'id':'u','status':'completed'}})
             deadline=time.monotonic()+4
             while time.monotonic()<deadline:
-                threads=read_snapshot(self.runtime)['threads']
+                threads=current_state(self.runtime)['threads']
                 if threads and threads[0]['activities'][0]['streams'][0]['tokens'] is not None:
                     break
                 time.sleep(.1)
-            before=read_snapshot(self.runtime)['threads'][0]
+            before=current_state(self.runtime)['threads'][0]
             stop(self.runtime)
             start(self.runtime)
             deadline=time.monotonic()+4
             while time.monotonic()<deadline:
-                snapshot=read_snapshot(self.runtime)
+                snapshot=current_state(self.runtime)
                 if snapshot.get('backends',{}).get('b',{}).get('connected'):
                     break
                 time.sleep(.1)
-            after=read_snapshot(self.runtime)['threads'][0]
+            after=current_state(self.runtime)['threads'][0]
             self.assertEqual(after['phase'],'completed')
             self.assertEqual(after['activities'][0]['streams'][0]['tokens'],before['activities'][0]['streams'][0]['tokens'])
             self.assertNotIn('private final',(self.runtime/'snapshot.json').read_text())
@@ -371,6 +402,7 @@ serve(Path(RUNTIME))
 
     def test_observation_queue_has_byte_and_packet_limits(self):
         observer=Observer(self.runtime,'b','/tmp','/bin/echo',queue_size=2)
+        observer.permits.until=time.monotonic()+60
         for _ in range(20):observer.offer('stdout',b'x'*65536)
         self.assertEqual(observer.packets.qsize(),2)
         self.assertEqual(observer.dropped,18)
@@ -390,8 +422,7 @@ serve(Path(RUNTIME))
         fresh.remember(original)
         sent=[]
         fresh.send=lambda row:sent.append(row) or True
-        with patch('codex_progress_monitor.bridge.socket.socket',return_value=MagicMock()):
-            fresh.connect()
+        fresh.replay()
         replay=next(row for row in sent if row['direction']=='protocol_out')
         self.assertTrue(replay['replayed'])
         self.assertEqual(replay['observed_ns'],123456789)
@@ -408,7 +439,7 @@ serve(Path(RUNTIME))
             offer([{'method':'turn/started','params':{'threadId':'t','turn':{'id':'u'}}},
                    {'method':'item/started','params':{'threadId':'t','turnId':'u','item':{'id':'i','type':'agentMessage'}}}])
             deadline=time.monotonic()+3
-            while not read_snapshot(self.runtime)['threads'] and time.monotonic()<deadline:time.sleep(.05)
+            while not current_state(self.runtime)['threads'] and time.monotonic()<deadline:time.sleep(.05)
             pid=json.loads((self.runtime/'collector.json').read_text())['pid']
             os.kill(pid,signal.SIGSTOP)
             try:
@@ -418,7 +449,7 @@ serve(Path(RUNTIME))
                 os.kill(pid,signal.SIGCONT)
             deadline=time.monotonic()+4
             while time.monotonic()<deadline:
-                snapshot=read_snapshot(self.runtime)
+                snapshot=current_state(self.runtime)
                 deltas=max((s['deltas'] for t in snapshot['threads'] for a in t['activities'] for s in a['streams']),default=0)
                 if deltas==600:break
                 time.sleep(.05)
@@ -470,7 +501,7 @@ protocol('turn/completed',{'threadId':'t','turn':{'id':'u','status':'completed'}
             deadline=time.monotonic()+5
             deltas=0
             while time.monotonic()<deadline:
-                snapshot=read_snapshot(self.runtime)
+                snapshot=current_state(self.runtime)
                 deltas=max((s['deltas'] for t in snapshot['threads'] for a in t['activities'] for s in a['streams']),default=0)
                 if deltas==600 and any(t['token_rates'].get('text',0) for t in snapshot['threads']):break
                 time.sleep(.05)
@@ -526,7 +557,7 @@ protocol('turn/completed',{'threadId':'t','turn':{'id':'u','status':'completed'}
         self.assertEqual(snapshot['threads'][0]['phase'],'unknown')
         stop(self.runtime)
         start(self.runtime)
-        restored=read_snapshot(self.runtime)['threads'][0]
+        restored=current_state(self.runtime)['threads'][0]
         self.assertEqual(restored['phase'],'unknown')
         self.assertIsNone(restored['token_rates']['text'])
         with socket.socket(socket.AF_UNIX,socket.SOCK_STREAM) as sock:
@@ -567,7 +598,7 @@ protocol('turn/completed',{'threadId':'t','turn':{'id':'u','status':'completed'}
         legacy['threads'][0]['usage']['latest_reasoning']={'tokens_per_second':20,'turn_id':'u'}
         atomic_json(self.runtime/'snapshot.json',legacy)
         start(self.runtime)
-        restored=read_snapshot(self.runtime)['threads'][0]['usage']
+        restored=current_state(self.runtime)['threads'][0]['usage']
         self.assertEqual((restored['output_tokens'],restored['reasoning_tokens']),(100,40))
         self.assertNotIn('latest_reasoning',restored)
         with socket.socket(socket.AF_UNIX,socket.SOCK_STREAM) as sock:

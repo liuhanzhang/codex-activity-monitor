@@ -1,0 +1,104 @@
+{
+  "version": 1,
+  "reviewed_at_utc": "2026-10-25T09:12:31+00:00",
+  "scope": "review of completed bounded natural-state sample and current read-only liveness; not release acceptance",
+  "sample_window_local": [
+    "2026-10-23T22:44:50+08:00",
+    "2026-10-23T23:14:49+08:00"
+  ],
+  "sampling": {
+    "state": "finished",
+    "stop_reason": "deadline",
+    "records": 1793,
+    "output_bytes": 29163243,
+    "probe_failures": 0,
+    "fresh_state_records": 1793,
+    "owner_connected_records": 1793,
+    "instances": 1,
+    "max_sample_interval_seconds": 1.0254,
+    "observed_connected_backend_count": 6,
+    "active_then_terminal_candidates_after_probe_start": 6,
+    "candidate_count_is_not_accepted_full_turn_count": true
+  },
+  "sampled_memory": {
+    "gui": {
+      "first_kib": 80992,
+      "last_kib": 76928,
+      "min_kib": 75600,
+      "max_kib": 94128,
+      "samples": 180
+    },
+    "collector": {
+      "first_kib": 32816,
+      "last_kib": 31952,
+      "min_kib": 31648,
+      "max_kib": 42704,
+      "samples": 180
+    },
+    "bridge_with_highest_sampled_peak": {
+      "first_kib": 54624,
+      "last_kib": 24304,
+      "min_kib": 17760,
+      "max_kib": 553552,
+      "samples": 180
+    }
+  },
+  "anomalies": {
+    "sampled_backends_with_gap_or_drop": 1,
+    "max_sampled_backend_gap_count": 1,
+    "max_sampled_backend_drop_count": 1,
+    "sampled_backend_parse_errors": 0,
+    "retained_diagnostics_for_same_high_peak_bridge": {
+      "connected": false,
+      "gaps": 1,
+      "dropped_packets": 1,
+      "parse_errors": 0,
+      "drop_reasons": {
+        "oversized_diagnostic": 1
+      }
+    },
+    "peak_and_gap_causality": "not established; same-bridge peak precedes first sampled gap by about 2 seconds"
+  },
+  "current_checks": {
+    "fresh": true,
+    "running": true,
+    "owner_connected": true,
+    "collector_lock_owned": true,
+    "collector_same_cutover_instance": true,
+    "collector_startup_source_matches_rollout": true,
+    "bridge_restart_required": false,
+    "connected_backends": [
+      {
+        "source_matches_rollout": true,
+        "gaps": 1,
+        "dropped_packets": 1,
+        "parse_errors": 0,
+        "drop_reasons": {
+          "oversized_diagnostic": 1
+        }
+      },
+      {
+        "source_matches_rollout": true,
+        "gaps": 0,
+        "dropped_packets": 0,
+        "parse_errors": 0,
+        "drop_reasons": {}
+      }
+    ]
+  },
+  "acceptance": {
+    "natural_acceptance_complete": false,
+    "end_to_draw_latency_verified": false,
+    "long_run_resource_acceptance_complete": false,
+    "implementation_and_cutover_complete": true
+  },
+  "limits": [
+    "Only 30 minutes were sampled; the sampler is now finished, not still collecting.",
+    "1-second state probes do not capture source last-delta or completion receipt timestamps.",
+    "GUI draw diagnostics have expired; no new process was started to extend observation.",
+    "Candidate status transitions include internal/partial chats and do not establish ten complete accepted turns.",
+    "The bridge memory peak is a sampled process RSS point; its root cause remains unproven.",
+    "Current same collector instance does not supply continuous resource measurements for the intervening days.",
+    "Original raw data and process IDs remain in ignored private files; no source code was changed for this review."
+  ]
+}

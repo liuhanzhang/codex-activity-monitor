@@ -212,7 +212,8 @@ class HistoryTests(unittest.TestCase):
         first = detail['sections'][1]
         self.assertEqual(detail['state'], 'available')
         self.assertIsNotNone(first['next_offset'])
-        second = query.detail(str(self.home), 't', 'u', phase['id'], 'output', first['next_offset'])['sections'][1]
+        second = query.detail(str(self.home), 't', 'u', phase['id'], 'output', first['next_offset'],
+                              page_token=first['page_token'])['sections'][0]
         self.assertEqual(json.loads(first['text'] + second['text']), output)
         # A sidecar retains identity after the source disappears, never its body.
         from codex_progress_monitor.timeline import TimelineBook
@@ -230,7 +231,7 @@ class HistoryTests(unittest.TestCase):
         query = TimelineQuery()
         one = query.detail(str(self.home), 't', 'u', phase['id'])
         s = one['sections'][0]
-        two = query.detail(str(self.home), 't', 'u', phase['id'], s['id'], s['next_offset'])
+        two = query.detail(str(self.home), 't', 'u', phase['id'], s['id'], s['next_offset'], page_token=s['page_token'])
         self.assertEqual(s['text'] + two['sections'][0]['text'], body)
 
     def test_history_queries_do_not_create_observation_or_sidecar(self):

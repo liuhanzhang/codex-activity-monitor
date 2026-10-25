@@ -8,7 +8,7 @@ private actor InputReplies: TimelineReading {
     var pending: CheckedContinuation<ActivityDetail, any Error>?
     var started: CheckedContinuation<Void, Never>?
     func timeline(scope: String, thread: String, turn: String?) async throws -> TimelineBundle { throw CancellationError() }
-    func detail(phase: TimelinePhase, section: String?, offset: Int) async throws -> ActivityDetail {
+    func detail(phase: TimelinePhase, page: ActivityPageCursor?) async throws -> ActivityDetail {
         try await withCheckedThrowingContinuation {
             pending = $0
             started?.resume(); started = nil
@@ -19,6 +19,7 @@ private actor InputReplies: TimelineReading {
         await withCheckedContinuation { started = $0 }
     }
     func reply(_ value: ActivityDetail) { pending?.resume(returning: value); pending = nil }
+    func fail(_ error: any Error) { pending?.resume(throwing: error); pending = nil }
 }
 
 private func inputPhase(_ fields: [String: Any] = [:]) throws -> TimelinePhase {
@@ -31,10 +32,23 @@ private func inputPhase(_ fields: [String: Any] = [:]) throws -> TimelinePhase {
 
 private func inputDetail(_ phase: TimelinePhase?, text: String? = "raw", state: String = "available",
                          offset: Int = 0, next: Int? = nil) -> ActivityDetail {
-    ActivityDetail(version: 1, state: state, phase: phase, sections: text.map { [
+    ActivityDetail(version: 2, state: state, phase: phase, sections: text.map { [
         ActivitySection(id: "input", title: "用户输入", format: "text", text: $0, offset: offset,
-                        total_chars: nil, next_offset: next, notice: nil)
+                        total_chars: next == nil ? offset + $0.unicodeScalars.count : 9, next_offset: next, notice: nil, page_token: "fixture-input")
     ] } ?? [], attachments: [], source: "synthetic")
+}
+
+@Test @MainActor func structuredQueryLimitPreservesInputReading() async throws {
+    let client = InputReplies(), selected = try inputPhase()
+    let store = InputContentStore(phase: selected, client: client)
+    let initial = Task { await store.load() }
+    await client.wait(); await client.reply(inputDetail(selected, text: "kept")); await initial.value
+    let next = Task { await store.load() }
+    await client.wait()
+    await client.fail(BackendFailure(message: "", presentationKey: "所选内容过多，暂时无法一次载入。"))
+    await next.value
+    #expect(store.detail?.sections[0].text == "kept")
+    #expect(store.error == "所选内容过多，暂时无法一次载入。")
 }
 
 @Test @MainActor func dismissedInputDiscardsLateContent() async throws {
@@ -98,7 +112,7 @@ private func inputDetail(_ phase: TimelinePhase?, text: String? = "raw", state: 
         let client = InputReplies()
         let reader = InputContentStore(phase: phase, client: client)
         let request = Task { await reader.load() }
-        await client.wait(); await client.reply(inputDetail(phase, state: state)); await request.value
+        await client.wait(); await client.reply(inputDetail(phase, text: state == "not_retained" ? nil : "raw", state: state)); await request.value
         #expect(reader.notice != nil && reader.detail?.state == state)
     }
 }
@@ -112,6 +126,20 @@ private func inputDetail(_ phase: TimelinePhase?, text: String? = "raw", state: 
     await client.wait(); await client.reply(inputDetail(nil, text: nil, state: "missing")); await page.value
     #expect(store.detail?.sections[0].text == "raw")
     #expect(store.detail?.state == "missing" && store.notice != nil)
+}
+
+@Test @MainActor func inputChangedPageRequiresReloadWithoutDiscardingTheReadText() async throws {
+    let client = InputReplies(), phase = try inputPhase()
+    let store = InputContentStore(phase: phase, client: client)
+    let first = Task { await store.load() }
+    await client.wait(); await client.reply(inputDetail(phase, text: "raw", next: 3)); await first.value
+    let page = Task { await store.loadMore() }
+    await client.wait(); await client.reply(inputDetail(nil, text: nil, state: "content_changed")); await page.value
+    #expect(store.detail?.sections[0].text == "raw" && store.detail?.pageCursor() == nil)
+    #expect(store.detail?.requiresReload == true && store.notice != nil)
+    let reload = Task { await store.load() }
+    await client.wait(); await client.reply(inputDetail(phase, text: "new")); await reload.value
+    #expect(store.detail?.sections[0].text == "new" && store.detail?.state == "available")
 }
 
 @Test @MainActor func auxiliaryDismissalIsOrderedAndCannotRemoveANewerPopover() {

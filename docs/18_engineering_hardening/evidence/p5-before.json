@@ -1,0 +1,72 @@
+{
+  "version": 1,
+  "label": "p4-before-p5",
+  "seed": 20261023,
+  "python": "3.14.7",
+  "platform": "Darwin",
+  "machine": "arm64",
+  "index": [
+    {
+      "turns": 100,
+      "phases": 400,
+      "source_bytes": 771961,
+      "cold_index_ms": 12.644500005990267,
+      "hot_view_ms": {
+        "p50": 3.88968747574836,
+        "p95": 4.070875002071261
+      },
+      "hot_view_returned_phases": 400,
+      "hot_view_peak_allocated_bytes": 531852,
+      "hot_view_remaining_allocated_bytes": 13764,
+      "append_and_view_ms": 6.02312502451241,
+      "cache": {
+        "indices": 1
+      }
+    },
+    {
+      "turns": 1000,
+      "phases": 4000,
+      "source_bytes": 7728062,
+      "cold_index_ms": 98.63483300432563,
+      "hot_view_ms": {
+        "p50": 38.16452098544687,
+        "p95": 38.64470892585814
+      },
+      "hot_view_returned_phases": 4000,
+      "hot_view_peak_allocated_bytes": 5139308,
+      "hot_view_remaining_allocated_bytes": 13708,
+      "append_and_view_ms": 21.886167116463184,
+      "cache": {
+        "indices": 1
+      }
+    }
+  ],
+  "counter": {
+    "streams": 256,
+    "text_bytes_per_stream": 65536,
+    "submit_ms": 0.7997921202331781,
+    "blocked_tasks_after_tick": 256,
+    "blocked_tasks_after_model_changes": 768,
+    "blocked_input_bytes_after_model_changes": 50331648,
+    "diagnostics": {},
+    "note": "Blocked synthetic counter; input bytes inferred from equal-size work, not Python RSS."
+  },
+  "tokenizer": {
+    "65536": {
+      "actual_utf8_bytes": 65536,
+      "count_ms": 1.5859589911997318
+    },
+    "1048576": {
+      "actual_utf8_bytes": 1048576,
+      "count_ms": 24.059917079284787
+    }
+  },
+  "snapshot": {
+    "chats": 100,
+    "activities": 800,
+    "copy_ms": 0.6452919915318489,
+    "json_encode_ms": 0.27112499810755253,
+    "json_bytes": 43003
+  },
+  "benchmark_peak_rss_bytes": 152944640
+}

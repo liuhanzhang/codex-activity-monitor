@@ -1,6 +1,6 @@
-# Architecture and reading guide
+# Baseline architecture and reading guide
 
-This describes the reviewed product, rather than the sequence of experiments that produced it. See [review.md](review.md) for findings and [validation.md](validation.md) for evidence and limits. Product paths below are relative to the repository root.
+This describes the implemented product at baseline `c3996dc`, rather than the sequence of experiments that produced it. See [review.md](review.md) for findings and [validation.md](validation.md) for dated evidence and limits. The [chapter 18 design](../18_engineering_hardening/technical-design.md) describes planned changes; its IPC, paging and projection APIs are not implemented here. Product paths below are relative to the repository root.
 
 ## Runtime ownership
 
@@ -97,4 +97,4 @@ Snapshot, timeline and detail responses currently use version 1. Official usage 
 - Incorrect content/page/selection: `ActivityContent.swift` → `TimelineStore.swift` / `InputPopover.swift` → `TimelineClient.swift` → `timeline_query.py`.
 - Installation or restoration: `app_control.py` → `app_session.py` → `cli.py`; use injected services or explicit disposable profiles in tests.
 
-The remaining architectural work is bounded: independent GUI IPC/health, a common cancellable subprocess runner, stronger source-generation contracts for paging, and fresh-machine distribution. A generic event bus, plugin framework, global data store or new writer is not needed to make those changes.
+The remaining architectural work and its implementation state are maintained in [chapter 18](../18_engineering_hardening/README.md). This baseline still uses file transport and the existing detail contract. A generic event bus, plugin framework, global data store or new writer is not needed to make those changes.

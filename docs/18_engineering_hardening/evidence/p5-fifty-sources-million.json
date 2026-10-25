@@ -1,0 +1,44 @@
+{
+  "version": 1,
+  "python": "3.14.7",
+  "platform": "Darwin",
+  "sources": 50,
+  "turns_per_source": 1000,
+  "items_per_turn": 4,
+  "selected_turns_per_source": 20,
+  "cycles": [
+    {
+      "cycle": 0,
+      "p50_ms": 102.16381307691336,
+      "p95_ms": 118.44524997286499,
+      "sum_ms": 8519.108454464003,
+      "parsed_rows": 1300049,
+      "cache": {
+        "indices": 1035,
+        "cache_bytes": 65574340,
+        "max_cache_bytes": 67108864,
+        "evictions": 15,
+        "measured_monotonic": 1154346.67330175
+      }
+    },
+    {
+      "cycle": 1,
+      "p50_ms": 0.778104062192142,
+      "p95_ms": 0.9263751562684774,
+      "sum_ms": 40.1891665533185,
+      "parsed_rows": 0,
+      "cache": {
+        "indices": 1035,
+        "cache_bytes": 65574340,
+        "max_cache_bytes": 67108864,
+        "evictions": 15,
+        "measured_monotonic": 1154346.67330175
+      }
+    }
+  ],
+  "note": "Provider cache pressure only; sequential calls, not parallel ingestion or natural soak.",
+  "source_bytes": 128436903,
+  "source_rows": 1294049,
+  "largest_source_rows": 1000000,
+  "benchmark_peak_rss_bytes": 112836608
+}

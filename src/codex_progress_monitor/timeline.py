@@ -12,8 +12,11 @@ from .events import TOOL_TYPES, SERVER_REQUESTS
 from .tool_labels import code_tool_names, file_edit_preview, is_patch_tool, tool_name
 from .agent_relations import raw_coordination
 from .i18n import message
+from .history_contract import HistoryCoverage
 
 MODEL_TYPES = {'reasoning': 'reasoning', 'agentMessage': 'text', 'message': 'text', 'plan': 'text'}
+HISTORY_SEED_TYPES = TOOL_TYPES | {'agentMessage', 'reasoning', 'plan', 'contextCompaction'}
+HISTORY_SEED_LIMIT = 20
 LABELS = {'reasoning': '思考', 'text': '正文输出', 'tool_input': '工具参数生成',
           'file_edit_input': '编辑内容生成', 'tool_execution': '工具执行', 'input': '用户输入',
           'contextCompaction': '整理上下文', 'sleep': '等待', 'approval': '等待确认',
@@ -30,6 +33,10 @@ def valid_ms(value):
 
 def phase_id(scope, thread, turn, namespace, item):
     return identity('phase', scope, thread, turn, namespace, item)
+
+
+def item_namespace(kind):
+    return 'input' if kind in ('function_call', 'custom_tool_call') else 'model' if kind in MODEL_TYPES else 'canonical'
 
 
 def status(value):
@@ -69,7 +76,7 @@ def item_phase(scope, thread, turn, item, start=None, end=None, source='producer
         subtype = 'other'
     else:
         return None
-    namespace = namespace or ('input' if raw_input else 'model' if kind in MODEL_TYPES else 'canonical')
+    namespace = namespace or item_namespace(kind)
     item_id = item.get('id')
     if not item_id or not thread or not turn:
         return None
@@ -146,12 +153,9 @@ def merge_phase(old, new):
         result = {**old, **{k: v for k, v in new.items() if v is not None}}
         result['quality'] = sorted(set(old.get('quality', [])) | set(new.get('quality', [])))
         result['mirrored'] = old.get('mirrored', False) or new.get('mirrored', False)
-        if old and new.get('history_terminal') and not old.get('history_terminal'):
-            # Historical coverage is replaceable. Keep the independent producer
-            # facts so removing/replacing JSONL never leaves borrowed endpoints.
-            result['observation'] = deepcopy(old)
-        elif old.get('observation') and not new.get('history_terminal'):
-            result['observation'] = merge_phase(old['observation'], new)
+        # History replaces a live supplement. Never retain an alternate history
+        # underneath it to resurrect after the authoritative source changes.
+        result.pop('observation', None)
         rank = lambda value: 3 if value == 'history' else 2 if value == 'producer' else 1 if value == 'receipt' else 0
         for bound in ('start', 'end'):
             key, provenance = bound + '_ms', bound + '_source'
@@ -169,6 +173,7 @@ def merge_phase(old, new):
             result['kind'] = 'file_edit_input'
         if new.get('execution_confirmed'):
             result['quality'] = [q for q in result['quality'] if q != 'execution_unconfirmed']
+    result.pop('observation', None)  # Also discard legacy sidecar shadow state.
     if result.get('start_ms') is None:
         result['quality'] = sorted(set(result.get('quality', [])) | {'start_unknown'})
     else:
@@ -180,25 +185,20 @@ def merge_phase(old, new):
     return result
 
 
-def merge_history_phase(observed, historical):
-    """Reapply current history to its original observation, never to an old overlay."""
+def merge_history_phase(observed, historical, *, read_complete=True):
+    """Apply current JSONL, invalidating facts removed from a verified source."""
     basis = observed
+    if historical is None and not read_complete:
+        return observed
     if observed and observed.get('history_terminal'):
-        basis = deepcopy(observed.get('observation'))
-        if not basis:
-            # Sidecars written before observation bases existed cannot recover
-            # producer boundaries overwritten by history. Keep that absence explicit.
-            basis = {k: v for k, v in observed.items() if k not in ('history_terminal', 'exit_code', 'observation')}
-            basis['status'] = 'unknown'
-            for bound in ('start', 'end'):
-                if basis.get(bound + '_source') == 'history':
-                    basis[bound + '_ms'] = basis[bound + '_source'] = None
-        if 'history_retired' in observed:
-            basis['history_retired'] = observed['history_retired']
+        basis = {k: v for k, v in observed.items()
+                 if k not in ('history_terminal', 'exit_code', 'observation')}
+        basis['status'] = 'unknown'
+        for bound in ('start', 'end'):
+            if basis.get(bound + '_source') == 'history':
+                basis[bound + '_ms'] = basis[bound + '_source'] = None
         if historical is None or historical.get('status') in ('active', 'waiting'):
             basis['quality'] = sorted(set(basis.get('quality', [])) | {'history_changed'})
-            if basis['status'] in ('active', 'waiting'):
-                basis['status'] = 'unknown'
     return merge_phase(basis, historical) if historical is not None else basis
 
 
@@ -240,25 +240,28 @@ class TimelineBook:
     def apply_history(self, summary):
         """Correct already-observed phases; JSONL remains the content store."""
         with self.lock:
+            coverage = HistoryCoverage.from_summary(summary)
             settled = settled_model_items(summary.get('turns', []), summary.get('phases', []),
                                           read_complete=summary.get('read_complete', False), quality=summary.get('quality', []))
             if settled is not None:
                 for phase in list(self.phases.values()):
                     if ((phase['scope_id'], phase['thread_id']) == (summary['scope_id'], summary['thread_id']) and
-                            phase['turn_id'] in summary.get('requested_turns', [])):
+                            coverage.covers(phase['turn_id'], phase['item_id'])):
                         updated = apply_model_membership(phase, settled)
                         if bool(phase.get('history_retired')) != updated['history_retired']:
                             self._put(updated)
             facts = {p['id']: p for p in summary.get('phases', []) if p.get('history_terminal')}
             for phase in list(self.phases.values()):
                 if ((phase['scope_id'], phase['thread_id']) == (summary['scope_id'], summary['thread_id']) and
-                        phase['turn_id'] in summary.get('requested_turns', [])):
-                    self._save('phase', merge_history_phase(phase, facts.get(phase['id'])))
+                        coverage.covers(phase['turn_id'], phase['item_id'])):
+                    self._save('phase', merge_history_phase(phase, facts.get(phase['id']),
+                                                          read_complete=summary.get('read_complete', False)))
             source_turns = {t['id']: t for t in summary.get('turns', [])}
             for turn in list(self.turns.values()):
                 if ((turn['scope_id'], turn['thread_id']) == (summary['scope_id'], summary['thread_id']) and
                         turn['turn_id'] in summary.get('requested_turns', [])):
-                    self._save('turn', merge_history_phase(turn, source_turns.get(turn['id'])))
+                    self._save('turn', merge_history_phase(turn, source_turns.get(turn['id']),
+                                                         read_complete=summary.get('read_complete', False)))
             for turn in summary.get('turns', []):
                 old = self.turns.get(turn['id'])
                 if old and turn['status'] in ('completed', 'failed', 'interrupted'):
@@ -279,7 +282,7 @@ class TimelineBook:
             return
         key = identity('turn', scope, thread, turn)
         old = self.turns.get(key, {})
-        basis = old.get('observation', old)
+        basis = old
         record = {**basis, 'id': key, 'scope_id': scope, 'thread_id': thread, 'turn_id': turn,
                   'status': state or basis.get('status', 'unknown'), 'updated_ms': at,
                   'observation_backend': self.current_backend,

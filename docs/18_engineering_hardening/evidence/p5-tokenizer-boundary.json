@@ -1,0 +1,41 @@
+{
+  "version": 1,
+  "note": "Isolated subprocess probe with a 3-second wall deadline including tokenizer initialization; not a production deadline.",
+  "cases": [
+    {
+      "pattern": "space",
+      "utf8_bytes": 1048576,
+      "wall_ms": 231.72912513837218,
+      "exit": 0,
+      "outcome": {
+        "error_type": "PanicException",
+        "message": "called `Result::unwrap()` on an `Err` value: RuntimeError(StackOverflow)",
+        "is_exception": false
+      }
+    },
+    {
+      "pattern": "ascii",
+      "utf8_bytes": 8388608,
+      "wall_ms": 2147.526750108227,
+      "exit": 0,
+      "outcome": {
+        "tokens_and_cost_ms": [
+          1048576,
+          1927.8197921812534
+        ]
+      }
+    },
+    {
+      "pattern": "han",
+      "utf8_bytes": 8388606,
+      "wall_ms": 705.3006670903414,
+      "exit": 0,
+      "outcome": {
+        "tokens_and_cost_ms": [
+          2796202,
+          509.7450839821249
+        ]
+      }
+    }
+  ]
+}

@@ -26,35 +26,36 @@ struct InputPopoverRequest: Identifiable {
         loading = true; error = nil
         defer { if token == serial { loading = false } }
         do {
-            let value = try await client.detail(phase: phase, section: nil, offset: 0).validated(for: phase)
+            let value = try await client.detail(phase: phase, page: nil).validated(for: phase)
             guard !Task.isCancelled, token == serial else { return }
-            detail = value
+            detail = try value.reconcilingRefresh(from: detail, reload: true)
         } catch {
             guard !Task.isCancelled, token == serial else { return }
-            self.error = "暂时无法读取活动内容"
+            self.error = queryFailureKey(error, fallback: "暂时无法读取活动内容")
         }
     }
 
     func loadMore() async {
-        guard !loading, let section = detail?.sections.first(where: { $0.next_offset != nil }),
-              let offset = section.next_offset else { return }
+        guard !loading, let cursor = detail?.pageCursor() else { return }
         serial += 1
         let token = serial
         loading = true; error = nil
         defer { if token == serial { loading = false } }
         do {
-            let value = try await client.detail(phase: phase, section: section.id, offset: offset).validated(for: phase)
+            let value = try await client.detail(phase: phase, page: cursor)
             guard !Task.isCancelled, token == serial, let prior = detail else { return }
-            detail = try prior.appendingPage(value, sectionID: section.id, offset: offset)
+            detail = try prior.appendingPage(value, cursor: cursor)
         } catch {
             guard !Task.isCancelled, token == serial else { return }
-            self.error = "暂时无法读取更多内容"
+            self.error = queryFailureKey(error, fallback: "暂时无法读取更多内容")
         }
     }
 
     var notice: String? {
         guard let detail else { return nil }
+        if detail.version == 1 && detail.requiresReload { return "当前来源不支持继续加载，请更新 Monitor 后重新读取。" }
         switch detail.state {
+        case "content_changed": return "源内容已变化。保留已加载内容，请重新读取。"
         case "available": return nil
         case "source_truncated": return "来源已截断，以下是 Codex 保留的全部可用内容。"
         case "not_retained": return "这段未完成的内容未被 Codex 历史保留。"
@@ -109,13 +110,13 @@ struct InputPopoverView: LocalizedView {
                     }.frame(maxWidth: .infinity, alignment: .leading)
                 }.frame(maxHeight: 220).fixedSize(horizontal: false, vertical: true)
                     .accessibilityIdentifier("monitor.input.content")
-                if detail.sections.contains(where: { $0.next_offset != nil }) {
+                if detail.pageCursor() != nil {
                     Button(L("继续加载完整内容")) { action = .next(version + 1) }.disabled(store.loading)
                 }
             }
             if let notice = store.notice { Text(L(notice)).font(.system(size: 10)).foregroundStyle(.secondary) }
             if let error = store.error { Text(L(error)).foregroundStyle(.secondary) }
-            if store.error != nil || (store.detail != nil && store.detail?.state != "available") {
+            if store.error != nil || store.detail?.requiresReload == true || (store.detail != nil && store.detail?.state != "available") {
                 Button(L("重新读取")) { action = .refresh(version + 1) }.disabled(store.loading)
             }
         }

@@ -1,0 +1,27 @@
+{
+  "version": 1,
+  "python": "3.14.7",
+  "platform": "Darwin",
+  "mode": "full",
+  "source_rows": 48004,
+  "source_bytes": 90853184,
+  "turns": 1,
+  "phases": 48000,
+  "requested_items": null,
+  "directory_ms": 1064.8872500751168,
+  "first_summary_instrumented_ms": 6682.5463748537,
+  "first_summary_peak_allocated_bytes": 134402414,
+  "returned_phases": 48000,
+  "bounded_packet_bytes": null,
+  "hot_summary_ms": 1975.9558339137584,
+  "append_summary_ms": 1605.8229999616742,
+  "cache": {
+    "indices": 1,
+    "cache_bytes": 4977670,
+    "max_cache_bytes": 67108864,
+    "evictions": 5,
+    "measured_monotonic": 1155308.269215166
+  },
+  "note": "Synthetic single giant turn; first summary uses tracemalloc, hot/append do not. Directory built separately; no real collector or GUI.",
+  "benchmark_peak_rss_bytes": 328499200
+}

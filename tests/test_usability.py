@@ -179,9 +179,13 @@ class UsabilityTests(unittest.TestCase):
         self.assertIn('en', CATALOGS)
 
     def test_cli_once_and_published_english(self):
-        with tempfile.TemporaryDirectory() as tmp:
+        with tempfile.TemporaryDirectory(dir='/tmp') as tmp:
             runtime = Path(tmp)
-            atomic_json(runtime/'snapshot.json', self.snapshot(103))
+            from codex_progress_monitor.state_transport import StateServer
+            from codex_progress_monitor.publication import DetachedSnapshot
+            server=StateServer(runtime/'state.sock')
+            self.addCleanup(server.close)
+            server.publish(DetachedSnapshot.capture({**self.snapshot(103), 'running': True}))
             output = io.StringIO()
             with patch('sys.stdout', output):
                 self.assertEqual(main(['--runtime', tmp, 'watch', '--once', '--lang', 'zh-CN']), 0)
@@ -252,12 +256,12 @@ from codex_progress_monitor.i18n import register_catalog
 from codex_progress_monitor.messages_zh_cn import MESSAGES
 register_catalog('test-en', dict(MESSAGES))
 runtime=Path(sys.argv[1])
-read=display.read_snapshot
+read=display.current_state
 def tracked(path):
     with (runtime/'reads.log').open('a') as out:
         out.write(str(time.monotonic())+'\\n')
     return read(path)
-display.read_snapshot=tracked
+display.current_state=tracked
 display.watch(runtime)
 '''
             process = subprocess.Popen([sys.executable, '-c', script, tmp], cwd=ROOT,

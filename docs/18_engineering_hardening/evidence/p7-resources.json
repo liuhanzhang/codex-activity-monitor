@@ -1,0 +1,136 @@
+{
+  "version": 1,
+  "label": "p7-budgets",
+  "seed": 20261023,
+  "python": "3.14.7",
+  "platform": "Darwin",
+  "machine": "arm64",
+  "index": [
+    {
+      "turns": 100,
+      "phases": 400,
+      "source_rows": 602,
+      "items_per_turn": 4,
+      "repetitions": 10,
+      "source_bytes": 771961,
+      "cold_index_ms": 18.828999949619174,
+      "hot_view_ms": {
+        "p50": 0.24785404093563557,
+        "p95": 0.36445795558393
+      },
+      "hot_view_returned_phases": 4,
+      "hot_view_peak_allocated_bytes": 139666,
+      "hot_view_remaining_allocated_bytes": 5180,
+      "append_and_view_ms": 12.645209208130836,
+      "cache": {
+        "indices": 1,
+        "cache_bytes": 653699,
+        "max_cache_bytes": 67108864,
+        "evictions": 0,
+        "measured_monotonic": 1150007.995255583
+      }
+    },
+    {
+      "turns": 1000,
+      "phases": 4000,
+      "source_rows": 6002,
+      "items_per_turn": 4,
+      "repetitions": 10,
+      "source_bytes": 7728062,
+      "cold_index_ms": 132.7739160042256,
+      "hot_view_ms": {
+        "p50": 0.9176044259220362,
+        "p95": 1.3386658392846584
+      },
+      "hot_view_returned_phases": 4,
+      "hot_view_peak_allocated_bytes": 139610,
+      "hot_view_remaining_allocated_bytes": 5124,
+      "append_and_view_ms": 42.53412480466068,
+      "cache": {
+        "indices": 1,
+        "cache_bytes": 6440383,
+        "max_cache_bytes": 67108864,
+        "evictions": 0,
+        "measured_monotonic": 1150008.211380208
+      }
+    }
+  ],
+  "counter": {
+    "streams": 256,
+    "text_bytes_per_stream": 65536,
+    "submit_ms": 0.1848749816417694,
+    "blocked_tasks_after_tick": 2,
+    "blocked_tasks_after_model_changes": 2,
+    "blocked_input_bytes_after_model_changes": 131072,
+    "diagnostics": {
+      "jobs": 2,
+      "pending_bytes": 131072,
+      "max_jobs": 2,
+      "max_pending_bytes": 16777216,
+      "peak_jobs": 2,
+      "peak_pending_bytes": 131072,
+      "budget_deferrals": 766
+    },
+    "note": "Blocked synthetic counter; input bytes inferred from equal-size work, not Python RSS."
+  },
+  "tokenizer": {
+    "65536": {
+      "actual_utf8_bytes": 65536,
+      "count_ms": 1.4904998242855072
+    },
+    "1048576": {
+      "actual_utf8_bytes": 1048576,
+      "count_ms": 23.675499949604273
+    }
+  },
+  "snapshot": {
+    "chats": 100,
+    "activities": 800,
+    "copy_ms": 0.680082943290472,
+    "json_encode_ms": 0.2681249752640724,
+    "json_bytes": 43003
+  },
+  "events": {
+    "turns": 1000,
+    "events": 5000,
+    "wall_seconds": 0.14649783307686448,
+    "batch_ms": {
+      "p50": 0.14370796270668507,
+      "p95": 0.15958305448293686,
+      "p99": 0.17358292825520039
+    },
+    "max_streams": 21,
+    "max_items": 20,
+    "identity_budget": {
+      "entries": 2002,
+      "terminal_entries": 2000,
+      "identity_bytes": 7782,
+      "max_identity_bytes": 8388608,
+      "max_entries": 65536,
+      "admission_closed": false
+    },
+    "identity_ledger_heap_bytes": 262146,
+    "note": "Synthetic accelerated turns, synchronous small counts; not a natural soak or GUI draw measurement."
+  },
+  "metadata": {
+    "narrow_records": 20000,
+    "wide_records": 2000,
+    "producer_ms": 74.33295878581703,
+    "recovery_drain_ms": 13.418416026979685,
+    "blocked_diagnostics": {
+      "pending_records": 156,
+      "pending_bytes": 479388,
+      "inflight_records": 1,
+      "inflight_bytes": 43,
+      "max_pending_records": 4096,
+      "max_pending_bytes": 2097152,
+      "peak_pending_records": 4096,
+      "peak_pending_bytes": 2095786,
+      "queue_resets": 7,
+      "discarded_records": 21844
+    },
+    "derived_database_bytes": 651264,
+    "note": "Synthetic blocked metadata write; overflow invalidates only the derived sidecar."
+  },
+  "benchmark_peak_rss_bytes": 148668416
+}

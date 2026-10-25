@@ -999,6 +999,22 @@
     }
   },
   {
+    "expected": "Monitor 与后台版本不兼容，请更新并重开 Monitor。",
+    "language": "zh-CN",
+    "message": {
+      "key": "control.gui_upgrade_required",
+      "params": {}
+    }
+  },
+  {
+    "expected": "实时状态通道暂不可用，请重试；仍存活的采集器不会重复启动。",
+    "language": "zh-CN",
+    "message": {
+      "key": "control.state_unavailable",
+      "params": {}
+    }
+  },
+  {
     "expected": "无法读取启动配置：原始内容.py",
     "language": "zh-CN",
     "message": {
@@ -2443,6 +2459,22 @@
       "params": {
         "value": "原始内容.py"
       }
+    }
+  },
+  {
+    "expected": "Monitor and its backend are incompatible. Update and reopen Monitor.",
+    "language": "en",
+    "message": {
+      "key": "control.gui_upgrade_required",
+      "params": {}
+    }
+  },
+  {
+    "expected": "Live state is temporarily unavailable. Try again; an owned collector will not be started twice.",
+    "language": "en",
+    "message": {
+      "key": "control.state_unavailable",
+      "params": {}
     }
   },
   {

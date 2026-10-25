@@ -16,7 +16,7 @@ private actor ControlledTimelineClient: TimelineReading {
             for observer in observers.removeValue(forKey: key) ?? [] { observer.resume() }
         }
     }
-    func detail(phase: TimelinePhase, section: String?, offset: Int) async throws -> ActivityDetail {
+    func detail(phase: TimelinePhase, page: ActivityPageCursor?) async throws -> ActivityDetail {
         try await withCheckedThrowingContinuation { continuation in
             details[phase.id] = continuation
             for observer in observers.removeValue(forKey: phase.id) ?? [] { observer.resume() }
@@ -28,6 +28,10 @@ private actor ControlledTimelineClient: TimelineReading {
     }
     func resolve(_ key: String, bundle: TimelineBundle) { timelines.removeValue(forKey: key)?.resume(returning: bundle) }
     func resolve(_ key: String, detail: ActivityDetail) { details.removeValue(forKey: key)?.resume(returning: detail) }
+    func fail(_ key: String, error: any Error) {
+        timelines.removeValue(forKey: key)?.resume(throwing: error)
+        details.removeValue(forKey: key)?.resume(throwing: error)
+    }
 }
 
 private func bundle(_ turn: String) throws -> TimelineBundle {
@@ -301,12 +305,30 @@ private func phase(_ id: String) throws -> TimelinePhase {
 
 private func rawDetail(_ text: String, for id: String, offset: Int = 0,
                        next: Int? = nil, state: String = "available") throws -> ActivityDetail {
-    let value: [String: Any] = ["version": 1, "state": state, "source": "codex_history", "attachments": [],
+    let value: [String: Any] = ["version": 2, "state": state, "source": "codex_history", "attachments": [],
         "phase": ["id": id, "scope_id": "scope", "thread_id": "root", "turn_id": "turn", "item_id": id,
                   "namespace": "model", "track": "model", "kind": "text", "label": "正文", "status": "completed"],
         "sections": state == "available" ? [["id": "input", "title": "参数", "format": "text", "text": text,
-            "offset": offset, "next_offset": next as Any? ?? NSNull()]] : []]
+            "offset": offset, "total_chars": next == nil ? offset + text.unicodeScalars.count : 11,
+            "page_token": "fixture-input", "next_offset": next as Any? ?? NSNull()]] : []]
     return try JSONDecoder().decode(ActivityDetail.self, from: JSONSerialization.data(withJSONObject: value))
+}
+
+@Test @MainActor func structuredQueryLimitKeepsTimelineAndReadContent() async throws {
+    let client = ControlledTimelineClient()
+    let store = TimelineStore(scope: "scope", thread: "root", title: "test", client: client)
+    store.bundle = try bundle("new"); store.selectedTurn = "new"; store.scrollOffset = 42
+    let failure = BackendFailure(message: "", presentationKey: "所选内容过多，暂时无法一次载入。")
+    let refresh = Task { await store.refresh() }
+    await client.waitFor("current"); await client.fail("current", error: failure); await refresh.value
+    #expect(store.bundle?.selected_turn_id == "new" && store.scrollOffset == 42)
+    #expect(store.error == failure.presentationKey)
+    let viewer = ActivityViewerStore(timeline: store, phase: try phase("a"))
+    viewer.detail = try rawDetail("kept", for: "a")
+    let read = Task { await viewer.refresh() }
+    await client.waitFor("a"); await client.fail("a", error: failure); await read.value
+    #expect(viewer.detail?.sections[0].text == "kept")
+    #expect(viewer.error == failure.presentationKey)
 }
 
 @Test @MainActor func multipleDetailsKeepIndependentFailurePagingAndClickedMembership() async throws {

@@ -96,6 +96,27 @@ public struct Snapshot: Decodable, Sendable {
     public let threads: [Chat]
     public let backends: [String: Backend]?
 
+    public let projection: SnapshotProjection
+
+    private enum CodingKeys: String, CodingKey {
+        case schema_version, updated_at, running, overview, menu_presentation, timeline_summary, threads, backends
+    }
+
+    public init(from decoder: any Decoder) throws {
+        let values = try decoder.container(keyedBy: CodingKeys.self)
+        schema_version = try values.decode(Int.self, forKey: .schema_version)
+        guard schema_version == 1 else { throw SnapshotError.unsupportedVersion }
+        updated_at = try values.decodeIfPresent(Double.self, forKey: .updated_at)
+        running = try values.decodeIfPresent(Bool.self, forKey: .running)
+        overview = try values.decodeIfPresent(Overview.self, forKey: .overview)
+        menu_presentation = try values.decodeIfPresent(MenuPresentation.self, forKey: .menu_presentation)
+        timeline_summary = try values.decodeIfPresent(TimelineSummary.self, forKey: .timeline_summary)
+        threads = try values.decode([Chat].self, forKey: .threads)
+        backends = try values.decodeIfPresent([String: Backend].self, forKey: .backends)
+        guard Set(threads.map(\.id)).count == threads.count else { throw SnapshotError.duplicateIdentity }
+        projection = SnapshotProjection(threads: threads)
+    }
+
     public static func decode(_ data: Data) throws -> Self {
         let value = try JSONDecoder().decode(Self.self, from: data)
         guard value.schema_version == 1 else { throw SnapshotError.unsupportedVersion }
@@ -108,15 +129,15 @@ public struct Snapshot: Decodable, Sendable {
         return age >= -5 && age < 3
     }
 
-    public func menuTitle(at date: Date = Date()) -> String {
-        guard isFresh(at: date), let overview, overview.version == 1,
+    public func menuTitle(at date: Date = Date(), connectionFresh: Bool? = nil) -> String {
+        guard connectionFresh ?? isFresh(at: date), let overview, overview.version == 1,
               overview.coverage == "complete", let rate = overview.generation_rate,
               rate.isFinite, rate >= 0 else { return "—" }
         return MetricFormat.speed(rate)
     }
 
-    public func menuMode(at date: Date = Date()) -> MenuMode {
-        guard menuTitle(at: date) != "—" else { return .unavailable }
+    public func menuMode(at date: Date = Date(), connectionFresh: Bool? = nil) -> MenuMode {
+        guard menuTitle(at: date, connectionFresh: connectionFresh) != "—" else { return .unavailable }
         guard let presentation = menu_presentation else { return .speed }
         guard presentation.version == 1, presentation.active_conversation_count >= 0,
               let mode = MenuMode(rawValue: presentation.mode), mode != .idle else { return .unavailable }
@@ -138,6 +159,7 @@ public struct Snapshot: Decodable, Sendable {
     }
 
     public var observationNotice: ObservationNotice? {
+        if overview?.version == 1, overview?.quality?.contains("identity_budget") == true { return .resourceLimit }
         guard backends?.values.contains(where: { $0.connected == true }) == true else { return .waitingForConnection }
         guard let overview, overview.version == 1 else { return .totalUnavailable }
         guard overview.coverage != "complete" else { return nil }
@@ -148,109 +170,16 @@ public struct Snapshot: Decodable, Sendable {
         return .streamUnavailable
     }
 
-    public var displayedChats: [Chat] { grouped.members }
-    public var rootChats: [Chat] { grouped.roots }
-    public var unassignedChats: [Chat] { grouped.unassigned }
-
-    public func children(of parent: Chat) -> [Chat] {
-        let data = grouped
-        return data.members.filter { data.edges[$0.id] == parent.id }
-    }
-
-    public func hasActiveWork(in root: Chat) -> Bool {
-        let data = grouped
-        return data.members.contains { $0.has_active_work == true && Self.belongs($0.id, to: root.id, edges: data.edges) }
-    }
-
-    private static func belongs(_ child: String, to ancestor: String, edges: [String: String]) -> Bool {
-        var cursor: String? = child
-        while let id = cursor {
-            if id == ancestor { return true }
-            cursor = edges[id]
-        }
-        return false
-    }
-
-    // Older snapshots omit the flag. Hide only explicitly ephemeral threads.
-    private var listChats: [Chat] { threads.filter { $0.ephemeral != true } }
-
-    private var grouped: (members: [Chat], roots: [Chat], unassigned: [Chat], edges: [String: String]) {
-        let chats = listChats
-        let edges = parentMap
-        var eligible = Set(chats.filter { $0.visible != false }.map(\.id))
-        // Hidden/expired ancestors are context for visible descendants, never
-        // additional independently recent conversations.
-        for id in Array(eligible) {
-            var cursor = edges[id]
-            while let parent = cursor { eligible.insert(parent); cursor = edges[parent] }
-        }
-        let candidates = chats.filter { eligible.contains($0.id) && edges[$0.id] == nil }
-        func members(_ root: Chat) -> [Chat] {
-            chats.filter { eligible.contains($0.id) && Self.belongs($0.id, to: root.id, edges: edges) }
-        }
-        func active(_ root: Chat) -> Bool { members(root).contains { $0.has_active_work == true } }
-        func age(_ root: Chat) -> Double {
-            members(root).compactMap { $0.last_progress_seconds }.min() ?? .infinity
-        }
-        func recent(_ root: Chat) -> Bool {
-            age(root) < 600 && members(root).contains { $0.isTerminal }
-        }
-        let main = candidates.filter { !$0.isKnownSubagent }
-        let roots = main.filter(active) + main.filter { !active($0) && recent($0) }
-            .sorted { age($0) < age($1) }.prefix(10)
-        let uncertain = candidates.filter(\.isKnownSubagent)
-        let unassigned = uncertain.filter(active) + uncertain.filter {
-            !active($0) && age($0) < 600 && members($0).contains { $0.status != "idle" }
-        }
-            .sorted { age($0) < age($1) }.prefix(10)
-        let selected = roots + unassigned
-        let visible = chats.filter { chat in selected.contains { Self.belongs(chat.id, to: $0.id, edges: edges) } }
-        return (visible, roots, unassigned, edges)
-    }
-
-    private var parentMap: [String: String] {
-        let chats = listChats
-        var edges: [String: String] = [:]
-        let spawnOperations: Set<String> = ["spawnAgent", "spawn_agent", "spawn"]
-        for child in chats where child.thread_source != "user" && !(child.parent_quality ?? []).contains("parent_identity_conflict") {
-            let parents = chats.filter { parent in
-                parent.scope == child.scope && parent.id != child.id &&
-                    (child.parent_thread_id == parent.threadID ||
-                     (child.parent_thread_id == nil && spawnOperations.contains(parent.subagents?[child.threadID] ?? "")))
-            }
-            if parents.count == 1 { edges[child.id] = parents[0].id }
-        }
-        let original = edges
-        for (child, parent) in original {
-            var seen: Set<String> = [child]
-            var cursor: String? = parent
-            while let current = cursor, !seen.contains(current) {
-                seen.insert(current); cursor = original[current]
-            }
-            if cursor != nil { edges.removeValue(forKey: child) }
-        }
-        return edges
-    }
-
-    public func rows(expanded: Set<String>) -> [ChatRow] {
-        rows(roots: rootChats, expanded: expanded)
-    }
-
+    public var displayedChats: [Chat] { projection.initial.members }
+    public var rootChats: [Chat] { projection.initial.roots }
+    public var unassignedChats: [Chat] { projection.initial.unassigned }
+    public func children(of parent: Chat) -> [Chat] { projection.children(of: parent) }
+    public func hasActiveWork(in root: Chat) -> Bool { projection.hasActiveWork(in: root) }
+    public func rows(expanded: Set<String>) -> [ChatRow] { projection.rows(roots: rootChats, expanded: expanded) }
     public func rows(roots: [Chat], expanded: Set<String>, order: [String: Int] = [:]) -> [ChatRow] {
-        let edges = parentMap
-        let chats = displayedChats
-        var result: [ChatRow] = []
-        func append(_ chat: Chat, depth: Int) {
-            result.append(ChatRow(chat: chat, depth: depth))
-            if expanded.contains(chat.id) {
-                for child in chats.filter({ edges[$0.id] == chat.id }).sorted(by: {
-                    (order[$0.id] ?? Int.max) < (order[$1.id] ?? Int.max)
-                }) { append(child, depth: depth + 1) }
-            }
-        }
-        for chat in roots { append(chat, depth: 0) }
-        return result
+        projection.rows(roots: roots, expanded: expanded, order: order)
     }
+
 }
 
 public enum ObservationNotice: String, Sendable {
@@ -260,6 +189,7 @@ public enum ObservationNotice: String, Sendable {
     case identityConflict = "NoticeIdentityConflict"
     case associatingEvents = "NoticeAssociatingEvents"
     case streamUnavailable = "NoticeStreamUnavailable"
+    case resourceLimit = "NoticeObservationResourceLimit"
 }
 
 public struct ChatRow: Identifiable, Sendable {
@@ -268,12 +198,12 @@ public struct ChatRow: Identifiable, Sendable {
     public var id: String { chat.id }
 }
 
-public enum SnapshotError: Error { case unsupportedVersion }
+public enum SnapshotError: Error { case unsupportedVersion, duplicateIdentity }
 
 public struct Backend: Decodable, Sendable {
     public let connected: Bool?
     public let implementation: Implementation?
-    public var supportsObservationLease: Bool { implementation?.modules?["app_session"] != nil }
+    public var supportsObservationLease: Bool { implementation?.modules?["observer_permit"] != nil }
 }
 
 public struct Implementation: Decodable, Sendable {

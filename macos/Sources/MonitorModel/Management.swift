@@ -4,7 +4,9 @@ public struct ObservationLease: Codable, Sendable {
     public var version: Int
     public var id: String
     public var owner_pid: Int32
-    public var heartbeat_at: Double
+    public var heartbeat_at: Double?
+    public let created_at: Double?
+    public let secret: String?
     public var active: Bool
 }
 
@@ -25,6 +27,7 @@ public struct ManagementState: Decodable, Sendable {
     public let display_message: DisplayMessage?
     public let language: String?
     public let session: ObservationLease?
+    public let bridge_restart_required: Bool?
 
     public var configured: Bool { state == "configured" }
     public var waitingForCleanup: Bool { state == "pending_cleanup" || state == "restoring" }

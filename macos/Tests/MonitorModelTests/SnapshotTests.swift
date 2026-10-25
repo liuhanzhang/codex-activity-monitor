@@ -36,6 +36,14 @@ import Testing
     #expect(throws: (any Error).self) { try Snapshot.decode(Data("{\"schema_version\":9,\"threads\":[]}".utf8)) }
 }
 
+@Test func exhaustedObservationKeepsAnActionableNoticeWithoutALiveBackend() throws {
+    let value = try Snapshot.decode(Data("""
+        {"schema_version":1,"threads":[],"overview":{"version":1,"coverage":"unavailable","quality":["identity_budget"]}}
+        """.utf8))
+    #expect(value.observationNotice == .resourceLimit)
+    #expect(value.menuMode(connectionFresh: true) == .unavailable)
+}
+
 private func hierarchy(_ rows: String) throws -> Snapshot {
     try Snapshot.decode(Data("{\"schema_version\":1,\"threads\":[\(rows)]}".utf8))
 }
@@ -118,7 +126,7 @@ private func hierarchy(_ rows: String) throws -> Snapshot {
 
 @Test func oldBridgesDoNotClaimPauseCapability() throws {
     let old = try JSONDecoder().decode(Backend.self, from: Data("{\"connected\":true}".utf8))
-    let current = try JSONDecoder().decode(Backend.self, from: Data("{\"connected\":true,\"implementation\":{\"modules\":{\"app_session\":\"hash\"}}}".utf8))
+    let current = try JSONDecoder().decode(Backend.self, from: Data("{\"connected\":true,\"implementation\":{\"modules\":{\"observer_permit\":\"hash\"}}}".utf8))
     #expect(!old.supportsObservationLease)
     #expect(current.supportsObservationLease)
 }
@@ -136,6 +144,7 @@ private func hierarchy(_ rows: String) throws -> Snapshot {
         ("", .totalUnavailable),
         (",\"overview\":{\"version\":1,\"coverage\":\"complete\"}", nil),
         (",\"overview\":{\"version\":1,\"coverage\":\"partial\",\"quality\":[\"observation_gap\"]}", .observationGap),
+        (",\"overview\":{\"version\":1,\"coverage\":\"unavailable\",\"quality\":[\"identity_budget\"]}", .resourceLimit),
         (",\"overview\":{\"version\":1,\"coverage\":\"unavailable\",\"quality\":[\"multiple_active_backends\"]}", .identityConflict),
         (",\"overview\":{\"version\":1,\"coverage\":\"partial\",\"quality\":[\"unassociated_events\"]}", .associatingEvents),
         (",\"overview\":{\"version\":1,\"coverage\":\"partial\"}", .streamUnavailable)

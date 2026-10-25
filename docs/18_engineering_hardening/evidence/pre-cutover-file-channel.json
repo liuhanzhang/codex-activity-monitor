@@ -1,0 +1,22 @@
+{
+  "version": 1,
+  "kind": "read-only pre-cutover old file-channel sample",
+  "sampled_at_utc": "2026-10-23T13:48:29.125216+00:00",
+  "sample_seconds": 20.06730629201047,
+  "poll_seconds": 0.25,
+  "file_size_samples": 78,
+  "snapshot_bytes": {
+    "min": 2836,
+    "median": 2839.0,
+    "max": 2840
+  },
+  "observed_file_replacements_or_updates": 18,
+  "collector_lock_owned": true,
+  "collector_startup_source_sha256": "af48555a645dc437fc850111a991896233b21e17d1f3c06e5a3e75945f275fda",
+  "collector_startup_module_count": 22,
+  "advertised_state_protocol": null,
+  "original_p0_probe_publication_outcomes": {
+    "True": 3607
+  },
+  "note": "Current resident old file-channel collector includes P0 semantic changes; this is not an untouched c3996dc measurement. File-update count is a polling lower bound, not all writes. P0 publication outcomes are counted from the original retained probe metadata, not reconstructed from this sample. No source content, chat IDs or runtime files are exported or changed."
+}

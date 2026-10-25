@@ -1,6 +1,8 @@
 """Structured management errors; codes and source diagnostics stay stable."""
 
 ZH = {'control.invalid_record': '无法读取管理记录：{value}',
+ 'control.gui_upgrade_required': 'Monitor 与后台版本不兼容，请更新并重开 Monitor。',
+ 'control.state_unavailable': '实时状态通道暂不可用，请重试；仍存活的采集器不会重复启动。',
  'control.environment_read_failed': '无法读取启动配置：{value}',
  'control.environment_format': '启动配置格式无法确认：{value}',
  'control.environment_write_failed': '无法恢复或设置启动配置：{value}',
@@ -42,6 +44,8 @@ ZH = {'control.invalid_record': '无法读取管理记录：{value}',
  'control.preference_missing': '缺少登录启动选项。'}
 
 EN = {'control.invalid_record': 'Cannot read management record: {value}',
+ 'control.gui_upgrade_required': 'Monitor and its backend are incompatible. Update and reopen Monitor.',
+ 'control.state_unavailable': 'Live state is temporarily unavailable. Try again; an owned collector will not be started twice.',
  'control.environment_read_failed': 'Cannot read launch setting: {value}',
  'control.environment_format': 'Unrecognized launch setting format: {value}',
  'control.environment_write_failed': 'Cannot restore or set launch setting: {value}',

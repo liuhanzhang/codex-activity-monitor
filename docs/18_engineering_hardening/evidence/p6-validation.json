@@ -1,0 +1,168 @@
+{
+  "version": 1,
+  "baseline": "c3996dc / p0-baseline.json",
+  "scope": "synthetic Swift debug benchmark; not native draw or a natural soak",
+  "getters": {
+    "build": "swift-test-debug",
+    "checksum": 1886,
+    "fixture": "three-member-groups",
+    "samples": [
+      {
+        "chats": 10,
+        "getter_batch_ms": [
+          0.009041,
+          0.003541,
+          0.003334,
+          0.004083,
+          0.003541,
+          0.003208,
+          0.003291,
+          0.003208,
+          0.00325,
+          0.003333
+        ],
+        "repetitions": 10,
+        "snapshot_bytes": 1456
+      },
+      {
+        "chats": 100,
+        "getter_batch_ms": [
+          0.004167,
+          0.0035,
+          0.003459
+        ],
+        "repetitions": 3,
+        "snapshot_bytes": 14624
+      },
+      {
+        "chats": 300,
+        "getter_batch_ms": [
+          0.004417,
+          0.003417,
+          0.003375
+        ],
+        "repetitions": 3,
+        "snapshot_bytes": 44246
+      }
+    ]
+  },
+  "construction": {
+    "build": "swift-test-debug",
+    "samples": [
+      {
+        "ancestor_steps": 0,
+        "chats": 10,
+        "cycle_steps": 10,
+        "decode_and_projection_ms": [
+          0.724333,
+          0.229208,
+          0.217542,
+          0.217375,
+          0.255875
+        ],
+        "edges": 6,
+        "nodes": 10,
+        "parent_candidates": 6,
+        "process_peak_rss_bytes": 38912000,
+        "snapshot_bytes": 1236
+      },
+      {
+        "ancestor_steps": 0,
+        "chats": 100,
+        "cycle_steps": 100,
+        "decode_and_projection_ms": [
+          2.075125,
+          2.084,
+          2.154,
+          2.225166,
+          1.806333
+        ],
+        "edges": 66,
+        "nodes": 100,
+        "parent_candidates": 66,
+        "process_peak_rss_bytes": 42876928,
+        "snapshot_bytes": 12424
+      },
+      {
+        "ancestor_steps": 0,
+        "chats": 300,
+        "cycle_steps": 300,
+        "decode_and_projection_ms": [
+          5.121042,
+          5.174042,
+          5.1195,
+          5.0845,
+          5.1515
+        ],
+        "edges": 200,
+        "nodes": 300,
+        "parent_candidates": 200,
+        "process_peak_rss_bytes": 44089344,
+        "snapshot_bytes": 37646
+      },
+      {
+        "ancestor_steps": 0,
+        "chats": 3000,
+        "cycle_steps": 3000,
+        "decode_and_projection_ms": [
+          52.011875,
+          52.08575,
+          52.047,
+          51.441709,
+          51.229583
+        ],
+        "edges": 2000,
+        "nodes": 3000,
+        "parent_candidates": 2000,
+        "process_peak_rss_bytes": 63307776,
+        "snapshot_bytes": 381178
+      }
+    ]
+  },
+  "main_actor": {
+    "checksum": 22760,
+    "samples": [
+      {
+        "chats": 10,
+        "main_actor_presentation_ms": [
+          0.4295,
+          0.105542,
+          0.081167,
+          0.09975,
+          0.08125
+        ]
+      },
+      {
+        "chats": 100,
+        "main_actor_presentation_ms": [
+          0.550167,
+          0.491875,
+          0.496459,
+          0.521917,
+          0.559625
+        ]
+      },
+      {
+        "chats": 300,
+        "main_actor_presentation_ms": [
+          1.696458,
+          1.512208,
+          1.645042,
+          1.713666,
+          1.686292
+        ]
+      },
+      {
+        "chats": 3000,
+        "main_actor_presentation_ms": [
+          17.041333,
+          16.575375,
+          16.724958,
+          16.612291,
+          16.662833
+        ]
+      }
+    ],
+    "scope": "Dashboard presentation model and row flags; excludes SwiftUI/AppKit drawing"
+  }
+}

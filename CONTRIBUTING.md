@@ -1,6 +1,8 @@
 # Contributing
 
-Start with the [architecture and reading guide](docs/17_review_and_refactor/architecture.md). The [review](docs/17_review_and_refactor/review.md) explains known issues and the [release checklist](docs/17_review_and_refactor/review.md#发行前仍需完成) separates completed engineering work from remaining release work.
+Start with the [architecture and reading guide](docs/18_engineering_hardening/implemented-architecture.md). The [baseline review](docs/17_review_and_refactor/review.md) preserves the original findings and fixes. Current engineering work is tracked in [Chapter 18](docs/18_engineering_hardening/README.md); [release preparation](docs/18_engineering_hardening/requirements-and-decisions.md#发行准备与维护者决策) remains a separate acceptance scope.
+
+The [documentation index](docs/README.md) separates historical evidence from active plans. [Chapter 18](docs/18_engineering_hardening/README.md) tracks the six engineering improvements; its implementation record distinguishes validated behavior from designs and acceptance still in progress.
 
 ## Development
 

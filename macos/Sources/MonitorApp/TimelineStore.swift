@@ -50,7 +50,7 @@ final class TimelineStore {
         } catch is CancellationError { }
         catch {
             guard !Task.isCancelled, token == serial else { return }
-            self.error = "暂时无法读取轨迹"
+            self.error = queryFailureKey(error, fallback: "暂时无法读取轨迹")
         }
     }
 
@@ -129,53 +129,41 @@ final class ActivityViewerStore {
         followsContent = phase.isActive; timeline.selectedPhaseID = phase.id; timeline.selectedPhaseIDs = [phase.id]
     }
 
-    func refresh() async {
-        guard !loadingMore else { return }
+    func refresh(reload: Bool = false) async {
+        guard !loadingMore, reload || detail?.requiresReload != true else { return }
         serial += 1
         let token = serial, selected = phase
         do {
-            var next = try await timeline.client.detail(phase: selected, section: nil, offset: 0)
+            var next = try await timeline.client.detail(phase: selected, page: nil)
             guard !Task.isCancelled, !loadingMore, token == serial, phase.id == selected.id else { return }
             next = try next.validated(for: selected)
-            if let prior = detail, next.sections.isEmpty, !prior.sections.isEmpty,
-               next.state != "available", next.state != "no_content" {
-                next = next.retainingContent(from: prior)
-            }
-            if let prior = detail, prior.source == next.source, selected.status != "active" {
-                for i in next.sections.indices {
-                    if let old = prior.sections.first(where: { $0.id == next.sections[i].id }),
-                       old.text.count > next.sections[i].text.count, old.text.hasPrefix(next.sections[i].text) {
-                        next.sections[i] = old
-                    }
-                }
-            }
+            next = try next.reconcilingRefresh(from: detail, followsLive: followsContent && selected.isActive, reload: reload)
             detail = next; phase = next.phase ?? phase; error = nil
             if !next.sections.contains(where: { $0.id == selectedSection }) { selectedSection = next.sections.first?.id }
         } catch is CancellationError { }
         catch {
             guard !Task.isCancelled, token == serial else { return }
-            self.error = "暂时无法读取活动内容"
+            self.error = queryFailureKey(error, fallback: "暂时无法读取活动内容")
         }
     }
 
     func loadMore() async {
         guard !loadingMore, let prior = detail,
-              let section = prior.sections.first(where: { $0.id == selectedSection }),
-              let offset = section.next_offset else { return }
+              let cursor = prior.pageCursor(for: selectedSection) else { return }
         loadingMore = true
         serial += 1
-        let token = serial, selected = phase, sectionID = section.id
+        let token = serial, selected = phase
         defer { if token == serial { loadingMore = false } }
         do {
-            let next = try await timeline.client.detail(phase: selected, section: sectionID, offset: offset)
+            let next = try await timeline.client.detail(phase: selected, page: cursor)
             guard !Task.isCancelled, token == serial, phase.id == selected.id else { return }
-            detail = try prior.appendingPage(next.validated(for: selected), sectionID: sectionID, offset: offset)
+            detail = try prior.appendingPage(next, cursor: cursor)
             phase = next.phase ?? phase
             error = nil
         } catch is CancellationError { }
         catch {
             guard !Task.isCancelled, token == serial else { return }
-            self.error = "暂时无法读取更多内容"
+            self.error = queryFailureKey(error, fallback: "暂时无法读取更多内容")
         }
     }
 }

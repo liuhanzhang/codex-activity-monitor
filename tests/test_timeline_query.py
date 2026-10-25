@@ -47,15 +47,20 @@ class QueryTests(unittest.TestCase):
                  'turn_id': 'turn', 'phase_id': 'phase'}
         invalid = [None, [], 'timeline'] + [dict(valid, **change) for change in (
             {'thread_id': '../root'}, {'turn_id': []}, {'phase_id': []},
-            {'offset': -1}, {'offset': True}, {'offset': 1.5}, {'section_id': []})]
+            {'offset': -1}, {'offset': True}, {'offset': 1.5}, {'section_id': []},
+            {'action': 'timeline', 'phase_id': []})]
         for request in invalid:
             with self.subTest(request=request), self.assertRaises(ValueError):
                 query.query(request)
 
     def test_cli_string_offset_is_normalized(self):
         from codex_progress_monitor.timeline_query import validated_request
+        from codex_progress_monitor.content_version import SectionVersion
+        token = SectionVersion.create((self.scope, 'root', 'turn', 'phase', 'input'),
+            'codex_history', 'available', {'format': 'text', 'text': 'abcdef'}).token
         value = validated_request({'action': 'detail', 'scope_id': self.scope, 'thread_id': 'root',
-                                   'turn_id': 'turn', 'phase_id': 'phase', 'offset': '3'})
+                                   'turn_id': 'turn', 'phase_id': 'phase', 'section_id': 'input',
+                                   'offset': '3', 'page_token': token})
         self.assertEqual(value['offset'], 3)
 
     def test_detail_requires_the_requested_turn_even_for_historical_phase_id(self):

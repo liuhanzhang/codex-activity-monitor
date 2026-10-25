@@ -1,0 +1,119 @@
+{
+  "version": 1,
+  "baseline_commit": "c3996dc",
+  "environment": {
+    "macos": "27.0",
+    "architecture": "arm64",
+    "python": "3.14.7",
+    "swift": "6.4"
+  },
+  "evidence_kind": "instrumented natural observations and synthetic debug projection benchmark",
+  "runtime_identity": {
+    "gui_baseline_match": "c3996dc with one extra EOF newline in ActivityContent.swift",
+    "collector_at_probe_start": "baseline code; state.py EOF whitespace difference recorded"
+  },
+  "natural_turns": [
+    {
+      "sample": "natural-1",
+      "full_turn_seconds": 204.266,
+      "completion_to_publish_ms": 144.069,
+      "completion_to_draw_ms": 179.005,
+      "last_message_stream_seconds": 8.794,
+      "last_message_delta_to_draw_ms": 401.981,
+      "completion_ingest_lag_ms": 0.935,
+      "unavailable_snapshot_count": 7
+    },
+    {
+      "sample": "natural-2",
+      "full_turn_seconds": 146.84,
+      "completion_to_publish_ms": 154.065,
+      "completion_to_draw_ms": 172.308,
+      "last_message_stream_seconds": 0.548,
+      "last_message_delta_to_draw_ms": 347.946,
+      "completion_ingest_lag_ms": 0.766,
+      "unavailable_snapshot_count": 18
+    },
+    {
+      "sample": "natural-3",
+      "full_turn_seconds": 873.334,
+      "completion_to_publish_ms": 64.202,
+      "completion_to_draw_ms": 187.167,
+      "last_message_stream_seconds": 3.247,
+      "last_message_delta_to_draw_ms": 405.613,
+      "completion_ingest_lag_ms": 1.678,
+      "unavailable_snapshot_count": 20
+    }
+  ],
+  "engine_snapshot_cost": {
+    "samples": 13550,
+    "median_ms": 1.108,
+    "p95_ms": 2.493,
+    "max_ms": 113.723
+  },
+  "archive_publish_cost": {
+    "samples": 3607,
+    "median_ms": 4.602,
+    "p95_ms": 8.722,
+    "max_ms": 164.457
+  },
+  "history_apply_cost": {
+    "samples": 2928,
+    "median_ms": 1.705,
+    "p95_ms": 6.45,
+    "max_ms": 23.092
+  },
+  "gui_projection": {
+    "build": "swift-test-debug",
+    "checksum": 1886,
+    "fixture": "three-member-groups",
+    "samples": [
+      {
+        "chats": 10,
+        "getter_batch_ms": [
+          2.203958,
+          2.099541,
+          2.144125,
+          1.97075,
+          2.139625,
+          2.281,
+          2.175875,
+          2.410542,
+          2.070584,
+          2.1625
+        ],
+        "repetitions": 10,
+        "snapshot_bytes": 1456,
+        "median_ms": 2.153
+      },
+      {
+        "chats": 100,
+        "getter_batch_ms": [
+          153.61,
+          159.896292,
+          156.442542
+        ],
+        "repetitions": 3,
+        "snapshot_bytes": 14624,
+        "median_ms": 156.443
+      },
+      {
+        "chats": 300,
+        "getter_batch_ms": [
+          1363.9095,
+          1257.657625,
+          1336.178417
+        ],
+        "repetitions": 3,
+        "snapshot_bytes": 44246,
+        "median_ms": 1336.178
+      }
+    ]
+  },
+  "limits": [
+    "Three fully observed turns; not a long-run or fresh-machine acceptance.",
+    "The collector probe also runs a pre-CR engine, so these timings include diagnostic overhead.",
+    "AppKit draw is not a physical screen-presentation timestamp.",
+    "Unavailable intervals remain visible in the sample statistics; only end-of-turn latency was compared.",
+    "Only synthetic content and aggregate timings are exported; raw natural metadata remains ignored locally."
+  ]
+}

@@ -14,33 +14,17 @@ from .timeline import (
 )
 from .timeline_storage import metadata_path, read_records
 from .agent_presentation import present_agents, present_coordination, scoped_status
-from .agent_relations import SPAWN_OPERATIONS, thread_identity
+from .agent_relations import SPAWN_OPERATIONS
+from .content_version import DETAIL_VERSION, page_request, paginate
+from .history_read import HistoryChanged
+from .query_request import TimelineRequest
+from .query_response import encode_response, read_response, failure
+from .runtime import collector_alive
 
 
 def validated_request(value):
-    """Validate once at the read API boundary, including CLI string offsets."""
-    if not isinstance(value, dict):
-        raise ValueError('invalid_query')
-    action = value.get('action')
-    if action not in ('timeline', 'detail'):
-        raise ValueError('unsupported_query')
-    scope, thread = value.get('scope_id'), value.get('thread_id')
-    if (not isinstance(scope, str) or not 0 < len(scope) <= 4096 or '\x00' in scope
-            or not thread_identity(thread)):
-        raise ValueError('invalid_identity')
-    turn, phase, section = (value.get(key) for key in ('turn_id', 'phase_id', 'section_id'))
-    if turn is not None and not thread_identity(turn):
-        raise ValueError('invalid_turn')
-    if action == 'detail' and (not thread_identity(turn) or not thread_identity(phase)):
-        raise ValueError('invalid_phase')
-    if section is not None and not thread_identity(section):
-        raise ValueError('invalid_section')
-    offset = value.get('offset', 0)
-    if isinstance(offset, str) and len(offset) <= 20 and offset.isdecimal():
-        offset = int(offset)
-    if type(offset) is not int or not 0 <= offset <= 2**63 - 1:
-        raise ValueError('invalid_offset')
-    return {**value, 'offset': offset}
+    """Compatibility adapter for CLI/socket serialization; domain uses the DTO."""
+    return TimelineRequest.parse(value).wire()
 
 
 class TimelineQuery:
@@ -63,6 +47,15 @@ class TimelineQuery:
         return result
 
     def bundle(self, scope, thread, selected=None):
+        with self.history.lock:
+            for attempt in range(2):
+                try:
+                    return self._bundle(scope, thread, selected)
+                except HistoryChanged:
+                    if attempt:
+                        raise
+
+    def _bundle(self, scope, thread, selected=None):
         observed = self._observed(scope, thread)
         phases = {p['id']: p for p in observed['phases']}
         turns = {(t['thread_id'], t['turn_id']): t for t in observed['turns']}
@@ -78,42 +71,62 @@ class TimelineQuery:
         spawn_calls = {(p['thread_id'], p['turn_id'], p.get('call_id')) for p in phases.values()
                        if p.get('call_operation') == 'spawn'}
 
+        hydrated = set()
+
         def load(owner):
-            # Many relation records can refer to the same child. Refresh and
-            # merge each history once per query, including unavailable history.
+            # Load one light catalogue per owner. Completed phase metadata is
+            # fetched only after explicit turn ownership has been resolved.
             if owner in loaded:
                 return loaded[owner]
             loaded[owner] = None
             try:
-                index = self.history.view(scope, owner)
+                index = self.history.index(scope, owner, directory_only=True)
                 if not index:
                     return None
                 revisions.append(index.revision)
                 quality.update(index.quality)
-                for key, p in list(phases.items()):
-                    if p['thread_id'] == owner:
-                        phases[key] = merge_history_phase(p, index.phases.get(key))
-                for p in index.phases.values():
-                    if p['id'] not in phases:
-                        phases[p['id']] = p
-                    if p.get('call_operation') == 'spawn':
-                        spawn_calls.add((p['thread_id'], p['turn_id'], p.get('call_id')))
-                settled = settled_model_items(index.turns.values(), index.phases.values(),
-                                              read_complete=index.read_complete, quality=index.quality)
-                for key, phase in list(phases.items()):
-                    if phase['thread_id'] == owner:
-                        phases[key] = apply_model_membership(phase, settled)
+                if not index.read_complete:
+                    quality.add('history_incomplete')
                 for key, old in list(turns.items()):
                     if key[0] == owner:
-                        turns[key] = merge_history_phase(old, index.turns.get(key[1]))
+                        turns[key] = merge_history_phase(old, index.turns.get(key[1]), read_complete=index.read_complete)
                 for t in index.turns.values():
-                    turns.setdefault((owner, t['turn_id']), t)
-                relations.update(index.relations)
+                    turns.setdefault((owner, t['turn_id']), dict(t))
+                for p in index.phases.values():
+                    phases[p['id']] = merge_history_phase(phases.get(p['id']), p, read_complete=index.read_complete)
+                spawn_calls.update((owner, turn, call) for turn, call in index.spawn_calls)
+                relations.update({key: dict(value) for key, value in index.relations.items()})
                 loaded[owner] = index
                 return index
+            except HistoryChanged:
+                raise
             except (OSError, ValueError, TypeError):
                 quality.add('history_unavailable')
                 return None
+
+        def hydrate(owner, wanted=()):
+            directory = loaded.get(owner)
+            if directory is None:
+                return
+            wanted = set(wanted) | {p['turn_id'] for p in phases.values() if p['thread_id'] == owner}
+            pending = {turn for turn in wanted if turn is not None and (owner, turn) not in hydrated}
+            if not pending:
+                return
+            index = self.history.timeline_view(directory, pending)
+            hydrated.update((owner, turn) for turn in pending)
+            quality.update(index.quality)
+            for key, p in list(phases.items()):
+                if p['thread_id'] == owner and p['turn_id'] in pending:
+                    phases[key] = merge_history_phase(p, index.phases.get(key), read_complete=index.read_complete)
+            for p in index.phases.values():
+                phases.setdefault(p['id'], p)
+                if p.get('call_operation') == 'spawn':
+                    spawn_calls.add((owner, p['turn_id'], p.get('call_id')))
+            settled = settled_model_items(index.turns.values(), index.phases.values(),
+                                          read_complete=index.read_complete, quality=index.quality)
+            for key, phase in list(phases.items()):
+                if phase['thread_id'] == owner and phase['turn_id'] in pending:
+                    phases[key] = apply_model_membership(phase, settled)
 
         root_index = load(thread)
 
@@ -147,6 +160,7 @@ class TimelineQuery:
                             key=lambda t: t.get('start_ms') or t.get('updated_ms') or 0, reverse=True)
         current = next((t['turn_id'] for t in root_turns if t['status'] == 'active'), None)
         selected = selected or current or (root_turns[0]['turn_id'] if root_turns else None)
+        hydrate(thread, (selected,))
         agents = [{'id': thread, 'thread_id': thread, 'name': '主智能体', 'parent_thread_id': None,
                    'quality': []}]
         owners = {(thread, selected)}
@@ -170,6 +184,7 @@ class TimelineQuery:
                     (parent, parent_turn, r.get('call_id')) in spawn_calls) for r in candidates)
                 if not linked and spawned and child_turns:
                     linked = [min(child_turns, key=lambda t: t.get('start_ms') or t.get('updated_ms') or 0)]
+                hydrate(child, (t['turn_id'] for t in linked))
                 agent_quality = [] if linked else ['turn_relation_unknown']
                 agent_turns[child] = linked
                 agents.append({'id': child, 'thread_id': child, 'name': '子智能体 · ' + child[:8],
@@ -233,6 +248,7 @@ class TimelineQuery:
             earlier_relations.setdefault(relation['child_thread_id'], []).append(relation)
         for child, candidates in earlier_relations.items():
             load(child)
+            hydrate(child)
             if not is_child(thread, child):
                 continue
             child_turns = [t for t in turns.values() if t['thread_id'] == child]
@@ -259,32 +275,33 @@ class TimelineQuery:
                 'origin_ms': start, 'end_ms': end, 'earlier_active_turns': earlier,
                 'quality': sorted(quality), 'revision': identity(revisions, selected), 'now_ms': time.time() * 1000}
 
-    def detail(self, scope, thread, turn, phase_id, section_id=None, offset=0, limit=262144):
+    def detail(self, scope, thread, turn, phase_id, section_id=None, offset=0, limit=262144, *, page_token=None):
+        version = page_request(scope, thread, turn, phase_id, section_id, offset, page_token)
+        observed = self._observed(scope, thread)
+        phase = next((p for p in observed['phases'] if p['id'] == phase_id and p['thread_id'] == thread and p['turn_id'] == turn), None)
         index = None
         history_error = None
         try:
-            previous_index = self.history.indices.get((scope, thread))
-            index = self.history.view(scope, thread)
-            if index is None and previous_index and not previous_index.path.exists():
+            previous_path = self.history.cached_path(scope, thread)
+            index = self.history.detail_view(scope, thread, turn, phase_id, phase)
+            if index is None and previous_path and not previous_path.exists():
                 history_error = 'missing'
         except (OSError, ValueError, TypeError):
             history_error = 'unavailable'
-        observed = self._observed(scope, thread)
-        phase = next((p for p in observed['phases'] if p['id'] == phase_id and p['thread_id'] == thread and p['turn_id'] == turn), None)
         historical = index.phases.get(phase_id) if index else None
         if historical and (historical['scope_id'], historical['thread_id'], historical['turn_id']) != (scope, thread, turn):
             historical = None
         if index:
-            phase = merge_history_phase(phase, historical)
+            phase = merge_history_phase(phase, historical, read_complete=index.read_complete)
         if phase and index:
             phase = apply_model_membership(phase, settled_model_items(
                 index.turns.values(), index.phases.values(), read_complete=index.read_complete, quality=index.quality))
         if phase and phase.get('history_retired'):
-            return {'version': 1, 'state': 'not_retained', 'phase': phase,
+            return {'version': DETAIL_VERSION, 'state': 'not_retained', 'phase': phase,
                     'source': 'observed_metadata', 'sections': [], 'attachments': []}
         phase = display_phase(phase) if phase else None
         if not phase:
-            return {'version': 1, 'state': 'content_unavailable', 'sections': [], 'attachments': []}
+            return {'version': DETAIL_VERSION, 'state': 'content_unavailable', 'sections': [], 'attachments': []}
         relations = {r['id']: r for r in observed['relations']}
         if index:
             relations.update(index.relations)
@@ -302,6 +319,9 @@ class TimelineQuery:
         if index:
             try:
                 result = index.detail(phase)
+            except HistoryChanged:
+                self.history.invalidate(scope, thread)
+                result = {'state': 'unavailable', 'sections': [], 'attachments': []}
             except FileNotFoundError:
                 result = {'state': 'missing', 'sections': [], 'attachments': []}
             except (OSError, ValueError, TypeError):
@@ -325,24 +345,18 @@ class TimelineQuery:
                     'not_retained' if index and phase['namespace'] == 'input' and phase.get('end_ms') is None else
                     'content_unavailable' if index else 'history_unavailable')
         result = result or {'state': history_error or fallback, 'sections': [], 'attachments': []}
-        result = deepcopy(result)
-        for s in result['sections']:
-            text = s['text']; start = max(0, int(offset)) if s['id'] == section_id else 0
-            stop = start + min(max(int(limit), 1), 262144)
-            s.update(text=text[start:stop], offset=start, total_chars=len(text), next_offset=stop if stop < len(text) else None)
-        result.update(version=1, phase=phase)
-        return result
+        return paginate(result, phase, section_id, offset, limit, version)
 
     def query(self, request):
-        request = validated_request(request)
-        scope, thread = request['scope_id'], request['thread_id']
+        request = TimelineRequest.parse(request)
+        scope, thread = request.scope_id, request.thread_id
         # Serialise each provider's offset/index updates, not the collector event loop.
         with self.history.lock:
-            if request.get('action') == 'detail':
-                return self.detail(scope, thread, request.get('turn_id'), request.get('phase_id'),
-                                   request.get('section_id'), request.get('offset', 0))
-            if request.get('action') == 'timeline':
-                return self.bundle(scope, thread, request.get('turn_id'))
+            if request.action == 'detail':
+                return self.detail(scope, thread, request.turn_id, request.phase_id,
+                                   request.section_id, request.offset, page_token=request.page_token)
+            if request.action == 'timeline':
+                return self.bundle(scope, thread, request.turn_id)
         raise ValueError('unsupported_query')
 
 
@@ -381,7 +395,7 @@ class QueryHandler(socketserver.StreamRequestHandler):
         except (OSError, ValueError, TypeError, KeyError):
             result = {'version': 1, 'error': 'query_unavailable'}
         try:
-            self.wfile.write(json.dumps(result, ensure_ascii=False, separators=(',', ':')).encode() + b'\n')
+            self.wfile.write(encode_response(result))
         except OSError:
             pass
 
@@ -390,12 +404,21 @@ def query_runtime(runtime, request):
     """Does not create runtime, start observation, resume a chat, or change config."""
     request = validated_request(request)
     runtime = Path(runtime)
+    connected = False
     try:
         with socket.socket(socket.AF_UNIX, socket.SOCK_STREAM) as connection:
             connection.settimeout(10)
             connection.connect(str(runtime / 'tl.sock'))
+            connected = True
             connection.sendall(json.dumps(request).encode() + b'\n')
             with connection.makefile('rb') as response:
-                return json.loads(response.readline(16 * 1024 * 1024))
-    except (OSError, ValueError):
+                return read_response(response)
+    except OSError:
+        if connected:
+            return failure('query_unavailable')
+        try:
+            if collector_alive(runtime):
+                return failure('query_unavailable')
+        except OSError:
+            return failure('query_unavailable')
         return TimelineQuery(metadata=metadata_path(runtime)).query(request)

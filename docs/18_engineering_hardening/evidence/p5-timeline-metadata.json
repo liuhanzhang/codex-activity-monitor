@@ -1,0 +1,27 @@
+{
+  "version": 1,
+  "python": "3.14.7",
+  "platform": "Darwin",
+  "mode": "metadata",
+  "source_rows": 48003,
+  "source_bytes": 90853126,
+  "turns": 1,
+  "phases": 48000,
+  "directory_ms": 1047.674500150606,
+  "first_bundle_and_encode_instrumented_ms": 7759.786958107725,
+  "first_bundle_and_encode_peak_allocated_bytes": 147995006,
+  "hot_bundle_and_encode_ms": 766.2539591547102,
+  "response_bytes": 40,
+  "response_error": "query_too_large",
+  "response_within_gui_budget": true,
+  "query_response_budget_bytes": 8388608,
+  "cache": {
+    "indices": 2,
+    "cache_bytes": 61558019,
+    "max_cache_bytes": 67108864,
+    "evictions": 0,
+    "measured_monotonic": 1159311.14058975
+  },
+  "benchmark_peak_rss_bytes": 264192000,
+  "note": "Synthetic whole-turn query, not a process RSS cap. Directory built separately. Full mode adapts the old full-reference projection and whole-buffer JSON encoding; metadata mode retains only timeline fields and emits a bounded complete reply. Both project every phase; first read includes tracemalloc, hot reads do not. The old oversized reply could not be consumed by the existing GUI output limit."
+}

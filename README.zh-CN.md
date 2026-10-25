@@ -1,6 +1,6 @@
 # Codex Progress Monitor
 
-[English](README.md) · [参与开发](CONTRIBUTING.md) · [架构阅读路径](docs/17_review_and_refactor/architecture.md)
+[English](README.md) · [参与开发](CONTRIBUTING.md) · [架构阅读路径](docs/18_engineering_hardening/implemented-architecture.md) · [文档入口](docs/README.md)
 
 Codex Desktop 的本机 macOS 菜单栏伴侣：查看聊天当前活动、模型与工具时间线、可见文本接收速度，以及本回合官方用量。
 
@@ -48,10 +48,10 @@ bin/codex-progress status
 
 ## 数据和限制
 
-包装器转发原版后端的 stdio，通过有界队列和独立 Unix socket 复制观察事件。Python 聚合状态，Swift 读取快照；只读历史查询从 Codex JSONL 取得完整详情，SQLite 仅保存阶段元数据。采集不会启动第二个会话 writer。
+包装器转发原版后端的 stdio，通过有界队列和独立 Unix socket 复制观察事件。Python 聚合状态，Swift 通过 `state.sock` 订阅完整状态和带 nonce 的健康响应；独立有界 worker 保存可丢弃的恢复检查点。只读历史查询从 Codex JSONL 取得完整详情，SQLite 仅保存阶段元数据。采集不会启动第二个会话 writer。
 
 快照可能包含聊天标题、路径、命令预览和数值指标，并非匿名数据。实时文本在内存中用于本地分词和所选活动详情；Monitor 不上传对话。依赖安装和 tokenizer 首次下载资源可能需要网络。不要将运行数据、登录状态、原始聊天或私密截图放入 Git 或问题报告。
 
 产品代码位于 `src/`、`macos/Sources/` 和 `bin/`。编号 `docs/` 保留需求、决策和历史验收；`experiments/` 保存实验方法，`analysis/` 保存精简结论，`.local/` 是 Git 忽略的本机环境与数据。
 
-目前只覆盖已接入的本机聊天，解析依赖上游版本；GUI 仍通过文件轮询。长期运行、全新机器、Remote、签名与公证、素材公开分发均不能由单元测试推定完成。当前证据见[审查报告](docs/17_review_and_refactor/review.md)、[验证记录](docs/17_review_and_refactor/validation.md)与[待办](docs/TODO.md)。
+目前只覆盖已接入的本机聊天，解析依赖上游版本。状态通道已有隔离原生验收，日常 GUI／collector／驻留 bridge 在完整重开 Desktop 后已统一更新并核对实际运行；新版自然样本仍需验收。长期运行、全新机器、Remote、签名与公证、素材公开分发均不能由单元测试推定完成。基线见[审查报告](docs/17_review_and_refactor/review.md)，当前六项进展和验证见[第 18 章](docs/18_engineering_hardening/README.md)与[实施记录](docs/18_engineering_hardening/implementation-results.md)。

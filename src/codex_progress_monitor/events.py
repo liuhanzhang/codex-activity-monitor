@@ -238,8 +238,8 @@ class Event:
     backend: str
     direction: str
     data: dict
-    at: float
-    wall_time: float
+    at: float  # Observer monotonic seconds; state durations and ordering.
+    wall_time: float  # Source/receipt Unix seconds; JSONL adapters convert to ms.
     replayed: bool = False
 
     @classmethod

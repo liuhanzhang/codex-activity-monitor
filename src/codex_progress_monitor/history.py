@@ -1,381 +1,57 @@
-"""Read Codex-owned JSONL lazily. Cache offsets and metadata, never transcripts."""
+"""Reader facade and one weighted cache for source directories and turn indices.
+
+Content rendering and source scanning have no Engine reference. This provider
+owns their mutable caches; callers receive detached views under its reader lock.
+"""
 
 from collections import OrderedDict
 from copy import copy, deepcopy
-from datetime import datetime
-import hashlib
+from dataclasses import asdict, dataclass
 import json
-
-from .i18n import message
-import re
 from pathlib import Path
 import threading
 import time
-import uuid
+from typing import Literal
 
-from .timeline import identity, item_phase, merge_phase, status, valid_ms
-from .events import TOOL_TYPES
-from .agent_presentation import agent_metadata
+# Preserve the established read helpers at this facade.
+from .history_content import (ABSENT, CANONICAL_TYPES, fields, item_content, raw_section, result_texts,
+                              section, source_truncated, text_content, tool_content)
+from .history_index import HistoryDirectory, HistoryDetails, HistoryFacts, HistoryMetadata, RolloutIndex, canonical_item, timestamp
+from .history_read import HistoryChanged, HistoryRead
+from .resource_budget import retained_bytes
+from .timeline import phase_id
 
-CANONICAL_TYPES = {'UserMessage': 'userMessage', 'AgentMessage': 'agentMessage', 'Reasoning': 'reasoning',
-                   'Plan': 'plan', 'CommandExecution': 'commandExecution', 'McpToolCall': 'mcpToolCall',
-                   'DynamicToolCall': 'dynamicToolCall', 'FileChange': 'fileChange',
-                   'CollabAgentToolCall': 'collabAgentToolCall', 'ImageView': 'imageView',
-                   'ImageGeneration': 'imageGeneration', 'ContextCompaction': 'contextCompaction',
-                   'SubAgentActivity': 'subAgentActivity', 'WebSearch': 'webSearch'}
-
-ABSENT = object()
-
-
-def timestamp(value):
-    if isinstance(value, (int, float)):
-        return valid_ms(value * 1000 if value < 100000000000 else value)
-    if isinstance(value, str):
-        try:
-            return datetime.fromisoformat(value.replace('Z', '+00:00')).timestamp() * 1000
-        except ValueError:
-            pass
-    return None
+@dataclass(frozen=True, slots=True)
+class HistoryCacheKey:
+    scope: str
+    thread: str
+    kind: Literal['full', 'directory', 'turn', 'facts', 'detail', 'timeline']
+    turn: str | None = None
+    phase: str | None = None
 
 
-def canonical_item(item):
-    result = dict(item)
-    result['type'] = CANONICAL_TYPES.get(item.get('type'), item.get('type'))
-    if item.get('type') == 'Extension':
-        result['type'] = {'web.search': 'webSearch', 'image_gen.generation': 'imageGeneration'}.get(item.get('kind'), 'extension')
-    for snake, camel in (('process_id', 'processId'), ('receiver_thread_ids', 'receiverThreadIds'),
-                         ('sender_thread_id', 'senderThreadId'), ('agents_states', 'agentsStates'),
-                         ('agent_thread_id', 'agentThreadId')):
-        if snake in result:
-            result[camel] = result[snake]
-    return result
-
-
-class RolloutIndex:
-    def __init__(self, path, scope, thread):
-        self.path, self.scope, self.thread = path, scope, thread
-        self.offset = 0
-        self.fingerprint = None
-        self.anchor = None
-        self.turn = None
-        self.turns = OrderedDict()
-        self.phases = OrderedDict()
-        self.refs = {}
-        self.outputs = {}
-        self.relations = {}
-        self.mode = None
-        self.quality = set()
-        self.revision = 0
-        self.generation = None
-        self.read_complete = False
-        self.agent_metadata = {}
-
-    def refresh(self):
-        self.read_complete = False
-        previous_metadata, self.agent_metadata = self.agent_metadata, {}
-        stat = self.path.stat()
-        signature = (stat.st_dev, stat.st_ino)
-        with self.path.open('rb') as stream:
-            first = stream.readline()
-            try:
-                meta = json.loads(first)
-            except ValueError:
-                raise ValueError('history_header_invalid') from None
-            if not isinstance(meta, dict) or not isinstance(meta.get('payload'), dict) or meta.get('type') != 'session_meta' or meta['payload'].get('id') != self.thread:
-                raise ValueError('history_identity_mismatch')
-            self.mode = meta['payload'].get('history_mode', 'legacy')
-            self.agent_metadata = agent_metadata(meta['payload'])
-            if previous_metadata != self.agent_metadata:
-                self.revision += 1
-            stream.seek(max(0, self.offset - 256))
-            anchor = hashlib.sha256(stream.read(min(self.offset, 256))).digest()
-            if self.fingerprint != signature or stat.st_size < self.offset or (self.anchor is not None and self.anchor != anchor):
-                self.generation = uuid.uuid4().hex
-                self.offset = 0
-                self.turn = None
-                self.turns.clear(); self.phases.clear(); self.refs.clear(); self.outputs.clear(); self.relations.clear()
-                self.quality.clear()
-            self.fingerprint = signature
-            stream.seek(self.offset)
-            while True:
-                start = stream.tell()
-                line = stream.readline()
-                if not line or not line.endswith(b'\n'):
-                    break
-                self.offset = stream.tell()
-                try:
-                    row = json.loads(line)
-                    self._row(row, start, len(line))
-                except (ValueError, TypeError, KeyError, AttributeError):
-                    self.quality.add('malformed_history_record')
-                self.revision += 1
-            self.read_complete = not line
-            stream.seek(max(0, self.offset - 256))
-            self.anchor = hashlib.sha256(stream.read(min(self.offset, 256))).digest()
-
-    def _turn_record(self, turn, at, start=None, end=None, state=None, parent=None):
-        if not turn:
-            return
-        old = self.turns.get(turn, {})
-        self.turns[turn] = {**old, 'id': identity('turn', self.scope, self.thread, turn),
-                            'scope_id': self.scope, 'thread_id': self.thread, 'turn_id': turn,
-                            'start_ms': start or old.get('start_ms'), 'end_ms': end or old.get('end_ms'),
-                            'updated_ms': at or old.get('updated_ms'),
-                            'parent_turn_id': parent or old.get('parent_turn_id'),
-                            'status': state or old.get('status', 'unknown'),
-                            'start_source': 'history' if start else old.get('start_source'),
-                            'end_source': 'history' if end else old.get('end_source'),
-                            'history_terminal': (state or old.get('status')) in ('completed', 'failed', 'interrupted')}
-
-    def _row(self, row, offset, length):
-        outer, payload = row.get('type'), row.get('payload', {})
-        at = timestamp(row.get('timestamp'))
-        kind = payload.get('type')
-        if outer == 'turn_context':
-            self.turn = payload.get('turn_id')
-            self._turn_record(self.turn, at, parent=payload.get('parent_turn_id'))
-        elif outer == 'event_msg' and kind in ('task_started', 'turn_started'):
-            self.turn = payload.get('turn_id') or payload.get('turn_attribution', {}).get('turn_id')
-            parent = (payload.get('turn_attribution') or {}).get('parent_turn_id')
-            self._turn_record(self.turn, at, start=timestamp(payload.get('started_at')), state='active', parent=parent)
-        elif outer == 'event_msg' and kind in ('task_complete', 'turn_complete', 'turn_aborted'):
-            turn = payload.get('turn_id') or self.turn
-            self._turn_record(turn, at, end=timestamp(payload.get('completed_at')) or at,
-                              state='interrupted' if kind == 'turn_aborted' else 'completed')
-        elif outer == 'event_msg' and kind == 'item_completed':
-            turn = payload.get('turn_id')
-            if payload.get('thread_id') not in (None, self.thread):
-                self.quality.add('history_identity_mismatch')
-                return
-            item = canonical_item(payload.get('item', {}))
-            if not turn:
-                self.quality.add('turn_identity_unavailable')
-            if item.get('type') == 'subAgentActivity':
-                child = item.get('agentThreadId')
-                if child:
-                    self._relation(turn, child, item.get('id'), item.get('kind'))
-                return
-            phase = item_phase(self.scope, self.thread, turn, item,
-                               valid_ms(payload.get('started_at_ms')), valid_ms(payload.get('completed_at_ms')), 'history')
-            if phase:
-                phase['status'] = status(item.get('status', 'completed'))
-                phase['history_terminal'] = phase['status'] in ('completed', 'failed', 'interrupted', 'declined')
-                code = payload.get('item', {}).get('exit_code', item.get('exitCode'))
-                if isinstance(code, int) and not isinstance(code, bool):
-                    phase['exit_code'] = code
-                phase['observed_until_ms'] = at
-                self._phase(phase, offset, length, 'canonical')
-                self._turn_record(turn, at)
-            for child in item.get('receiverThreadIds', []):
-                self._relation(turn, child, item.get('id'), item.get('tool'))
-        elif outer == 'response_item':
-            if kind in ('function_call_output', 'custom_tool_call_output'):
-                if payload.get('call_id'):
-                    self.outputs[payload['call_id']] = {'offset': offset, 'length': length}
-                return
-            if kind not in ('message', 'agentMessage', 'reasoning', 'function_call', 'custom_tool_call'):
-                return
-            if kind == 'message' and payload.get('role') not in ('assistant', 'user'):
-                return
-            # Paginated canonical records provide user/model items; raw calls supply missing parameters.
-            if self.mode == 'paginated' and kind not in ('function_call', 'custom_tool_call'):
-                return
-            item = dict(payload)
-            if kind == 'message' and payload.get('role') == 'user':
-                item['type'] = 'userMessage'
-            if not item.get('id'):
-                item['id'] = payload.get('call_id') or 'offset-' + str(offset)
-            if not self.turn:
-                self.quality.add('turn_identity_unavailable')
-            phase = item_phase(self.scope, self.thread, self.turn, item, source='history')
-            if phase:
-                phase.update(status='completed', observed_until_ms=at)
-                self._phase(phase, offset, length, 'raw')
-
-    def _phase(self, phase, offset, length, source):
-        self.phases[phase['id']] = merge_phase(self.phases.get(phase['id']), phase)
-        self.refs[phase['id']] = {'offset': offset, 'length': length, 'source': source,
-                                  'fingerprint': self.fingerprint}
-
-    def _relation(self, turn, child, call, operation):
-        if turn and child and child != self.thread:
-            key = identity('relation', self.scope, self.thread, turn, child, call)
-            self.relations[key] = {'id': key, 'scope_id': self.scope, 'parent_thread_id': self.thread,
-                                   'parent_turn_id': turn, 'child_thread_id': child,
-                                   'call_id': call, 'operation': operation}
-
-    def read_ref(self, ref):
-        stat = self.path.stat()
-        if (stat.st_dev, stat.st_ino) != self.fingerprint:
-            raise ValueError('history_changed')
-        with self.path.open('rb') as stream:
-            stream.seek(ref['offset'])
-            row = json.loads(stream.read(ref['length']))
-        return row.get('payload', {})
-
-    def detail(self, phase):
-        ref = self.refs.get(phase['id'])
-        if not ref:
-            return None
-        payload = self.read_ref(ref)
-        item = payload.get('item', {}) if ref['source'] == 'canonical' else payload
-        if ref['source'] == 'canonical' and (payload.get('turn_id') != phase['turn_id'] or item.get('id') != phase['item_id']):
-            raise ValueError('history_changed')
-        if ref['source'] == 'raw' and (item.get('id') or item.get('call_id') or 'offset-' + str(ref['offset'])) != phase['item_id']:
-            raise ValueError('history_changed')
-        sections, attachments = item_content(item)
-        output = ABSENT
-        call = item.get('call_id')
-        if item.get('type') in ('function_call', 'custom_tool_call') and call in self.outputs:
-            returned = self.read_ref(self.outputs[call])
-            if returned.get('call_id') != call:
-                raise ValueError('history_changed')
-            output = returned.get('output', ABSENT)
-            sections = [s for s in sections if s['id'] != 'output'] + [raw_section('output', '结果', output)]
-        state = 'no_content' if phase.get('item_type') == 'contextCompaction' else (
-            'source_truncated' if source_truncated(item, output) else 'available')
-        return {'state': state, 'sections': sections,
-                'attachments': attachments, 'source': 'codex_history'}
-
-
-def text_content(value):
-    if isinstance(value, str):
-        return value
-    if isinstance(value, list):
-        return '\n'.join(text_content(v) for v in value if v is not None)
-    if isinstance(value, dict):
-        if isinstance(value.get('text'), str):
-            return value['text']
-        return json.dumps(value, ensure_ascii=False, indent=2)
-    return '' if value is None else str(value)
-
-
-def section(key, title, value, format=None, title_key=None, text_key=None):
-    if format is None:
-        format = 'json' if isinstance(value, (dict, list)) else 'text'
-    return {'id': key, 'title': title, 'title_message': message(title_key) if title_key else None,
-            'text_message': message(text_key) if text_key else None, 'format': format,
-            'text': json.dumps(value, ensure_ascii=False, indent=2) if format == 'json' else text_content(value)}
-
-
-def raw_section(key, title, value=ABSENT):
-    """Keep strings verbatim, containers/scalars as JSON, and absence explicit."""
-    if value is ABSENT:
-        return {'id': key, 'title': title, 'format': 'text', 'text': '',
-                'title_message': message('detail.' + key),
-                'notice_message': message('detail.missing_input' if key == 'input' else 'detail.missing_output'),
-                'notice': '源记录未提供独立参数。' if key == 'input' else '来源中尚无这次调用的结果。'}
-    return {'id': key, 'title': title, 'title_message': message('detail.' + key), 'format': 'code' if isinstance(value, str) else 'json',
-            'text': value if isinstance(value, str) else json.dumps(value, ensure_ascii=False, indent=2)}
-
-
-def fields(item, names):
-    value = {key: item[key] for key in names if key in item}
-    return value if value else ABSENT
-
-
-def result_texts(value):
-    if isinstance(value, str):
-        yield value
-    elif isinstance(value, list):
-        for part in value:
-            if isinstance(part, dict) and isinstance(part.get('text'), str):
-                yield part['text']
-    elif isinstance(value, dict):
-        yield from result_texts(value.get('content', value.get('content_items', value.get('contentItems'))))
-
-
-def source_truncated(item, output=ABSENT):
-    """Recognise source result conventions, never inspect generated parameters."""
-    kind = CANONICAL_TYPES.get(item.get('type'), item.get('type'))
-    if kind == 'commandExecution':
-        text = item.get('aggregated_output', item.get('aggregatedOutput'))
-        if isinstance(text, str) and '\n... command output truncated for persistence ...\n' in text:
-            return True
-        values = [text]
-    elif kind in ('mcpToolCall', 'dynamicToolCall'):
-        values = [item[key] for key in ('result', 'content_items', 'contentItems') if key in item]
-    elif kind in ('function_call', 'custom_tool_call'):
-        values = [output]
-    else:
-        return False
-    omission = re.compile(r'…\d+ (?:tokens|chars) truncated…')
-    for value in values:
-        for text in result_texts(value):
-            # Code Mode may wrap a tool-owned warning with its execution header.
-            body = re.sub(r'\AScript [^\n]*\nWall time[^\n]*\nOutput:\n', '', text, count=1)
-            if body.startswith('Warning: truncated output (original token count:') and omission.search(body):
-                return True
-            # Persisted MCP truncation replaces the result with a cut JSON preview.
-            if kind == 'mcpToolCall' and body.startswith('{') and omission.search(body):
-                try:
-                    json.loads(body)
-                except ValueError:
-                    return True
-    return False
-
-
-def tool_content(item, kind):
-    if kind in ('function_call', 'custom_tool_call'):
-        args = item.get('arguments' if kind == 'function_call' else 'input', ABSENT)
-        result = ABSENT  # Matched raw output is attached by RolloutIndex.detail.
-    elif kind == 'commandExecution':
-        args = fields(item, ('command', 'cwd', 'interaction_input', 'interactionInput'))
-        result = fields(item, ('aggregated_output', 'aggregatedOutput', 'exit_code', 'exitCode',
-                               'duration', 'duration_ms', 'durationMs', 'status'))
-    elif kind == 'mcpToolCall':
-        args = item.get('arguments', ABSENT)
-        result = fields(item, ('result', 'error'))
-    elif kind == 'dynamicToolCall':
-        args = item.get('arguments', ABSENT)
-        result = fields(item, ('content_items', 'contentItems', 'success', 'error', 'duration', 'durationMs'))
-    elif kind == 'fileChange':
-        args = ABSENT
-        result = fields(item, ('changes', 'status', 'stdout', 'stderr', 'auto_approved', 'autoApproved'))
-    else:
-        args = item.get('arguments', item.get('input', ABSENT))
-        result = item
-    return [raw_section('input', '参数', args), raw_section('output', '结果', result)], []
-
-
-def item_content(item):
-    kind = CANONICAL_TYPES.get(item.get('type'), item.get('type'))
-    if kind == 'Extension':
-        kind = {'web.search': 'webSearch', 'image_gen.generation': 'imageGeneration'}.get(item.get('kind'), kind)
-    sections, attachments = [], []
-    if kind in ('userMessage', 'agentMessage', 'message', 'plan'):
-        value = item.get('text', item.get('content', ''))
-        body = [] if isinstance(value, list) else value
-        for part in value if isinstance(value, list) else []:
-            if isinstance(part, dict) and str(part.get('type', '')).replace('_', '').lower() in ('image', 'inputimage', 'localimage'):
-                path = part.get('path') or part.get('image_url') or part.get('url')
-                if isinstance(path, dict):
-                    path = path.get('url')
-                if isinstance(path, str):
-                    attachments.append(path)
-            else:
-                body.append(part)
-        sections.append(section('body', '用户输入' if kind == 'userMessage' else '正文', body, 'text', title_key='detail.user' if kind == 'userMessage' else 'detail.body'))
-        if attachments and not text_content(body):
-            sections.append(section('attachments', '图片附件', '此条输入包含图片，预览见下方。', 'text', title_key='detail.attachments', text_key='detail.image_notice'))
-    elif kind == 'reasoning':
-        value = item.get('summary_text', item.get('summary', []))
-        sections.append(section('body', '可见思考摘要', value, 'text', title_key='detail.reasoning'))
-    elif kind in TOOL_TYPES or kind in ('function_call', 'custom_tool_call'):
-        return tool_content(item, kind)
-    elif kind == 'contextCompaction':
-        return [], []
-    else:
-        sections.append(section('body', '活动内容', item, 'json', title_key='detail.content'))
-    return [s for s in sections if s['text']], attachments
+@dataclass(frozen=True, slots=True)
+class HistoryCacheStats:
+    indices: int
+    cache_bytes: int
+    max_cache_bytes: int
+    evictions: int
+    measured_monotonic: float
 
 
 class HistoryProvider:
-    def __init__(self, capacity=12):
+    def __init__(self, capacity=12, max_cache_bytes=64*1024*1024, max_turn_indices=1024):
+        if capacity < 0 or max_cache_bytes < 0 or max_turn_indices < 0:
+            raise ValueError('invalid_history_budget')
         self.indices = OrderedDict()
         self.lock = threading.RLock()
         self.missing = OrderedDict()
         self.capacity = capacity
+        self.max_cache_bytes = max_cache_bytes
+        self.max_turn_indices = max_turn_indices
+        self.weights = {}
+        self.evictions = 0
+        self._stats = HistoryCacheStats(0, 0, max_cache_bytes, 0, time.monotonic())
 
     def view(self, scope, thread):
         """Detach mutable index metadata before releasing the reader lock."""
@@ -383,39 +59,283 @@ class HistoryProvider:
             index = self.index(scope, thread)
             if index is None:
                 return None
-            result = copy(index)
-            for name in ('turns', 'phases', 'refs', 'outputs', 'relations', 'agent_metadata', 'quality'):
-                setattr(result, name, deepcopy(getattr(index, name)))
-            return result
+            return self._view(index)
 
-    def reconciliation(self, scope, thread, turns):
+    def selected_view(self, scope, thread, turn):
+        """Read and cache one turn; source size cannot force a full phase rebuild."""
+        with self.lock:
+            cached = self._cached_selection(scope, thread, {turn})
+            if cached is not None:
+                return cached
+            for attempt in range(2):
+                directory = self.index(scope, thread, directory_only=True)
+                if directory is None:
+                    return None
+                try:
+                    return self.turn_view(directory, {turn})
+                except HistoryChanged:
+                    if attempt: raise
+
+    def cached_path(self, scope, thread):
+        with self.lock:
+            return next((index.path for key, index in reversed(self.indices.items())
+                         if (key.scope, key.thread) == (scope, thread)), None)
+
+    def detail_view(self, scope, thread, turn, selected_id, observed_phase=None):
+        """One phase and explicit call dependencies, independent of turn width."""
+        key = HistoryCacheKey(scope, thread, 'detail', turn, selected_id)
+        with self.lock:
+            cached = self.indices.get(key)
+            if cached is not None and cached.hint_signature == HistoryDetails.hint_key(observed_phase):
+                try:
+                    with HistoryRead(cached.path, thread, cached.fingerprint, cached.header_digest) as reader:
+                        if reader.before == cached.file_stamp:
+                            result = self._view(cached)
+                            self.indices.move_to_end(key)
+                            return result
+                except (OSError, HistoryChanged):
+                    self.invalidate(scope, thread)
+            for attempt in range(2):
+                directory = self.index(scope, thread, directory_only=True)
+                if directory is None:
+                    return None
+                try:
+                    index = directory.load_detail(turn, selected_id, observed_phase)
+                except HistoryChanged:
+                    self.invalidate(scope, thread)
+                    if attempt: raise
+                    continue
+                self.indices[key] = index
+                self.indices.move_to_end(key)
+                self._budget(key, index)
+                return self._view(index)
+
+    def turn_view(self, directory, turns):
+        """Caller holds the provider lock and its catalogue for this query."""
+        return self._turn_views(directory, turns, 'turn')
+
+    def timeline_view(self, directory, turns):
+        """Full phase metadata for a timeline, without unused content references."""
+        return self._turn_views(directory, turns, 'timeline')
+
+    def _turn_views(self, directory, turns, kind):
+        parts = []
+        for turn in turns:
+            key = HistoryCacheKey(directory.scope, directory.thread, kind, turn)
+            index = self.indices.get(key)
+            if index is None or index.file_stamp != directory.file_stamp or index.generation != directory.generation:
+                try:
+                    index = directory.load_metadata(turn) if kind == 'timeline' else directory.load_turn(turn)
+                except HistoryChanged:
+                    self.invalidate(directory.scope, directory.thread)
+                    raise
+                self.indices[key] = index
+            self.indices.move_to_end(key)
+            directory_key = HistoryCacheKey(directory.scope, directory.thread, 'directory')
+            if directory_key in self.indices:
+                self.indices.move_to_end(directory_key)
+            self._budget(key, index)
+            parts.append(index)
+        return self._selection_view(directory, parts, projection=kind)
+
+    def _cached_selection(self, scope, thread, turns, *, required_ids=None):
+        """A directory eviction need not invalidate verified, unchanged turns.
+
+        Check one open source handle, header and file stamp for the whole
+        selection. Any change falls back to incremental source discovery.
+        Caller owns the reader lock, never an Engine/domain lock.
+        """
+        if not turns:
+            return None
+        kind = 'turn' if required_ids is None else 'facts'
+        keys = [HistoryCacheKey(scope, thread, kind, turn) for turn in turns]
+        parts = [self.indices.get(key) for key in keys]
+        if any(part is None for part in parts):
+            return None
+        if required_ids is not None and any(not required_ids.get(key.turn, set()) <= part.selected_ids
+                                            for key, part in zip(keys, parts)):
+            return None
+        source = parts[0]
+        if any((part.path, part.file_stamp, part.generation) !=
+               (source.path, source.file_stamp, source.generation) for part in parts):
+            return None
+        try:
+            with HistoryRead(source.path, thread, source.fingerprint, source.header_digest) as reader:
+                if reader.before != source.file_stamp:
+                    return None
+                result = self._selection_view(source, parts, projection='facts' if required_ids is not None else 'turn')
+        except (OSError, HistoryChanged):
+            self.invalidate(scope, thread)
+            return None
+        for key in keys:
+            self.indices.move_to_end(key)
+        return result
+
+    @classmethod
+    def _selection_view(cls, source, parts, *, projection: Literal['turn', 'facts', 'timeline'] = 'turn'):
+        facts = projection == 'facts'
+        selected_ids = frozenset(key for part in parts for key in part.selected_ids) if facts else ()
+        if facts:
+            result = HistoryFacts(source.path, source.scope, source.thread, selected_ids)
+        elif projection == 'timeline':
+            result = HistoryMetadata(source.path, source.scope, source.thread)
+        else:
+            result = RolloutIndex(source.path, source.scope, source.thread)
+        if facts:
+            result.seed_phase_ids = frozenset(key for part in parts for key in part.seed_phase_ids)
+        for name in ('offset', 'fingerprint', 'anchor', 'turn', 'turn_ref', 'file_stamp', 'header_digest',
+                     'mode', 'revision', 'generation', 'read_complete'):
+            setattr(result, name, getattr(source, name))
+        result.agent_metadata = source.agent_metadata
+        result.quality = set(source.quality)
+        for index in parts:
+            for name in ('turns', 'phases', 'refs', 'outputs', 'relations'):
+                getattr(result, name).update(getattr(index, name))
+            result.quality.update(index.quality)
+        return cls._view(result)
+
+    @staticmethod
+    def _view(index, turn=None):
+        result = copy(index)
+        phases = {k: p for k, p in index.phases.items() if turn is None or p['turn_id'] == turn}
+        result.phases = deepcopy(phases)
+        result.turns = deepcopy({k: t for k, t in index.turns.items() if turn is None or t['turn_id'] == turn})
+        result.refs = {k: r for k, r in index.refs.items() if k in phases}  # immutable HistoryReference
+        result.outputs = {k: r for k, r in index.outputs.items() if turn is None or k[0] == turn}
+        result.relations = deepcopy({k: r for k, r in index.relations.items() if turn is None or
+            r['parent_turn_id'] == turn or r['child_thread_id'] == index.thread})
+        result.agent_metadata = deepcopy(index.agent_metadata)
+        result.quality = set(index.quality)
+        return result
+
+    def invalidate(self, scope, thread):
+        with self.lock:
+            for key in list(self.indices):
+                if (key.scope, key.thread) == (scope, thread):
+                    self.indices.pop(key, None); self.weights.pop(key, None)
+            self._publish_stats()
+
+    def diagnostics(self):
+        # The event loop must never wait for this provider's JSONL reader lock.
+        # A frozen replacement gives either complete prior or complete new stats.
+        return asdict(self._stats)
+
+    def _publish_stats(self):
+        self._stats = HistoryCacheStats(len(self.indices), sum(self.weights[k][1] for k in self.indices),
+            self.max_cache_bytes, self.evictions, time.monotonic())
+
+    def _budget(self, key, index):
+        version = (index.revision, index.generation)
+        if self.weights.get(key, (None,))[0] != version:
+            weight = retained_bytes(index.turns, index.phases, index.refs, index.outputs,
+                                    index.relations, index.agent_metadata, index.quality,
+                                    getattr(index, 'ranges', {}), getattr(index, 'spawn_calls', set()),
+                                    getattr(index, 'phase_catalogue', {}), getattr(index, 'selected_ids', frozenset()),
+                                    getattr(index, 'seed_phase_ids', frozenset()),
+                                    getattr(index, 'selection', None), getattr(index, 'hint_signature', None))
+            self.weights[key] = (version, weight)
+        if self.weights[key][1] > self.max_cache_bytes:
+            # A selection that cannot be admitted must not first flush the
+            # useful working set. The caller can still read its detached view.
+            self.indices.pop(key)
+            self.weights.pop(key)
+            self.evictions += 1
+            self._publish_stats()
+            return
+        total = sum(self.weights[k][1] for k in self.indices)
+        while self.indices:
+            sources = [k for k in self.indices if k.kind in ('full', 'directory')]
+            parts = [k for k in self.indices if k.kind in ('turn', 'facts', 'detail', 'timeline')]
+            candidates = (sources if len(sources) > self.capacity else
+                          parts if len(parts) > self.max_turn_indices else
+                          ([k for k in self.indices if k.kind == 'directory'] or list(self.indices))
+                          if total > self.max_cache_bytes else [])
+            if not candidates:
+                break
+            evicted = candidates[0]
+            self.indices.pop(evicted)
+            total -= self.weights.pop(evicted)[1]
+            self.evictions += 1
+        self._publish_stats()
+
+    def reconciliation(self, scope, thread, turns, *, items=None):
         """Small, content-free summary for the event loop; all I/O stays here."""
         with self.lock:
-            index = self.index(scope, thread)
-            if index is None:
-                return {'scope_id': scope, 'thread_id': thread, 'quality': ['history_unavailable']}
             selected = set(turns)
-            if not selected and index.turns:
-                selected.add(max(index.turns.values(), key=lambda t: t.get('updated_ms') or 0)['turn_id'])
-            return {'scope_id': scope, 'thread_id': thread,
-                    'revision': index.revision, 'generation': index.generation, 'fingerprint': index.fingerprint,
-                    'read_complete': index.read_complete,
-                    'requested_turns': sorted(selected),
-                    'quality': sorted(index.quality),
-                    'turns': deepcopy([t for t in index.turns.values() if t['turn_id'] in selected]),
-                    'phases': deepcopy([p for p in index.phases.values() if p['turn_id'] in selected])}
+            required = None if items is None else self._item_phases(scope, thread, items)
+            index = self._cached_selection(scope, thread, selected, required_ids=required)
+            if index is not None:
+                return self._summary(index, selected, items)
+            for attempt in range(2):
+                directory = self.index(scope, thread, directory_only=True)
+                if directory is None:
+                    return {'scope_id': scope, 'thread_id': thread, 'quality': ['history_unavailable']}
+                if not selected and directory.turns:
+                    selected.add(max(directory.turns.values(), key=lambda t: t.get('updated_ms') or 0)['turn_id'])
+                try:
+                    index = (self.turn_view(directory, selected) if items is None else
+                             self._facts_view(directory, selected, required))
+                    break
+                except HistoryChanged:
+                    if attempt: raise
+            return self._summary(index, selected, items)
 
-    def index(self, scope, thread):
+    @staticmethod
+    def _item_phases(scope, thread, items):
+        result = {}
+        for turn, item in items:
+            result.setdefault(turn, set()).update(phase_id(scope, thread, turn, namespace, item)
+                                                  for namespace in ('model', 'input', 'canonical'))
+        return result
+
+    def _facts_view(self, directory, turns, required):
+        parts = []
+        for turn in turns:
+            seeds = frozenset(directory.seed_ids(turn))
+            wanted = required.get(turn, set()) | seeds
+            key = HistoryCacheKey(directory.scope, directory.thread, 'facts', turn)
+            index = self.indices.get(key)
+            if (index is None or index.file_stamp != directory.file_stamp or
+                    index.generation != directory.generation or not wanted <= index.selected_ids):
+                try:
+                    index = directory.load_facts(turn, wanted)
+                except HistoryChanged:
+                    self.invalidate(directory.scope, directory.thread)
+                    raise
+                index.seed_phase_ids = seeds
+                self.indices[key] = index
+            self.indices.move_to_end(key)
+            self._budget(key, index)
+            parts.append(index)
+        return self._selection_view(directory, parts, projection='facts')
+
+    @staticmethod
+    def _summary(index, selected, items=None):
+        phases = [p for p in index.phases.values() if p['turn_id'] in selected and
+                  (items is None or (p['turn_id'], p['item_id']) in items or p['id'] in index.seed_phase_ids)]
+        result = {'scope_id': index.scope, 'thread_id': index.thread,
+                'revision': index.revision, 'generation': index.generation, 'fingerprint': index.fingerprint,
+                'read_complete': index.read_complete,
+                'requested_turns': sorted(selected),
+                'quality': sorted(index.quality | (set() if index.read_complete else {'history_incomplete'})),
+                'turns': deepcopy([t for t in index.turns.values() if t['turn_id'] in selected]),
+                'phases': deepcopy(phases)}
+        if items is not None:
+            result['phase_selection'] = [list(pair) for pair in sorted(items) if pair[0] in selected]
+        return result
+
+    def index(self, scope, thread, *, directory_only=False):
         if not isinstance(thread, str) or not thread or any(c in thread for c in ('/', '\\', '\x00')):
             raise ValueError('invalid_thread_identity')
         home = Path(scope).expanduser()
         if not home.is_absolute():
             return None
-        key = (scope, thread)
+        key = HistoryCacheKey(scope, thread, 'directory' if directory_only else 'full')
+        missing_key = (scope, thread)
         with self.lock:
             index = self.indices.get(key)
             if index is None or not index.path.is_file():
-                if time.monotonic() - self.missing.get(key, 0) < 2:
+                if time.monotonic() - self.missing.get(missing_key, 0) < 2:
                     return None
                 matches = []
                 for directory in ('sessions', 'archived_sessions'):
@@ -432,16 +352,19 @@ class HistoryProvider:
                     except (OSError, ValueError, TypeError, AttributeError):
                         continue
                 if len(verified) != 1:
-                    self.missing[key] = time.monotonic()
-                    self.missing.move_to_end(key)
+                    self.missing[missing_key] = time.monotonic()
+                    self.missing.move_to_end(missing_key)
                     while len(self.missing) > 512:
                         self.missing.popitem(last=False)
                     return None
-                self.missing.pop(key, None)
-                index = RolloutIndex(verified[0], scope, thread)
+                self.missing.pop(missing_key, None)
+                index = (HistoryDirectory if directory_only else RolloutIndex)(verified[0], scope, thread)
                 self.indices[key] = index
-            index.refresh()
+            try:
+                index.refresh()
+            except (OSError, ValueError, TypeError):
+                self.invalidate(scope, thread)
+                raise
             self.indices.move_to_end(key)
-            while len(self.indices) > self.capacity:
-                self.indices.popitem(last=False)
+            self._budget(key, index)
             return index

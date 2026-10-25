@@ -1,0 +1,60 @@
+{
+  "date": "2026-10-23",
+  "baseline": "c3996dc",
+  "scope": "synthetic isolated acceptance; not natural use or daily cutover",
+  "environment": {
+    "platform": "Darwin",
+    "os": "27.0",
+    "architecture": "arm64",
+    "python": "3.14.7"
+  },
+  "stress": {
+    "archive_block_seconds": 30,
+    "paused_reader_seconds": 60,
+    "end_to_draw_ms": 220.336,
+    "build_id": "5e5dc8bffbaf9787fe00ae61ec76074dcab3be2f7a10b76bfd51c2d2205d0bac",
+    "original_exit_code": 17,
+    "config_read_attempts": 0,
+    "collector_stopped_after_gui_exit": true,
+    "passed": true,
+    "turn_kind": "synthetic reasoning-only"
+  },
+  "state_samples": {
+    "count": 119,
+    "all_fresh": true,
+    "max_pending_checkpoint": 1
+  },
+  "transport": {
+    "max_queued_bytes": 6364,
+    "rejected_clients": 0,
+    "malformed": 0,
+    "oversized_states": 0
+  },
+  "normal_quit": {
+    "scenario": "native-normal-quit",
+    "passed": true,
+    "gui_exit_code": 0,
+    "collector_stopped": true,
+    "integration_preserved": true,
+    "observation_released": true,
+    "build_id": "96e742ca18dd2c59cae26f4b46061f427148942b5ea0d369d56f754e6851e425"
+  },
+  "remaining": [
+    "daily GUI and resident Desktop bridge cutover",
+    "new-version natural turn acceptance",
+    "minimum supported environment and release validation"
+  ],
+  "visible_generation_stress": {
+    "archive_block_seconds": 30,
+    "paused_reader_seconds": 60,
+    "end_to_draw_ms": 118.309,
+    "last_delta_to_draw_ms": 246.259,
+    "visible_speed_draw_observed": true,
+    "build_id": "96e742ca18dd2c59cae26f4b46061f427148942b5ea0d369d56f754e6851e425",
+    "original_exit_code": 17,
+    "config_read_attempts": 0,
+    "collector_stopped_after_gui_exit": true,
+    "passed": true,
+    "max_peer_queued_bytes": 7033
+  }
+}

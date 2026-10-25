@@ -1,0 +1,141 @@
+{
+  "pages": [
+    {
+      "state": "available",
+      "source": "codex_history",
+      "attachments": [],
+      "sections": [
+        {
+          "id": "input",
+          "title": "参数",
+          "title_message": {
+            "key": "detail.input",
+            "params": {}
+          },
+          "format": "text",
+          "text": "é🙂",
+          "offset": 0,
+          "total_chars": 12,
+          "next_offset": 3,
+          "page_token": "eyJtZXRhZGF0YSI6eyJmb3JtYXQiOiJ0ZXh0IiwiaWRlbnRpdHkiOlsic2NvcGUiLCJ0aHJlYWQiLCJ0dXJuIiwicGhhc2UiLCJpbnB1dCJdLCJub3RpY2UiOm51bGwsInNuYXBzaG90X2NoYXJzIjoxMiwic291cmNlIjoiY29kZXhfaGlzdG9yeSIsInN0YXRlIjoiYXZhaWxhYmxlIiwidGV4dF9tZXNzYWdlIjpudWxsfSwic2hhMjU2IjoiNzgwZjk1MTAyNjQ1YzM0MmUyOTg2NDA0NThhZGUyNzdiYjk2MGIzZGRhN2Y4YzBlN2Y5YmFlZTQ4NjU0ZjI0NSIsInZlcnNpb24iOjF9"
+        }
+      ],
+      "version": 2,
+      "phase": {
+        "id": "phase",
+        "scope_id": "scope",
+        "thread_id": "thread",
+        "turn_id": "turn",
+        "item_id": "item",
+        "namespace": "canonical",
+        "track": "model",
+        "kind": "text",
+        "label": "正文",
+        "status": "completed"
+      }
+    },
+    {
+      "state": "available",
+      "source": "codex_history",
+      "attachments": [],
+      "sections": [
+        {
+          "id": "input",
+          "title": "参数",
+          "title_message": {
+            "key": "detail.input",
+            "params": {}
+          },
+          "format": "text",
+          "text": "\r\n原",
+          "offset": 3,
+          "total_chars": 12,
+          "next_offset": 6,
+          "page_token": "eyJtZXRhZGF0YSI6eyJmb3JtYXQiOiJ0ZXh0IiwiaWRlbnRpdHkiOlsic2NvcGUiLCJ0aHJlYWQiLCJ0dXJuIiwicGhhc2UiLCJpbnB1dCJdLCJub3RpY2UiOm51bGwsInNuYXBzaG90X2NoYXJzIjoxMiwic291cmNlIjoiY29kZXhfaGlzdG9yeSIsInN0YXRlIjoiYXZhaWxhYmxlIiwidGV4dF9tZXNzYWdlIjpudWxsfSwic2hhMjU2IjoiNzgwZjk1MTAyNjQ1YzM0MmUyOTg2NDA0NThhZGUyNzdiYjk2MGIzZGRhN2Y4YzBlN2Y5YmFlZTQ4NjU0ZjI0NSIsInZlcnNpb24iOjF9"
+        }
+      ],
+      "version": 2,
+      "phase": {
+        "id": "phase",
+        "scope_id": "scope",
+        "thread_id": "thread",
+        "turn_id": "turn",
+        "item_id": "item",
+        "namespace": "canonical",
+        "track": "model",
+        "kind": "text",
+        "label": "正文",
+        "status": "completed"
+      }
+    },
+    {
+      "state": "available",
+      "source": "codex_history",
+      "attachments": [],
+      "sections": [
+        {
+          "id": "input",
+          "title": "参数",
+          "title_message": {
+            "key": "detail.input",
+            "params": {}
+          },
+          "format": "text",
+          "text": "始文本",
+          "offset": 6,
+          "total_chars": 12,
+          "next_offset": 9,
+          "page_token": "eyJtZXRhZGF0YSI6eyJmb3JtYXQiOiJ0ZXh0IiwiaWRlbnRpdHkiOlsic2NvcGUiLCJ0aHJlYWQiLCJ0dXJuIiwicGhhc2UiLCJpbnB1dCJdLCJub3RpY2UiOm51bGwsInNuYXBzaG90X2NoYXJzIjoxMiwic291cmNlIjoiY29kZXhfaGlzdG9yeSIsInN0YXRlIjoiYXZhaWxhYmxlIiwidGV4dF9tZXNzYWdlIjpudWxsfSwic2hhMjU2IjoiNzgwZjk1MTAyNjQ1YzM0MmUyOTg2NDA0NThhZGUyNzdiYjk2MGIzZGRhN2Y4YzBlN2Y5YmFlZTQ4NjU0ZjI0NSIsInZlcnNpb24iOjF9"
+        }
+      ],
+      "version": 2,
+      "phase": {
+        "id": "phase",
+        "scope_id": "scope",
+        "thread_id": "thread",
+        "turn_id": "turn",
+        "item_id": "item",
+        "namespace": "canonical",
+        "track": "model",
+        "kind": "text",
+        "label": "正文",
+        "status": "completed"
+      }
+    },
+    {
+      "state": "available",
+      "source": "codex_history",
+      "attachments": [],
+      "sections": [
+        {
+          "id": "input",
+          "title": "参数",
+          "title_message": {
+            "key": "detail.input",
+            "params": {}
+          },
+          "format": "text",
+          "text": " é\n",
+          "offset": 9,
+          "total_chars": 12,
+          "next_offset": null,
+          "page_token": "eyJtZXRhZGF0YSI6eyJmb3JtYXQiOiJ0ZXh0IiwiaWRlbnRpdHkiOlsic2NvcGUiLCJ0aHJlYWQiLCJ0dXJuIiwicGhhc2UiLCJpbnB1dCJdLCJub3RpY2UiOm51bGwsInNuYXBzaG90X2NoYXJzIjoxMiwic291cmNlIjoiY29kZXhfaGlzdG9yeSIsInN0YXRlIjoiYXZhaWxhYmxlIiwidGV4dF9tZXNzYWdlIjpudWxsfSwic2hhMjU2IjoiNzgwZjk1MTAyNjQ1YzM0MmUyOTg2NDA0NThhZGUyNzdiYjk2MGIzZGRhN2Y4YzBlN2Y5YmFlZTQ4NjU0ZjI0NSIsInZlcnNpb24iOjF9"
+        }
+      ],
+      "version": 2,
+      "phase": {
+        "id": "phase",
+        "scope_id": "scope",
+        "thread_id": "thread",
+        "turn_id": "turn",
+        "item_id": "item",
+        "namespace": "canonical",
+        "track": "model",
+        "kind": "text",
+        "label": "正文",
+        "status": "completed"
+      }
+    }
+  ],
+  "text": "é🙂\r\n原始文本 é\n"
+}

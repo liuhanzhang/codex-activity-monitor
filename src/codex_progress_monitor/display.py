@@ -16,7 +16,8 @@ from rich.text import Text
 
 from .i18n import DEFAULT_LANGUAGE, available_languages, message, phase_message, render_message, tr
 from .progress_state import activity_message
-from .runtime import read_snapshot, save_ui_language, ui_language, snapshot_age, snapshot_fresh
+from .runtime import save_ui_language, ui_language, snapshot_age, snapshot_fresh
+from .state_client import current_state
 
 REFRESH_SECONDS = 1.0
 
@@ -43,11 +44,12 @@ def _activity_message(activity):
     return activity_message(legacy, ended=not legacy.get('active'))
 
 
-def render(snapshot, selected=0, detail=False, thread_filter=None, language=DEFAULT_LANGUAGE, notice=None):
+def render(snapshot, selected=0, detail=False, thread_filter=None, language=DEFAULT_LANGUAGE, notice=None,
+           connection_fresh=None):
     def t(key, **params):
         return tr(key, language, **params)
     age = snapshot_age(snapshot)
-    stale = not snapshot_fresh(snapshot)
+    stale = not (snapshot_fresh(snapshot) if connection_fresh is None else connection_fresh)
     if stale:
         snapshot = deepcopy(snapshot)
         for thread in snapshot.get('threads', []):
@@ -167,17 +169,19 @@ def input_keys(buffer):
 def watch(runtime, once=False, json_output=False, thread_filter=None, language=None):
     language = ui_language(runtime, language)
     console = Console()
+    def render_live(snapshot, **options):
+        return render(snapshot, connection_fresh=snapshot['connection']['healthy'], **options)
     if once:
-        snapshot = read_snapshot(runtime)
+        snapshot = current_state(runtime)
         if json_output:
             print(json.dumps(snapshot, ensure_ascii=False, indent=2))
         else:
-            console.print(render(snapshot, detail=bool(thread_filter), thread_filter=thread_filter, language=language)[0])
+            console.print(render_live(snapshot, detail=bool(thread_filter), thread_filter=thread_filter, language=language)[0])
         return
     if json_output or not sys.stdout.isatty():
         try:
             while True:
-                print(json.dumps(read_snapshot(runtime), ensure_ascii=False), flush=True)
+                print(json.dumps(current_state(runtime), ensure_ascii=False), flush=True)
                 time.sleep(REFRESH_SECONDS)
         except KeyboardInterrupt:
             return
@@ -195,7 +199,8 @@ def watch(runtime, once=False, json_output=False, thread_filter=None, language=N
                 now = time.monotonic()
                 due = now >= next_refresh
                 if due or dirty:
-                    visual, count = render(read_snapshot(runtime), selected, detail, thread_filter, language, notice)
+                    visual, count = render_live(current_state(runtime), selected=selected, detail=detail,
+                                                thread_filter=thread_filter, language=language, notice=notice)
                     live.update(visual, refresh=True)
                     dirty = False
                     if due:

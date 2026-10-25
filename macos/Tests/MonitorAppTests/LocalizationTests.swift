@@ -100,11 +100,12 @@ private actor LanguageBackend: BackendManaging {
 private struct NativeLanguageFixture: TimelineReading {
     let bundle: TimelineBundle
     func timeline(scope: String, thread: String, turn: String?) async throws -> TimelineBundle { bundle }
-    func detail(phase: TimelinePhase, section: String?, offset: Int) async throws -> ActivityDetail {
+    func detail(phase: TimelinePhase, page: ActivityPageCursor?) async throws -> ActivityDetail {
+        let text = (1...100).map { "\($0). 原始中文内容 remains unchanged" }.joined(separator: "\n")
         let section = ActivitySection(id: "input", title: "参数", format: "code",
-            text: (1...100).map { "\($0). 原始中文内容 remains unchanged" }.joined(separator: "\n"),
-            offset: 0, total_chars: nil, next_offset: nil, notice: nil, title_message: DisplayMessage("detail.input"))
-        return ActivityDetail(version: 1, state: "available", phase: phase,
+            text: text, offset: 0, total_chars: text.unicodeScalars.count, next_offset: nil, notice: nil,
+            page_token: "fixture-native", title_message: DisplayMessage("detail.input"))
+        return ActivityDetail(version: 2, state: "available", phase: phase,
                               sections: [section], attachments: [], source: "synthetic")
     }
 }
@@ -150,6 +151,7 @@ private struct NativeLanguageFixture: TimelineReading {
     text.setSelectedRange(NSRange(location: 3, length: 8))
     scroll.contentView.scroll(to: NSPoint(x: 0, y: 100))
     let offset = scroll.contentView.bounds.origin, selected = text.selectedRanges, original = text.string
+    await entry.refresh()
     root.setLanguage(.english)
     for _ in 0..<60 {
         host.layoutSubtreeIfNeeded()
