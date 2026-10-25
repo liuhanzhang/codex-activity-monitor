@@ -31,13 +31,13 @@ class MenuPresentationTests(unittest.TestCase):
         self.activity(thread, 'tool', 'exec')
         self.assertEqual(self.menu()['mode'], 'executing')
         self.activity(thread, 'tool_input', 'input')
-        self.assertEqual(self.menu()['reason'], 'generating')
+        self.assertEqual(self.menu()['reason'], 'sampling')
 
     def test_active_generation_does_not_depend_on_positive_or_rounded_speed(self):
         thread = self.thread()
         self.activity(thread, 'text')
         self.assertEqual(self.menu()['mode'], 'speed')
-        self.assertEqual(self.menu(110)['reason'], 'generating')
+        self.assertEqual(self.menu(110)['reason'], 'sampling')
 
     def test_summary_is_generation_only_while_stream_is_live(self):
         thread = self.thread()
@@ -45,6 +45,7 @@ class MenuPresentationTests(unittest.TestCase):
         self.assertEqual(self.menu()['mode'], 'thinking')
         key = ('b', 'a', 'summary', 0)
         stream = TextStream(key, 'summary', 'upstream', 'unknown', 100)
+        stream.apply_count(0, 0, 100, 0)
         stream.append('sample', 102)
         stream.apply_count(3, stream.revision, 102, 0)
         self.engine.streams[key] = stream
@@ -146,7 +147,8 @@ class MenuPresentationTests(unittest.TestCase):
         # classifications continue to contribute, regardless of its name.
         for classification in (None, False):
             helper.ephemeral = classification
-            self.assertEqual(self.menu()['reason'], 'multi_conversation')
+            self.assertEqual(self.menu()['reason'], 'sampling')
+            self.assertEqual(self.menu()['active_conversation_count'], 2)
 
     def test_mirrored_work_cannot_start_animation(self):
         thread = self.thread()

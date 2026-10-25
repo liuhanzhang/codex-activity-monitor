@@ -1,0 +1,174 @@
+{
+  "version": 1,
+  "date": "2026-10-25",
+  "policy": "fixed trailing one-second local token count; no ellipsis placeholder",
+  "native": {
+    "scope": "native Preview applies synthetic read-only fixtures; no production runtime or model calls",
+    "passed": true,
+    "languages": {
+      "en": {
+        "sampling": {
+          "title": "Generation",
+          "mode": "speed",
+          "status_tooltip": "Generation · Click to view live activity",
+          "connection_label": "Connected",
+          "observation_notice": null,
+          "build_id": "7288de560f82ece6d1f68e2e59360d814830edf3f5ea31ef473c049732b43ff6"
+        },
+        "prefix-correction": {
+          "title": "Generation",
+          "mode": "speed",
+          "status_tooltip": "Generation · Click to view live activity",
+          "connection_label": "Connected",
+          "observation_notice": null,
+          "build_id": "7288de560f82ece6d1f68e2e59360d814830edf3f5ea31ef473c049732b43ff6"
+        },
+        "ready": {
+          "title": "100 T/s",
+          "mode": "speed",
+          "status_tooltip": "100 T/s · Click to view live activity",
+          "connection_label": "Connected",
+          "observation_notice": null,
+          "build_id": "7288de560f82ece6d1f68e2e59360d814830edf3f5ea31ef473c049732b43ff6"
+        },
+        "limited": {
+          "title": "—",
+          "mode": "unavailable",
+          "status_tooltip": "The current text is too large to estimate its token speed. · Click to view live activity",
+          "connection_label": "Connected · Total speed unavailable",
+          "observation_notice": "NoticeSpeedResourceLimit",
+          "build_id": "7288de560f82ece6d1f68e2e59360d814830edf3f5ea31ef473c049732b43ff6"
+        },
+        "failed": {
+          "title": "—",
+          "mode": "unavailable",
+          "status_tooltip": "Token counting failed. Speed is temporarily unavailable. · Click to view live activity",
+          "connection_label": "Connected · Total speed unavailable",
+          "observation_notice": "NoticeSpeedCountFailed",
+          "build_id": "7288de560f82ece6d1f68e2e59360d814830edf3f5ea31ef473c049732b43ff6"
+        },
+        "gap": {
+          "title": "—",
+          "mode": "unavailable",
+          "status_tooltip": "Some turns lack continuous observation. Total speed is unavailable. · Click to view live activity",
+          "connection_label": "Connected · Total speed unavailable",
+          "observation_notice": "NoticeObservationGap",
+          "build_id": "7288de560f82ece6d1f68e2e59360d814830edf3f5ea31ef473c049732b43ff6"
+        },
+        "disconnected": {
+          "title": "—",
+          "mode": "unavailable",
+          "status_tooltip": "If Codex is already open, reopen it after your tasks finish to connect. · Click to view live activity",
+          "connection_label": "Waiting for Codex",
+          "observation_notice": "NoticeWaitingForConnection",
+          "build_id": "7288de560f82ece6d1f68e2e59360d814830edf3f5ea31ef473c049732b43ff6"
+        }
+      },
+      "zh-CN": {
+        "sampling": {
+          "title": "生成",
+          "mode": "speed",
+          "status_tooltip": "生成 · 点击查看实时活动",
+          "connection_label": "已连接",
+          "observation_notice": null,
+          "build_id": "7288de560f82ece6d1f68e2e59360d814830edf3f5ea31ef473c049732b43ff6"
+        },
+        "prefix-correction": {
+          "title": "生成",
+          "mode": "speed",
+          "status_tooltip": "生成 · 点击查看实时活动",
+          "connection_label": "已连接",
+          "observation_notice": null,
+          "build_id": "7288de560f82ece6d1f68e2e59360d814830edf3f5ea31ef473c049732b43ff6"
+        },
+        "ready": {
+          "title": "100 T/s",
+          "mode": "speed",
+          "status_tooltip": "100 T/s · 点击查看实时活动",
+          "connection_label": "已连接",
+          "observation_notice": null,
+          "build_id": "7288de560f82ece6d1f68e2e59360d814830edf3f5ea31ef473c049732b43ff6"
+        },
+        "limited": {
+          "title": "—",
+          "mode": "unavailable",
+          "status_tooltip": "当前文本过长，暂时无法估算速度。 · 点击查看实时活动",
+          "connection_label": "已连接 · 总速度暂不可用",
+          "observation_notice": "NoticeSpeedResourceLimit",
+          "build_id": "7288de560f82ece6d1f68e2e59360d814830edf3f5ea31ef473c049732b43ff6"
+        },
+        "failed": {
+          "title": "—",
+          "mode": "unavailable",
+          "status_tooltip": "速度计数失败，暂时无法估算速度。 · 点击查看实时活动",
+          "connection_label": "已连接 · 总速度暂不可用",
+          "observation_notice": "NoticeSpeedCountFailed",
+          "build_id": "7288de560f82ece6d1f68e2e59360d814830edf3f5ea31ef473c049732b43ff6"
+        },
+        "gap": {
+          "title": "—",
+          "mode": "unavailable",
+          "status_tooltip": "部分回合缺少连续观测，暂不显示总速度。 · 点击查看实时活动",
+          "connection_label": "已连接 · 总速度暂不可用",
+          "observation_notice": "NoticeObservationGap",
+          "build_id": "7288de560f82ece6d1f68e2e59360d814830edf3f5ea31ef473c049732b43ff6"
+        },
+        "disconnected": {
+          "title": "—",
+          "mode": "unavailable",
+          "status_tooltip": "若 Codex 已经打开，请在任务结束后重开以接入。 · 点击查看实时活动",
+          "connection_label": "等待 Codex 接入",
+          "observation_notice": "NoticeWaitingForConnection",
+          "build_id": "7288de560f82ece6d1f68e2e59360d814830edf3f5ea31ef473c049732b43ff6"
+        }
+      }
+    },
+    "limits": [
+      "Applied AppKit/SwiftUI state and actual status-button tooltip, not a physical screen timing measurement.",
+      "Each independent fixture tests display semantics; these are not natural completion or recovery samples."
+    ]
+  },
+  "verification": {
+    "python_full_initial": {
+      "tests": 471,
+      "seconds": 90.332,
+      "failures": 4,
+      "reason": "Four old fixtures expected two-prefix startup or pre-one-second silence behavior; expectations updated to the explicitly requested policy."
+    },
+    "python_targeted_after_fixture_updates": {
+      "tests": 125,
+      "seconds": 2.172,
+      "passed": true
+    },
+    "swift_model": {
+      "tests": 66,
+      "seconds": 0.1,
+      "passed": true,
+      "executed_passed": 64,
+      "skipped": 2
+    },
+    "swift_app": {
+      "tests": 115,
+      "seconds": 1.934,
+      "passed": true,
+      "executed_passed": 108,
+      "skipped": 7
+    }
+  },
+  "limits": [
+    "Native read-only synthetic fixtures, not natural model timing or physical display latency.",
+    "Default Swift skips remain skips; no natural or long-term acceptance claim.",
+    "The complete Python suite was not repeated solely for updated fixture expectations; affected modules and metric/resource boundaries passed targeted regression."
+  ],
+  "daily_cutover": {
+    "gui_build_matches": true,
+    "collector_modules_match": true,
+    "fresh_sequence_advancing": true,
+    "same_owner_instance": true,
+    "original_connected_bridges_retained": true,
+    "desktop_restarted": false,
+    "observation_gaps_retained": true,
+    "gui_build_id": "7288de560f82ece6d1f68e2e59360d814830edf3f5ea31ef473c049732b43ff6",
+    "metrics_sha256": "37a576e8c61e8072a847b39b5d248bd91caeb246634589fc480a93556a00501b"
+  }
+}

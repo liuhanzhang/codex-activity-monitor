@@ -1,0 +1,180 @@
+{
+  "version": 1,
+  "rate_window_seconds": 1,
+  "source": {
+    "source_sha256": "e9f5cdb169b4ae21739ec3aabaddc9b95bfe8345e3cc0108b70f747e8bd419c5",
+    "modules": {
+      "metrics": "37a576e8c61e8072a847b39b5d248bd91caeb246634589fc480a93556a00501b"
+    }
+  },
+  "cases": {
+    "quarter_second": {
+      "receipt_interval_seconds": 0.25,
+      "tokens_per_batch": 25,
+      "first_two_seconds": [
+        {
+          "elapsed": 0.25,
+          "rate": 25.0
+        },
+        {
+          "elapsed": 0.5,
+          "rate": 50.0
+        },
+        {
+          "elapsed": 0.75,
+          "rate": 75.0
+        },
+        {
+          "elapsed": 1.0,
+          "rate": 100.0
+        },
+        {
+          "elapsed": 1.25,
+          "rate": 100.0
+        },
+        {
+          "elapsed": 1.5,
+          "rate": 100.0
+        },
+        {
+          "elapsed": 1.75,
+          "rate": 100.0
+        },
+        {
+          "elapsed": 2.0,
+          "rate": 100.0
+        }
+      ],
+      "steady_min": 100.0,
+      "steady_max": 100.0,
+      "all_samples_equal_source_window_count": true
+    },
+    "half_second": {
+      "receipt_interval_seconds": 0.5,
+      "tokens_per_batch": 50,
+      "first_two_seconds": [
+        {
+          "elapsed": 0.25,
+          "rate": 50.0
+        },
+        {
+          "elapsed": 0.5,
+          "rate": 50.0
+        },
+        {
+          "elapsed": 0.75,
+          "rate": 100.0
+        },
+        {
+          "elapsed": 1.0,
+          "rate": 100.0
+        },
+        {
+          "elapsed": 1.25,
+          "rate": 100.0
+        },
+        {
+          "elapsed": 1.5,
+          "rate": 100.0
+        },
+        {
+          "elapsed": 1.75,
+          "rate": 100.0
+        },
+        {
+          "elapsed": 2.0,
+          "rate": 100.0
+        }
+      ],
+      "steady_min": 100.0,
+      "steady_max": 100.0,
+      "all_samples_equal_source_window_count": true
+    },
+    "batches_1_2_seconds": {
+      "receipt_interval_seconds": 1.2,
+      "tokens_per_batch": 120,
+      "first_two_seconds": [
+        {
+          "elapsed": 0.25,
+          "rate": 120.0
+        },
+        {
+          "elapsed": 0.5,
+          "rate": 120.0
+        },
+        {
+          "elapsed": 0.75,
+          "rate": 120.0
+        },
+        {
+          "elapsed": 1.0,
+          "rate": 120.0
+        },
+        {
+          "elapsed": 1.25,
+          "rate": 0.0
+        },
+        {
+          "elapsed": 1.5,
+          "rate": 120.0
+        },
+        {
+          "elapsed": 1.75,
+          "rate": 120.0
+        },
+        {
+          "elapsed": 2.0,
+          "rate": 120.0
+        }
+      ],
+      "steady_min": 0.0,
+      "steady_max": 120.0,
+      "all_samples_equal_source_window_count": true
+    },
+    "batches_1_5_seconds": {
+      "receipt_interval_seconds": 1.5,
+      "tokens_per_batch": 150,
+      "first_two_seconds": [
+        {
+          "elapsed": 0.25,
+          "rate": 150.0
+        },
+        {
+          "elapsed": 0.5,
+          "rate": 150.0
+        },
+        {
+          "elapsed": 0.75,
+          "rate": 150.0
+        },
+        {
+          "elapsed": 1.0,
+          "rate": 150.0
+        },
+        {
+          "elapsed": 1.25,
+          "rate": 0.0
+        },
+        {
+          "elapsed": 1.5,
+          "rate": 0.0
+        },
+        {
+          "elapsed": 1.75,
+          "rate": 150.0
+        },
+        {
+          "elapsed": 2.0,
+          "rate": 150.0
+        }
+      ],
+      "steady_min": 0.0,
+      "steady_max": 150.0,
+      "all_samples_equal_source_window_count": true
+    }
+  },
+  "limits": [
+    "Real local BPE, virtual clock, normalized zero tokenizer CPU cost; no native GUI or natural model.",
+    "Window counts deliberately reflect burst arrivals; they do not promise a constant or smooth display."
+  ]
+}

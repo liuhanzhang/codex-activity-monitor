@@ -61,6 +61,7 @@ class EngineTests(unittest.TestCase):
         self.turn()
         self.item()
         self.delta()
+        self.view(102.01)  # Establish a count before checking pending-stream coverage.
         self.item('unmapped', turn='unobserved-turn', at=102.1)
         self.delta('unmapped', at=102.2)
         self.assertEqual(self.view(103)['overview']['coverage'], 'partial')
@@ -81,6 +82,7 @@ class EngineTests(unittest.TestCase):
         self.turn()
         self.item()
         self.delta()
+        self.view(102.01)
         for item in ('closed', 'still-open'):
             self.item(item, turn='unobserved-turn', at=102.1)
             self.delta(item, at=102.2)
@@ -144,7 +146,9 @@ class EngineTests(unittest.TestCase):
         self.delta(text='摘要🙂',kind='response.reasoning_summary_text.delta')
         a=self.view()['threads'][0]['activities'][0]
         self.assertEqual((a['summary_chars'],a['summary_parts']),(3,1))
-        self.assertGreater(a['streams'][0]['token_rate'],0)
+        self.assertEqual(a['streams'][0]['token_rate'], 0)  # The first delta has left the one-second window.
+        self.delta(text='继续', sequence=2, at=103.25, kind='response.reasoning_summary_text.delta')
+        self.assertGreater(self.view(103.5)['threads'][0]['activities'][0]['streams'][0]['token_rate'], 0)
         self.send({'method':'turn/completed','params':{'threadId':'t','turn':{'id':'u','status':'interrupted'}}},104)
         self.assertEqual(self.view(120)['threads'][0]['activities'][0]['duration_seconds'],3)
         self.assertEqual(self.view(120)['threads'][0]['phase'],'interrupted')

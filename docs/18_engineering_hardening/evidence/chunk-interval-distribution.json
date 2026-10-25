@@ -1,0 +1,214 @@
+{
+  "version": 1,
+  "date": "2026-10-25",
+  "requested_window_seconds": 60.0,
+  "actual_probe_lifetime_seconds": 60.161989625077695,
+  "quantile_definition": "nearest rank: sorted[ceil(p*n)-1]",
+  "main_scope": "sequence-deduplicated nonempty upstream deltas; explicit ephemeral streams excluded, unknown association retained and counted",
+  "clock": "bridge transport-read observation monotonic time, carried through Event.at; not collector scheduling time",
+  "main": {
+    "delta_records": 921,
+    "stream_segments": 2,
+    "segments_with_at_least_two_deltas": 2,
+    "kinds": {
+      "tool_input": 921
+    },
+    "sources": {
+      "upstream": 921
+    },
+    "delta_event_interval_ms_including_same_receipt": {
+      "n": 919,
+      "min": 0.0,
+      "mean": 7.696604370864127,
+      "max": 404.47633317671716,
+      "p50": 0.1360829919576645,
+      "p90": 8.831666084006429,
+      "p95": 73.5597088932991,
+      "p99": 102.36424999311566
+    },
+    "distinct_receipt_batch_interval_ms": {
+      "n": 757,
+      "min": 0.0071660615503787994,
+      "mean": 9.3436980407188,
+      "max": 404.47633317671716,
+      "p50": 0.6690421141684055,
+      "p90": 15.928792068734765,
+      "p95": 76.41574996523559,
+      "p99": 146.67620789259672
+    },
+    "same_receipt_interval_count": 162,
+    "same_receipt_interval_fraction": 0.176278563656148,
+    "deltas_per_stream_receipt_batch": {
+      "n": 759,
+      "min": 1,
+      "mean": 1.2134387351778657,
+      "max": 19,
+      "p50": 1,
+      "p90": 2,
+      "p95": 2,
+      "p99": 5
+    },
+    "distinct_receipt_histogram": [
+      {
+        "lower_inclusive_ms": 0,
+        "upper_exclusive_ms": 1,
+        "count": 420,
+        "fraction": 0.5548216644649934
+      },
+      {
+        "lower_inclusive_ms": 1,
+        "upper_exclusive_ms": 5,
+        "count": 217,
+        "fraction": 0.2866578599735799
+      },
+      {
+        "lower_inclusive_ms": 5,
+        "upper_exclusive_ms": 10,
+        "count": 32,
+        "fraction": 0.04227212681638045
+      },
+      {
+        "lower_inclusive_ms": 10,
+        "upper_exclusive_ms": 20,
+        "count": 18,
+        "fraction": 0.023778071334214
+      },
+      {
+        "lower_inclusive_ms": 20,
+        "upper_exclusive_ms": 50,
+        "count": 8,
+        "fraction": 0.010568031704095112
+      },
+      {
+        "lower_inclusive_ms": 50,
+        "upper_exclusive_ms": 100,
+        "count": 51,
+        "fraction": 0.06737120211360634
+      },
+      {
+        "lower_inclusive_ms": 100,
+        "upper_exclusive_ms": 250,
+        "count": 10,
+        "fraction": 0.013210039630118891
+      },
+      {
+        "lower_inclusive_ms": 250,
+        "upper_exclusive_ms": 500,
+        "count": 1,
+        "fraction": 0.001321003963011889
+      },
+      {
+        "lower_inclusive_ms": 500,
+        "upper_exclusive_ms": 1000,
+        "count": 0,
+        "fraction": 0.0
+      },
+      {
+        "lower_inclusive_ms": 1000,
+        "upper_exclusive_ms": null,
+        "count": 0,
+        "fraction": 0.0
+      }
+    ],
+    "distinct_receipt_gaps_at_least_1s": 0,
+    "longest_within_stream_gaps": [
+      {
+        "gap_ms": 404.47633317671716,
+        "kind": "tool_input",
+        "source": "upstream"
+      },
+      {
+        "gap_ms": 228.31058292649686,
+        "kind": "tool_input",
+        "source": "upstream"
+      },
+      {
+        "gap_ms": 180.2090830169618,
+        "kind": "tool_input",
+        "source": "upstream"
+      },
+      {
+        "gap_ms": 172.26829193532467,
+        "kind": "tool_input",
+        "source": "upstream"
+      },
+      {
+        "gap_ms": 171.26979189924896,
+        "kind": "tool_input",
+        "source": "upstream"
+      }
+    ],
+    "out_of_order_timestamp_pairs_excluded": 0,
+    "collector_receipt_lag_ms": {
+      "n": 921,
+      "min": 0.037874793633818626,
+      "mean": 0.7492257509659672,
+      "max": 8.877374930307269,
+      "p50": 0.2309158444404602,
+      "p90": 1.3950839638710022,
+      "p95": 4.864708054810762,
+      "p99": 8.649833034723997
+    }
+  },
+  "stream_state_counts": {
+    "no_live_text_stream": 921
+  },
+  "association_unknown_delta_records": 0,
+  "complete_stream_subset": {
+    "delta_records": 0,
+    "reason": "No active TextStream in this reload-crossing sample; the retained source distribution is not a GUI rate acceptance sample."
+  },
+  "current_chat_matched_by_explicit_environment_id": true,
+  "current_chat_source_delta_records": 921,
+  "engine_delta_classification_counts": {
+    "engine_delta_no_stream": 921
+  },
+  "engine_late_terminal_delta_counter": 921,
+  "sampled_stream_span_seconds": 7.073179416824132,
+  "excluded": {
+    "explicitly_ephemeral_deltas": 0,
+    "noncomplete_quality_deltas_included_in_source_statistics": 921,
+    "probe": {
+      "engine_delta_no_stream": 921
+    }
+  },
+  "measured_delta_classification_hook_cost_microseconds": {
+    "n": 921,
+    "min": 0.25,
+    "mean": 1.3155114006514659,
+    "max": 12.917,
+    "p50": 0.958,
+    "p90": 2.667,
+    "p95": 3.375,
+    "p99": 5.375
+  },
+  "restoration": {
+    "healthy": true,
+    "owner_connected": true,
+    "owner_matches": true,
+    "collector_is_ordinary_cli": true
+  },
+  "restored_collector_sources_match_before": true,
+  "limits": [
+    "Finite natural tool/text generation during this task, not a whole-day or whole-model distribution.",
+    "Main statistics measure source receipts even if Engine cannot associate a delta with a current active chat; unknown association counts are explicit.",
+    "All source deltas in this sample hit Engine late_terminal_deltas and had no live TextStream. That branch also includes unknown thread status after reload; this does not prove actual source completion or reproduce the earlier GUI speed.",
+    "Distinct batches mean different bridge read timestamps carrying deltas in the same stream, not server-side chunks or TCP packets.",
+    "All same-timestamp deltas are retained in event statistics; positive-time batch statistics exclude those unresolvable intervals.",
+    "Intervals never cross backend, item, content part, source or recorded gap epoch; first/last boundary waits are censored.",
+    "Long pauses within a stream remain included; their server, transport or buffering cause is not inferred.",
+    "Collector restart introduces real observation gaps; they remain in Monitor; source-only statistics do not make those streams eligible for speed display.",
+    "Only metadata was captured; the original Desktop/backend/bridge and product speed formula were not changed.",
+    "The collector ran temporarily under an instrumented launcher; classification-hook cost excludes pre-call lookups, source metadata capture and lifecycle hooks; total diagnostic overhead was not measured."
+  ],
+  "initial_accepted_stream_probe": {
+    "actual_lifetime_seconds": 120.22580329095945,
+    "accepted_delta_records": 0,
+    "excluded": {
+      "not_new_accepted_nonempty_delta": 11248
+    },
+    "interpretation": "No retained accepted-stream sample; no interval distribution inferred. The subsequent source-receipt probe supplies the main data."
+  },
+  "sampled_local_revision_before_consolidation": "25f3f64",
+  "source_stage": "receipt-only diagnostic before the fixed one-second policy; identifiers retain original sampling provenance"
+}

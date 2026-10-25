@@ -1,0 +1,132 @@
+{
+  "scope": "synthetic tool-input stream; real isolated collector and tokenizer IPC",
+  "feed_tokens_per_batch": 25,
+  "feed_interval_seconds": 0.25,
+  "batches": 64,
+  "pre_text_wait_seconds": 8,
+  "reference_tokens_per_second": 100.01674963025944,
+  "first_positive_rate": {
+    "elapsed": 1.0065826668869704,
+    "rate": 50.0,
+    "expected_window_tokens": 50,
+    "rate_window_seconds": 1.0,
+    "coverage": "complete"
+  },
+  "steady_samples": 12,
+  "steady_mean": 100.0,
+  "steady_min": 100.0,
+  "steady_max": 100.0,
+  "completion_rate_unknown": true,
+  "samples": [
+    {
+      "elapsed": 0.25590370781719685,
+      "rate": null,
+      "expected_window_tokens": null,
+      "rate_window_seconds": null,
+      "coverage": "unavailable"
+    },
+    {
+      "elapsed": 1.0065826668869704,
+      "rate": 50.0,
+      "expected_window_tokens": 50,
+      "rate_window_seconds": 1.0,
+      "coverage": "complete"
+    },
+    {
+      "elapsed": 2.0062756668776274,
+      "rate": 100.0,
+      "expected_window_tokens": 100,
+      "rate_window_seconds": 1.0,
+      "coverage": "complete"
+    },
+    {
+      "elapsed": 3.0060981668066233,
+      "rate": 100.0,
+      "expected_window_tokens": 100,
+      "rate_window_seconds": 1.0,
+      "coverage": "complete"
+    },
+    {
+      "elapsed": 4.256113791838288,
+      "rate": 100.0,
+      "expected_window_tokens": 100,
+      "rate_window_seconds": 1.0,
+      "coverage": "complete"
+    },
+    {
+      "elapsed": 5.256142749916762,
+      "rate": 100.0,
+      "expected_window_tokens": 100,
+      "rate_window_seconds": 1.0,
+      "coverage": "complete"
+    },
+    {
+      "elapsed": 6.501166832866147,
+      "rate": 100.0,
+      "expected_window_tokens": 100,
+      "rate_window_seconds": 1.0,
+      "coverage": "complete"
+    },
+    {
+      "elapsed": 7.505455999867991,
+      "rate": 100.0,
+      "expected_window_tokens": 100,
+      "rate_window_seconds": 1.0,
+      "coverage": "complete"
+    },
+    {
+      "elapsed": 8.509614957962185,
+      "rate": 100.0,
+      "expected_window_tokens": 100,
+      "rate_window_seconds": 1.0,
+      "coverage": "complete"
+    },
+    {
+      "elapsed": 9.751349916914478,
+      "rate": 100.0,
+      "expected_window_tokens": 100,
+      "rate_window_seconds": 1.0,
+      "coverage": "complete"
+    },
+    {
+      "elapsed": 10.755997041938826,
+      "rate": 100.0,
+      "expected_window_tokens": 100,
+      "rate_window_seconds": 1.0,
+      "coverage": "complete"
+    },
+    {
+      "elapsed": 12.005924166878685,
+      "rate": 100.0,
+      "expected_window_tokens": 100,
+      "rate_window_seconds": 1.0,
+      "coverage": "complete"
+    },
+    {
+      "elapsed": 13.004479749826714,
+      "rate": 100.0,
+      "expected_window_tokens": 100,
+      "rate_window_seconds": 1.0,
+      "coverage": "complete"
+    },
+    {
+      "elapsed": 14.006983124883845,
+      "rate": 100.0,
+      "expected_window_tokens": 100,
+      "rate_window_seconds": 1.0,
+      "coverage": "complete"
+    },
+    {
+      "elapsed": 15.255039416952059,
+      "rate": 100.0,
+      "expected_window_tokens": 100,
+      "rate_window_seconds": 1.0,
+      "coverage": "complete"
+    }
+  ],
+  "limits": [
+    "Synthetic content and emission schedule, not natural model performance.",
+    "Collector prefix sampling introduces bounded fixture quantization; no GUI draw is measured."
+  ],
+  "passed": true
+}

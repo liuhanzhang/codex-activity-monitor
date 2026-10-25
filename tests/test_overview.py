@@ -20,9 +20,10 @@ class OverviewTests(unittest.TestCase):
     def stream(self, thread, item='i', pending=False):
         key = (thread.backend, item, 'text', 0)
         stream = TextStream(key, 'text', 'upstream', 'unknown', 100)
-        stream.append('some words', 102)
+        stream.apply_count(0, 0, 100, 0)
+        stream.append(' x'*4, 102.5)
         if not pending:
-            stream.apply_count(12, stream.revision, 102, 0)
+            stream.apply_count(4, stream.revision, 103, 0)
         self.engine.streams[key] = stream
         activity = Activity(item, 'turn', 'text', '', 100, stream_keys=[key])
         thread.activities[item] = activity

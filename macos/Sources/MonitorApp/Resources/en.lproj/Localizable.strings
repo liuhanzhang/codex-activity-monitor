@@ -245,3 +245,6 @@
 "重新读取" = "Read again";
 "重试" = "Retry";
 "隔离验证" = "Isolated preview";
+"当前无法可靠计算速度。" = "Speed cannot currently be measured reliably.";
+"NoticeSpeedResourceLimit" = "The current text is too large to estimate its token speed.";
+"NoticeSpeedCountFailed" = "Token counting failed. Speed is temporarily unavailable.";

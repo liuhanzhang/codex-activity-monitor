@@ -189,6 +189,8 @@ class ReconciliationTests(unittest.TestCase):
                    'metadata': {'thread_id': 't', 'turn_id': 'new'}}}, 103.1, 'upstream')
         self.send({'type': 'response.output_text.delta', 'item_id': 'text', 'delta': 'fresh generation'}, 104, 'upstream')
         self.engine.tick(104)
+        self.send({'type': 'response.output_text.delta', 'item_id': 'text', 'delta': ' continues'}, 104.5, 'upstream')
+        self.engine.tick(104.5)
         stream = self.engine.streams[('b', 'text', 'text', 0)]
         tokens = stream.tokens
         self.reconcile([self.completion(), self.row('event_msg', {'type': 'task_complete', 'turn_id': 'u'})], ('u', 'new'))

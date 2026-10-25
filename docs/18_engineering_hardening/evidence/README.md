@@ -10,6 +10,9 @@
 | P3 日常 GUI／collector 更新 | [p3-daily-cutover.json](p3-daily-cutover.json) | 实际构建／源码、同实例递增序号及拥有连接；Desktop 重开与完整自然样本仍待验收 |
 | P3 Desktop 重开后核对 | [p3-desktop-restart.json](p3-desktop-restart.json) | 新驻留 bridge 身份／源码与原后端父子关系、实时许可及旧提示消失；自然延迟／长期样本仍待验收 |
 | P5 自然窗口复核 | [p5-natural-window-review.json](p5-natural-window-review.json) | 30 分钟／1,793 条新鲜探测，但有超长诊断行丢弃和 bridge RSS 峰值；不构成完整自然回合、结束延迟或长期验收通过 |
+| 源接收间隔分布 | [921 个 delta／两条流](chunk-interval-distribution.json) | 当前聊天源读取时间的分位数、同批零间隔及恢复核对；无活动 TextStream，不当作 GUI 测速或无缺口自然验收 |
+| 每段／批次 token 数 | [同一源样本离线重建](chunk-token-distribution.json) | 相同 JSONL item ID、字符和逐段 UTF-8 长度匹配后，按追加协议还原累计前缀差分；本地编码估算，不是服务端 token ID 或逐段原文校验 |
+| 当前一秒接收窗口 | [确定性窗口](one-second-rate-window.json)、[隔离 collector](one-second-rate-collector.json)、[原生展示与日常切换](one-second-rate-presentation.json) | 固定一秒源接收量、没有省略号；自然回归原因及跨重载缺口仍未闭合 |
 | P5 首轮前后值 | [before](p5-before.json)、[after](p5-after.json) | 全索引复制改为所选 turn 视图；不是最终目录实现 |
 | P5 旧缓存边界 | [百万行](p5-million-lines.json)、[超过缓存上限](p5-over-cache.json) | 保存促成目录修订的原反例 |
 | P5 当前目录 | [百万行](p5-directory-million-lines.json)、[原超限工作集](p5-directory-over-cache.json) | 相同规模下冷／热／追加、权重与临时分配 |

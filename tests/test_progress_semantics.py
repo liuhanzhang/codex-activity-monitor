@@ -207,7 +207,9 @@ class ProgressTests(unittest.TestCase):
 
     def test_retry_failure_closes_generation_and_recovery_keeps_new_rate(self):
         self.text()
-        self.assertGreater(self.view(102)['generation_rate'],0)
+        self.assertGreater(self.view(102)['generation_rate'], 0)  # First counted prefix is enough for a fixed one-second total.
+        self.send('item/agentMessage/delta',{'threadId':'t','turnId':'u','itemId':'text','delta':'继续'},102.25)
+        self.assertGreater(self.view(102.5)['generation_rate'],0)
         self.send('error',{'threadId':'t','turnId':'u','willRetry':True,'error':{'message':'PRIVATE'}},103)
         self.assertIsNone(self.view(105)['generation_rate'])
         self.assertEqual(self.view(105)['display_label'],'正在重试')
@@ -250,10 +252,13 @@ class ProgressTests(unittest.TestCase):
         self.item({'id':'summary','type':'reasoning'})
         self.send('item/reasoning/summaryTextDelta',{'threadId':'t','turnId':'u','itemId':'summary','delta':'摘要文本','summaryIndex':0},102)
         self.send('item/reasoning/summaryPartAdded',{'threadId':'t','turnId':'u','itemId':'summary','summaryIndex':1},102.1)
-        before=self.view(103)['generation_rate']
-        self.command('output',103)
-        self.send('item/commandExecution/outputDelta',{'threadId':'t','turnId':'u','itemId':'output','delta':'PRIVATE'*1000},103.1)
-        self.assertAlmostEqual(self.view(103.1)['generation_rate'],before*2/2.1)
+        self.assertEqual(self.view(103)['generation_rate'], 0)  # The visible summary has aged out.
+        self.send('item/reasoning/summaryTextDelta',{'threadId':'t','turnId':'u','itemId':'summary','delta':'继续','summaryIndex':0},103.25)
+        before=self.view(103.5)['generation_rate']
+        self.assertGreater(before,0)
+        self.command('output',103.6)
+        self.send('item/commandExecution/outputDelta',{'threadId':'t','turnId':'u','itemId':'output','delta':'PRIVATE'*1000},103.7)
+        self.assertAlmostEqual(self.view(103.7)['generation_rate'],before)
         self.assertEqual(len(self.engine.streams),1)
         self.assertNotIn('PRIVATE',self.visual(103.1))
 
@@ -319,7 +324,7 @@ class ProgressTests(unittest.TestCase):
         self.send('model/rerouted',{'threadId':'t','turnId':'u','toModel':'gpt-4o'},103)
         self.view(103)
         self.assertEqual(stream.encoding_name,'o200k_base')
-        self.assertIsNone(stream.rate(103))
+        self.assertEqual(stream.rate(103), 0)  # Recounting does not give old source text a new receive time.
         self.send('item/agentMessage/delta',{'threadId':'t','turnId':'u','itemId':'text','delta':'继续'},104)
         self.assertGreater(self.view(104.5)['generation_rate'],0)
 
@@ -335,7 +340,9 @@ class ProgressTests(unittest.TestCase):
         self.assertIsNone(self.view(106)['generation_rate'])
         self.item({'id':'text','type':'agentMessage','text':'旧流'},107,True)
         self.text('complete-new-stream',108)
-        self.assertGreater(self.view(109)['generation_rate'],0)
+        self.assertGreater(self.view(109)['generation_rate'], 0)  # A new complete stream has its own first-second count.
+        self.send('item/agentMessage/delta',{'threadId':'t','turnId':'u','itemId':'complete-new-stream','delta':'继续'},109.25)
+        self.assertGreater(self.view(109.5)['generation_rate'],0)
 
     def test_idle_is_not_success_and_preserves_independent_background_work(self):
         self.text()

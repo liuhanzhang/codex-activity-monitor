@@ -28,7 +28,7 @@ def menu_presentation(engine, views, total):
     def result(mode, reason):
         return dict(version=1, mode=mode, reason=reason, active_conversation_count=count)
 
-    if total['coverage'] != 'complete':
+    if total['coverage'] != 'complete' and total.get('rate_status') != 'sampling':
         return result('unavailable', 'coverage_incomplete')
     if unowned:
         return result('unavailable', 'parent_identity_unknown')
@@ -36,6 +36,8 @@ def menu_presentation(engine, views, total):
            v.get('display_message', {}).get('key') in ('activity.unknown', 'activity.disconnected')
            for v in active):
         return result('unavailable', 'activity_unavailable')
+    if total.get('rate_status') == 'sampling':
+        return result('speed', 'sampling') if count else result('unavailable', 'activity_unavailable')
     if count > 1:
         return result('speed', 'multi_conversation')
     if not active:

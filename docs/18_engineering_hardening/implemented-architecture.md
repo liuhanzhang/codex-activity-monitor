@@ -2,6 +2,8 @@
 
 状态：本文件描述 P4 分页、P5 分段索引／校正队列／独立计数进程、P6 投影及 P7 边界的已实现架构；日常 GUI／collector／驻留 bridge 已统一更新并核对，新版自然验收仍待完成。后续阶段更新本文件，不覆盖[第 17 章基线架构](../17_review_and_refactor/architecture.md)。目标与实际结果分别见[技术设计](technical-design.md)和[实施记录](implementation-results.md)。
 
+当前速度口径与展示见[固定一秒接收窗口](one-second-speed.md)。`RateReading` 统一数值／状态／原因；可选 `rate_status` 与 `generation_rate_status` 让 GUI 区分首次计数和异常不可用，数字覆盖仍独立保留。正常等待没有省略号，真实缺口不能显示为零。
+
 ## 一次活动如何到达界面
 
 ```mermaid

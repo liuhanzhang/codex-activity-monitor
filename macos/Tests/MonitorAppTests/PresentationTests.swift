@@ -71,6 +71,33 @@ import MonitorModel
     #expect(!view.animating)
 }
 
+@Test @MainActor func initialGenerationTitleStaysStaticWithoutEllipsis() {
+    let width = StatusContentView.itemWidth(for: .speed, title: "生成")
+    #expect(width == StatusContentView.itemWidth(for: .speed, title: "100 T/s"))
+    let view = StatusContentView(frame: NSRect(x: 0, y: 0, width: width, height: 24))
+    view.update(mode: .speed, title: "生成")
+    #expect(!view.animating)
+    #expect(view.boundedTitle("生成", availableWidth: width - StatusContentView.horizontalInset * 2) == "生成")
+    view.stop()
+}
+
+@Test @MainActor func normalSamplingKeepsTheConnectionHealthyInBothLanguages() throws {
+    let store = DashboardStore(configuration: BackendConfiguration(python: "/unused", source_root: "/unused", runtime: "/unused", data_root: "/unused", build_id: "sampling-test"), arguments: ["--snapshot", "/unused"])
+    store.snapshot = try Snapshot.decode(JSONSerialization.data(withJSONObject: [
+        "schema_version": 1, "updated_at": Date().timeIntervalSince1970, "running": true, "threads": [],
+        "overview": ["version": 1, "coverage": "unavailable", "quality": ["stream_pending"], "rate_status": "sampling"],
+        "menu_presentation": ["version": 1, "mode": "speed", "reason": "sampling", "active_conversation_count": 1],
+        "backends": ["b": ["connected": true, "implementation": ["modules": ["observer_permit": "test"]]]]]))
+    for language: MonitorLanguage in [.chinese, .english] {
+        store.setLanguage(language)
+        store.updatePresentation()
+        #expect(store.menuTitle == (language == .english ? "Generation" : "生成"))
+        #expect(store.connectionLabel == L("已连接", language: language))
+        #expect(store.compactConnectionLabel == L("已连接", language: language))
+        #expect(store.connectionDetail == nil)
+    }
+}
+
 @Test @MainActor func stoppedAnimationClockReleasesItsView() {
     weak var released: StatusContentView?
     autoreleasepool {

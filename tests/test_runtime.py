@@ -15,6 +15,7 @@ from codex_progress_monitor.state_client import current_state
 from codex_progress_monitor.runtime import runtime_dir,read_snapshot,atomic_json
 from codex_progress_monitor.bridge import observes_stdio,Observer
 from codex_progress_monitor.events import filter_event
+from codex_progress_monitor.metrics import count_text
 from codex_progress_monitor.timeline_query import query_runtime
 
 
@@ -500,13 +501,18 @@ protocol('turn/completed',{'threadId':'t','turn':{'id':'u','status':'completed'}
         try:
             deadline=time.monotonic()+5
             deltas=0
+            expected_tokens=count_text('hello '*600,'o200k_base')[0]
+            streams=[]
             while time.monotonic()<deadline:
                 snapshot=current_state(self.runtime)
-                deltas=max((s['deltas'] for t in snapshot['threads'] for a in t['activities'] for s in a['streams']),default=0)
-                if deltas==600 and any(t['token_rates'].get('text',0) for t in snapshot['threads']):break
+                streams=[s for t in snapshot['threads'] for a in t['activities'] for s in a['streams']]
+                deltas=max((s['deltas'] for s in streams),default=0)
+                if deltas==600 and any(s['tokens']==expected_tokens and not s['count_pending'] for s in streams):break
                 time.sleep(.05)
             self.assertEqual(deltas,600)
-            self.assertTrue(any(t['token_rates'].get('text',0) for t in snapshot['threads']))
+            # A burst may have only one countable prefix; preservation proves
+            # its cumulative count, not a positive rate with invented timing.
+            self.assertTrue(any(s['tokens']==expected_tokens and not s['count_pending'] for s in streams))
             self.assertTrue(all(b.get('dropped_packets',0)==0 and b.get('parse_errors',0)==0 for b in snapshot['backends'].values()))
             process.communicate(input=b'finish\n',timeout=8)
             self.assertEqual(process.returncode,0)

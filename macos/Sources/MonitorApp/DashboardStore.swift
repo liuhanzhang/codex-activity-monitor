@@ -308,7 +308,7 @@ final class DashboardStore {
         }
         let connectionFresh = usesLiveState ? liveState?.isFresh == true : nil
         fresh = readError == nil && (connectionFresh ?? (snapshot?.isFresh(at: date) == true))
-        menuTitle = fresh ? (snapshot?.menuTitle(at: date, connectionFresh: connectionFresh) ?? "—") : "—"
+        menuTitle = fresh ? (snapshot?.menuTitle(at: date, connectionFresh: connectionFresh, language: language) ?? "—") : "—"
         menuMode = fresh ? (snapshot?.menuMode(at: date, connectionFresh: connectionFresh) ?? .unavailable) : .unavailable
         let chats = snapshot?.threads ?? []
         let ids = Set(chats.map(\.id))
@@ -399,6 +399,7 @@ final class DashboardStore {
         if !readOnly, let management, !management.configured { return management.localizedLabel(language) }
         if readError != nil { return L(readError!) }
         if !fresh { return L("Stale") }
+        if snapshot?.isMeasuringSpeed == true { return L("已连接") }
         if snapshot?.overview?.coverage == "partial" { return L("部分观测") }
         if snapshot?.overview?.coverage == "complete" { return L("已连接") }
         if snapshot?.backends?.values.contains(where: { $0.connected == true }) == true {
@@ -415,6 +416,7 @@ final class DashboardStore {
     var compactConnectionLabel: String {
         if !readOnly, let management, !management.configured { return L("未接入") }
         if !fresh { return L("数据不可用") }
+        if snapshot?.isMeasuringSpeed == true { return L("已连接") }
         if snapshot?.overview?.coverage == "partial" { return L("部分观测") }
         if snapshot?.backends?.values.contains(where: { $0.connected == true }) == true { return L("已连接") }
         return L("等待接入")

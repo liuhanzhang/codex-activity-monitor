@@ -17,6 +17,7 @@ def overview(engine, views, now):
     quality = set()
     rates = []
     unknown = 0
+    sampling = 0
     estimated = False
     seen = set()
     for view in views:
@@ -30,9 +31,14 @@ def overview(engine, views, now):
             continue
         if not view.get('connected', False):
             continue
+        visible = {a['id'] for a in view.get('activities', []) if a.get('display_visible')}
         for activity in thread.activities.values():
             if not activity.active or activity.mirrored:
                 continue
+            if activity.kind in ('text', 'plan', 'tool_input') and not activity.stream_keys and activity.id in visible:
+                unknown += 1
+                sampling += 1
+                quality.add('stream_pending')
             for key in activity.stream_keys:
                 if key in seen:
                     continue
@@ -40,10 +46,12 @@ def overview(engine, views, now):
                 stream = engine.streams.get(key)
                 if stream is None or stream.kind not in LIVE_KINDS or stream.ended_at is not None or stream.ended_by_history:
                     continue
-                rate = stream.rate(now)
+                reading = stream.rate_reading(now)
+                rate = reading.value
                 if rate is None or not math.isfinite(rate) or rate < 0:
                     unknown += 1
-                    quality.add(stream.quality if stream.quality != 'complete' else 'stream_pending')
+                    sampling += reading.status == 'sampling'
+                    quality.add('stream_pending' if reading.status == 'sampling' else reading.reason or 'stream_unavailable')
                 else:
                     rates.append(rate)
                     estimated |= stream.estimated
@@ -57,7 +65,10 @@ def overview(engine, views, now):
     if not connected:
         quality.add('no_backend')
     coverage = ('partial' if rates else 'unavailable') if unknown or not connected else 'complete'
+    rate_status = ('sampling' if connected and unknown == sampling and sampling else
+                   'unavailable' if unknown or not connected else 'ready')
     return {'version': 1, 'scope': 'observed_local', 'coverage': coverage,
+            'rate_status': rate_status,
             'generation_rate': sum(rates) if coverage == 'complete' else None,
             'observed_subtotal': sum(rates) if rates else (0.0 if coverage == 'complete' else None),
             'estimated': estimated, 'active_thread_count': sum(bool(v.get('has_active_work')) for v in views),

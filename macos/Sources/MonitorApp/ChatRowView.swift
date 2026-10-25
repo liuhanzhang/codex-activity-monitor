@@ -10,6 +10,16 @@ struct ChatRowView: LocalizedView {
     private var live: Bool { store.sourceAvailable(for: chat) }
     private var working: Bool { store.snapshot?.hasActiveWork(in: chat) == true }
     private var unassigned: Bool { store.isUnassigned(chat) }
+    private var speedTitle: String? {
+        guard working else { return nil }
+        guard live, chat.generation_rate_status != "unavailable" else { return "—" }
+        if let rate = chat.generation_rate, rate.isFinite, rate >= 0 { return MetricFormat.compactSpeed(rate) }
+        return nil
+    }
+    private var speedHelp: String {
+        if speedTitle == "—" { return L("当前无法可靠计算速度。") }
+        return (speedTitle ?? "") + " · " + L("生成是实时窗口估算，统计已接收的独立生成内容。")
+    }
     private var actionLabel: String {
         if !live { return L("状态暂不可用") }
         if working {
@@ -31,9 +41,9 @@ struct ChatRowView: LocalizedView {
                     Text(chat.localizedTitle(language)).font(.system(size: 12, weight: selected ? .medium : .regular))
                         .lineLimit(1).truncationMode(.tail)
                     Spacer(minLength: 0)
-                    if live, working, let rate = chat.generation_rate, rate.isFinite, rate >= 0 {
-                        Text(MetricFormat.compactSpeed(rate)).font(.system(size: 11)).monospacedDigit().fixedSize()
-                            .help(MetricFormat.speed(rate) + " · " + L("生成是实时窗口估算，统计已接收的独立生成内容。"))
+                    if let speedTitle {
+                        Text(speedTitle).font(.system(size: 11)).monospacedDigit().fixedSize()
+                            .help(speedHelp)
                     }
                 }
                 HStack(spacing: 5) {

@@ -117,7 +117,7 @@ enum MonitorApplication {
                 case .idle: self.L("空闲 · 暂无活动聊天")
                 case .thinking: self.L("思考中")
                 case .executing: self.L("执行中")
-                case .unavailable: self.store.connectionLabel
+                case .unavailable: self.store.connectionDetail ?? self.store.connectionLabel
                 case .speed: self.store.menuTitle
                 }
                 self.item.button?.toolTip = state + " · " + self.L("点击查看实时活动")
@@ -203,6 +203,9 @@ enum MonitorApplication {
         value["transport_fresh"] = store.fresh
         value["management_state"] = store.management?.state
         value["mode"] = store.menuMode.rawValue; value["title"] = store.menuTitle
+        value["status_tooltip"] = item.button?.toolTip
+        value["connection_label"] = store.connectionLabel
+        value["observation_notice"] = store.snapshot?.observationNotice?.rawValue
         value["animating"] = statusContent.animating; value["reduced_motion"] = statusContent.reducedMotion
         value["animation_frames"] = statusContent.frameDiagnostics
         value["build_id"] = store.configuration.build_id

@@ -8,6 +8,7 @@ public struct Overview: Decodable, Sendable {
     public let estimated: Bool?
     public let active_thread_count: Int?
     public let quality: [String]?
+    public let rate_status: String?
 }
 
 public struct Usage: Decodable, Sendable {
@@ -53,6 +54,7 @@ public struct Chat: Decodable, Identifiable, Sendable {
     public let display_seconds: Double?
     public let generation_rate: Double?
     public let generation_estimated: Bool?
+    public let generation_rate_status: String?
     public let last_progress_seconds: Double?
     public let usage: Usage?
     public let activities: [Activity]?
@@ -81,7 +83,7 @@ public struct Chat: Decodable, Identifiable, Sendable {
     enum CodingKeys: String, CodingKey {
         case threadID = "id"
         case home, backend, name, cwd, model, status, connected, visible, ephemeral, has_active_work
-        case display_label, display_message, display_seconds, generation_rate, generation_estimated
+        case display_label, display_message, display_seconds, generation_rate, generation_estimated, generation_rate_status
         case last_progress_seconds, usage, activities, subagents, parent_thread_id, parent_source, parent_quality, thread_source, context_only, turn_id
     }
 }
@@ -129,11 +131,23 @@ public struct Snapshot: Decodable, Sendable {
         return age >= -5 && age < 3
     }
 
-    public func menuTitle(at date: Date = Date(), connectionFresh: Bool? = nil) -> String {
-        guard connectionFresh ?? isFresh(at: date), let overview, overview.version == 1,
+    public func menuTitle(at date: Date = Date(), connectionFresh: Bool? = nil, language: MonitorLanguage = .chinese) -> String {
+        guard connectionFresh ?? isFresh(at: date) else { return "—" }
+        if isMeasuringSpeed { return DisplayMessage("usage.generation").rendered(in: language) }
+        guard let overview, overview.version == 1,
               overview.coverage == "complete", let rate = overview.generation_rate,
               rate.isFinite, rate >= 0 else { return "—" }
         return MetricFormat.speed(rate)
+    }
+
+    public var isMeasuringSpeed: Bool {
+        guard let overview, overview.version == 1, overview.rate_status == "sampling",
+              overview.generation_rate == nil, Set(overview.quality ?? []) == ["stream_pending"],
+              let presentation = menu_presentation, presentation.version == 1,
+              presentation.mode == "speed", presentation.reason == "sampling",
+              presentation.active_conversation_count > 0,
+              backends?.values.contains(where: { $0.connected == true }) == true else { return false }
+        return true
     }
 
     public func menuMode(at date: Date = Date(), connectionFresh: Bool? = nil) -> MenuMode {
@@ -162,11 +176,14 @@ public struct Snapshot: Decodable, Sendable {
         if overview?.version == 1, overview?.quality?.contains("identity_budget") == true { return .resourceLimit }
         guard backends?.values.contains(where: { $0.connected == true }) == true else { return .waitingForConnection }
         guard let overview, overview.version == 1 else { return .totalUnavailable }
+        if isMeasuringSpeed { return nil }
         guard overview.coverage != "complete" else { return nil }
         let quality = Set(overview.quality ?? [])
         if quality.contains("observation_gap") { return .observationGap }
         if !quality.isDisjoint(with: ["identity_conflict", "multiple_active_backends"]) { return .identityConflict }
         if quality.contains("unassociated_events") { return .associatingEvents }
+        if quality.contains("count_budget") { return .speedResourceLimit }
+        if quality.contains("tokenizer_error") { return .speedCountFailed }
         return .streamUnavailable
     }
 
@@ -190,6 +207,8 @@ public enum ObservationNotice: String, Sendable {
     case associatingEvents = "NoticeAssociatingEvents"
     case streamUnavailable = "NoticeStreamUnavailable"
     case resourceLimit = "NoticeObservationResourceLimit"
+    case speedResourceLimit = "NoticeSpeedResourceLimit"
+    case speedCountFailed = "NoticeSpeedCountFailed"
 }
 
 public struct ChatRow: Identifiable, Sendable {
