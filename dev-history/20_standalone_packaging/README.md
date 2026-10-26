@@ -1,15 +1,15 @@
-# 朋友试用：自包含 macOS App
+# 自包含 macOS 开发版
 
 日期：2026-10-26。状态：自包含打包与本机隔离验收已完成；朋友机器安装与真实 Codex 接入尚未验收。
 
-构建入口见 [packaging/README](../../packaging/README.md)，实际产物与证据见 [实施结果](implementation-results.md)。
+当前构建入口与 `dev` 命名见 [packaging/README](../../packaging/README.md)，首次产物与证据见 [实施结果](implementation-results.md)。历史记录中的旧包名及校验和保留原样。
 
 ## 范围
 
 - 用户已确认目标为 Apple Silicon（arm64），macOS 26 / 27。
 - 保留 SwiftUI / AppKit GUI 和 Python 后端，以 PyInstaller `onedir` 收集运行时、代码、依赖与 tokenizer 资源。
 - 单独构建 `.local/standalone/` 下的 App 与 ZIP，不覆盖日常 App，不修改日常 launchctl、collector 或 Codex 接入。
-- 试用包先使用 ad-hoc 签名；Developer ID、公证、自动更新、公开仓库与 Release 后续处理。
+- 开发版先使用 ad-hoc 签名；Developer ID、公证、自动更新、公开仓库与 Release 后续处理。
 - 朋友仍需安装 Codex Desktop；接入需要重新启动 Desktop。打包不携带用户的 Codex 二进制、凭据、历史、数据库或 Monitor 配置。
 
 ## 设计

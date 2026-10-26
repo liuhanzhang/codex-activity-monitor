@@ -1,4 +1,4 @@
-"""Accept the extracted trial under OS-enforced source and network denial.
+"""Validate an extracted development build under source and network denial.
 
 Only explicit disposable profiles are configured. No launchctl or real Codex
 installation is changed. Run outside an enclosing sandbox so sandbox-exec can
@@ -10,6 +10,7 @@ import hashlib
 import json
 import os
 from pathlib import Path
+import plistlib
 import shlex
 import signal
 import socket
@@ -40,6 +41,13 @@ def main():
         config = json.loads((app/'Contents/Resources/backend.json').read_text())
         assert config['backend'] == str(backend.relative_to(app)) and config['mode'] == 'bundled'
         assert str(ROOT) not in json.dumps(config) and '/Users/' not in json.dumps(config)
+        with (app/'Contents/Info.plist').open('rb') as source:
+            app_id = plistlib.load(source)['CFBundleIdentifier']
+        with (app/'Contents/Helpers/MonitorBackend.app/Contents/Info.plist').open('rb') as source:
+            backend_id = plistlib.load(source)['CFBundleIdentifier']
+        assert app_id == 'com.liuhanzhang.codexactivitymonitor', app_id
+        assert backend_id == 'com.liuhanzhang.codexactivitymonitor.backend', backend_id
+        result['checks']['bundle_ids'] = {'app': app_id, 'backend': backend_id}
         result['build_id'] = config['build_id']
         subprocess.run(['codesign', '--verify', '--deep', '--strict', str(app)], check=True)
         denied = [ROOT, Path(sys.base_prefix), Path('/opt/homebrew'), Path.home()/'.codex', Path.home()/'Library/Caches',
@@ -95,7 +103,7 @@ def main():
             path.mkdir()
             (path/'profile.json').write_text(json.dumps({'kind': 'codex-monitor-disposable-test'}))
             original = path/'original-cli'
-            original.write_text('#!/bin/sh\ncat\necho trial-stderr >&2\nexit 17\n')
+            original.write_text('#!/bin/sh\ncat\necho dev-stderr >&2\nexit 17\n')
             original.chmod(0o700)
             return path
 
@@ -116,15 +124,15 @@ def main():
             assert state['running'] and state['connection']['healthy'], state
             result['checks']['collector_spawn_and_live_health'] = True
             synthetic_events = [
-                {'method': 'thread/started', 'params': {'thread': {'id': 'packaging-fixture', 'name': 'Synthetic trial'}}},
-                {'method': 'turn/started', 'params': {'threadId': 'packaging-fixture', 'turn': {'id': 'trial-turn'}}},
-                {'method': 'item/started', 'params': {'threadId': 'packaging-fixture', 'turnId': 'trial-turn',
-                                                    'item': {'id': 'trial-item', 'type': 'agentMessage'}}},
-                {'method': 'item/agentMessage/delta', 'params': {'threadId': 'packaging-fixture', 'turnId': 'trial-turn',
-                                                              'itemId': 'trial-item', 'delta': 'Synthetic packaging 中文'}},
-                {'method': 'item/completed', 'params': {'threadId': 'packaging-fixture', 'turnId': 'trial-turn',
-                                                      'item': {'id': 'trial-item', 'type': 'agentMessage', 'text': 'Synthetic packaging 中文'}}},
-                {'method': 'turn/completed', 'params': {'threadId': 'packaging-fixture', 'turn': {'id': 'trial-turn', 'status': 'completed'}}},
+                {'method': 'thread/started', 'params': {'thread': {'id': 'packaging-fixture', 'name': 'Synthetic development build'}}},
+                {'method': 'turn/started', 'params': {'threadId': 'packaging-fixture', 'turn': {'id': 'dev-turn'}}},
+                {'method': 'item/started', 'params': {'threadId': 'packaging-fixture', 'turnId': 'dev-turn',
+                                                    'item': {'id': 'dev-item', 'type': 'agentMessage'}}},
+                {'method': 'item/agentMessage/delta', 'params': {'threadId': 'packaging-fixture', 'turnId': 'dev-turn',
+                                                              'itemId': 'dev-item', 'delta': 'Synthetic packaging 中文'}},
+                {'method': 'item/completed', 'params': {'threadId': 'packaging-fixture', 'turnId': 'dev-turn',
+                                                      'item': {'id': 'dev-item', 'type': 'agentMessage', 'text': 'Synthetic packaging 中文'}}},
+                {'method': 'turn/completed', 'params': {'threadId': 'packaging-fixture', 'turn': {'id': 'dev-turn', 'status': 'completed'}}},
             ]
             query = {'action': 'timeline', 'scope_id': str(root/'synthetic-codex-home'), 'thread_id': 'packaging-fixture'}
             timeline = json.loads(cli('--runtime', runtime, 'timeline-query', json.dumps(query)).stdout)
@@ -132,15 +140,15 @@ def main():
             result['checks']['timeline_query'] = True
             payload = b''.join(json.dumps(row, ensure_ascii=False).encode()+b'\n' for row in synthetic_events)+bytes(range(256))*16
             bridged = execute([test/'data/codex-observed', 'app-server'], input=payload, check=False)
-            assert (bridged.returncode, bridged.stdout, bridged.stderr) == (17, payload, b'trial-stderr\n'), bridged
+            assert (bridged.returncode, bridged.stdout, bridged.stderr) == (17, payload, b'dev-stderr\n'), bridged
             result['checks']['bridge_binary_stdio_and_exit_code'] = True
             deadline = time.monotonic()+5
             while time.monotonic() < deadline:
                 timeline = json.loads(cli('--runtime', runtime, 'timeline-query', json.dumps(query)).stdout)
-                if timeline.get('selected_turn_id') == 'trial-turn' and timeline.get('phases'):
+                if timeline.get('selected_turn_id') == 'dev-turn' and timeline.get('phases'):
                     break
                 time.sleep(.1)
-            assert timeline.get('selected_turn_id') == 'trial-turn' and timeline.get('phases'), timeline
+            assert timeline.get('selected_turn_id') == 'dev-turn' and timeline.get('phases'), timeline
             assert json.loads(cli('--runtime', runtime, 'status').stdout)['threads'] == 1
             result['checks']['observed_synthetic_turn_and_timeline'] = True
             management('stop', '--owner-pid', str(os.getpid()))
@@ -150,7 +158,7 @@ def main():
             app.rename(missing)
             try:
                 fallback = execute([test/'data/codex-observed', 'app-server'], input=payload, check=False)
-                assert (fallback.returncode, fallback.stdout, fallback.stderr) == (17, payload, b'trial-stderr\n'), fallback
+                assert (fallback.returncode, fallback.stdout, fallback.stderr) == (17, payload, b'dev-stderr\n'), fallback
             finally:
                 missing.rename(app)
             result['checks']['missing_app_external_fallback'] = True

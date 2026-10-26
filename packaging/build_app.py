@@ -1,4 +1,4 @@
-"""Build a relocatable arm64 macOS trial app, never the daily development app."""
+"""Build a relocatable arm64 macOS development build, separate from the daily app."""
 
 import argparse
 import hashlib
@@ -29,7 +29,7 @@ def main():
     parser.add_argument('--output', type=Path, default=ROOT/'.local/standalone')
     args = parser.parse_args()
     if sys.platform != 'darwin' or platform.machine() != 'arm64':
-        parser.error('This trial build supports native arm64 macOS only.')
+        parser.error('This dev build supports native arm64 macOS only.')
     distribution_build = Path(sys.base_prefix)/'BUILD'
     if sys.version_info[:3] != (3, 14, 9) or not distribution_build.is_file() or distribution_build.read_text().strip() != '20261021':
         parser.error('Use the pinned standalone Python; run bin/prepare-standalone first.')
@@ -121,7 +121,7 @@ def main():
                     destination.parent.mkdir(parents=True, exist_ok=True)
                     shutil.copy2(source, destination)
     version = tomllib.loads((ROOT/'pyproject.toml').read_text())['project']['version']
-    info = {'CFBundleExecutable': 'MonitorApp', 'CFBundleIdentifier': 'com.local.codex-progress-monitor.trial',
+    info = {'CFBundleExecutable': 'MonitorApp', 'CFBundleIdentifier': 'com.liuhanzhang.codexactivitymonitor',
             'CFBundleName': 'Codex Monitor', 'CFBundleDisplayName': 'Codex Monitor', 'CFBundlePackageType': 'APPL',
             'CFBundleShortVersionString': version, 'CFBundleVersion': '1', 'LSMinimumSystemVersion': '26.0',
             'LSUIElement': True, 'NSPrincipalClass': 'NSApplication'}
@@ -133,7 +133,7 @@ def main():
     if final.exists():
         shutil.rmtree(final)
     stage.rename(final)
-    archive = output/f'Codex-Monitor-{version}-arm64-trial.zip'
+    archive = output/f'Codex-Monitor-{version}-arm64-dev.zip'
     run('/usr/bin/ditto', '-c', '-k', '--sequesterRsrc', '--keepParent', final, archive)
     summary = {'app': str(final), 'archive': str(archive), 'build_id': build_id,
                'archive_sha256': hashlib.sha256(archive.read_bytes()).hexdigest(),

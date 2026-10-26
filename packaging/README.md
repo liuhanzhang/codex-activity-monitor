@@ -1,4 +1,4 @@
-# 独立试用包的构建与验收
+# 独立开发版的构建与验收
 
 范围、设计与验收边界见 [第 20 章](../dev-history/20_standalone_packaging/README.md)。
 
@@ -18,16 +18,18 @@ Python 依赖约束保存在 `requirements-build.lock`，项目直接依赖仍�
 默认输出：
 
 - `.local/standalone/Codex Monitor.app`
-- `.local/standalone/Codex-Monitor-0.1.0-arm64-trial.zip`
+- `.local/standalone/Codex-Monitor-0.1.0-arm64-dev.zip`
 - `.local/standalone/build-result.json`：构建身份、ZIP SHA-256、体积与逐个二进制检查结果。
 
-外层 App 的包标识为 `com.local.codex-progress-monitor.trial`。后端是 `Contents/Helpers/MonitorBackend.app/Contents/MacOS/monitor-backend`，保留 console stdio；Python 与资源通过 PyInstaller 的标准嵌套 App 布局交付。外层配置仅有相对后端路径和 build ID，不写构建机器的 home / 源码 / venv 位置。
+外层 App 的包标识固定为 `com.liuhanzhang.codexactivitymonitor`，后端包标识为 `com.liuhanzhang.codexactivitymonitor.backend`，开发版与后续正式版沿用同一身份。ZIP 文件名中的 `dev` 仅表示发布阶段。本地 GUI 构建使用相同的主 App 标识，Preview 构建追加 `.preview` 后缀。
+
+后端入口是 `Contents/Helpers/MonitorBackend.app/Contents/MacOS/monitor-backend`，保留 console stdio；Python 与资源通过 PyInstaller 的标准嵌套 App 布局交付。外层配置仅有相对后端路径和 build ID，不写构建机器的 home / 源码 / venv 位置。
 
 ## 隔离验收
 
 ```sh
 .local/packaging/portable-venv/bin/python packaging/verify_app.py \
-  .local/standalone/Codex-Monitor-0.1.0-arm64-trial.zip \
+  .local/standalone/Codex-Monitor-0.1.0-arm64-dev.zip \
   --result .local/standalone/acceptance-result.json --gui
 ```
 
@@ -37,6 +39,6 @@ macOS 不允许嵌套调用 sandbox-exec，所以在 Codex 工具沙箱中运行
 
 ## 交付边界
 
-目前是 ad-hoc 签名试用包。代码签名验证通过不代表已通过 Gatekeeper 的下载安装流程，也不代表已公证。朋友仍需安装 Codex Desktop；默认原版 CLI 路径与开发构建一致，非默认安装路径尚需单独处理。安装、首次手动允许、真实 Desktop 接入、macOS 26 实机与自然长期使用不能由上述合成验证代替。
+目前是 ad-hoc 签名开发版（development build），构建命名使用 `dev`。代码签名验证通过不代表已通过 Gatekeeper 的下载安装流程，也不代表已公证。朋友仍需安装 Codex Desktop；默认原版 CLI 路径与开发构建一致，非默认安装路径尚需单独处理。安装、首次手动允许、真实 Desktop 接入、macOS 26 实机与自然长期使用不能由上述合成验证代替。
 
 后续构建会将项目 [MIT 许可证](../LICENSE) 放入 App 的 `Contents/Resources/LICENSE`；CPython、Python 发行版的上游汇总说明与已安装依赖的许可文本另存于 `ThirdPartyLicenses`。项目授权不替代这些第三方许可；素材来源与完整分发复核仍见发行准备清单。
