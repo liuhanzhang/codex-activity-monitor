@@ -15,6 +15,7 @@ task_binary_dir=$(swift build --disable-sandbox --cache-path "$task_root/.local/
 task_app="$task_root/.local/gui/Codex Monitor.app"
 if [ "$task_preview" = true ]; then task_app="$task_root/.local/gui-preview/Codex Monitor Preview.app"; fi
 mkdir -p "$task_app/Contents/MacOS" "$task_app/Contents/Resources"
+"$task_root/bin/build-app-icon" "$task_app/Contents/Resources/AppIcon.icns"
 # Preserve the inode mapped by an already running GUI. Replacing its executable
 # atomically avoids truncating code pages during an ordinary local rebuild.
 cp "$task_binary_dir/MonitorApp" "$task_app/Contents/MacOS/MonitorApp.new"
@@ -33,11 +34,12 @@ from pathlib import Path
 root,app=map(Path,sys.argv[1:3])
 preview=sys.argv[3]=='true'
 sources=sorted(p for p in (root/'macos/Sources').rglob('*') if p.is_file())
+sources += [root/'macos/Assets/AppIcon.png', root/'bin/build-app-icon']
 build=hashlib.sha256(b''.join(str(p.relative_to(root)).encode()+b'\0'+p.read_bytes() for p in sources)).hexdigest()
 info={'CFBundleExecutable':'MonitorApp','CFBundleIdentifier':'com.liuhanzhang.codexactivitymonitor',
       'CFBundleName':'Codex Monitor','CFBundleDisplayName':'Codex Monitor','CFBundlePackageType':'APPL',
       'CFBundleShortVersionString':'0.1.0','CFBundleVersion':'1','LSMinimumSystemVersion':'26.0',
-      'LSUIElement':True,'NSPrincipalClass':'NSApplication'}
+      'LSUIElement':True,'NSPrincipalClass':'NSApplication','CFBundleIconFile':'AppIcon.icns'}
 if preview:
     info.update(CFBundleIdentifier=info['CFBundleIdentifier']+'.preview',
                 CFBundleName='Codex Monitor Preview', CFBundleDisplayName='Codex Monitor Preview')

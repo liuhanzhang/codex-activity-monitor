@@ -59,7 +59,8 @@ def main():
         tiktoken.get_encoding(name).encode_ordinary('Hello, 世界！打包验证。')
 
     files = sorted([*ROOT.glob('src/codex_progress_monitor/*.py'), *ROOT.glob('macos/Sources/**/*'),
-                    *ROOT.glob('packaging/*'), ROOT/'pyproject.toml', ROOT/'LICENSE'])
+                    *ROOT.glob('packaging/*'), ROOT/'pyproject.toml', ROOT/'LICENSE',
+                    ROOT/'macos/Assets/AppIcon.png', ROOT/'bin/build-app-icon'])
     digest = hashlib.sha256()
     for path in files:
         if path.is_file():
@@ -93,6 +94,7 @@ def main():
     (contents/'MacOS').mkdir(parents=True)
     resources = contents/'Resources'
     resources.mkdir()
+    run(ROOT/'bin/build-app-icon', resources/'AppIcon.icns')
     shutil.copy2(ROOT/'LICENSE', resources/'LICENSE')
     shutil.copy2(binary_dir/'MonitorApp', contents/'MacOS/MonitorApp')
     for bundle in binary_dir.glob('*.bundle'):
@@ -124,7 +126,7 @@ def main():
     info = {'CFBundleExecutable': 'MonitorApp', 'CFBundleIdentifier': 'com.liuhanzhang.codexactivitymonitor',
             'CFBundleName': 'Codex Monitor', 'CFBundleDisplayName': 'Codex Monitor', 'CFBundlePackageType': 'APPL',
             'CFBundleShortVersionString': version, 'CFBundleVersion': '1', 'LSMinimumSystemVersion': '26.0',
-            'LSUIElement': True, 'NSPrincipalClass': 'NSApplication'}
+            'LSUIElement': True, 'NSPrincipalClass': 'NSApplication', 'CFBundleIconFile': 'AppIcon.icns'}
     (contents/'Info.plist').write_bytes(plistlib.dumps(info))
     run('codesign', '--force', '--deep', '--sign', '-', stage)
     run('codesign', '--verify', '--deep', '--strict', stage)
