@@ -11,8 +11,9 @@ import sys
 import time
 
 from .runtime import (
-    ROOT, REAL_CLI, atomic_json, collector_alive, runtime_dir, ui_language,
+    REAL_CLI, atomic_json, collector_alive, default_runtime, runtime_dir, ui_language,
 )
+from .execution import backend_command, backend_environment
 from .state_client import current_state
 
 from .i18n import DEFAULT_LANGUAGE, available_languages, tr
@@ -27,7 +28,7 @@ def start(runtime, language=DEFAULT_LANGUAGE):
     if log.exists() and log.stat().st_size>1024*1024:
         log.replace(runtime/'collector.previous.log')
     with log.open('a') as out:
-        process=subprocess.Popen([sys.executable,'-m','codex_progress_monitor.cli','--runtime',str(runtime),'collect'],
+        process=subprocess.Popen(backend_command('--runtime', runtime, 'collect'), env=backend_environment(),
                                  stdin=subprocess.DEVNULL,stdout=out,stderr=out,start_new_session=True)
         _children[str(runtime)]=process
     deadline=time.monotonic()+5
@@ -99,7 +100,7 @@ def main(argv=None):
     seed.add_argument('--runtime', type=Path)
     seed.add_argument('--lang')
     known, _ = seed.parse_known_args(argv[:argv.index('--')] if '--' in argv else argv)
-    initial_runtime = Path(known.runtime or os.environ.get('CODEX_PROGRESS_RUNTIME', ROOT/'.local/runtime')).expanduser()
+    initial_runtime = Path(known.runtime or os.environ.get('CODEX_PROGRESS_RUNTIME', default_runtime())).expanduser()
     try:
         language = ui_language(initial_runtime, known.lang)
     except ValueError as exc:
@@ -150,7 +151,7 @@ def main(argv=None):
         from .query_response import encode_response
         try:
             # Deliberately bypass runtime_dir(): browsing cannot create or resume observation.
-            query_path=Path(args.runtime or os.environ.get('CODEX_PROGRESS_RUNTIME', ROOT/'.local/runtime')).expanduser().resolve()
+            query_path=Path(args.runtime or os.environ.get('CODEX_PROGRESS_RUNTIME', default_runtime())).expanduser().resolve()
             value=query_runtime(query_path,json.loads(args.request))
             frame = encode_response(value)
             # This is a UTF-8 protocol, independent of terminal output encoding.

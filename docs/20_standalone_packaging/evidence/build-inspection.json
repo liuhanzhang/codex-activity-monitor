@@ -1,0 +1,62 @@
+{
+  "build_id": "bb40e889fd39393c2ab061c954790d3781c80873f785fb5959bdc4de12d58281",
+  "archive_sha256": "cb49fa8cc9415a48e9ba98e9ed6311875d7278128beecc362d51d6b9922745e8",
+  "archive_bytes": 22912129,
+  "binary_inspection": {
+    "macho_count": 7,
+    "architecture": "arm64",
+    "maximum_minimum_system": "26.0.0",
+    "binaries": [
+      {
+        "path": "Contents/Helpers/MonitorBackend.app/Contents/Frameworks/charset_normalizer/cd.cpython-314-darwin.so",
+        "architecture": "arm64",
+        "minimum_system": [
+          "11.0"
+        ]
+      },
+      {
+        "path": "Contents/Helpers/MonitorBackend.app/Contents/Frameworks/charset_normalizer/md.cpython-314-darwin.so",
+        "architecture": "arm64",
+        "minimum_system": [
+          "11.0"
+        ]
+      },
+      {
+        "path": "Contents/Helpers/MonitorBackend.app/Contents/Frameworks/libpython3.14.dylib",
+        "architecture": "arm64",
+        "minimum_system": [
+          "11.0"
+        ]
+      },
+      {
+        "path": "Contents/Helpers/MonitorBackend.app/Contents/Frameworks/regex/_regex.cpython-314-darwin.so",
+        "architecture": "arm64",
+        "minimum_system": [
+          "11.0"
+        ]
+      },
+      {
+        "path": "Contents/Helpers/MonitorBackend.app/Contents/Frameworks/tiktoken/_tiktoken.cpython-314-darwin.so",
+        "architecture": "arm64",
+        "minimum_system": [
+          "11.0"
+        ]
+      },
+      {
+        "path": "Contents/Helpers/MonitorBackend.app/Contents/MacOS/monitor-backend",
+        "architecture": "arm64",
+        "minimum_system": [
+          "11.0"
+        ]
+      },
+      {
+        "path": "Contents/MacOS/MonitorApp",
+        "architecture": "arm64",
+        "minimum_system": [
+          "26.0"
+        ]
+      }
+    ]
+  },
+  "installed_bytes": 45900168
+}

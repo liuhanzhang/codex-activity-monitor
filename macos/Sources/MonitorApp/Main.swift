@@ -68,10 +68,7 @@ enum MonitorApplication {
 
     func applicationDidFinishLaunching(_ notification: Notification) {
         do {
-            guard let url = Bundle.main.url(forResource: "backend", withExtension: "json") else {
-                throw CocoaError(.fileNoSuchFile)
-            }
-            let config = try JSONDecoder().decode(BackendConfiguration.self, from: Data(contentsOf: url))
+            let config = try BackendConfiguration.load(bundleURL: Bundle.main.bundleURL)
             var arguments = CommandLine.arguments
             if Bundle.main.bundleIdentifier?.hasSuffix(".preview") == true && !arguments.contains("--test-profile") {
                 arguments.append("--read-only")

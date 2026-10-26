@@ -1,11 +1,47 @@
 # Local generated material and machine state.
 .local/
 .DS_Store
+._*
 **/__pycache__/
 *.py[cod]
-src/*.egg-info/
+*.egg-info/
 macos/.build/
 macos/.swiftpm/
+macos/**/xcuserdata/
+macos/**/*.xcuserstate
+
+# Python build outputs, local environments and test/tool caches.
+/build/
+/dist/
+/.venv/
+/venv/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.tox/
+.nox/
+.coverage
+.coverage.*
+htmlcov/
+
+# Release packages accidentally written to the repository root.
+# Keep source assets and test fixtures in their own directories trackable.
+/*.app/
+/*.dmg
+/*.pkg
+/*.zip
+/*.whl
+/*.tar.gz
+
+# Local secrets and signing identities; example configuration stays public.
+.env
+.env.*
+!.env.example
+!.env.*.example
+/auth.json
+*.p12
+*.pfx
+*.p8
 
 # Isolated Desktop profiles, credentials, databases, logs and raw transcripts.
 experiments/desktop-isolation/runs/

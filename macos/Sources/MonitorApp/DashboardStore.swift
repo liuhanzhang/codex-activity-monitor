@@ -4,14 +4,6 @@ import MonitorModel
 import Observation
 import ServiceManagement
 
-struct BackendConfiguration: Decodable, Sendable {
-    let python: String
-    let source_root: String
-    let runtime: String
-    let data_root: String
-    let build_id: String
-}
-
 @MainActor @Observable
 final class DashboardStore {
     var snapshot: Snapshot? {

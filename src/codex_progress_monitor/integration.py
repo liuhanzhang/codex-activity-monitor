@@ -9,6 +9,7 @@ import subprocess
 import sys
 
 from .runtime import atomic_json
+from .execution import backend_command
 from .i18n import DEFAULT_LANGUAGE, tr
 
 LABEL='com.local.codex-progress-monitor'
@@ -40,8 +41,8 @@ def setup(runtime,actual,launch_agent=False,language=DEFAULT_LANGUAGE):
     wrapper=runtime/'codex-observed'
     if actual==wrapper:
         raise ValueError(tr('cli.original_wrapper', language))
-    wrapper.write_text('#!/bin/sh\nexec '+shlex.quote(sys.executable)+' -m codex_progress_monitor.cli --runtime '+
-                       shlex.quote(str(runtime))+' bridge --real-cli '+shlex.quote(str(actual))+' -- "$@"\n')
+    command=backend_command('--runtime',runtime,'bridge','--real-cli',actual,'--')
+    wrapper.write_text('#!/bin/sh\nexec '+shlex.join(command)+' "$@"\n')
     wrapper.chmod(0o700)
     atomic_json(runtime/'installation.json',{'real_cli':str(actual),'python':sys.executable,'wrapper':str(wrapper)})
     if launch_agent:
@@ -65,7 +66,7 @@ def setup(runtime,actual,launch_agent=False,language=DEFAULT_LANGUAGE):
         script=runtime/'login-start'
         lines=['#!/bin/sh']
         lines.extend('/bin/launchctl setenv '+key+' '+shlex.quote(value) for key,value in _values(wrapper).items())
-        lines.append('exec '+shlex.quote(sys.executable)+' -m codex_progress_monitor.cli --runtime '+shlex.quote(str(runtime))+' collect')
+        lines.append('exec '+shlex.join(backend_command('--runtime',runtime,'collect')))
         script.write_text('\n'.join(lines)+'\n')
         script.chmod(0o700)
         plist.parent.mkdir(parents=True,exist_ok=True)

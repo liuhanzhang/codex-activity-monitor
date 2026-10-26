@@ -36,4 +36,6 @@ Describe the concrete behavior changed, the checks run, and any unverified integ
 
 `src/`, `macos/Sources/`, and `bin/` form the product. `tests/test_*.py` and `macos/Tests/` are regression suites. Numbered documentation records the product's evolution; experiments and historical validation reports are not required to build the app. Archived reports can reference local evidence that is intentionally absent from a public checkout.
 
-The repository's open-source license has not yet been selected. The maintainer must resolve the license and asset provenance before public release; this document does not grant distribution rights.
+## License
+
+This project is licensed under the [MIT License](LICENSE), copyright (c) 2026 Hanzhang Liu. Preserve applicable copyright and license notices when reusing or redistributing the software. Third-party dependencies and externally sourced materials retain their own licenses; their provenance and redistribution scope must still be checked before public release.

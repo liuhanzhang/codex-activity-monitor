@@ -1,0 +1,51 @@
+{
+  "archive_sha256": "cb49fa8cc9415a48e9ba98e9ed6311875d7278128beecc362d51d6b9922745e8",
+  "checks": {
+    "source_python_and_network_denial": true,
+    "offline_all_encodings_and_spawn_worker": {
+      "ok": true,
+      "build_id": "bb40e889fd39393c2ab061c954790d3781c80873f785fb5959bdc4de12d58281",
+      "python": "3.14.9",
+      "tokenizer_counts": {
+        "cl100k_base": 11,
+        "gpt2": 20,
+        "o200k_base": 8,
+        "o200k_harmony": 8,
+        "p50k_base": 20,
+        "p50k_edit": 20,
+        "r50k_base": 20
+      },
+      "worker": {
+        "starts": 1,
+        "timeouts": 0,
+        "deadline_seconds": 10,
+        "running": false,
+        "closed": false
+      },
+      "implementation": {
+        "source_sha256": "b9e679125ff17a4747434cbd0613990a81db12b742d16068e777ccf23145f75a",
+        "modules": {
+          "collector": "308b9abf09d8f12b0bf7e89b530c407f21800e0732b520b31a3787a4fb8977f0",
+          "bridge": "cd410aa0c69d9fffb1eacd5529805d7ee59c9ebfd835a7963b2009c7fd986441",
+          "execution": "d01000cecc8f3c66cbcfb383d0f5afbc4120216d0586d5f309091b338bb9ecc4",
+          "runtime": "158244060043c69882857b4c9558f874dd4118988b8654438bea41be8feba87d"
+        }
+      }
+    },
+    "collector_spawn_and_live_health": true,
+    "timeline_query": true,
+    "bridge_binary_stdio_and_exit_code": true,
+    "observed_synthetic_turn_and_timeline": true,
+    "managed_stop": true,
+    "missing_app_external_fallback": true,
+    "restore_original_environment_and_remove_launcher": true,
+    "native_gui_with_bundled_backend": {
+      "build_id": "bb40e889fd39393c2ab061c954790d3781c80873f785fb5959bdc4de12d58281",
+      "management_state": "configured",
+      "transport_fresh": true,
+      "mode": "unavailable"
+    }
+  },
+  "build_id": "bb40e889fd39393c2ab061c954790d3781c80873f785fb5959bdc4de12d58281",
+  "ok": true
+}

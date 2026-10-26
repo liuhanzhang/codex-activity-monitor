@@ -1,0 +1,9 @@
+#!/bin/sh
+set -eu
+task_root=$(CDPATH= cd -- "$(dirname -- "$0")/.." && pwd)
+task_python="$task_root/.local/packaging/portable-venv/bin/python"
+if [ ! -x "$task_python" ]; then
+  echo 'Create the isolated build environment first (see packaging/README.md).' >&2
+  exit 1
+fi
+exec "$task_python" "$task_root/packaging/build_app.py" "$@"

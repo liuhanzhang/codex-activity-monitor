@@ -48,10 +48,7 @@ struct SystemTimelineClient: TimelineReading {
 
     private func request(_ value: TimelineQueryRequest) async throws -> Data {
         let payload = String(decoding: try JSONEncoder().encode(value), as: UTF8.self)
-        var request = ProcessRequest(executable: configuration.python,
-            arguments: ["-m", "codex_progress_monitor.cli", "--runtime", runtime, "timeline-query", payload])
-        request.directory = configuration.source_root
-        request.environment["PYTHONPATH"] = configuration.source_root + "/src"
+        var request = configuration.request(arguments: ["--runtime", runtime, "timeline-query", payload])
         request.timeout = 12; request.stdoutLimit = 8 * 1_048_576
         let result = try await executor.execute(request)
         guard result.exitCode == 0 else { throw BackendFailure(message: "", presentationKey: "暂时无法读取轨迹") }

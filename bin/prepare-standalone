@@ -1,0 +1,11 @@
+#!/bin/sh
+set -eu
+task_root=$(CDPATH= cd -- "$(dirname -- "$0")/.." && pwd)
+task_packaging="$task_root/.local/packaging"
+python3 -m venv "$task_packaging/bootstrap"
+"$task_packaging/bootstrap/bin/python" -m pip --cache-dir "$task_packaging/pip-cache" install 'uv==0.13.5'
+"$task_packaging/bootstrap/bin/uv" python install 3.14.9 --install-dir "$task_packaging/python" \
+  --no-bin --cache-dir "$task_packaging/uv-cache" --no-config
+"$task_packaging/python/cpython-3.14.9-macos-aarch64-none/bin/python3" -m venv "$task_packaging/portable-venv"
+"$task_packaging/portable-venv/bin/python" -m pip --cache-dir "$task_packaging/pip-cache" install \
+  -r "$task_root/packaging/requirements-build.txt" -c "$task_root/packaging/requirements-build.lock" -e "$task_root"

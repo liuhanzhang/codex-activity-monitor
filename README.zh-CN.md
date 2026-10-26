@@ -4,7 +4,7 @@
 
 Codex Desktop 的本机 macOS 菜单栏伴侣：查看聊天当前活动、模型与工具时间线、可见文本接收速度，以及本回合官方用量。
 
-当前提供开发者本机构建，尚无独立签名发行包。开源许可证及发行验收仍待完成，见[系统审查与发行清单](docs/17_review_and_refactor/review.md)。
+本项目采用 [MIT 许可证](LICENSE)。当前尚无经过 Developer ID 签名和公证的公开发行包，其余发行验收见[系统审查与发行清单](docs/17_review_and_refactor/review.md)。
 
 ## 功能与语义
 
@@ -55,3 +55,7 @@ bin/codex-progress status
 产品代码位于 `src/`、`macos/Sources/` 和 `bin/`。编号 `docs/` 保留需求、决策和历史验收；`experiments/` 保存实验方法，`analysis/` 保存精简结论，`.local/` 是 Git 忽略的本机环境与数据。
 
 目前只覆盖已接入的本机聊天，解析依赖上游版本。状态通道已有隔离原生验收，日常 GUI／collector／驻留 bridge 在完整重开 Desktop 后已统一更新并核对实际运行；新版自然样本仍需验收。长期运行、全新机器、Remote、签名与公证、素材公开分发均不能由单元测试推定完成。基线见[审查报告](docs/17_review_and_refactor/review.md)，当前六项进展和验证见[第 18 章](docs/18_engineering_hardening/README.md)与[实施记录](docs/18_engineering_hardening/implementation-results.md)。
+
+## 许可证
+
+Copyright (c) 2026 Hanzhang Liu。本项目采用 [MIT 许可证](LICENSE)。第三方依赖与外部来源材料保留各自的许可证和版权声明，本项目的授权不替代这些许可。

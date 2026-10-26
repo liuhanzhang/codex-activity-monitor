@@ -17,6 +17,7 @@ import uuid
 
 from .integration import KEYS, LABEL
 from .runtime import ROOT, REAL_CLI, atomic_json, collector_alive
+from .execution import backend_command, is_frozen
 from .state_client import state_once, authorize_session, StateClientError
 from .i18n import CATALOGS, DEFAULT_LANGUAGE, message, render_message, validate_language
 
@@ -276,7 +277,7 @@ class AppController:
             raise ControlError('app_missing', 'control.app_missing')
         if not os.access(actual, os.X_OK) or not os.access(python, os.X_OK):
             raise ControlError('entry_missing', 'control.entry_missing')
-        if not (source / 'src/codex_progress_monitor/cli.py').is_file():
+        if not is_frozen() and not (source / 'src/codex_progress_monitor/cli.py').is_file():
             raise ControlError('source_missing', 'control.source_missing')
         with self.locked():
             old = self._receipt()
@@ -319,7 +320,8 @@ class AppController:
             receipt = {'version': 1, 'id': old.get('id') if old.get('state') == 'configured' else uuid.uuid4().hex,
                        'state': 'configuring', 'previous': previous, 'installed': installed,
                        'runtime': str(runtime), 'app': str(app), 'real_cli': str(actual),
-                       'python': str(python), 'source_root': str(source), 'imported_legacy': imported or old.get('imported_legacy', False),
+                       'python': str(python), 'source_root': str(source), 'backend_mode': 'bundled' if is_frozen() else 'source',
+                       'imported_legacy': imported or old.get('imported_legacy', False),
                        'restored_keys': [], 'purge': False}
             if legacy_backup:
                 receipt['legacy_backup'] = legacy_backup
@@ -398,12 +400,15 @@ class AppController:
 
     def _launcher(self, app, actual, python, source, runtime):
         quote = shlex.quote
-        command = ['exec', '/usr/bin/env', 'PYTHONPATH=' + str(source / 'src'), str(python), '-m',
-                   'codex_progress_monitor.cli', '--runtime', str(runtime), 'bridge', '--real-cli', str(actual), '--']
+        environment = (['-u', 'PYTHONPATH', '-u', 'PYTHONHOME', 'PYINSTALLER_RESET_ENVIRONMENT=1'] if is_frozen()
+                       else ['PYTHONPATH=' + str(source / 'src')])
+        command = ['exec', '/usr/bin/env', *environment,
+                   *backend_command('--runtime', runtime, 'bridge', '--real-cli', actual, '--', executable=python)]
+        source_check = '' if is_frozen() else f' && [ -f {quote(str(source / "src/codex_progress_monitor/cli.py"))} ]'
         return ('#!/bin/sh\n'
                 f'if [ ! -x {quote(str(actual))} ]; then echo "Codex 原版 CLI 不可用" >&2; exit 127; fi\n'
                 f'if [ -f {quote(str(self.enabled))} ] && [ -x {quote(str(app / "Contents/MacOS/MonitorApp"))} ] && '
-                f'[ -x {quote(str(python))} ] && [ -f {quote(str(source / "src/codex_progress_monitor/cli.py"))} ]; then\n'
+                f'[ -x {quote(str(python))} ]{source_check}; then\n'
                 + '  ' + ' '.join(quote(x) if i else x for i, x in enumerate(command)) + ' "$@"\nfi\n'
                 + f'exec {quote(str(actual))} "$@"\n')
 

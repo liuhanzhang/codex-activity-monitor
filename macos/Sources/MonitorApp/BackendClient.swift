@@ -32,13 +32,10 @@ struct BackendClient: BackendManaging {
     }
 
     private func perform(_ action: String, extra: [String], timeout: TimeInterval) async throws -> ManagementState {
-        var request = ProcessRequest(executable: configuration.python,
-            arguments: ["-m", "codex_progress_monitor.cli", "app", action,
+        var request = configuration.request(arguments: ["app", action,
                         "--data-root", dataRoot, "--app", Bundle.main.bundleURL.path]
                 + extra + (["configure", "resume"].contains(action) ? ["--state-protocol", "1"] : [])
                 + (testProfile.map { ["--test-profile", $0] } ?? []))
-        request.directory = configuration.source_root
-        request.environment["PYTHONPATH"] = configuration.source_root + "/src"
         request.timeout = timeout
         let output = try await executor.execute(request)
         let result = try JSONDecoder().decode(ManagementState.self, from: output.stdout)
