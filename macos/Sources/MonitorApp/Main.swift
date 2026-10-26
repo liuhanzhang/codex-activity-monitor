@@ -65,6 +65,7 @@ enum MonitorApplication {
     private let diagnosticsStartedAt = Date()
     private var fullscreenObserver: NSObjectProtocol?
     private var activityViewer: ActivityViewerWindowController?
+    private var statusCaptureIndex = 0
 
     func applicationDidFinishLaunching(_ notification: Notification) {
         do {
@@ -110,6 +111,7 @@ enum MonitorApplication {
                     self.panel.statusItemDidResize()
                 }
                 self.statusContent.update(mode: self.store.menuMode, title: self.store.menuTitle)
+                self.capturePreviewStatus()
                 let state = switch self.store.menuMode {
                 case .idle: self.L("空闲 · 暂无活动聊天")
                 case .thinking: self.L("思考中")
@@ -168,6 +170,29 @@ enum MonitorApplication {
     }
 
     private var isPreview: Bool { store.readOnly || store.testProfile != nil }
+
+    /// Export the actual status button for isolated documentation captures.
+    /// Never enabled for a daily runtime or a preview without explicit fixtures.
+    private func capturePreviewStatus() {
+        let args = CommandLine.arguments
+        guard store.readOnly, store.snapshotOverride != nil, args.contains("--timeline-fixture"),
+              let index = args.firstIndex(of: "--capture-status-to"), index + 1 < args.count,
+              let button = item.button,
+              let bitmap = button.bitmapImageRepForCachingDisplay(in: button.bounds) else { return }
+        button.cacheDisplay(in: button.bounds, to: bitmap)
+        guard let png = bitmap.representation(using: .png, properties: [:]) else { return }
+        let directory = URL(fileURLWithPath: args[index + 1], isDirectory: true)
+        do {
+            try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
+            let name = String(format: "status-%06d.png", statusCaptureIndex)
+            try png.write(to: directory.appendingPathComponent(name), options: .atomic)
+            let record: [String: Any] = ["file": name, "at": Date().timeIntervalSince1970 * 1000,
+                                         "title": store.menuTitle]
+            try JSONSerialization.data(withJSONObject: record)
+                .write(to: directory.appendingPathComponent("latest.json"), options: .atomic)
+            statusCaptureIndex += 1
+        } catch { fputs("Status capture: \(error)\n", stderr) }
+    }
 
     @objc private func togglePopover() {
         panel?.toggle()

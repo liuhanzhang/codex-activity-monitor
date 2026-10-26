@@ -1,0 +1,133 @@
+{
+  "version": 2,
+  "date": "2026-10-26",
+  "language": "en",
+  "source": "Native read-only preview and native NSStatusBarButton, with synthetic developer tasks",
+  "scenario": "API retry fix, test and documentation reviewers, pagination docs, settings UI",
+  "build_id": "b9bc96d85e94b5c4843786124696183b1d6f91e3c27b85b04db465c045ef9263",
+  "fixture": "experiments/readme-demo/preview.py",
+  "fixture_sha256": "8a6666d1ccbcd0dce824052a1cd1be6e7fd7c59cff5fa14654496b04df2a6bce",
+  "capture": "cua_repl native app screenshots plus opt-in AppKit caching of the actual menu bar button; up to 8 source frames per second",
+  "status_capture": {
+    "frames": 56,
+    "displayed_values": [
+      "73 T/s",
+      "74 T/s",
+      "75 T/s",
+      "76 T/s",
+      "77 T/s",
+      "78 T/s",
+      "79 T/s",
+      "80 T/s",
+      "81 T/s",
+      "82 T/s",
+      "83 T/s"
+    ],
+    "guard": "read-only mode, explicit snapshot and timeline fixtures, and --capture-status-to"
+  },
+  "edits": {
+    "overview.jpg": "Native status-button bitmap on a neutral bar backdrop, above the native overview; developer footer cropped",
+    "timeline.jpg": "Focused crop of native overview: x=26, y=500, width=840, height=510",
+    "activity-detail.jpg": "Native status-button bitmap and activity viewer; OS title bar and developer footer cropped",
+    "video": "Native window frames and native status-button bitmap composed on a neutral canvas; a magnified copy of the same bitmap highlights speed; developer footers and OS capture chrome cropped; feature captions; no audio"
+  },
+  "video": {
+    "programs": [],
+    "stream_groups": [],
+    "streams": [
+      {
+        "codec_name": "h264",
+        "width": 1440,
+        "height": 1000,
+        "r_frame_rate": "24/1",
+        "nb_frames": "1402"
+      }
+    ],
+    "format": {
+      "duration": "58.416667",
+      "size": "454936"
+    }
+  },
+  "chapters": [
+    {
+      "title": "Live token generation speed in the menu bar",
+      "frames": 56,
+      "captured_seconds": 7.054,
+      "file": "chapter-00.mp4"
+    },
+    {
+      "title": "See every active chat at a glance",
+      "frames": 36,
+      "captured_seconds": 4.909,
+      "file": "chapter-01.mp4"
+    },
+    {
+      "title": "Switch chats without losing the overview",
+      "frames": 64,
+      "captured_seconds": 8.455,
+      "file": "chapter-02.mp4"
+    },
+    {
+      "title": "Read the original request beside the timeline",
+      "frames": 46,
+      "captured_seconds": 6.081,
+      "file": "chapter-03.mp4"
+    },
+    {
+      "title": "Zoom into model and tool activity for each agent",
+      "frames": 40,
+      "captured_seconds": 5.034,
+      "file": "chapter-04.mp4"
+    },
+    {
+      "title": "Open a test command in the native activity viewer",
+      "frames": 39,
+      "captured_seconds": 5.016,
+      "file": "chapter-05.mp4"
+    },
+    {
+      "title": "Inspect the exact result: 24 focused tests passed",
+      "frames": 54,
+      "captured_seconds": 6.906,
+      "file": "chapter-06.mp4"
+    },
+    {
+      "title": "Review the source patch behind a file edit",
+      "frames": 48,
+      "captured_seconds": 6.056,
+      "file": "chapter-07.mp4"
+    },
+    {
+      "title": "Follow the response while the current activity grows",
+      "frames": 60,
+      "captured_seconds": 8.058,
+      "file": "chapter-08.mp4"
+    }
+  ],
+  "assets": {
+    "activity-detail.jpg": {
+      "bytes": 187308,
+      "sha256": "3d47aac9143d47f10a093d4d58912f9f35e1dc02bef12bba092ca2473d98e1a4"
+    },
+    "demo-poster.jpg": {
+      "bytes": 76745,
+      "sha256": "fa3447622db40297178e9df0bac31598cc4c7c0edb09dd35e56c9c5e5bb6d80c"
+    },
+    "demo.gif": {
+      "bytes": 454359,
+      "sha256": "3eae2df89695b650b322daa0896026accb56e1086de5a8e7691237250077070d"
+    },
+    "demo.mp4": {
+      "bytes": 454936,
+      "sha256": "7a9fc0b834c66cb9f6d87a0843f1adf1dbbb83e0def895ba5465eb3ee8a2e76d"
+    },
+    "overview.jpg": {
+      "bytes": 129267,
+      "sha256": "0695900ad7d87c82f5cc0320492c712ab26cfad4b8682f9e600bf110a30f8ff3"
+    },
+    "timeline.jpg": {
+      "bytes": 64307,
+      "sha256": "9f2a0ea76f866169eb8f45434a5c69083568ad48ed663547ff3a71332366a9a2"
+    }
+  }
+}
