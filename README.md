@@ -1,10 +1,10 @@
 # Codex Progress Monitor
 
-[简体中文](README.zh-CN.md) · [Contributing](CONTRIBUTING.md) · [Architecture](docs/18_engineering_hardening/implemented-architecture.md) · [Docs](docs/README.md)
+[简体中文](README.zh-CN.md) · [Contributing](CONTRIBUTING.md) · [Architecture notes](dev-history/18_engineering_hardening/implemented-architecture.md) · [Development history](dev-history/README.md)
 
 A local macOS menu bar companion for Codex Desktop. See what your connected chats are doing, inspect model and tool activity on a timeline, and view received-text token speed alongside official turn usage.
 
-This project is licensed under [MIT](LICENSE). A Developer ID-signed and notarized public release is not available yet; see the [review and release checklist](docs/17_review_and_refactor/review.md) for the remaining release checks.
+This project is licensed under [MIT](LICENSE). A Developer ID-signed and notarized public release is not available yet; see the [review and release checklist](dev-history/17_review_and_refactor/review.md) for the remaining release checks.
 
 ## What it shows
 
@@ -43,7 +43,7 @@ bin/codex-progress watch --lang en
 bin/codex-progress status
 ```
 
-Detailed [GUI usage](docs/06_gui_app_options_and_decisions/usage.md) and [process lifecycle](docs/02_product_mvp/startup-and-processes.md) explain integration and restoration. These historical documents are in Chinese and may reference local validation evidence.
+Detailed [GUI usage](dev-history/06_gui_app_options_and_decisions/usage.md) and [process lifecycle](dev-history/02_product_mvp/startup-and-processes.md) explain integration and restoration. These historical documents are in Chinese and may reference local validation evidence.
 
 ## How it works
 
@@ -65,9 +65,9 @@ Monitor keeps local metadata, snapshots, and integration backups. Snapshots can 
 
 ## Development and limitations
 
-See [CONTRIBUTING.md](CONTRIBUTING.md) for checks and safe fixtures. The product is in `src/`, `macos/Sources/`, and `bin/`; numbered `docs/` folders preserve decisions and validation history. `experiments/` and `analysis/` are research material. `.local/` is ignored machine state.
+See [CONTRIBUTING.md](CONTRIBUTING.md) for checks and safe fixtures. The product is in `src/`, `macos/Sources/`, and `bin/`; `dev-history/` preserves requirements, decisions, and validation records by iteration. These records describe their stated versions rather than a continuously updated product manual. `experiments/` and `analysis/` are research material. `.local/` is ignored machine state.
 
-Current limits include local observed chats only, version-dependent upstream trace parsing, and no fresh-machine or distribution acceptance yet. The state transport has isolated native acceptance, and the daily GUI/collector/resident-bridge update has been verified after a full Desktop restart; new natural-use samples remain pending. Tests and local builds do not establish long-run, Remote, signing, notarization, or asset-distribution readiness. The [baseline review](docs/17_review_and_refactor/review.md), [current implementation record](docs/18_engineering_hardening/implementation-results.md), and [remaining work](docs/TODO.md) track those boundaries.
+Current limits include local observed chats only, version-dependent upstream trace parsing, and no fresh-machine or distribution acceptance yet. The state transport has isolated native acceptance, and the daily GUI/collector/resident-bridge update has been verified after a full Desktop restart; new natural-use samples remain pending. Tests and local builds do not establish long-run, Remote, signing, notarization, or asset-distribution readiness. The [baseline review](dev-history/17_review_and_refactor/review.md), [current implementation record](dev-history/18_engineering_hardening/implementation-results.md), and [remaining work](dev-history/TODO.md) track those boundaries.
 
 ## License
 

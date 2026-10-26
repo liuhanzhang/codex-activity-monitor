@@ -94,4 +94,4 @@ Code Mode 外层 cell 与嵌套工具的精确生命周期关联仍未取得。�
 
 ## 6. 工作区边界
 
-截至 2026-10-12 运行验收，本次文档全部位于 docs/03_event_lifecycle_and_progress_display，docs/02_product_mvp 未改；已有暂存区的完整 diff 哈希保持不变，没有暂存、提交或推送。2026-10-13 用户授权提交本轮改动，代码 / 测试与文档 / 验证记录分组提交，提交结果以 Git 历史为准。
+截至 2026-10-12 运行验收，本次文档全部位于 dev-history/03_event_lifecycle_and_progress_display，dev-history/02_product_mvp 未改；已有暂存区的完整 diff 哈希保持不变，没有暂存、提交或推送。2026-10-13 用户授权提交本轮改动，代码 / 测试与文档 / 验证记录分组提交，提交结果以 Git 历史为准。

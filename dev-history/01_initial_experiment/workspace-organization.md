@@ -10,7 +10,7 @@
 codex_progress_monitor/
 ├── README.md                         项目入口与目录约定
 ├── .gitignore                        排除本机状态和生成材料
-├── docs/01_initial_experiment/       架构、数据来源、需求和整理说明
+├── dev-history/01_initial_experiment/       架构、数据来源、需求和整理说明
 ├── analysis/                        分析脚本、研究结论和精简验证结果
 │   └── workspace-cleanup/            本次清理清单
 ├── experiments/desktop-isolation/    可复用的隔离实验脚本

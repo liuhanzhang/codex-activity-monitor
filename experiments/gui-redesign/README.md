@@ -75,7 +75,7 @@ printf '%s\n' thinking > .local/gui-preview/fixtures/case.txt
 
 每种外观导出 7 个时刻，覆盖静止、抬起、敲下、回弹和循环停顿；`frame_times_seconds` 记录实际采样时刻。减少动态效果时 7 帧相同。这是姿态采样，不是均匀帧率的视频。
 
-小狗现仅作为实验素材保留，普通界面不显示，也不提供切换选项。8 帧透明资源及来源记录位于 `macos/Sources/MonitorApp/Resources/IdlePet/`，已有放大动效预览位于 `docs/08_gui_ui_ux_redesign/assets/idle-pet-native-4x.gif`。
+小狗现仅作为实验素材保留，普通界面不显示，也不提供切换选项。8 帧透明资源及来源记录位于 `macos/Sources/MonitorApp/Resources/IdlePet/`，已有放大动效预览位于 `dev-history/08_gui_ui_ux_redesign/assets/idle-pet-native-4x.gif`。
 
 开发用原生离屏导出仍可复现小狗动效（共用绘制器，不配置接入）：
 

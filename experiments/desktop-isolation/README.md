@@ -1,6 +1,6 @@
 # 隔离 Desktop 实验
 
-这里保留初始研究使用的脚本，不是正式监控实现。当前完整说明见 [初始实验文档](/Users/bytedance/personal/codex_progress_monitor/docs/01_initial_experiment/README.md)。
+这里保留初始研究使用的脚本，不是正式监控实现。当前完整说明见 [初始实验文档](/Users/bytedance/personal/codex_progress_monitor/dev-history/01_initial_experiment/README.md)。
 
 ## 文件
 

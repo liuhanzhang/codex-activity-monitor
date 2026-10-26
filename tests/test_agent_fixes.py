@@ -1,4 +1,4 @@
-"""Regressions from the real three-agent run (docs/12)."""
+"""Regressions from the real three-agent run (dev-history/12)."""
 
 import json
 from pathlib import Path

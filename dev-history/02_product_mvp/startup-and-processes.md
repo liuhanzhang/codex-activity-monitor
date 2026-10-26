@@ -2,7 +2,7 @@
 
 更新日期：2026-10-15。本文按当前 macOS 实现说明如何启动主 Codex App、隔离测试 App 和 Monitor，以及各进程和配置的关系。命令中的绝对路径使用本机现有安装；其他机器需替换路径。
 
-方案选择与配置前后对比见 [架构文档](/Users/bytedance/personal/codex_progress_monitor/docs/02_product_mvp/architecture.md)，看板操作与指标含义见 [使用说明](/Users/bytedance/personal/codex_progress_monitor/docs/02_product_mvp/usage.md)。
+方案选择与配置前后对比见 [架构文档](/Users/bytedance/personal/codex_progress_monitor/dev-history/02_product_mvp/architecture.md)，看板操作与指标含义见 [使用说明](/Users/bytedance/personal/codex_progress_monitor/dev-history/02_product_mvp/usage.md)。
 
 ## 1. 哪些进程在运行
 
@@ -53,7 +53,7 @@ flowchart LR
 | [login-start](/Users/bytedance/personal/codex_progress_monitor/.local/runtime/login-start) | 保存四个接入变量；运行 `launchctl setenv`，最后执行 `collect` |
 | [desktop-environment.json](/Users/bytedance/personal/codex_progress_monitor/.local/runtime/desktop-environment.json) | 保存安装前的变量和安装值，供卸载恢复；Desktop 不读取它 |
 
-启动脚本设置 `CODEX_CLI_PATH`、`CODEX_APP_SERVER_FORCE_CLI`、`CODEX_APP_SERVER_USE_LOCAL_DAEMON` 和 `CODEX_APP_SERVER_WS_URL`。值和具体影响见 [架构文档的配置表](/Users/bytedance/personal/codex_progress_monitor/docs/02_product_mvp/architecture.md#43-实际修改的配置和架构)。
+启动脚本设置 `CODEX_CLI_PATH`、`CODEX_APP_SERVER_FORCE_CLI`、`CODEX_APP_SERVER_USE_LOCAL_DAEMON` 和 `CODEX_APP_SERVER_WS_URL`。值和具体影响见 [架构文档的配置表](/Users/bytedance/personal/codex_progress_monitor/dev-history/02_product_mvp/architecture.md#43-实际修改的配置和架构)。
 
 `CODEX_APP_SERVER_FORCE_CLI` 从 2026-10-15 起设为 `0`，避免把 Desktop 的 `durable` 云连接强制变成额外本地后端。已有登录安装也要更新 `login-start` 和备份文件的 `installed` 字段；`previous` 保留第一次安装前的值。修改 GUI 会话变量后，正在运行的 Desktop 仍保留旧副本，需等任务结束后完整退出并重新打开。重开 `watch` 或只重启 collector 不会切换 Desktop 的连接方式。
 
@@ -134,7 +134,7 @@ Monitor 没有主 App / 隔离 App 监听模式开关。两个实例都接入时
 
 ### 4.1 关闭看板或 Codex
 
-看板按 `q`，只关闭显示。正常退出某个 Codex 实例，会关闭它对应的包装器和后端；采集器继续运行。包装器负责 EOF、信号和退出状态传递，已有验证及异常清理边界见 [架构文档](/Users/bytedance/personal/codex_progress_monitor/docs/02_product_mvp/architecture.md#41-当前方案怎样工作)。
+看板按 `q`，只关闭显示。正常退出某个 Codex 实例，会关闭它对应的包装器和后端；采集器继续运行。包装器负责 EOF、信号和退出状态传递，已有验证及异常清理边界见 [架构文档](/Users/bytedance/personal/codex_progress_monitor/dev-history/02_product_mvp/architecture.md#41-当前方案怎样工作)。
 
 ### 4.2 登录启动模式：暂停采集、再恢复
 

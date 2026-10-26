@@ -194,4 +194,4 @@ Reasoning 静默期显示有依据的等待状态；未取得精确 token/s 时�
 - [仅含增量大小与时间的记录](/Users/bytedance/personal/codex_progress_monitor/analysis/upstream-stream/tool-input-deltas.jsonl)
 - [文件编辑 / Code Mode 实验](/Users/bytedance/personal/codex_progress_monitor/analysis/file-edit-progress/FINDINGS.txt)
 - [隔离后端接收日志实验脚本](/Users/bytedance/personal/codex_progress_monitor/experiments/desktop-isolation/configure_transport_logging.py)
-- [数据来源与官方 / 开源参考](/Users/bytedance/personal/codex_progress_monitor/docs/01_initial_experiment/data-sources.md)
+- [数据来源与官方 / 开源参考](/Users/bytedance/personal/codex_progress_monitor/dev-history/01_initial_experiment/data-sources.md)

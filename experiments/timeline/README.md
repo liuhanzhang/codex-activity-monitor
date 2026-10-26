@@ -1,6 +1,6 @@
 # 活动时间线的预览与来源探针
 
-配合 [第 09 章](../../docs/09_activity_timeline/README.md)。所有输出放在被忽略的 `.local/`；Git 中只保留脚本、合成截图和脱敏结构统计。
+配合 [第 09 章](../../dev-history/09_activity_timeline/README.md)。所有输出放在被忽略的 `.local/`；Git 中只保留脚本、合成截图和脱敏结构统计。
 
 ## JSONL 活动校正原型
 
@@ -11,11 +11,11 @@
   --output .local/diagnostics/jsonl-feasibility-20261022/run-next
 ```
 
-输出目录必须尚不存在。实际结果和边界见[第 14 章可行性实验](../../docs/14_jsonl_activity_reconciliation/feasibility-results.md)。
+输出目录必须尚不存在。实际结果和边界见[第 14 章可行性实验](../../dev-history/14_jsonl_activity_reconciliation/feasibility-results.md)。
 
 ## 只读原生预览
 
-最新选中与结果状态见[选中与结果状态](../../docs/09_activity_timeline/selection-status.md)。夹具包含 90 秒失败长工具、5 毫秒失败短工具和无开始时间的阻止记录，用于检查淡蓝底衬、局部图标与详情文案。
+最新选中与结果状态见[选中与结果状态](../../dev-history/09_activity_timeline/selection-status.md)。夹具包含 90 秒失败长工具、5 毫秒失败短工具和无开始时间的阻止记录，用于检查淡蓝底衬、局部图标与详情文案。
 
 ```sh
 PYTHONPATH=src .local/venv/bin/python experiments/timeline/preview.py --output .local/gui-preview/runtime --keep-fresh
@@ -24,9 +24,9 @@ bin/build-gui --preview
 
 通过系统正常打开 `.local/gui-preview/Codex Monitor Preview.app`。该 bundle 与日常 App 分离，使用 fixture provider；不创建观察 lease、不读真实历史、不配置接入。预览时间轴固定在 90 秒，只更新快照新鲜度，便于重叠和滚动检查。结束时退出 Preview，并在启动 fixture writer 的终端按 Ctrl+C。
 
-图中所有聊天、代码、输出与检查数量均为手写合成内容。不要把真实聊天截图放进 `docs/assets`。
+图中所有聊天、代码、输出与检查数量均为手写合成内容。不要把真实聊天截图放进 `dev-history/assets`。
 
-最新交互见[第二轮 UI/UX 调整](../../docs/09_activity_timeline/panel-ux-round2.md)，工具布局采用[来源时间方案](../../docs/09_activity_timeline/true-time-tools.md)，夹具新增持续 90 秒的工具及 5／10 毫秒短工具，检查局部叠色、粗线直接点击和多工具详情。夹具还包含 18 个毫秒级密集工具、旧 hook、4 秒上下文整理、原始命令／文件字段，以及多个区间重叠的工具和后续独立工具。菜单默认一屏 30 秒，可用加减按钮切换到 60 秒，90 秒轮次需要横向滚动；详情沿用所选比例，调整窗口只增减可见范围。最终交互结果见[来源时间验证](../../docs/09_activity_timeline/true-time-tools.md)，固定比例见[固定比例验证](../../docs/09_activity_timeline/fixed-scale.md)，叠放交互的前版证据见[布局验收](../../docs/09_activity_timeline/overlap-layout.md)。
+最新交互见[第二轮 UI/UX 调整](../../dev-history/09_activity_timeline/panel-ux-round2.md)，工具布局采用[来源时间方案](../../dev-history/09_activity_timeline/true-time-tools.md)，夹具新增持续 90 秒的工具及 5／10 毫秒短工具，检查局部叠色、粗线直接点击和多工具详情。夹具还包含 18 个毫秒级密集工具、旧 hook、4 秒上下文整理、原始命令／文件字段，以及多个区间重叠的工具和后续独立工具。菜单默认一屏 30 秒，可用加减按钮切换到 60 秒，90 秒轮次需要横向滚动；详情沿用所选比例，调整窗口只增减可见范围。最终交互结果见[来源时间验证](../../dev-history/09_activity_timeline/true-time-tools.md)，固定比例见[固定比例验证](../../dev-history/09_activity_timeline/fixed-scale.md)，叠放交互的前版证据见[布局验收](../../dev-history/09_activity_timeline/overlap-layout.md)。
 
 模型第三段还包含手写的 22 毫秒边界交叠，用于检查思考、正文、参数仍逐段展示且可直接打开详情；工具只在实际图形覆盖的位置叠色，点击直接查看命中的工具；不能把视觉交叠当作模型并行证据。
 
@@ -63,4 +63,4 @@ swift test --disable-sandbox --cache-path .local/swift-cache --package-path maco
 MONITOR_WINDOW_TESTS=1 swift test --disable-sandbox --cache-path .local/swift-cache --package-path macos --filter viewerReusesWindowAndPreservesResizedFrameAcrossContentChanges
 ```
 
-实际执行结果及兼容边界见[首轮实现记录](../../docs/09_activity_timeline/implementation-results.md)和[后续验收](../../docs/09_activity_timeline/refinement-results.md)；不要把构建、合成截图、真实 stdio、日常 App 与发行验收合成一个“全部环境通过”的结论。
+实际执行结果及兼容边界见[首轮实现记录](../../dev-history/09_activity_timeline/implementation-results.md)和[后续验收](../../dev-history/09_activity_timeline/refinement-results.md)；不要把构建、合成截图、真实 stdio、日常 App 与发行验收合成一个“全部环境通过”的结论。

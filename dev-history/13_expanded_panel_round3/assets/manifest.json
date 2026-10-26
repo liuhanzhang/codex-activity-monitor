@@ -47,7 +47,7 @@
   },
   "checksums": {
     "algorithm": "sha256",
-    "paths_relative_to": "docs/13_expanded_panel_round3/",
+    "paths_relative_to": "dev-history/13_expanded_panel_round3/",
     "manifest_self_checksum": "omitted",
     "files": {
       "README.md": {

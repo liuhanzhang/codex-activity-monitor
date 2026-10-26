@@ -1,6 +1,6 @@
 # 独立试用包的构建与验收
 
-范围、设计与验收边界见 [第 20 章](../docs/20_standalone_packaging/README.md)。
+范围、设计与验收边界见 [第 20 章](../dev-history/20_standalone_packaging/README.md)。
 
 ## 构建
 

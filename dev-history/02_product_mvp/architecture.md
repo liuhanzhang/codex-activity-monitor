@@ -4,7 +4,7 @@
 
 **当前方案：在 Desktop 与原版后端之间加入 stdio 包装器，复制运行事件，读取 Rust 日志中的流式增量。** 它满足首版的本机实时监控需求；选择依据是数据覆盖、日常接入方式和已有验证，不是已经证明它在所有场景下优于 WebSocket。
 
-主 App / 隔离 App 的逐步启动、环境变量保存位置，以及包装器、采集器、看板的启动和停止关系，见 [启动步骤与进程管理](/Users/bytedance/personal/codex_progress_monitor/docs/02_product_mvp/startup-and-processes.md)。
+主 App / 隔离 App 的逐步启动、环境变量保存位置，以及包装器、采集器、看板的启动和停止关系，见 [启动步骤与进程管理](/Users/bytedance/personal/codex_progress_monitor/dev-history/02_product_mvp/startup-and-processes.md)。
 
 ## 1. Codex Desktop 本来怎样工作
 
@@ -50,7 +50,7 @@ stderr 的历史名称是“标准错误输出”，但正常的 INFO、DEBUG、
 
 Desktop 还支持连接已有 WebSocket 后端，以及有条件地连接本地常驻服务（daemon）；远程主机也有自己的后端连接。初始实验采用的正是“我们先启动 WebSocket 后端，Desktop 再连接它”。一个后端可以管理多条聊天，一个 Desktop 也可以连接多个后端。共享数据目录不代表共享正在执行的任务。
 
-源码依据：[Desktop 的 IPC 接收](/Users/bytedance/personal/codex_progress_monitor/analysis/upstream-stream/desktop-source/main.pretty.js:160126)、[Desktop 创建三条管道](/Users/bytedance/personal/codex_progress_monitor/analysis/upstream-stream/desktop-source/application-network-startup.pretty.js:13739)、[Rust 日志写入 stderr](/Users/bytedance/playground/codex/codex-rs/app-server/src/lib.rs:715)。原生架构的详细研究见 [初始架构文档](/Users/bytedance/personal/codex_progress_monitor/docs/01_initial_experiment/architecture.md)。
+源码依据：[Desktop 的 IPC 接收](/Users/bytedance/personal/codex_progress_monitor/analysis/upstream-stream/desktop-source/main.pretty.js:160126)、[Desktop 创建三条管道](/Users/bytedance/personal/codex_progress_monitor/analysis/upstream-stream/desktop-source/application-network-startup.pretty.js:13739)、[Rust 日志写入 stderr](/Users/bytedance/playground/codex/codex-rs/app-server/src/lib.rs:715)。原生架构的详细研究见 [初始架构文档](/Users/bytedance/personal/codex_progress_monitor/dev-history/01_initial_experiment/architecture.md)。
 
 ## 2. 可以配置哪些部分，怎样配置
 
@@ -112,7 +112,7 @@ Rust 日志中的关键增量包括 `response.output_text.delta`、`response.cus
 
 只看 Desktop 界面受其渲染和折叠行为限制；会话文件保存的是完整内容和部分事件，未保存逐段正文/参数增量，无法满足长参数生成期间的实时反馈。不同方案是否可行，应以实际事件覆盖为准，不能只看“有没有连接上”。
 
-证据：[初始协议与上游日志对照](/Users/bytedance/personal/codex_progress_monitor/docs/01_initial_experiment/data-sources.md:44)、[初始 WebSocket 实验方案](/Users/bytedance/personal/codex_progress_monitor/docs/01_initial_experiment/requirements-and-plan.md:101)。
+证据：[初始协议与上游日志对照](/Users/bytedance/personal/codex_progress_monitor/dev-history/01_initial_experiment/data-sources.md:44)、[初始 WebSocket 实验方案](/Users/bytedance/personal/codex_progress_monitor/dev-history/01_initial_experiment/requirements-and-plan.md:101)。
 
 ## 4. 为什么选择当前方案，具体改了什么
 
@@ -220,4 +220,4 @@ Desktop 的原默认值见 [子进程环境构造](/Users/bytedance/personal/cod
 /Users/bytedance/personal/codex_progress_monitor/bin/codex-progress uninstall
 ```
 
-已有任务使用的包装器和依赖应保留到任务结束。完整安装、试用和恢复步骤见 [使用说明](/Users/bytedance/personal/codex_progress_monitor/docs/02_product_mvp/usage.md)。
+已有任务使用的包装器和依赖应保留到任务结束。完整安装、试用和恢复步骤见 [使用说明](/Users/bytedance/personal/codex_progress_monitor/dev-history/02_product_mvp/usage.md)。

@@ -79,7 +79,7 @@
 ```sh
 .local/venv/bin/python tests/verify_usage_capture.py \
   .local/product-preflight/live-20261011/capture.jsonl \
-  --output docs/05_token_usage_and_reasoning_speed/capture-verification.json
+  --output dev-history/05_token_usage_and_reasoning_speed/capture-verification.json
 ```
 
 [回放证据](capture-verification.json)记录原捕获 SHA-256、官方数值、阶段耗时、usage 延迟和关联来源。原始捕获未提交。

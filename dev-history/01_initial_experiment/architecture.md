@@ -1,6 +1,6 @@
 # 架构与通信原理
 
-整理日期：2026-10-10。版本与证据分级见 [阅读索引](/Users/bytedance/personal/codex_progress_monitor/docs/01_initial_experiment/README.md)。
+整理日期：2026-10-10。版本与证据分级见 [阅读索引](/Users/bytedance/personal/codex_progress_monitor/dev-history/01_initial_experiment/README.md)。
 
 ## 1. 整体结构
 

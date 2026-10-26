@@ -1,10 +1,10 @@
 # Codex Progress Monitor
 
-[English](README.md) · [参与开发](CONTRIBUTING.md) · [架构阅读路径](docs/18_engineering_hardening/implemented-architecture.md) · [文档入口](docs/README.md)
+[English](README.md) · [参与开发](CONTRIBUTING.md) · [架构记录](dev-history/18_engineering_hardening/implemented-architecture.md) · [开发历史](dev-history/README.md)
 
 Codex Desktop 的本机 macOS 菜单栏伴侣：查看聊天当前活动、模型与工具时间线、可见文本接收速度，以及本回合官方用量。
 
-本项目采用 [MIT 许可证](LICENSE)。当前尚无经过 Developer ID 签名和公证的公开发行包，其余发行验收见[系统审查与发行清单](docs/17_review_and_refactor/review.md)。
+本项目采用 [MIT 许可证](LICENSE)。当前尚无经过 Developer ID 签名和公证的公开发行包，其余发行验收见[系统审查与发行清单](dev-history/17_review_and_refactor/review.md)。
 
 ## 功能与语义
 
@@ -44,7 +44,7 @@ bin/codex-progress watch --lang en
 bin/codex-progress status
 ```
 
-更多配置与恢复步骤见 [GUI 使用](docs/06_gui_app_options_and_decisions/usage.md)及[启动与进程管理](docs/02_product_mvp/startup-and-processes.md)。历史文档中的本机路径仅用于说明当时的验证环境。
+更多配置与恢复步骤见 [GUI 使用](dev-history/06_gui_app_options_and_decisions/usage.md)及[启动与进程管理](dev-history/02_product_mvp/startup-and-processes.md)。历史文档中的本机路径仅用于说明当时的验证环境。
 
 ## 数据和限制
 
@@ -52,9 +52,9 @@ bin/codex-progress status
 
 快照可能包含聊天标题、路径、命令预览和数值指标，并非匿名数据。实时文本在内存中用于本地分词和所选活动详情；Monitor 不上传对话。依赖安装和 tokenizer 首次下载资源可能需要网络。不要将运行数据、登录状态、原始聊天或私密截图放入 Git 或问题报告。
 
-产品代码位于 `src/`、`macos/Sources/` 和 `bin/`。编号 `docs/` 保留需求、决策和历史验收；`experiments/` 保存实验方法，`analysis/` 保存精简结论，`.local/` 是 Git 忽略的本机环境与数据。
+产品代码位于 `src/`、`macos/Sources/` 和 `bin/`。`dev-history/` 按迭代保存需求、决策和历史验收，内容对应记录时的版本，不作为随版本持续更新的产品手册。`experiments/` 保存实验方法，`analysis/` 保存精简结论，`.local/` 是 Git 忽略的本机环境与数据。
 
-目前只覆盖已接入的本机聊天，解析依赖上游版本。状态通道已有隔离原生验收，日常 GUI／collector／驻留 bridge 在完整重开 Desktop 后已统一更新并核对实际运行；新版自然样本仍需验收。长期运行、全新机器、Remote、签名与公证、素材公开分发均不能由单元测试推定完成。基线见[审查报告](docs/17_review_and_refactor/review.md)，当前六项进展和验证见[第 18 章](docs/18_engineering_hardening/README.md)与[实施记录](docs/18_engineering_hardening/implementation-results.md)。
+目前只覆盖已接入的本机聊天，解析依赖上游版本。状态通道已有隔离原生验收，日常 GUI／collector／驻留 bridge 在完整重开 Desktop 后已统一更新并核对实际运行；新版自然样本仍需验收。长期运行、全新机器、Remote、签名与公证、素材公开分发均不能由单元测试推定完成。基线见[审查报告](dev-history/17_review_and_refactor/review.md)，当前六项进展和验证见[第 18 章](dev-history/18_engineering_hardening/README.md)与[实施记录](dev-history/18_engineering_hardening/implementation-results.md)。
 
 ## 许可证
 

@@ -2,7 +2,7 @@
 
 确认日期：2026-10-11，Asia/Shanghai。
 
-本文记录本次产品讨论确认的范围，以及实现前需要完成的验证。具体实验方法、通过条件、失败分支和工程模块见 [实现前验证方案](/Users/bytedance/personal/codex_progress_monitor/docs/02_product_mvp/preimplementation-validation.md)。历史实验保留在 [初始实验文档](/Users/bytedance/personal/codex_progress_monitor/docs/01_initial_experiment/README.md)，其结论不能直接视为常驻产品已经实现。
+本文记录本次产品讨论确认的范围，以及实现前需要完成的验证。具体实验方法、通过条件、失败分支和工程模块见 [实现前验证方案](/Users/bytedance/personal/codex_progress_monitor/dev-history/02_product_mvp/preimplementation-validation.md)。历史实验保留在 [初始实验文档](/Users/bytedance/personal/codex_progress_monitor/dev-history/01_initial_experiment/README.md)，其结论不能直接视为常驻产品已经实现。
 
 ## 1. 用户问题与产品目标
 
@@ -204,7 +204,7 @@ Reasoning 持续时间表示开始事件以来经过的时间。无摘要增量�
 - 第三轮人工提交的隔离 Desktop 核心实时采集检查通过：正文约 17.5 秒持续正速度、68 个不同快照，最终约 1,000 token 与会话文本计数一致；工具持续约 20 秒、exit 0；任务期间丢弃、解析错误和活动后端断连均为 0，两条临时标题任务默认隐藏。第二轮的 374 次丢弃保留为修复前证据。主 App 默认启动接入等其他任务结束后自然重开验证；短参数速度、摘要频率和更多工具覆盖继续观察。
 - 长期自然使用与更广泛工具类型覆盖继续属于阶段 D，不将有限样本视为全部通过。
 
-使用步骤见 [使用说明](/Users/bytedance/personal/codex_progress_monitor/docs/02_product_mvp/usage.md)。实现结构、性能测量和验收边界见 [产品验证报告](/Users/bytedance/personal/codex_progress_monitor/analysis/product-mvp/README.md)。下一步是用户的日常试用，之后根据实际缺口继续阶段 D。
+使用步骤见 [使用说明](/Users/bytedance/personal/codex_progress_monitor/dev-history/02_product_mvp/usage.md)。实现结构、性能测量和验收边界见 [产品验证报告](/Users/bytedance/personal/codex_progress_monitor/analysis/product-mvp/README.md)。下一步是用户的日常试用，之后根据实际缺口继续阶段 D。
 
 ### 本次实施目标状态
 

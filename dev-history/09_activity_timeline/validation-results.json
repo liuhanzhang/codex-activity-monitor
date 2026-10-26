@@ -32,7 +32,7 @@
       "evidence": [
         "macos/Tests/MonitorAppTests/TimelineStoreTests.swift",
         "macos/Tests/MonitorModelTests/SnapshotTests.swift",
-        "docs/09_activity_timeline/assets/native-panel-collapsed.jpg"
+        "dev-history/09_activity_timeline/assets/native-panel-collapsed.jpg"
       ],
       "limits": null
     },
@@ -72,8 +72,8 @@
       "evidence": [
         "tests/test_timeline.py",
         "macos/Tests/MonitorModelTests/TimelineTests.swift",
-        "docs/09_activity_timeline/assets/native-overlap-selection.jpg",
-        "docs/09_activity_timeline/assets/native-child-tracks.jpg"
+        "dev-history/09_activity_timeline/assets/native-overlap-selection.jpg",
+        "dev-history/09_activity_timeline/assets/native-child-tracks.jpg"
       ],
       "limits": null
     },
@@ -94,7 +94,7 @@
       "evidence": [
         "tests/test_timeline.py",
         "tests/test_file_editing.py",
-        "docs/09_activity_timeline/assets/native-panel-timeline.jpg"
+        "dev-history/09_activity_timeline/assets/native-panel-timeline.jpg"
       ],
       "limits": null
     },
@@ -211,7 +211,7 @@
       "result": "passed",
       "outcome": "通过：popover收起、普通单窗口、用户尺寸保持、上下文/选择稳定。",
       "evidence": [
-        "docs/09_activity_timeline/assets/native-activity-viewer.jpg",
+        "dev-history/09_activity_timeline/assets/native-activity-viewer.jpg",
         "macos/Tests/MonitorAppTests/TimelineStoreTests.swift",
         ".local/timeline-window-tests.log"
       ],
@@ -235,7 +235,7 @@
       "evidence": [
         "tests/test_history.py",
         ".local/timeline-online-probe/reconciled_query.json",
-        "docs/09_activity_timeline/assets/native-activity-viewer.jpg"
+        "dev-history/09_activity_timeline/assets/native-activity-viewer.jpg"
       ],
       "limits": "图片可用引用与加载有实现/夹具，未声称验证所有图片来源。"
     },
@@ -378,7 +378,7 @@
       "evidence": [
         "macos/Tests/MonitorAppTests/TimelineStoreTests.swift",
         "macos/Sources/MonitorApp/TimelineSurface.swift",
-        "docs/09_activity_timeline/assets/native-overlap-selection.jpg"
+        "dev-history/09_activity_timeline/assets/native-overlap-selection.jpg"
       ],
       "limits": "完整VoiceOver朗读、减少动态和长标题全组合未逐项人工验收；已有实现/静态与相关回归覆盖。"
     },

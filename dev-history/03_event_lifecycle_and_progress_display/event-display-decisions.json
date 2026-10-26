@@ -3,7 +3,7 @@
   "status": "产品取舍作为实施基准；实施前复核与实施后结果分开记录，日常运行切换已验证",
   "scope": "本机 Codex 任务进度总览；不复制 Desktop 的交互、通知、正文、用量面板或实时音视频功能",
   "basis": {
-    "file": "/Users/bytedance/personal/codex_progress_monitor/docs/03_event_lifecycle_and_progress_display/app-server-event-inventory.json",
+    "file": "/Users/bytedance/personal/codex_progress_monitor/dev-history/03_event_lifecycle_and_progress_display/app-server-event-inventory.json",
     "sha256": "0309d66230649e8c064e24bc1cf001e208e1e9ca6671ae834652abf5cb298602",
     "codex_source_commit": "806d9732c974bc8a51b8317c1bd8985544fe627c"
   },
@@ -6739,7 +6739,7 @@
       "未确认点与兜底"
     ],
     "completion_gate": "方法集合与基线一致，87/87 无缺项或重复；逐条有证据、结论、改进安排与验证依据；静态复核和真实触发验证分别标注",
-    "plan_file": "/Users/bytedance/personal/codex_progress_monitor/docs/03_event_lifecycle_and_progress_display/background-and-implementation-plan.md",
+    "plan_file": "/Users/bytedance/personal/codex_progress_monitor/dev-history/03_event_lifecycle_and_progress_display/background-and-implementation-plan.md",
     "reviewed_methods": 87,
     "baseline_source_hashes": {
       "src/codex_progress_monitor/metrics.py": "218d3dc7a9624186225d8fbfa75b1f9398482ab56ca60def0e64b73796e17ccd",

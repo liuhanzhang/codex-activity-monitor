@@ -2,7 +2,7 @@
 
 整理日期：2026-10-11，Asia/Shanghai。
 
-对应 [第一版产品需求与实施计划](/Users/bytedance/personal/codex_progress_monitor/docs/02_product_mvp/requirements-and-plan.md)。需求范围已明确；采集入口、并发身份映射与实际模型的 tokenizer 匹配需要由实验决定。
+对应 [第一版产品需求与实施计划](/Users/bytedance/personal/codex_progress_monitor/dev-history/02_product_mvp/requirements-and-plan.md)。需求范围已明确；采集入口、并发身份映射与实际模型的 tokenizer 匹配需要由实验决定。
 
 ## 1. 实现前只读核查
 

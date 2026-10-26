@@ -1,6 +1,6 @@
 # 产品实现与有限验收
 
-日期：2026-10-11。对应 [使用说明](/Users/bytedance/personal/codex_progress_monitor/docs/02_product_mvp/usage.md) 和 [需求与计划](/Users/bytedance/personal/codex_progress_monitor/docs/02_product_mvp/requirements-and-plan.md)。统计与逐流哈希见 [verification.json](/Users/bytedance/personal/codex_progress_monitor/analysis/product-mvp/verification.json)。
+日期：2026-10-11。对应 [使用说明](/Users/bytedance/personal/codex_progress_monitor/dev-history/02_product_mvp/usage.md) 和 [需求与计划](/Users/bytedance/personal/codex_progress_monitor/dev-history/02_product_mvp/requirements-and-plan.md)。统计与逐流哈希见 [verification.json](/Users/bytedance/personal/codex_progress_monitor/analysis/product-mvp/verification.json)。
 
 第一版已经实现、安装并可运行：原版 CLI 的 stdio 包装器、独立本地采集器、聊天/活动聚合、后台 tokenizer、终端总览与活动详情，以及安装恢复命令。第三轮人工提交的隔离 Desktop 核心实时采集检查已通过：正文的正速度覆盖约 17.5 秒，68 个不同快照有正速度，最终约 1,000 token 与会话文本的本地分词计数一致；20 秒命令持续显示执行阶段并 exit 0，任务期间丢弃、解析错误和活动后端断连均为 0，两条内部标题任务默认隐藏。前两轮发现并修复了临时任务混入、诊断压力和短暂停顿触发断连的问题。**主 Desktop 默认启动路径与长期自然使用仍待验收**；主 App 继续运行。本轮没有要求再次重复测试。
 

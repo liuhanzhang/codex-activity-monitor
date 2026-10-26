@@ -1,6 +1,6 @@
 # 状态与用量的数据来源
 
-整理日期：2026-10-10。通信层次见 [架构文档](/Users/bytedance/personal/codex_progress_monitor/docs/01_initial_experiment/architecture.md)。
+整理日期：2026-10-10。通信层次见 [架构文档](/Users/bytedance/personal/codex_progress_monitor/dev-history/01_initial_experiment/architecture.md)。
 
 ## 1. 先区分需要观察的东西
 
