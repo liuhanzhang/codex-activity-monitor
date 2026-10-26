@@ -38,6 +38,7 @@ struct BackendConfiguration: Decodable, Sendable {
             request.environment["PYINSTALLER_RESET_ENVIRONMENT"] = "1"
         } else {
             request.environment["PYTHONPATH"] = source_root + "/src"
+            request.environment["TIKTOKEN_CACHE_DIR"] = source_root + "/.local/tokenizer-cache"
         }
         return request
     }

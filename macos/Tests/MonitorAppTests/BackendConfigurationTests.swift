@@ -49,4 +49,38 @@ import Testing
     let request = config.request(arguments: ["app", "status"])
     #expect(request.arguments == ["-m", "codex_progress_monitor.cli", "app", "status"])
     #expect(request.environment["PYTHONPATH"] == "/source/src")
+    #expect(request.environment["TIKTOKEN_CACHE_DIR"] == "/source/.local/tokenizer-cache")
+}
+
+// Build acceptance: run bin/build-gui first, then MONITOR_TOKENIZER_CACHE_TESTS=1.
+@Test(.enabled(if: ProcessInfo.processInfo.environment["MONITOR_TOKENIZER_CACHE_TESTS"] == "1"))
+func sourceTokenizerWorksWithEmptyTemporaryCacheAndNoNetwork() async throws {
+    let root = URL(fileURLWithPath: #filePath).deletingLastPathComponent().deletingLastPathComponent()
+        .deletingLastPathComponent().deletingLastPathComponent()
+    let temporary = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
+    try FileManager.default.createDirectory(at: temporary, withIntermediateDirectories: true)
+    defer { try? FileManager.default.removeItem(at: temporary) }
+    let config = BackendConfiguration(python: root.appendingPathComponent(".local/venv/bin/python").path,
+        source_root: root.path, runtime: temporary.path, data_root: temporary.path, build_id: "fixture")
+    var request = config.request(arguments: [])
+    request.arguments = ["-c", """
+        from codex_progress_monitor.tokenizer_process import TokenizerProcess
+        worker = TokenizerProcess(timeout=3)
+        try:
+            for encoding in ('o200k_base', 'cl100k_base'):
+                assert worker.count('hello world', encoding)[0] == 2
+            assert worker.diagnostics()['timeouts'] == 0
+        finally:
+            worker.close()
+        """]
+    request.environment["TMPDIR"] = temporary.path
+    request.environment["DATA_GYM_CACHE_DIR"] = temporary.path
+    for key in ["HTTP_PROXY", "HTTPS_PROXY", "ALL_PROXY", "http_proxy", "https_proxy", "all_proxy"] {
+        request.environment[key] = "http://127.0.0.1:1"
+    }
+    request.environment["NO_PROXY"] = ""
+    request.environment["no_proxy"] = ""
+    let result = try await ProcessExecutor().execute(request)
+    #expect(result.exitCode == 0, "\(String(decoding: result.stderr, as: UTF8.self))")
+    #expect(try FileManager.default.contentsOfDirectory(atPath: temporary.path).isEmpty)
 }

@@ -8,6 +8,15 @@ case "${1-}" in
   *) echo "Usage: bin/build-gui [--preview]" >&2; exit 2 ;;
 esac
 cd "$task_root"
+# Populate a persistent cache before the runtime's finite tokenizer deadline.
+# A first download can take longer than that deadline and never finish there.
+export TIKTOKEN_CACHE_DIR="$task_root/.local/tokenizer-cache"
+"$task_root/.local/venv/bin/python" - <<'PY'
+import tiktoken
+
+for name in tiktoken.list_encoding_names():
+    tiktoken.get_encoding(name).encode_ordinary('Hello, 世界！')
+PY
 "$task_root/.local/venv/bin/python" "$task_root/bin/export-localizations"
 export CLANG_MODULE_CACHE_PATH="$task_root/.local/clang-module-cache"
 swift build --disable-sandbox --cache-path "$task_root/.local/swift-cache" --package-path macos --configuration debug
