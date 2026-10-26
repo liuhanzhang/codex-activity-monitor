@@ -32,9 +32,15 @@ import Testing
     #expect(snapshot.threads[1].activityLabel(.english) == "Running · 测试.py")
     let phase = try timelinePhase(["kind": "tool_input", "namespace": "input", "label_message": ["key": "activity.named", "params": ["name": "服务.工具"]]])
     #expect(phase.sourceLabel(in: .english) == "服务.工具")
-    #expect(phase.kindLabel(in: .english) == "Tool input")
+    #expect(phase.kindLabel(in: .english) == "Tool params")
     #expect(phase.accessibleLabel(at: 3000, language: .english).contains("Completed"))
     #expect(phase.duration(at: 3000) == 2)
+    let legacyText = try timelinePhase(["label": "正文输出"])
+    #expect(legacyText.presentationLabel(language: .chinese) == "回复")
+    #expect(legacyText.label == "正文输出")
+    let legacyCompaction = try timelinePhase(["kind": "contextCompaction", "namespace": "canonical", "label": "整理上下文"])
+    #expect(legacyCompaction.presentationLabel(language: .chinese) == "压缩")
+    #expect(legacyCompaction.label == "整理上下文")
 }
 
 @Test func localizationSectionsRetainMessagesAcrossPaginationAndRawContent() throws {

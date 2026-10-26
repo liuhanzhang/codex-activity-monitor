@@ -52,7 +52,7 @@
 "协作调用" = "Coordination call";
 "历史缺少轮次字段，部分轨迹不可恢复。" = "History lacks turn identifiers; some activity cannot be recovered.";
 "历史轮次" = "Historical turn";
-"参数" = "Params";
+"参数" = "Tools";
 "取消" = "Cancel";
 "可见时间范围" = "Visible time range";
 "合成预览记录" = "Synthetic preview records";
@@ -83,8 +83,8 @@
 "尚未配置" = "Not configured";
 "工作概览" = "Overview";
 "工具" = "Tool";
-"工具参数生成" = "Tool input";
-"工具参数生成 · " = "Tool input · ";
+"工具参数生成" = "Tool params";
+"工具参数生成 · " = "Tool params · ";
 "工具执行" = "Tool execution";
 "已停止" = "Stopped";
 "已完成" = "Completed";
@@ -110,8 +110,8 @@
 "当前没有活跃聊天" = "No active chats";
 "当前轮" = "Current turn";
 "当前轮次的官方用量；Output 已包含 Reasoning。" = "Official usage for the current turn; Output includes Reasoning.";
-"思考" = "Thinking";
-"思考中" = "Thinking";
+"思考" = "Reasoning";
+"思考中" = "Reasoning";
 "恢复 Codex 配置" = "Restore Codex configuration";
 "恢复接入前的配置并停止采集。用户后来的设置会保留，Codex 任务不会被强制结束。" = "Restore the configuration from before integration and stop collection. Your later settings are preserved; Codex tasks will not be terminated.";
 "恢复配置" = "Restore configuration";
@@ -126,8 +126,8 @@
 "收起已完成" = "Hide completed";
 "放大时间线" = "Zoom in timeline";
 "数据不可用" = "Data unavailable";
-"压缩" = "Compacting";
-"整理上下文" = "Compacting context";
+"压缩" = "Compaction";
+"整理上下文" = "Compaction";
 "无法启动 Codex Monitor" = "Cannot start Codex Monitor";
 "无法启动后台命令。" = "Could not start the background command.";
 "无法读取后台命令结果。" = "Could not read the background command result.";
@@ -175,8 +175,8 @@
 "正在读取活动内容…" = "Reading activity content…";
 "正在进行" = "In progress";
 "正在配置" = "Configuring";
-"回复" = "Reply";
-"正文输出" = "Response output";
+"回复" = "Response";
+"正文输出" = "Response";
 "每屏 %d 秒" = "%d seconds per screen";
 "活动" = "Activity";
 "活动图片" = "Activity image";
@@ -212,7 +212,7 @@
 "统计口径说明" = "About these statistics";
 "继续加载完整内容" = "Load more content";
 "改动" = "Edits";
-"编辑内容生成" = "Edit input";
+"编辑内容生成" = "File edits";
 "缩小时间线" = "Zoom out timeline";
 "耗时未知" = "Unknown duration";
 "聊天实时状态暂不可用；以下仅为可读取的活动记录。" = "Live chat status is unavailable. Readable activity records are shown below.";

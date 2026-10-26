@@ -18,8 +18,8 @@
 "对象未知" = "Unknown target";
 "尚未配置" = "Not configured";
 "工具" = "Tool";
-"工具参数生成" = "Tool input";
-"工具参数生成 · " = "Tool input · ";
+"工具参数生成" = "Tool params";
+"工具参数生成 · " = "Tool params · ";
 "工具执行" = "Tool execution";
 "已停止" = "Stopped";
 "已完成" = "Completed";
@@ -27,7 +27,7 @@
 "已配置" = "Configured";
 "已阻止，未执行" = "Blocked, not executed";
 "思考" = "Reasoning";
-"整理上下文" = "Compacting context";
+"整理上下文" = "Compaction";
 "智能体" = "Agent";
 "智能体 · " = "Agent · ";
 "未命名聊天" = "Untitled chat";
@@ -41,13 +41,13 @@
 "模型" = "Model";
 "正在恢复配置" = "Restoring configuration";
 "正在配置" = "Configuring";
-"正文输出" = "Response output";
+"正文输出" = "Response";
 "活动" = "Activity";
 "状态未知" = "Unknown status";
 "用户输入" = "User input";
 "等待子智能体消息" = "Waiting for subagent messages";
 "等待执行" = "Waiting to execute";
-"编辑内容生成" = "Edit input";
+"编辑内容生成" = "File edits";
 "耗时未知" = "Unknown duration";
 "进行中" = "Active";
 "部分观测" = "Partial observation";

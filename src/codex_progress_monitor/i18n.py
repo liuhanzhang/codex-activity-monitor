@@ -11,7 +11,7 @@ CATALOGS = {DEFAULT_LANGUAGE: MESSAGES}
 PHASE_KEYS = {
     'waiting': 'waiting', 'reasoning': 'reasoning', 'text': 'text', 'plan': 'plan',
     'tool_input': 'preparing', 'tool_ready': 'processing', 'tool': 'running',
-    'approval': 'paused', 'input': 'paused', 'unknown': 'unknown',
+    'approval': 'pending', 'input': 'pending', 'unknown': 'unknown',
     'review': 'review', 'compaction': 'compaction', 'sleep': 'sleep',
     'auth': 'auth', 'retry': 'retry', 'buffering': 'buffering', 'hook': 'processing',
     'completed': 'completed', 'interrupted': 'stopped', 'failed': 'failed', 'idle': 'idle',

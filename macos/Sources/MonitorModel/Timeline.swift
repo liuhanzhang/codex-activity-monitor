@@ -103,6 +103,9 @@ public struct TimelinePhase: Decodable, Identifiable, Sendable {
 
     public func sourceLabel(in language: MonitorLanguage) -> String {
         if let label_message { return label_message.rendered(in: language) }
+        // Known model labels are Monitor copy, including labels retained by older records.
+        if namespace == "model" && (kind == "text" || kind == "reasoning") { return kindLabel(in: language) }
+        if kind == "contextCompaction" { return kindLabel(in: language) }
         if language == .chinese { return label }
         if namespace == "input" || track == "tool" {
             // Older tool labels have no provenance. New records carry label_message.

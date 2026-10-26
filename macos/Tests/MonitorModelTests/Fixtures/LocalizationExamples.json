@@ -319,7 +319,7 @@
     }
   },
   {
-    "expected": "生成回答",
+    "expected": "回复中",
     "language": "zh-CN",
     "message": {
       "key": "activity.text",
@@ -351,7 +351,7 @@
     }
   },
   {
-    "expected": "压缩上下文",
+    "expected": "压缩中",
     "language": "zh-CN",
     "message": {
       "key": "activity.compaction",
@@ -395,6 +395,14 @@
     "language": "zh-CN",
     "message": {
       "key": "activity.waiting",
+      "params": {}
+    }
+  },
+  {
+    "expected": "等待中",
+    "language": "zh-CN",
+    "message": {
+      "key": "activity.pending",
       "params": {}
     }
   },
@@ -1790,7 +1798,7 @@
     }
   },
   {
-    "expected": "Generating response",
+    "expected": "Responding",
     "language": "en",
     "message": {
       "key": "activity.text",
@@ -1806,7 +1814,7 @@
     }
   },
   {
-    "expected": "Thinking",
+    "expected": "Reasoning",
     "language": "en",
     "message": {
       "key": "activity.reasoning",
@@ -1822,7 +1830,7 @@
     }
   },
   {
-    "expected": "Compacting context",
+    "expected": "Compacting",
     "language": "en",
     "message": {
       "key": "activity.compaction",
@@ -1866,6 +1874,14 @@
     "language": "en",
     "message": {
       "key": "activity.waiting",
+      "params": {}
+    }
+  },
+  {
+    "expected": "Pending",
+    "language": "en",
+    "message": {
+      "key": "activity.pending",
       "params": {}
     }
   },

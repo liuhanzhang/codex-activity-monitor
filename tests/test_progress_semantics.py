@@ -145,7 +145,7 @@ class ProgressTests(unittest.TestCase):
     def test_blocked_target_does_not_hide_another_actual_tool(self):
         self.item({'id':'file','type':'fileChange','changes':[{'path':'src/a.py','diff':'secret'}]})
         self.send('item/fileChange/requestApproval',{'threadId':'t','turnId':'u','itemId':'file'},102,7)
-        self.assertEqual(self.view()['display_label'],'已暂停')
+        self.assertEqual(self.view()['display_label'],'等待中')
         self.command('other',105)
         view=self.view(106)
         self.assertEqual(view['display_active_count'],1)
@@ -153,17 +153,29 @@ class ProgressTests(unittest.TestCase):
 
     def test_legacy_and_empty_target_requests_never_store_prompts(self):
         self.send('execCommandApproval',{'conversationId':'t','callId':'cmd','command':['secret']},102,7)
-        self.assertEqual(self.view()['display_label'],'已暂停')
+        self.assertEqual(self.view()['display_label'],'等待中')
         self.send('serverRequest/resolved',{'threadId':'t','requestId':7},105)
         self.send('item/permissions/requestApproval',{'threadId':'t','turnId':'u','reason':'PRIVATE'},106,8)
-        self.assertEqual(self.view(107)['display_label'],'已暂停')
+        self.assertEqual(self.view(107)['display_label'],'等待中')
         self.assertNotIn('PRIVATE',json.dumps(self.engine.snapshot(107)))
+
+    def test_pending_waits_resolve_without_relabeling_paused_goals(self):
+        self.send('item/tool/requestUserInput',{'threadId':'t','turnId':'u'},102,7)
+        self.assertEqual(self.view()['display_label'],'等待中')
+        self.send('serverRequest/resolved',{'threadId':'t','requestId':7},105)
+        self.assertEqual(self.view(106)['display_active_count'],0)
+        for at, flag in enumerate(('waitingOnApproval','waitingOnUserInput'),107):
+            self.send('thread/status/changed',{'threadId':'t','status':{'type':'active','activeFlags':[flag]}},at)
+            self.assertEqual(self.view(at+.1)['display_label'],'等待中')
+        self.send('thread/status/changed',{'threadId':'t','status':{'type':'active','activeFlags':[]}},110)
+        self.send('thread/goal/updated',{'threadId':'t','goal':{'status':'paused'}},111)
+        self.assertEqual(self.view(112)['display_label'],'已暂停')
 
     def test_global_login_or_verification_cannot_clear_or_pause_other_work(self):
         self.text()
         self.send('model/verification',{'threadId':'t','turnId':'u','verifications':[{'secret':'PRIVATE'}]},102)
         self.send('account/login/completed',{'loginId':'other','success':True},103)
-        self.assertEqual(self.view()['display_label'],'生成回答')
+        self.assertEqual(self.view()['display_label'],'回复中')
         self.send('mcpServer/elicitation/request',{'threadId':'t','turnId':'u','message':'PRIVATE'},105,9)
         self.send('mcpServer/oauthLogin/completed',{'name':'unrelated','success':True},106)
         self.assertIn(('b',9),self.engine.approvals)
@@ -199,7 +211,7 @@ class ProgressTests(unittest.TestCase):
 
     def test_compaction_and_old_completion_do_not_reopen(self):
         self.item({'id':'compact','type':'contextCompaction'})
-        self.assertEqual(self.view()['display_label'],'压缩上下文')
+        self.assertEqual(self.view()['display_label'],'压缩中')
         self.send('thread/compacted',{'threadId':'t','turnId':'u'},105)
         self.item({'id':'compact','type':'contextCompaction'},106,True)
         self.assertEqual(self.view(108)['display_active_count'],0)
@@ -214,7 +226,7 @@ class ProgressTests(unittest.TestCase):
         self.assertIsNone(self.view(105)['generation_rate'])
         self.assertEqual(self.view(105)['display_label'],'正在重试')
         self.text('new',106)
-        self.assertEqual(self.view(107)['display_label'],'生成回答')
+        self.assertEqual(self.view(107)['display_label'],'回复中')
         self.send('error',{'threadId':'t','turnId':'u','willRetry':False},108)
         self.assertEqual(self.view(110)['display_label'],'任务失败')
         self.assertNotIn('PRIVATE',self.visual(110))
@@ -222,7 +234,7 @@ class ProgressTests(unittest.TestCase):
     def test_response_end_uses_explicit_identity_without_backend_recency(self):
         self.text()
         self.value({'type':'response.failed','response':{'id':'r','output':[]}},103,'upstream')
-        self.assertEqual(self.view()['display_label'],'生成回答')
+        self.assertEqual(self.view()['display_label'],'回复中')
         self.value({'type':'response.incomplete','turn_id':'u','response':{'id':'r'}},105,'upstream')
         self.assertIsNone(self.view(106)['generation_rate'])
         self.assertEqual(self.view(107)['display_active_count'],0)
@@ -336,7 +348,7 @@ class ProgressTests(unittest.TestCase):
         self.assertEqual(view['display_active_count'],0)
         self.assertIsNone(view['generation_rate'])
         self.send('item/agentMessage/delta',{'threadId':'t','turnId':'u','itemId':'text','delta':'继续'},105)
-        self.assertEqual(self.view(106)['display_label'],'生成回答')
+        self.assertEqual(self.view(106)['display_label'],'回复中')
         self.assertEqual(self.view(106)['generation_rate'], 0)  # A complete post-gap window has no new text.
         self.assertEqual(self.view(106)['generation_rate_issues'], [])
         self.item({'id':'text','type':'agentMessage','text':'旧流'},107,True)

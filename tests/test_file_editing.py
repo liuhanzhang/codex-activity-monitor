@@ -210,7 +210,7 @@ class FileEditingTests(unittest.TestCase):
         self.model(call_id='call', code=PATCH, at=101)
         self.file(item_id='call', at=102)
         self.send('item/fileChange/requestApproval', {'threadId': 't', 'turnId': 'u', 'itemId': 'call'}, 103, 7)
-        self.assertEqual(self.view(104)['display_label'], '已暂停')
+        self.assertEqual(self.view(104)['display_label'], '等待中')
         self.send('item/started', {'threadId': 't', 'turnId': 'u', 'item': {'id': 'cmd', 'type': 'commandExecution',
             'command': 'sleep 3', 'source': 'unifiedExecStartup', 'processId': '1'}}, 105)
         self.assertEqual(self.view(106)['display_label'], '运行中 · sleep')

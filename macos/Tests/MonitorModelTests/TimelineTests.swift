@@ -206,7 +206,7 @@ private func toolsLayout(_ phases: [TimelinePhase], now: Double = 5000,
     #expect(layout.rect(for: hook) == nil)
     #expect(layout.hitRect(for: hook) == nil)
     #expect(layout.rect(for: compaction).map { Double($0.width) } == 2 * TimelineLayout.defaultScale)
-    #expect(compaction.kindLabel == "整理上下文")
+    #expect(compaction.kindLabel == "压缩")
     #expect(compaction.namespace == "canonical")
 }
 

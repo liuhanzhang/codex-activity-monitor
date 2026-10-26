@@ -356,7 +356,8 @@ def presentation(engine, thread, view, now):
     elif primary:
         label = display_message(primary)
     elif thread.active_flags:
-        label = message('activity.paused')
+        label = message('activity.pending' if thread.active_flags & {'waitingOnApproval', 'waitingOnUserInput'}
+                        else 'activity.paused')
     elif thread.error_status:
         label = message('activity.retry' if thread.error_status == 'retry' else 'activity.failed')
     elif thread.goal_status in ('paused','blocked','usageLimited','budgetLimited'):

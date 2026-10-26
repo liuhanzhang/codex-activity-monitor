@@ -1,0 +1,19 @@
+{
+  "date_local": "2026-10-26",
+  "scope": "File edits and Compaction copy follow-up",
+  "gui_restarted": true,
+  "gui_build_matches_source": true,
+  "build_id": "7054eb0a0eda061dbf75e4a7a20ea6bc816ab26d26ca69610561505a299014a8",
+  "packaged_localizations_match": true,
+  "collector_restarted": true,
+  "tracked_modules_checked": 37,
+  "tracked_modules_match": true,
+  "collector_lifetime_lock_owned": true,
+  "gui_owns_active_observation": true,
+  "fresh_nonce_probes": 2,
+  "sequence_advanced": true,
+  "codex_desktop_restarted": false,
+  "full_native_window_acceptance": false,
+  "natural_complete_turn_acceptance": false,
+  "module_manifest_limit": "messages_en is not independently fingerprinted by the existing collector startup manifest."
+}

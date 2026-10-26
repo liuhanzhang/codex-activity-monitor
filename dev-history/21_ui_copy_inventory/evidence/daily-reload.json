@@ -1,0 +1,20 @@
+{
+  "date_local": "2026-10-26",
+  "gui_restarted": true,
+  "gui_loaded_build_matches": true,
+  "build_id": "fa526604a9e3c785e09ccdf25bfa29ff111cb8afe13e8e3f63130172749b880c",
+  "collector_restarted": true,
+  "collector_loaded_modules_checked": 37,
+  "collector_modules_match_source": true,
+  "collector_lifetime_lock_owned": true,
+  "transport_fresh": true,
+  "fresh_nonce_probes": 2,
+  "sequence_advanced": true,
+  "gui_owns_active_observation": true,
+  "codex_desktop_restarted": false,
+  "natural_complete_turn_acceptance": false,
+  "module_fingerprint_limit": "Collector startup manifest tracks 37 modules; messages_en is not independently fingerprinted.",
+  "registered_bridge_pids_checked": 5,
+  "registered_bridge_pids_alive_after": 3,
+  "bridge_liveness_limit": "Before-cutover registration was captured without individual process-liveness checks; no before/after survival inference."
+}

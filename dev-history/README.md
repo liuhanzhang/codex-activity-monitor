@@ -6,6 +6,7 @@
 
 | 阅读目的 | 入口 | 状态与边界 |
 | --- | --- | --- |
+| 查看活动文案调整 | [21：活动文案清单与修改工作表](21_ui_copy_inventory/README.md) | 两轮文案已实施、定向检查及日常重载完成；完整底表保留修改前快照，其他文案按需讨论 |
 | 给朋友提供独立开发版 | [20：自包含 macOS App](20_standalone_packaging/README.md) | arm64、最低 macOS 26；隔离打包验证与实际朋友机器验收分开记录 |
 | 了解已完成 CR 和修正 | [17：系统 CR 与基线修复](17_review_and_refactor/README.md) | 代码基线 `c3996dc`；保存已发生的审查和验证 |
 | 查看六项工程及实施进展 | [18：六项工程改进](18_engineering_hardening/README.md) | 当前设计、计划与实际验证；状态以本章为准 |
