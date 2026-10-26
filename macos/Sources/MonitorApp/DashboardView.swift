@@ -78,7 +78,7 @@ struct DashboardView: LocalizedView {
         }
         .frame(width: 420)
         .environment(store.auxiliary)
-        .background(.background)
+        .background(.regularMaterial)
         .onChange(of: store.dismissPresentation) { restoreRequest = nil }
         .onGeometryChange(for: CGSize.self) { $0.size } action: { onSizeChange($0) }
         .environment(\.monitorLanguage, store.language)
