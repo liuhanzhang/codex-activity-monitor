@@ -1,7 +1,7 @@
 import shlex
 import unittest
 
-from codex_progress_monitor.tool_labels import MAX_CODE_PREFIX, code_tool_names, command_name, command_previews, command_summary, tool_display
+from codex_activity_monitor.tool_labels import MAX_CODE_PREFIX, code_tool_names, command_name, command_previews, command_summary, tool_display
 
 
 class ToolLabelTests(unittest.TestCase):

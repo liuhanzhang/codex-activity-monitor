@@ -8,9 +8,9 @@ import plistlib
 import subprocess
 import time
 
-from codex_progress_monitor.engine import Activity, Engine
-from codex_progress_monitor.metrics import TextStream, count_text
-from codex_progress_monitor.runtime import atomic_json
+from codex_activity_monitor.engine import Activity, Engine
+from codex_activity_monitor.metrics import TextStream, count_text
+from codex_activity_monitor.runtime import atomic_json
 
 
 def fixture(phase):

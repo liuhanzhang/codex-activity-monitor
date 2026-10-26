@@ -6,8 +6,8 @@ from pathlib import Path
 import threading
 import time
 
-from codex_progress_monitor.history_refresh import HistoryRefresh
-from codex_progress_monitor.history_contract import HistorySelection
+from codex_activity_monitor.history_refresh import HistoryRefresh
+from codex_activity_monitor.history_contract import HistorySelection
 
 
 def main():

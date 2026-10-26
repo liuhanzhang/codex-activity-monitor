@@ -14,8 +14,8 @@
 | [DashboardView.swift](../../macos/Sources/MonitorApp/DashboardView.swift) | 固定 720×520；大标题、多列指标与底部管理按钮 | 约 420 pt、自适应高度、两行聊天、按需详情、统一设置入口 |
 | [DashboardStore.swift](../../macos/Sources/MonitorApp/DashboardStore.swift) | 约每秒读取快照；向菜单栏回调单个字符串 | 分离语义展示状态和数值文案；维护稳定行序及展开状态，数据刷新不驱动动画帧 |
 | [Snapshot.swift](../../macos/Sources/MonitorModel/Snapshot.swift) | 总速一位小数、小写单位、可附 `≈`；仅解码部分活动字段 | 新状态投影 DTO、GUI 统一格式、旧快照降级、主会话分组与列表投影 |
-| [overview.py](../../src/codex_progress_monitor/overview.py) | 独立流汇总与覆盖质量；`active_thread_count` 统计 Thread | 保留计量，在可信父子身份上增加主会话计数及菜单栏状态投影 |
-| [progress_state.py](../../src/codex_progress_monitor/progress_state.py) | 活动证据、准备 / 执行区别、语义描述、有限防抖 | 提供状态分类需要的同源语义，避免 Swift 再读中文猜状态 |
+| [overview.py](../../src/codex_activity_monitor/overview.py) | 独立流汇总与覆盖质量；`active_thread_count` 统计 Thread | 保留计量，在可信父子身份上增加主会话计数及菜单栏状态投影 |
+| [progress_state.py](../../src/codex_activity_monitor/progress_state.py) | 活动证据、准备 / 执行区别、语义描述、有限防抖 | 提供状态分类需要的同源语义，避免 Swift 再读中文猜状态 |
 
 当前原生截屏曾出现裁切，外部点击操作也未完成稳定复现。因此“覆盖菜单栏 / 外部点击不收起”的因果仍待在原生窗口中检查，不能把现有标志或截图异常直接当作根因。
 

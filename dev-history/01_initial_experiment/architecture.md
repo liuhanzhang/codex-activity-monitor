@@ -1,6 +1,6 @@
 # 架构与通信原理
 
-整理日期：2026-10-10。版本与证据分级见 [阅读索引](/Users/bytedance/personal/codex_progress_monitor/dev-history/01_initial_experiment/README.md)。
+整理日期：2026-10-10。版本与证据分级见 [阅读索引](/Users/bytedance/personal/codex-activity-monitor/dev-history/01_initial_experiment/README.md)。
 
 ## 1. 整体结构
 
@@ -57,7 +57,7 @@ app-server 接收请求、管理 thread / turn、连接模型服务、调度工�
 
 stdout 上的一条 JSONL 消息本身可以是增量事件，但普通管道不会自动提供第二个订阅客户端。一个外部监控程序无法仅凭 CLI 的 PID 就订阅这条流。
 
-源码入口：[子进程与管道创建](/Users/bytedance/personal/codex_progress_monitor/analysis/upstream-stream/desktop-source/application-network-startup.pretty.js:13739)。
+源码入口：[子进程与管道创建](/Users/bytedance/personal/codex-activity-monitor/analysis/upstream-stream/desktop-source/application-network-startup.pretty.js:13739)。
 
 ### 显式 WebSocket / socket
 
@@ -86,7 +86,7 @@ daemon 是常驻的 app-server 服务形态，区别在于启动和生命周期�
 - 进程在 Desktop 退出后仍驻留，不代表它一定在生成 token 或执行任务。
 - 退出 Desktop 后某个活跃 turn 是否继续，要看实际断连策略与运行状态；本项目尚未完成该场景的验证。
 
-源码入口：[daemon 分支选择](/Users/bytedance/personal/codex_progress_monitor/analysis/upstream-stream/desktop-source/application-network-startup.pretty.js:13927)。不能将“支持 daemon”写成“当前 Desktop 必定使用 daemon”。
+源码入口：[daemon 分支选择](/Users/bytedance/personal/codex-activity-monitor/analysis/upstream-stream/desktop-source/application-network-startup.pretty.js:13927)。不能将“支持 daemon”写成“当前 Desktop 必定使用 daemon”。
 
 ## 5. 后端与 OpenAI 服务如何通信？
 
@@ -96,7 +96,7 @@ Responses API 的 HTTP 流式响应通常采用 SSE；它也有 WebSocket 模式
 
 **实测**：本次隔离后端与模型服务之间使用 Responses WebSocket。接收层日志包含解析后的 `response.*` JSON 事件。SSE 接收日志入口在公开源码中存在，但本次没有实测 SSE。
 
-参考：[官方流式响应说明](https://developers.openai.com/api/docs/guides/streaming-responses)、[官方 WebSocket 模式](https://developers.openai.com/api/docs/guides/websocket-mode)、[本地实验记录](/Users/bytedance/personal/codex_progress_monitor/analysis/upstream-stream/FINDINGS.txt)。
+参考：[官方流式响应说明](https://developers.openai.com/api/docs/guides/streaming-responses)、[官方 WebSocket 模式](https://developers.openai.com/api/docs/guides/websocket-mode)、[本地实验记录](/Users/bytedance/personal/codex-activity-monitor/analysis/upstream-stream/FINDINGS.txt)。
 
 ### ChatGPT 登录与 API key
 
@@ -132,7 +132,7 @@ text(result.output);
 
 **实测**：更改隔离模型工具模式并直接调用 `apply_patch` 后曾收到 14 次补丁预览；随后已恢复原有模式。监控方案不依赖改变工具模式或开启实验补丁开关。
 
-证据：[文件编辑流式实验](/Users/bytedance/personal/codex_progress_monitor/analysis/file-edit-progress/FINDINGS.txt)。
+证据：[文件编辑流式实验](/Users/bytedance/personal/codex-activity-monitor/analysis/file-edit-progress/FINDINGS.txt)。
 
 ## 7. 接入配置的稳定性
 
@@ -150,4 +150,4 @@ text(result.output);
 
 更关键的是，普通 app-server 事件 trace 可以只记录 `item/started` 等方法名，而不含事件参数。因此“开启详细日志”与“得到完整工具事件”不能画等号。
 
-参考：[官方诊断配置](https://learn.chatgpt.com/docs/config-file/environment-variables#diagnostics)、[Desktop 环境传递](/Users/bytedance/personal/codex_progress_monitor/analysis/upstream-stream/desktop-source/application-network-startup.pretty.js:14004)、[Desktop 日志实现提取文件](/Users/bytedance/personal/codex_progress_monitor/analysis/upstream-stream/desktop-source/bootstrap-Du6FqCuH.js)、[app-server 事件 trace](/Users/bytedance/playground/codex/codex-rs/app-server/src/outgoing_message.rs:767)。
+参考：[官方诊断配置](https://learn.chatgpt.com/docs/config-file/environment-variables#diagnostics)、[Desktop 环境传递](/Users/bytedance/personal/codex-activity-monitor/analysis/upstream-stream/desktop-source/application-network-startup.pretty.js:14004)、[Desktop 日志实现提取文件](/Users/bytedance/personal/codex-activity-monitor/analysis/upstream-stream/desktop-source/bootstrap-Du6FqCuH.js)、[app-server 事件 trace](/Users/bytedance/playground/codex/codex-rs/app-server/src/outgoing_message.rs:767)。

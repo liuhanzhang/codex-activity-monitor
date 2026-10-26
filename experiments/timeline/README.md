@@ -22,7 +22,7 @@ PYTHONPATH=src .local/venv/bin/python experiments/timeline/preview.py --output .
 bin/build-gui --preview
 ```
 
-通过系统正常打开 `.local/gui-preview/Codex Monitor Preview.app`。该 bundle 与日常 App 分离，使用 fixture provider；不创建观察 lease、不读真实历史、不配置接入。预览时间轴固定在 90 秒，只更新快照新鲜度，便于重叠和滚动检查。结束时退出 Preview，并在启动 fixture writer 的终端按 Ctrl+C。
+通过系统正常打开 `.local/gui-preview/Codex Activity Monitor Preview.app`。该 bundle 与日常 App 分离，使用 fixture provider；不创建观察 lease、不读真实历史、不配置接入。预览时间轴固定在 90 秒，只更新快照新鲜度，便于重叠和滚动检查。结束时退出 Preview，并在启动 fixture writer 的终端按 Ctrl+C。
 
 图中所有聊天、代码、输出与检查数量均为手写合成内容。不要把真实聊天截图放进 `dev-history/assets`。
 

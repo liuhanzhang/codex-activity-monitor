@@ -5,10 +5,10 @@ import unittest
 import json
 from unittest.mock import patch
 
-from codex_progress_monitor.timeline import TimelineBook, item_phase
-from codex_progress_monitor.timeline_query import TimelineQuery, QueryServer, query_runtime
-from codex_progress_monitor.timeline_storage import TimelineStorage
-from codex_progress_monitor.agent_presentation import agent_metadata, present_agents, scoped_status
+from codex_activity_monitor.timeline import TimelineBook, item_phase
+from codex_activity_monitor.timeline_query import TimelineQuery, QueryServer, query_runtime
+from codex_activity_monitor.timeline_storage import TimelineStorage
+from codex_activity_monitor.agent_presentation import agent_metadata, present_agents, scoped_status
 
 
 class QueryTests(unittest.TestCase):
@@ -54,8 +54,8 @@ class QueryTests(unittest.TestCase):
                 query.query(request)
 
     def test_cli_string_offset_is_normalized(self):
-        from codex_progress_monitor.timeline_query import validated_request
-        from codex_progress_monitor.content_version import SectionVersion
+        from codex_activity_monitor.timeline_query import validated_request
+        from codex_activity_monitor.content_version import SectionVersion
         token = SectionVersion.create((self.scope, 'root', 'turn', 'phase', 'input'),
             'codex_history', 'available', {'format': 'text', 'text': 'abcdef'}).token
         value = validated_request({'action': 'detail', 'scope_id': self.scope, 'thread_id': 'root',

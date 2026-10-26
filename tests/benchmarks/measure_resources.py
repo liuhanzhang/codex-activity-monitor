@@ -19,13 +19,13 @@ import time
 import tracemalloc
 from unittest.mock import patch
 
-from codex_progress_monitor.history import HistoryProvider
-from codex_progress_monitor.metrics import TextStream, TokenCounter, count_text
-from codex_progress_monitor.publication import DetachedSnapshot
-from codex_progress_monitor.engine import Engine
-from codex_progress_monitor.events import Event, filter_event
-from codex_progress_monitor.resource_budget import retained_bytes
-from codex_progress_monitor.timeline_storage import TimelineStorage
+from codex_activity_monitor.history import HistoryProvider
+from codex_activity_monitor.metrics import TextStream, TokenCounter, count_text
+from codex_activity_monitor.publication import DetachedSnapshot
+from codex_activity_monitor.engine import Engine
+from codex_activity_monitor.events import Event, filter_event
+from codex_activity_monitor.resource_budget import retained_bytes
+from codex_activity_monitor.timeline_storage import TimelineStorage
 
 
 def elapsed(call):
@@ -40,7 +40,7 @@ def percentile(values, fraction):
 
 def index_case(turns, seed, items_per_turn=4, repetitions=10, padding_rows=0):
     rng = random.Random(seed)
-    with tempfile.TemporaryDirectory(prefix='cpm-resource-') as directory:
+    with tempfile.TemporaryDirectory(prefix='cam-resource-') as directory:
         home = Path(directory); (home/'sessions').mkdir()
         path = home/'sessions'/'fixture-thread.jsonl'
         with path.open('w') as stream:
@@ -89,7 +89,7 @@ def counter_case():
         return 1, 0.01
     counter = TokenCounter(isolated=False)  # Inject a deterministic blocked counting function.
     try:
-        with patch('codex_progress_monitor.metrics.count_text', blocked):
+        with patch('codex_activity_monitor.metrics.count_text', blocked):
             _, submit_ms = elapsed(lambda:counter.tick(streams, 2))
             first = counter.pool._work_queue.qsize()+1
             for model in ('gpt-4', 'unknown'):
@@ -145,7 +145,7 @@ def event_case():
 
 
 def metadata_case():
-    with tempfile.TemporaryDirectory(prefix='cpm-metadata-budget-') as tmp:
+    with tempfile.TemporaryDirectory(prefix='cam-metadata-budget-') as tmp:
         entered, release = threading.Event(), threading.Event()
         original = TimelineStorage._write_batch
         def blocked(store, batch, reset):

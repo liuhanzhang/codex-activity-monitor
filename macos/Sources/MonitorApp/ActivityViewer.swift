@@ -275,7 +275,7 @@ private struct ActivityDetailView: LocalizedView {
         return store.timeline.bundle?.agents.first { $0.thread_id == store.phase.thread_id }?.displayName ?? L("所属智能体") }
     private var detailNotice: String {
         if store.detail?.version == 1 && store.detail?.requiresReload == true {
-            return L("当前来源不支持继续加载，请更新 Monitor 后重新读取。")
+            return L("当前来源不支持继续加载，请更新 Codex Activity Monitor 后重新读取。")
         }
         return switch store.detail?.state {
         case "content_changed": L("源内容已变化。保留已加载内容，请重新读取。")

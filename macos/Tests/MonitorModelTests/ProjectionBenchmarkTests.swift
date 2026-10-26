@@ -3,7 +3,7 @@ import Testing
 @testable import MonitorModel
 
 /// Opt-in synthetic baseline, kept unchanged when comparing EH06 projection.
-@Test(.enabled(if: ProcessInfo.processInfo.environment["CPM_PROJECTION_BENCHMARK"] == "1"))
+@Test(.enabled(if: ProcessInfo.processInfo.environment["CAM_PROJECTION_BENCHMARK"] == "1"))
 func syntheticSnapshotProjectionBenchmark() throws {
     var samples: [[String: Any]] = []
     var checksum = 0
@@ -36,5 +36,5 @@ func syntheticSnapshotProjectionBenchmark() throws {
     #expect(checksum > 0)
     let encoded = try JSONSerialization.data(withJSONObject: ["fixture": "three-member-groups",
         "build": "swift-test-debug", "samples": samples, "checksum": checksum], options: [.sortedKeys])
-    print("CPM_PROJECTION_BENCHMARK " + String(decoding: encoded, as: UTF8.self))
+    print("CAM_PROJECTION_BENCHMARK " + String(decoding: encoded, as: UTF8.self))
 }

@@ -10,18 +10,18 @@ import time
 import unittest
 from unittest.mock import patch, MagicMock
 
-from codex_progress_monitor.cli import start,stop
-from codex_progress_monitor.state_client import current_state
-from codex_progress_monitor.runtime import runtime_dir,read_snapshot,atomic_json
-from codex_progress_monitor.bridge import observes_stdio,Observer
-from codex_progress_monitor.events import filter_event
-from codex_progress_monitor.metrics import count_text
-from codex_progress_monitor.timeline_query import query_runtime
+from codex_activity_monitor.cli import start,stop
+from codex_activity_monitor.state_client import current_state
+from codex_activity_monitor.runtime import runtime_dir,read_snapshot,atomic_json
+from codex_activity_monitor.bridge import observes_stdio,Observer
+from codex_activity_monitor.events import filter_event
+from codex_activity_monitor.metrics import count_text
+from codex_activity_monitor.timeline_query import query_runtime
 
 
 class RuntimeTests(unittest.TestCase):
     def setUp(self):
-        self.temp=tempfile.TemporaryDirectory(prefix='cpm-',dir='/tmp')
+        self.temp=tempfile.TemporaryDirectory(prefix='cam-',dir='/tmp')
         self.runtime=runtime_dir(self.temp.name)
 
     def tearDown(self):
@@ -41,8 +41,8 @@ class RuntimeTests(unittest.TestCase):
                 self.assertEqual(read_snapshot(self.runtime)['threads'], [])
 
     def test_snapshot_freshness_rejects_future_and_malformed_clocks(self):
-        from codex_progress_monitor.cli import running
-        from codex_progress_monitor.runtime import snapshot_fresh
+        from codex_activity_monitor.cli import running
+        from codex_activity_monitor.runtime import snapshot_fresh
         (self.runtime/'events.sock').touch()
         for updated in (time.time()+60, 'invalid', [], None, True):
             with self.subTest(updated=updated):
@@ -55,9 +55,9 @@ class RuntimeTests(unittest.TestCase):
         self.assertFalse(snapshot_fresh({'updated_at': 106}, now=100))
 
     def test_lifecycle_changes_publish_before_the_numeric_refresh_deadline(self):
-        from codex_progress_monitor.engine import Engine
-        from codex_progress_monitor.events import Event
-        from codex_progress_monitor.runtime import SnapshotCadence
+        from codex_activity_monitor.engine import Engine
+        from codex_activity_monitor.events import Event
+        from codex_activity_monitor.runtime import SnapshotCadence
         engine = Engine(asynchronous_counts=False)
         self.addCleanup(engine.close)
         cadence = SnapshotCadence()
@@ -197,8 +197,8 @@ class RuntimeTests(unittest.TestCase):
         entered, release = self.runtime/'reader-entered', self.runtime/'reader-release'
         script = '''import time
 from pathlib import Path
-from codex_progress_monitor.history import HistoryProvider
-from codex_progress_monitor.collector import serve
+from codex_activity_monitor.history import HistoryProvider
+from codex_activity_monitor.collector import serve
 original=HistoryProvider.reconciliation
 def blocked(self,*args,**kwargs):
     Path(ENTERED).touch()
@@ -238,8 +238,8 @@ serve(Path(RUNTIME))
         blocked.touch()
         script = '''import errno
 from pathlib import Path
-import codex_progress_monitor.runtime as persistence
-from codex_progress_monitor.collector import serve
+import codex_activity_monitor.runtime as persistence
+from codex_activity_monitor.collector import serve
 original = persistence.atomic_json
 def failing(path, value):
     if path.name == 'snapshot.json' and Path(BLOCKED).exists():
@@ -253,10 +253,10 @@ serve(Path(RUNTIME))
             process = subprocess.Popen([sys.executable, '-B', '-c', script], stdout=log, stderr=log)
             try:
                 self.wait_snapshot(lambda _: attempted.exists(), timeout=4)
-                from codex_progress_monitor.runtime import collector_alive
+                from codex_activity_monitor.runtime import collector_alive
                 self.assertTrue(collector_alive(self.runtime))
                 # Freshness may be unavailable without authorizing a second collector.
-                with patch('codex_progress_monitor.cli.subprocess.Popen') as spawn:
+                with patch('codex_activity_monitor.cli.subprocess.Popen') as spawn:
                     start(self.runtime)
                 spawn.assert_not_called()
                 with socket.socket(socket.AF_UNIX, socket.SOCK_STREAM) as sock:
@@ -280,7 +280,7 @@ serve(Path(RUNTIME))
                 process.wait(timeout=5)
 
     def command(self,actual,*args):
-        return [sys.executable,'-m','codex_progress_monitor.cli','--runtime',str(self.runtime),'bridge','--real-cli',str(actual),'--',*args]
+        return [sys.executable,'-m','codex_activity_monitor.cli','--runtime',str(self.runtime),'bridge','--real-cli',str(actual),'--',*args]
 
     def wait_archive(self, predicate, timeout=3):
         deadline=time.monotonic()+timeout

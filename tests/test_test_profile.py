@@ -5,22 +5,22 @@ import sys
 import tempfile
 import unittest
 
-from codex_progress_monitor.app_control import ControlError
-from codex_progress_monitor.integration import KEYS
-from codex_progress_monitor.runtime import ROOT
-from codex_progress_monitor.test_profile import FileEnvironment, controller
+from codex_activity_monitor.app_control import ControlError
+from codex_activity_monitor.integration import KEYS
+from codex_activity_monitor.runtime import ROOT
+from codex_activity_monitor.test_profile import FileEnvironment, controller
 
 
 class TestProfileTests(unittest.TestCase):
     def setUp(self):
-        self.temp = tempfile.TemporaryDirectory(prefix='cpm-profile-', dir='/tmp')
+        self.temp = tempfile.TemporaryDirectory(prefix='cam-profile-', dir='/tmp')
         self.addCleanup(self.temp.cleanup)
         self.root = Path(self.temp.name).resolve()
 
     def test_explicit_marker_and_separate_data_root_are_required(self):
         with self.assertRaises(ControlError):
             controller(self.root)
-        (self.root / 'profile.json').write_text(json.dumps({'kind': 'codex-monitor-disposable-test'}))
+        (self.root / 'profile.json').write_text(json.dumps({'kind': 'codex-activity-monitor-disposable-test'}))
         control, cli = controller(self.root)
         self.assertEqual(control.root, self.root / 'data')
         self.assertEqual(cli, self.root / 'original-cli')
@@ -38,8 +38,8 @@ class TestProfileTests(unittest.TestCase):
         self.assertIsNone(env.get(KEYS[0]))
 
     def test_cli_profile_never_imports_actual_legacy_runtime(self):
-        (self.root / 'profile.json').write_text(json.dumps({'kind': 'codex-monitor-disposable-test'}))
-        result = subprocess.run([sys.executable, '-m', 'codex_progress_monitor.cli', 'app', 'status',
+        (self.root / 'profile.json').write_text(json.dumps({'kind': 'codex-activity-monitor-disposable-test'}))
+        result = subprocess.run([sys.executable, '-m', 'codex_activity_monitor.cli', 'app', 'status',
                                  '--test-profile', str(self.root), '--legacy-runtime', str(ROOT / '.local/runtime')],
                                 capture_output=True, text=True)
         self.assertEqual(result.returncode, 0, result.stderr)
@@ -50,7 +50,7 @@ class TestProfileTests(unittest.TestCase):
         runtime = self.root / 'managed'; runtime.mkdir()
         (runtime / 'app-managed.json').write_text('{}')
         for action in ('setup', 'uninstall'):
-            result = subprocess.run([sys.executable, '-m', 'codex_progress_monitor.cli', '--runtime', str(runtime), action],
+            result = subprocess.run([sys.executable, '-m', 'codex_activity_monitor.cli', '--runtime', str(runtime), action],
                                     capture_output=True, text=True)
             self.assertEqual(result.returncode, 1)
             self.assertIn('GUI 管理', result.stderr)

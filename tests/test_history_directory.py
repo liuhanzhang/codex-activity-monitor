@@ -6,10 +6,10 @@ import tempfile
 import unittest
 from unittest.mock import patch
 
-from codex_progress_monitor.history import HistoryProvider, RolloutIndex
-from codex_progress_monitor.history_index import HistoryDirectory, HistoryFacts, HistoryMetadata
-from codex_progress_monitor.timeline import HISTORY_SEED_TYPES
-from codex_progress_monitor.timeline_query import TimelineQuery
+from codex_activity_monitor.history import HistoryProvider, RolloutIndex
+from codex_activity_monitor.history_index import HistoryDirectory, HistoryFacts, HistoryMetadata
+from codex_activity_monitor.timeline import HISTORY_SEED_TYPES
+from codex_activity_monitor.timeline_query import TimelineQuery
 
 
 class HistoryDirectoryTests(unittest.TestCase):

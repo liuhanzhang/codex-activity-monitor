@@ -19,22 +19,22 @@ import tempfile
 import time
 import uuid
 
-from codex_progress_monitor.runtime import ROOT, atomic_json, collector_alive
-from codex_progress_monitor.state_client import state_once
-from codex_progress_monitor.test_profile import controller
+from codex_activity_monitor.runtime import ROOT, atomic_json, collector_alive
+from codex_activity_monitor.state_client import state_once
+from codex_activity_monitor.test_profile import controller
 
 
 COLLECTOR = '''
 import builtins, io, json, sys, time
 from pathlib import Path
-from codex_progress_monitor import app_session, runtime as persistence, state_transport
-from codex_progress_monitor.collector import serve
+from codex_activity_monitor import app_session, runtime as persistence, state_transport
+from codex_activity_monitor.collector import serve
 runtime, output = map(Path, sys.argv[1:3])
 targets = {runtime/'app-managed.json', runtime.parent/'observation.json', runtime.parent/'integration.enabled'}
 original_load = app_session.load_lease
 armed = False
 # collector imported the function already: patch its own boundary explicitly.
-import codex_progress_monitor.collector as collector
+import codex_activity_monitor.collector as collector
 def loaded(path):
     lease = original_load(path)
     original_io, original_open, original_stat = io.open, builtins.open, Path.stat
@@ -92,9 +92,9 @@ def records(path):
 
 def verify_normal_quit(app, output):
     """Launch the production management path; quit through the Preview UI."""
-    with tempfile.TemporaryDirectory(prefix='cpm-quit-', dir='/tmp') as directory:
+    with tempfile.TemporaryDirectory(prefix='cam-quit-', dir='/tmp') as directory:
         profile = Path(directory)
-        atomic_json(profile/'profile.json', {'kind': 'codex-monitor-disposable-test'})
+        atomic_json(profile/'profile.json', {'kind': 'codex-activity-monitor-disposable-test'})
         original = profile/'original-cli'
         original.write_text('#!/bin/sh\ncat\n')
         original.chmod(0o700)
@@ -113,7 +113,7 @@ def verify_normal_quit(app, output):
                         return False
                 wait(ready, timeout=10)
                 wait(lambda:any(r.get('transport_fresh') for r in records(diagnostic)))
-                print('Ready: quit Codex Monitor Preview through its isolated UI.', flush=True)
+                print('Ready: quit Codex Activity Monitor Preview through its isolated UI.', flush=True)
                 wait(lambda:gui.poll() is not None, timeout=60)
                 assert gui.returncode == 0
                 wait(lambda:not collector_alive(runtime))
@@ -128,7 +128,7 @@ def verify_normal_quit(app, output):
                 if gui.poll() is None:
                     gui.terminate(); gui.wait(timeout=3)
                 if collector_alive(runtime):
-                    from codex_progress_monitor.cli import stop
+                    from codex_activity_monitor.cli import stop
                     stop(runtime)
 
 
@@ -150,9 +150,9 @@ def main():
     processes = []
     report = {'scenario': 'managed-state-and-original-stdio', 'archive_block_seconds': 30,
               'paused_reader_seconds': 60, 'natural_use': False}
-    with tempfile.TemporaryDirectory(prefix='cpm-native-', dir='/tmp') as directory:
+    with tempfile.TemporaryDirectory(prefix='cam-native-', dir='/tmp') as directory:
         profile = Path(directory)
-        atomic_json(profile/'profile.json', {'kind': 'codex-monitor-disposable-test'})
+        atomic_json(profile/'profile.json', {'kind': 'codex-activity-monitor-disposable-test'})
         original = profile/'original-cli'
         original.write_text('#!'+sys.executable+'\nimport sys\nfor line in sys.stdin.buffer:\n sys.stdout.buffer.write(line);sys.stdout.buffer.flush()\nsys.exit(17)\n')
         original.chmod(0o700)
@@ -192,7 +192,7 @@ def main():
             wait(lambda:any(r.get('transport_fresh') and r.get('state_sequence') for r in records(diagnostic)))
             print('Native owner connected; archive and config reads are blocked.', flush=True)
             env = {**os.environ, 'CODEX_HOME': str(profile/'synthetic-home')}
-            bridge = subprocess.Popen([sys.executable, '-m', 'codex_progress_monitor.cli', '--runtime', str(runtime),
+            bridge = subprocess.Popen([sys.executable, '-m', 'codex_activity_monitor.cli', '--runtime', str(runtime),
                 'bridge', '--real-cli', str(original), '--', 'app-server'], stdin=subprocess.PIPE,
                 stdout=subprocess.PIPE, stderr=log, env=env)
             processes.append(bridge)

@@ -20,12 +20,12 @@
 
 | 现有位置 | 已有基础 | 本轮缺口 |
 | --- | --- | --- |
-| [engine.py](../../src/codex_progress_monitor/engine.py)、[progress_state.py](../../src/codex_progress_monitor/progress_state.py) | Thread / turn / item 身份、来源去重、镜像排除、逻辑 Thread 选择、每 Thread 展示字段 | 全局独立流汇总、覆盖质量、稳定父子关系及 GUI 数据投影。不能直接相加可见行。 |
-| [metrics.py](../../src/codex_progress_monitor/metrics.py)、[usage.py](../../src/codex_progress_monitor/usage.py) | 实时分词窗口、服务端用量与事后推理均速 | 继续复用，不改变指标定义；只有汇总确有需要时扩展最小元数据。 |
-| [collector.py](../../src/codex_progress_monitor/collector.py)、[runtime.py](../../src/codex_progress_monitor/runtime.py) | 单采集器锁、原子快照、停止控制、恢复与加载身份 | GUI 数据契约、运行状态与本机路径布局、GUI 退出后的采集生命周期。 |
-| [integration.py](../../src/codex_progress_monitor/integration.py) | 原配置备份、按值判断所有权、包装脚本、旧 LaunchAgent 安装与恢复 | 可重试的配置 / 恢复状态、App 缺失回退、完整清理、旧安装迁移。当前恢复会删除备份，不能直接作为多步骤 GUI 恢复流程。 |
-| [bridge.py](../../src/codex_progress_monitor/bridge.py) | 透明转发、旁路队列、有界重放、断连处理 | 明确暂停观察与恢复缺口；保留通信时不能通过结束 bridge 来实现退出采集。 |
-| [cli.py](../../src/codex_progress_monitor/cli.py)、[i18n.py](../../src/codex_progress_monitor/i18n.py) | 核心命令、中文资源与语义消息 | 面向 GUI 的结构化管理命令、同源活动文案与 GUI 新文案资源。 |
+| [engine.py](../../src/codex_activity_monitor/engine.py)、[progress_state.py](../../src/codex_activity_monitor/progress_state.py) | Thread / turn / item 身份、来源去重、镜像排除、逻辑 Thread 选择、每 Thread 展示字段 | 全局独立流汇总、覆盖质量、稳定父子关系及 GUI 数据投影。不能直接相加可见行。 |
+| [metrics.py](../../src/codex_activity_monitor/metrics.py)、[usage.py](../../src/codex_activity_monitor/usage.py) | 实时分词窗口、服务端用量与事后推理均速 | 继续复用，不改变指标定义；只有汇总确有需要时扩展最小元数据。 |
+| [collector.py](../../src/codex_activity_monitor/collector.py)、[runtime.py](../../src/codex_activity_monitor/runtime.py) | 单采集器锁、原子快照、停止控制、恢复与加载身份 | GUI 数据契约、运行状态与本机路径布局、GUI 退出后的采集生命周期。 |
+| [integration.py](../../src/codex_activity_monitor/integration.py) | 原配置备份、按值判断所有权、包装脚本、旧 LaunchAgent 安装与恢复 | 可重试的配置 / 恢复状态、App 缺失回退、完整清理、旧安装迁移。当前恢复会删除备份，不能直接作为多步骤 GUI 恢复流程。 |
+| [bridge.py](../../src/codex_activity_monitor/bridge.py) | 透明转发、旁路队列、有界重放、断连处理 | 明确暂停观察与恢复缺口；保留通信时不能通过结束 bridge 来实现退出采集。 |
+| [cli.py](../../src/codex_activity_monitor/cli.py)、[i18n.py](../../src/codex_activity_monitor/i18n.py) | 核心命令、中文资源与语义消息 | 面向 GUI 的结构化管理命令、同源活动文案与 GUI 新文案资源。 |
 
 当前旧 LaunchAgent 为 `KeepAlive=true`，并在启动时重新设置接入环境；只调用 `stop()` 可能立即重启采集器。当前包装器也没有 App 存在性检查。这两项必须实现并验证，不能由新界面隐藏问题。
 

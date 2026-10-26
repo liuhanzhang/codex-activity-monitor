@@ -12,7 +12,7 @@ from .runtime import atomic_json
 from .execution import backend_command
 from .i18n import DEFAULT_LANGUAGE, tr
 
-LABEL='com.local.codex-progress-monitor'
+LABEL='com.liuhanzhang.codexactivitymonitor.collector'
 KEYS=('CODEX_CLI_PATH','CODEX_APP_SERVER_FORCE_CLI','CODEX_APP_SERVER_USE_LOCAL_DAEMON','CODEX_APP_SERVER_WS_URL')
 
 

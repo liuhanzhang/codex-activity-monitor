@@ -58,7 +58,7 @@ def main():
     for name in encodings:
         tiktoken.get_encoding(name).encode_ordinary('Hello, 世界！打包验证。')
 
-    files = sorted([*ROOT.glob('src/codex_progress_monitor/*.py'), *ROOT.glob('macos/Sources/**/*'),
+    files = sorted([*ROOT.glob('src/codex_activity_monitor/*.py'), *ROOT.glob('macos/Sources/**/*'),
                     *ROOT.glob('packaging/*'), ROOT/'pyproject.toml', ROOT/'LICENSE',
                     ROOT/'macos/Assets/AppIcon.png', ROOT/'bin/build-app-icon'])
     digest = hashlib.sha256()
@@ -67,7 +67,7 @@ def main():
             digest.update(str(path.relative_to(ROOT)).encode()+b'\0'+path.read_bytes())
     build_id = digest.hexdigest()
     modules = {path.stem: hashlib.sha256(path.read_bytes()).hexdigest()
-               for path in sorted(ROOT.glob('src/codex_progress_monitor/*.py'))}
+               for path in sorted(ROOT.glob('src/codex_activity_monitor/*.py'))}
     dependencies = {dist.metadata['Name']: dist.version for dist in importlib.metadata.distributions()
                     if dist.metadata.get('Name')}
     manifest = {'version': 1, 'build_id': build_id, 'modules': modules, 'encodings': encodings,
@@ -76,7 +76,7 @@ def main():
                 'tokenizer_assets': {p.name: hashlib.sha256(p.read_bytes()).hexdigest()
                                      for p in sorted(cache.iterdir()) if p.is_file()}}
     (assets/'build-manifest.json').write_text(json.dumps(manifest, indent=2, sort_keys=True)+'\n')
-    os.environ['CPM_PACKAGING_ASSETS'] = str(assets)
+    os.environ['CAM_PACKAGING_ASSETS'] = str(assets)
     run(sys.executable, '-m', 'PyInstaller', '--noconfirm', '--clean',
         '--distpath', build/'dist', '--workpath', build/'work', ROOT/'packaging/backend.spec', cwd=ROOT)
 
@@ -87,7 +87,7 @@ def main():
              '--package-path', str(ROOT/'macos'), '--configuration', 'release']
     run(*swift, env=environment, cwd=ROOT)
     binary_dir = Path(subprocess.check_output([*swift, '--show-bin-path'], env=environment, text=True).strip())
-    stage = build/'Codex Monitor.app'
+    stage = build/'Codex Activity Monitor.app'
     if stage.exists():
         shutil.rmtree(stage)
     contents = stage/'Contents'
@@ -113,7 +113,7 @@ def main():
     shutil.copy2(notices, licenses/'Python/standalone-distribution-notices.rst')
     for dist in importlib.metadata.distributions():
         name = dist.metadata.get('Name', '')
-        if name.lower() in ('codex-progress-monitor', 'pip'):
+        if name.lower() in ('codex-activity-monitor', 'pip'):
             continue
         for file in dist.files or []:
             if any(part.lower().startswith(('license', 'copying', 'notice')) for part in file.parts):
@@ -124,7 +124,7 @@ def main():
                     shutil.copy2(source, destination)
     version = tomllib.loads((ROOT/'pyproject.toml').read_text())['project']['version']
     info = {'CFBundleExecutable': 'MonitorApp', 'CFBundleIdentifier': 'com.liuhanzhang.codexactivitymonitor',
-            'CFBundleName': 'Codex Monitor', 'CFBundleDisplayName': 'Codex Monitor', 'CFBundlePackageType': 'APPL',
+            'CFBundleName': 'Codex Activity Monitor', 'CFBundleDisplayName': 'Codex Activity Monitor', 'CFBundlePackageType': 'APPL',
             'CFBundleShortVersionString': version, 'CFBundleVersion': '1', 'LSMinimumSystemVersion': '26.0',
             'LSUIElement': True, 'NSPrincipalClass': 'NSApplication', 'CFBundleIconFile': 'AppIcon.icns'}
     (contents/'Info.plist').write_bytes(plistlib.dumps(info))
@@ -135,7 +135,7 @@ def main():
     if final.exists():
         shutil.rmtree(final)
     stage.rename(final)
-    archive = output/f'Codex-Monitor-{version}-arm64-dev.zip'
+    archive = output/f'Codex-Activity-Monitor-{version}-arm64-dev.zip'
     run('/usr/bin/ditto', '-c', '-k', '--sequesterRsrc', '--keepParent', final, archive)
     summary = {'app': str(final), 'archive': str(archive), 'build_id': build_id,
                'archive_sha256': hashlib.sha256(archive.read_bytes()).hexdigest(),

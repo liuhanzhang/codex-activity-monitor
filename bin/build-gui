@@ -21,8 +21,8 @@ PY
 export CLANG_MODULE_CACHE_PATH="$task_root/.local/clang-module-cache"
 swift build --disable-sandbox --cache-path "$task_root/.local/swift-cache" --package-path macos --configuration debug
 task_binary_dir=$(swift build --disable-sandbox --cache-path "$task_root/.local/swift-cache" --package-path macos --configuration debug --show-bin-path)
-task_app="$task_root/.local/gui/Codex Monitor.app"
-if [ "$task_preview" = true ]; then task_app="$task_root/.local/gui-preview/Codex Monitor Preview.app"; fi
+task_app="$task_root/.local/gui/Codex Activity Monitor.app"
+if [ "$task_preview" = true ]; then task_app="$task_root/.local/gui-preview/Codex Activity Monitor Preview.app"; fi
 mkdir -p "$task_app/Contents/MacOS" "$task_app/Contents/Resources"
 "$task_root/bin/build-app-icon" "$task_app/Contents/Resources/AppIcon.icns"
 # Preserve the inode mapped by an already running GUI. Replacing its executable
@@ -46,16 +46,16 @@ sources=sorted(p for p in (root/'macos/Sources').rglob('*') if p.is_file())
 sources += [root/'macos/Assets/AppIcon.png', root/'bin/build-app-icon']
 build=hashlib.sha256(b''.join(str(p.relative_to(root)).encode()+b'\0'+p.read_bytes() for p in sources)).hexdigest()
 info={'CFBundleExecutable':'MonitorApp','CFBundleIdentifier':'com.liuhanzhang.codexactivitymonitor',
-      'CFBundleName':'Codex Monitor','CFBundleDisplayName':'Codex Monitor','CFBundlePackageType':'APPL',
+      'CFBundleName':'Codex Activity Monitor','CFBundleDisplayName':'Codex Activity Monitor','CFBundlePackageType':'APPL',
       'CFBundleShortVersionString':'0.1.0','CFBundleVersion':'1','LSMinimumSystemVersion':'26.0',
       'LSUIElement':True,'NSPrincipalClass':'NSApplication','CFBundleIconFile':'AppIcon.icns'}
 if preview:
     info.update(CFBundleIdentifier=info['CFBundleIdentifier']+'.preview',
-                CFBundleName='Codex Monitor Preview', CFBundleDisplayName='Codex Monitor Preview')
+                CFBundleName='Codex Activity Monitor Preview', CFBundleDisplayName='Codex Activity Monitor Preview')
 (app/'Contents/Info.plist').write_bytes(plistlib.dumps(info))
 config={'python':str(root/'.local/venv/bin/python'),'source_root':str(root),
-        'runtime':str(root/('.local/gui-preview/runtime' if preview else '.local/runtime')),
-        'data_root':str(Path.home()/'Library/Application Support/CodexProgressMonitor'), 'build_id':build}
+        'runtime':str(root/'.local/gui-preview/runtime' if preview else Path.home()/'Library/Application Support/CodexActivityMonitor/run'),
+        'data_root':str(Path.home()/'Library/Application Support/CodexActivityMonitor'), 'build_id':build}
 (app/'Contents/Resources/backend.json').write_text(json.dumps(config))
 print(app)
 PY

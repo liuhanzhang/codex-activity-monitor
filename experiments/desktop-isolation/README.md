@@ -1,6 +1,6 @@
 # 隔离 Desktop 实验
 
-这里保留初始研究使用的脚本，不是正式监控实现。当前完整说明见 [初始实验文档](/Users/bytedance/personal/codex_progress_monitor/dev-history/01_initial_experiment/README.md)。
+这里保留初始研究使用的脚本，不是正式监控实现。当前完整说明见 [初始实验文档](/Users/bytedance/personal/codex-activity-monitor/dev-history/01_initial_experiment/README.md)。
 
 ## 文件
 
@@ -23,4 +23,4 @@
 
 `20261010-150337-2b232b` 的隔离 App 与后端在整理时仍运行，配置、登录状态、会话、数据库和依赖原位保留。
 
-上游分析脚本支持读取原始 `.log` 或无损归档的 `.log.gz`。历史报告中的原始路径字符串保持当时含义；实际压缩文件的位置与校验值见 [整理清单](/Users/bytedance/personal/codex_progress_monitor/analysis/workspace-cleanup/2026-10-10.json)。
+上游分析脚本支持读取原始 `.log` 或无损归档的 `.log.gz`。历史报告中的原始路径字符串保持当时含义；实际压缩文件的位置与校验值见 [整理清单](/Users/bytedance/personal/codex-activity-monitor/analysis/workspace-cleanup/2026-10-10.json)。

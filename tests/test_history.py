@@ -3,8 +3,8 @@ from pathlib import Path
 import tempfile
 import unittest
 
-from codex_progress_monitor.history import HistoryProvider, item_content, source_truncated
-from codex_progress_monitor.timeline_query import TimelineQuery
+from codex_activity_monitor.history import HistoryProvider, item_content, source_truncated
+from codex_activity_monitor.timeline_query import TimelineQuery
 
 
 class HistoryTests(unittest.TestCase):
@@ -216,7 +216,7 @@ class HistoryTests(unittest.TestCase):
                               page_token=first['page_token'])['sections'][0]
         self.assertEqual(json.loads(first['text'] + second['text']), output)
         # A sidecar retains identity after the source disappears, never its body.
-        from codex_progress_monitor.timeline import TimelineBook
+        from codex_activity_monitor.timeline import TimelineBook
         query.book = TimelineBook()
         query.book._put(phase)
         self.path.unlink()

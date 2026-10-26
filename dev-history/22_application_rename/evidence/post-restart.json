@@ -1,0 +1,27 @@
+{
+  "date": "2026-10-26",
+  "codex_restart_verified": true,
+  "new_bridge_source_matches": true,
+  "bridge_source_sha256": "209ad523f14be6a4940fe45d5fe0b9ef884fa9c4995fbfb1d8051c89b51f350c",
+  "collector_healthy": true,
+  "native_gui_real_activity_observed": true,
+  "thread_id": "01a1783c-dc17-77b2-81bf-35044c5848d9",
+  "turn_id": "01a1786e-afce-79b3-9228-f55940e2b4a4",
+  "phase_count": 142,
+  "phase_kinds": {
+    "text": 5,
+    "tool_input": 31,
+    "tool_execution": 47,
+    "reasoning": 59
+  },
+  "phase_statuses": {
+    "completed": 134,
+    "failed": 6,
+    "declined": 1,
+    "waiting": 1
+  },
+  "natural_turn_terminal_pending": true,
+  "scope": "Live metadata and counts only; no conversation or tool body retained",
+  "snapshot_phase": "live_before_terminal_confirmation",
+  "superseded_by": "post-restart-natural-turn.json"
+}

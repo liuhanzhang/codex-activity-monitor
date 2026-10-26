@@ -1,4 +1,4 @@
-// Monitor-owned copy. Source content is never translated.
+// Codex Activity Monitor-owned copy. Source content is never translated.
 "%.0f 毫秒" = "%.0f 毫秒";
 "%.1f 秒" = "%.1f 秒";
 "%d 个智能体" = "%d 个智能体";
@@ -9,8 +9,8 @@
 "%d 毫秒" = "%d 毫秒";
 "%d 项工具" = "%d 项工具";
 "%d 项工具.one" = "%d 项工具";
-"Codex Monitor · 只读验证" = "Codex Monitor · 只读验证";
-"Codex Monitor · 隔离验证" = "Codex Monitor · 隔离验证";
+"Codex Activity Monitor · 只读验证" = "Codex Activity Monitor · 只读验证";
+"Codex Activity Monitor · 隔离验证" = "Codex Activity Monitor · 隔离验证";
 "Codex 保留的活动记录" = "Codex 保留的活动记录";
 "Codex 生成速度 · 点击查看实时活动" = "Codex 生成速度 · 点击查看实时活动";
 "Codex 记录的活动生命周期。" = "Codex 记录的活动生命周期。";
@@ -18,8 +18,8 @@
 "Details" = "活动详情";
 "Empty" = "暂时没有可显示的聊天";
 "Live" = "实时活动";
-"Monitor" = "Codex Monitor";
-"Monitor · 动画刷新验证" = "Monitor · 动画刷新验证";
+"Codex Activity Monitor" = "Codex Activity Monitor";
+"Codex Activity Monitor · 动画刷新验证" = "Codex Activity Monitor · 动画刷新验证";
 "NoConnection" = "等待 Codex 接入";
 "NoticeAssociatingEvents" = "部分活动尚未关联到聊天，其速度暂不可确认。";
 "NoticeIdentityConflict" = "接入身份重复或冲突，相关速度暂不可确认。";
@@ -28,7 +28,7 @@
 "NoticeStreamUnavailable" = "部分当前生成速度暂不可用。";
 "NoticeTotalUnavailable" = "当前接入暂不提供总速度数据。";
 "NoticeWaitingForConnection" = "若 Codex 已经打开，请在任务结束后重开以接入。";
-"Quit" = "退出 Monitor";
+"Quit" = "退出 Codex Activity Monitor";
 "ReadOnly" = "只读预览";
 "Restore" = "恢复配置…";
 "Stale" = "采集已停止或数据已过期";
@@ -104,7 +104,7 @@
 "归属待确认的子任务（%d）.one" = "归属待确认的子任务（%d）";
 "当前内容为部分观测，完成后将从历史补齐。" = "当前内容为部分观测，完成后将从历史补齐。";
 "当前找不到可读取的源历史。" = "当前找不到可读取的源历史。";
-"当前来源不支持继续加载，请更新 Monitor 后重新读取。" = "当前来源不支持继续加载，请更新 Monitor 后重新读取。";
+"当前来源不支持继续加载，请更新 Codex Activity Monitor 后重新读取。" = "当前来源不支持继续加载，请更新 Codex Activity Monitor 后重新读取。";
 "当前来源不支持读取此类内容。" = "当前来源不支持读取此类内容。";
 "当前模型" = "当前模型";
 "当前没有活跃聊天" = "当前没有活跃聊天";
@@ -128,7 +128,7 @@
 "数据不可用" = "数据不可用";
 "压缩" = "压缩";
 "整理上下文" = "压缩";
-"无法启动 Codex Monitor" = "无法启动 Codex Monitor";
+"无法启动 Codex Activity Monitor" = "无法启动 Codex Activity Monitor";
 "无法启动后台命令。" = "无法启动后台命令。";
 "无法读取后台命令结果。" = "无法读取后台命令结果。";
 "旧接入仍在运行；任务结束后重开 Codex，以启用退出暂停采集。" = "旧接入仍在运行；任务结束后重开 Codex，以启用退出暂停采集。";
@@ -201,7 +201,7 @@
 "短工具以粗线标记；重叠处增强颜色，点击直接查看此处的工具详情。" = "短工具以粗线标记；重叠处增强颜色，点击直接查看此处的工具详情。";
 "短活动以粗线标记，符号宽度不代表耗时；点击查看活动详情。" = "短活动以粗线标记，符号宽度不代表耗时；点击查看活动详情。";
 "空闲 · 暂无活动聊天" = "空闲 · 暂无活动聊天";
-"等待 Codex 安全退出并完成清理后，Monitor 将退出。之后可手动删除 App；再次打开会按首次启动处理。" = "等待 Codex 安全退出并完成清理后，Monitor 将退出。之后可手动删除 App；再次打开会按首次启动处理。";
+"等待 Codex 安全退出并完成清理后，Codex Activity Monitor 将退出。之后可手动删除 App；再次打开会按首次启动处理。" = "等待 Codex 安全退出并完成清理后，Codex Activity Monitor 将退出。之后可手动删除 App；再次打开会按首次启动处理。";
 "等待子智能体消息" = "等待子智能体消息";
 "等待执行" = "等待执行";
 "等待接入" = "等待接入";

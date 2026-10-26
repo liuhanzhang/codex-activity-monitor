@@ -119,11 +119,11 @@ Reasoning 9,000
 
 | 位置 | 当前行为 | 本轮需要补充 |
 | --- | --- | --- |
-| [events.py](../../src/codex_progress_monitor/events.py) | 未放行 `thread/tokenUsage/updated`；上游完成 response 只保留 ID、模型、状态、item IDs 等身份信息，usage 被移除。 | 放行所需数值字段与可靠身份，继续过滤其他响应内容。 |
-| [engine.py](../../src/codex_progress_monitor/engine.py) | 已关联 backend / thread / turn / item，处理 reasoning 生命周期；未维护服务端回合用量或最近推理均速。 | 增加回合用量与 reasoning 结果状态，处理延迟、重复、冲突和作用域。 |
-| [metrics.py](../../src/codex_progress_monitor/metrics.py) | 对接收文本累计重新分词，生成流式速度。 | 与服务端 usage 分离；现有 TextStream 计数不作为本轮累计用量。 |
-| [bridge.py](../../src/codex_progress_monitor/bridge.py)、[collector.py](../../src/codex_progress_monitor/collector.py) | 有界缓存并恢复部分活动 / 元数据，重启后清除不可信实时速率。 | 恢复可验证的已报告计数与已完成均速；不从重放的活动补造计时。 |
-| [display.py](../../src/codex_progress_monitor/display.py)、[中文资源](../../src/codex_progress_monitor/messages_zh_cn.py) | 四列布局，速度只有现有生成速度。 | 增加计数和最近推理均速，兼容旧快照与窄终端。 |
+| [events.py](../../src/codex_activity_monitor/events.py) | 未放行 `thread/tokenUsage/updated`；上游完成 response 只保留 ID、模型、状态、item IDs 等身份信息，usage 被移除。 | 放行所需数值字段与可靠身份，继续过滤其他响应内容。 |
+| [engine.py](../../src/codex_activity_monitor/engine.py) | 已关联 backend / thread / turn / item，处理 reasoning 生命周期；未维护服务端回合用量或最近推理均速。 | 增加回合用量与 reasoning 结果状态，处理延迟、重复、冲突和作用域。 |
+| [metrics.py](../../src/codex_activity_monitor/metrics.py) | 对接收文本累计重新分词，生成流式速度。 | 与服务端 usage 分离；现有 TextStream 计数不作为本轮累计用量。 |
+| [bridge.py](../../src/codex_activity_monitor/bridge.py)、[collector.py](../../src/codex_activity_monitor/collector.py) | 有界缓存并恢复部分活动 / 元数据，重启后清除不可信实时速率。 | 恢复可验证的已报告计数与已完成均速；不从重放的活动补造计时。 |
+| [display.py](../../src/codex_activity_monitor/display.py)、[中文资源](../../src/codex_activity_monitor/messages_zh_cn.py) | 四列布局，速度只有现有生成速度。 | 增加计数和最近推理均速，兼容旧快照与窄终端。 |
 
 官方 [app-server 文档](https://learn.chatgpt.com/docs/app-server#turn-events)列出 `thread/tokenUsage/updated`。已检查的本地协议包含 threadId、turnId、累计 `total` 和最近响应 `last`，但该通知本身不提供 responseId 或 reasoning itemId，不能仅凭“最近一次 reasoning”强行配对。
 

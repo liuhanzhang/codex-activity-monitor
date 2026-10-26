@@ -7,7 +7,7 @@ import platform
 import resource
 import time
 
-from codex_progress_monitor.tokenizer_process import TokenizerProcess, TokenizerUnavailable
+from codex_activity_monitor.tokenizer_process import TokenizerProcess, TokenizerUnavailable
 
 
 def main():

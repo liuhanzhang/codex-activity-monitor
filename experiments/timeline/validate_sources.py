@@ -5,11 +5,11 @@ from datetime import datetime
 import json
 from pathlib import Path
 
-from codex_progress_monitor.engine import Engine
-from codex_progress_monitor.events import Event, decode_log, filter_event
-from codex_progress_monitor.timeline import TimelineBook
-from codex_progress_monitor.timeline_storage import TimelineStorage, read_records
-from codex_progress_monitor.timeline_query import TimelineQuery
+from codex_activity_monitor.engine import Engine
+from codex_activity_monitor.events import Event, decode_log, filter_event
+from codex_activity_monitor.timeline import TimelineBook
+from codex_activity_monitor.timeline_storage import TimelineStorage, read_records
+from codex_activity_monitor.timeline_query import TimelineQuery
 
 
 def main():

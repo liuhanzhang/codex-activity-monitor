@@ -3,7 +3,7 @@ import Testing
 import MonitorModel
 @testable import MonitorApp
 
-@Test(.enabled(if: ProcessInfo.processInfo.environment["CPM_PROJECTION_BENCHMARK"] == "1"))
+@Test(.enabled(if: ProcessInfo.processInfo.environment["CAM_PROJECTION_BENCHMARK"] == "1"))
 @MainActor func syntheticDashboardProjectionOnMainActorBenchmark() async throws {
     let store = DashboardStore(configuration: BackendConfiguration(python: "/unused", source_root: "/unused",
         runtime: "/unused", data_root: "/unused", build_id: "benchmark"), arguments: ["--read-only"])
@@ -40,5 +40,5 @@ import MonitorModel
     #expect(checksum > 0)
     let data = try JSONSerialization.data(withJSONObject: ["samples": samples, "checksum": checksum,
         "scope": "Dashboard presentation model and row flags; excludes SwiftUI/AppKit drawing"], options: [.sortedKeys])
-    print("CPM_PROJECTION_MAIN_ACTOR " + String(decoding: data, as: UTF8.self))
+    print("CAM_PROJECTION_MAIN_ACTOR " + String(decoding: data, as: UTF8.self))
 }

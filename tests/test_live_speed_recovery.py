@@ -5,10 +5,10 @@ from pathlib import Path
 import unittest
 from unittest.mock import MagicMock
 
-from codex_progress_monitor.bridge import Observer, unrelated_diagnostic_prefix
-from codex_progress_monitor.engine import Engine
-from codex_progress_monitor.events import Event, filter_event
-from codex_progress_monitor.metrics import TextStream, TokenCounter
+from codex_activity_monitor.bridge import Observer, unrelated_diagnostic_prefix
+from codex_activity_monitor.engine import Engine
+from codex_activity_monitor.events import Event, filter_event
+from codex_activity_monitor.metrics import TextStream, TokenCounter
 
 
 class LiveSpeedRecoveryTests(unittest.TestCase):

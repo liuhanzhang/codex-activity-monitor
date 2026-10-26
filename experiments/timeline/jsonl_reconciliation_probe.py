@@ -19,11 +19,11 @@ import time
 ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT / 'src'))
 
-from codex_progress_monitor.engine import Engine
-from codex_progress_monitor.events import Event
-from codex_progress_monitor.history import HistoryProvider
-from codex_progress_monitor.timeline import TimelineBook, status
-from codex_progress_monitor.timeline_query import TimelineQuery
+from codex_activity_monitor.engine import Engine
+from codex_activity_monitor.events import Event
+from codex_activity_monitor.history import HistoryProvider
+from codex_activity_monitor.timeline import TimelineBook, status
+from codex_activity_monitor.timeline_query import TimelineQuery
 
 
 def row(kind, payload, at):
@@ -354,7 +354,7 @@ def main():
             results[name] = {'passed': False, 'error': type(error).__name__, 'detail': str(error)}
     report = {'scope': 'isolated prototype with synthetic events; not production collector or native UI acceptance',
               'poll_interval_s': .025, 'original_source': check_original_source(), 'cases': results,
-              'source_sha256': {name: hashlib.sha256((ROOT / 'src/codex_progress_monitor' / (name + '.py')).read_bytes()).hexdigest()
+              'source_sha256': {name: hashlib.sha256((ROOT / 'src/codex_activity_monitor' / (name + '.py')).read_bytes()).hexdigest()
                                 for name in ('engine', 'history', 'overview', 'timeline', 'timeline_query')},
               'prototype_sha256': hashlib.sha256(Path(__file__).read_bytes()).hexdigest()}
     passed = sum(r['passed'] for r in results.values())

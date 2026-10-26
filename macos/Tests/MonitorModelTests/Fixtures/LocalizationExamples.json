@@ -639,7 +639,7 @@
     }
   },
   {
-    "expected": "Codex Progress · 原始内容.py · 0 条聊天",
+    "expected": "Codex Activity Monitor · 原始内容.py · 0 条聊天",
     "language": "zh-CN",
     "message": {
       "key": "view.header",
@@ -650,7 +650,7 @@
     }
   },
   {
-    "expected": "Codex Progress · 原始内容.py · 1 条聊天",
+    "expected": "Codex Activity Monitor · 原始内容.py · 1 条聊天",
     "language": "zh-CN",
     "message": {
       "key": "view.header",
@@ -661,7 +661,7 @@
     }
   },
   {
-    "expected": "Codex Progress · 原始内容.py · 2 条聊天",
+    "expected": "Codex Activity Monitor · 原始内容.py · 2 条聊天",
     "language": "zh-CN",
     "message": {
       "key": "view.header",
@@ -1015,7 +1015,7 @@
     }
   },
   {
-    "expected": "Monitor 与后台版本不兼容，请更新并重开 Monitor。",
+    "expected": "Codex Activity Monitor 与后台版本不兼容，请更新并重开 Codex Activity Monitor。",
     "language": "zh-CN",
     "message": {
       "key": "control.gui_upgrade_required",
@@ -1071,7 +1071,7 @@
     }
   },
   {
-    "expected": "已有启动项不属于当前 Monitor，未修改。",
+    "expected": "已有启动项不属于当前 Codex Activity Monitor，未修改。",
     "language": "zh-CN",
     "message": {
       "key": "control.foreign_agent",
@@ -1119,7 +1119,7 @@
     }
   },
   {
-    "expected": "找不到 Monitor App，请先构建或重新下载。",
+    "expected": "找不到 Codex Activity Monitor App，请先构建或重新下载。",
     "language": "zh-CN",
     "message": {
       "key": "control.app_missing",
@@ -1175,7 +1175,7 @@
     }
   },
   {
-    "expected": "无法停用旧 Monitor 自动重启服务。",
+    "expected": "无法停用旧 Codex Activity Monitor 自动重启服务。",
     "language": "zh-CN",
     "message": {
       "key": "control.agent_unload_failed",
@@ -1199,7 +1199,7 @@
     }
   },
   {
-    "expected": "原 CLI 不能指向 Monitor 包装器。",
+    "expected": "原 CLI 不能指向 Codex Activity Monitor 包装器。",
     "language": "zh-CN",
     "message": {
       "key": "control.recursive_cli",
@@ -1215,7 +1215,7 @@
     }
   },
   {
-    "expected": "找不到 Monitor 界面进程。",
+    "expected": "找不到 Codex Activity Monitor 界面进程。",
     "language": "zh-CN",
     "message": {
       "key": "control.owner_missing",
@@ -1223,7 +1223,7 @@
     }
   },
   {
-    "expected": "另一个 Monitor 界面正在采集，请先退出该实例。",
+    "expected": "另一个 Codex Activity Monitor 界面正在采集，请先退出该实例。",
     "language": "zh-CN",
     "message": {
       "key": "control.another_gui_running",
@@ -1239,7 +1239,7 @@
     }
   },
   {
-    "expected": "当前采集由另一个 Monitor 界面管理，未停止。",
+    "expected": "当前采集由另一个 Codex Activity Monitor 界面管理，未停止。",
     "language": "zh-CN",
     "message": {
       "key": "control.another_gui_running.2",
@@ -1327,7 +1327,7 @@
     }
   },
   {
-    "expected": "配置需要 Monitor App 路径。",
+    "expected": "配置需要 Codex Activity Monitor App 路径。",
     "language": "zh-CN",
     "message": {
       "key": "control.app_missing.2",
@@ -2118,7 +2118,7 @@
     }
   },
   {
-    "expected": "Codex Progress · 原始内容.py · 0 chats",
+    "expected": "Codex Activity Monitor · 原始内容.py · 0 chats",
     "language": "en",
     "message": {
       "key": "view.header",
@@ -2129,7 +2129,7 @@
     }
   },
   {
-    "expected": "Codex Progress · 原始内容.py · 1 chat",
+    "expected": "Codex Activity Monitor · 原始内容.py · 1 chat",
     "language": "en",
     "message": {
       "key": "view.header",
@@ -2140,7 +2140,7 @@
     }
   },
   {
-    "expected": "Codex Progress · 原始内容.py · 2 chats",
+    "expected": "Codex Activity Monitor · 原始内容.py · 2 chats",
     "language": "en",
     "message": {
       "key": "view.header",
@@ -2494,7 +2494,7 @@
     }
   },
   {
-    "expected": "Monitor and its backend are incompatible. Update and reopen Monitor.",
+    "expected": "Codex Activity Monitor and its backend are incompatible. Update and reopen Codex Activity Monitor.",
     "language": "en",
     "message": {
       "key": "control.gui_upgrade_required",
@@ -2550,7 +2550,7 @@
     }
   },
   {
-    "expected": "The existing launch item belongs to another Monitor; it was left unchanged.",
+    "expected": "The existing launch item belongs to another Codex Activity Monitor; it was left unchanged.",
     "language": "en",
     "message": {
       "key": "control.foreign_agent",
@@ -2598,7 +2598,7 @@
     }
   },
   {
-    "expected": "Monitor App was not found. Build or download it again.",
+    "expected": "Codex Activity Monitor App was not found. Build or download it again.",
     "language": "en",
     "message": {
       "key": "control.app_missing",
@@ -2654,7 +2654,7 @@
     }
   },
   {
-    "expected": "Cannot disable the previous Monitor restart service.",
+    "expected": "Cannot disable the previous Codex Activity Monitor restart service.",
     "language": "en",
     "message": {
       "key": "control.agent_unload_failed",
@@ -2678,7 +2678,7 @@
     }
   },
   {
-    "expected": "The original CLI cannot point to the Monitor wrapper.",
+    "expected": "The original CLI cannot point to the Codex Activity Monitor wrapper.",
     "language": "en",
     "message": {
       "key": "control.recursive_cli",
@@ -2694,7 +2694,7 @@
     }
   },
   {
-    "expected": "The Monitor UI process was not found.",
+    "expected": "The Codex Activity Monitor UI process was not found.",
     "language": "en",
     "message": {
       "key": "control.owner_missing",
@@ -2702,7 +2702,7 @@
     }
   },
   {
-    "expected": "Another Monitor UI is collecting activity. Quit that instance first.",
+    "expected": "Another Codex Activity Monitor UI is collecting activity. Quit that instance first.",
     "language": "en",
     "message": {
       "key": "control.another_gui_running",
@@ -2718,7 +2718,7 @@
     }
   },
   {
-    "expected": "Collection is managed by another Monitor UI; it was not stopped.",
+    "expected": "Collection is managed by another Codex Activity Monitor UI; it was not stopped.",
     "language": "en",
     "message": {
       "key": "control.another_gui_running.2",
@@ -2806,7 +2806,7 @@
     }
   },
   {
-    "expected": "Configuration requires the Monitor App path.",
+    "expected": "Configuration requires the Codex Activity Monitor App path.",
     "language": "en",
     "message": {
       "key": "control.app_missing.2",

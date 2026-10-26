@@ -100,7 +100,7 @@ def main(argv=None):
     seed.add_argument('--runtime', type=Path)
     seed.add_argument('--lang')
     known, _ = seed.parse_known_args(argv[:argv.index('--')] if '--' in argv else argv)
-    initial_runtime = Path(known.runtime or os.environ.get('CODEX_PROGRESS_RUNTIME', default_runtime())).expanduser()
+    initial_runtime = Path(known.runtime or os.environ.get('CODEX_ACTIVITY_MONITOR_RUNTIME', default_runtime())).expanduser()
     try:
         language = ui_language(initial_runtime, known.lang)
     except ValueError as exc:
@@ -151,7 +151,7 @@ def main(argv=None):
         from .query_response import encode_response
         try:
             # Deliberately bypass runtime_dir(): browsing cannot create or resume observation.
-            query_path=Path(args.runtime or os.environ.get('CODEX_PROGRESS_RUNTIME', default_runtime())).expanduser().resolve()
+            query_path=Path(args.runtime or os.environ.get('CODEX_ACTIVITY_MONITOR_RUNTIME', default_runtime())).expanduser().resolve()
             value=query_runtime(query_path,json.loads(args.request))
             frame = encode_response(value)
             # This is a UTF-8 protocol, independent of terminal output encoding.

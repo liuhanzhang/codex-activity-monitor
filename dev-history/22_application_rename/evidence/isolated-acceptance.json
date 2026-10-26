@@ -1,0 +1,49 @@
+{
+  "archive_sha256": "819973141d6418fe16480b225b197ee101ce6403a63473869e2928886ab0e99f",
+  "checks": {
+    "bundle_ids": {
+      "app": "com.liuhanzhang.codexactivitymonitor",
+      "backend": "com.liuhanzhang.codexactivitymonitor.backend"
+    },
+    "source_python_and_network_denial": true,
+    "offline_all_encodings_and_spawn_worker": {
+      "ok": true,
+      "build_id": "9c7e82cb0e2467ad320ef14d8748a061671616f93265798b2e12ec5264aba7e6",
+      "python": "3.14.9",
+      "tokenizer_counts": {
+        "cl100k_base": 11,
+        "gpt2": 20,
+        "o200k_base": 8,
+        "o200k_harmony": 8,
+        "p50k_base": 20,
+        "p50k_edit": 20,
+        "r50k_base": 20
+      },
+      "worker": {
+        "starts": 1,
+        "timeouts": 0,
+        "deadline_seconds": 10,
+        "running": false,
+        "closed": false
+      },
+      "implementation": {
+        "source_sha256": "4462c91759db25cd2b118b0c3417b6509408b2910a7f43b71b11be905704f5d1",
+        "modules": {
+          "collector": "308b9abf09d8f12b0bf7e89b530c407f21800e0732b520b31a3787a4fb8977f0",
+          "bridge": "e54bb57326dcc5b764acf3facd624933a2df0754197cb4a78ffe9b81d0298af6",
+          "execution": "a96cc546eb896fec2c1e3d2e62de8da1cabf37d4b06785de34eeec1beea17b95",
+          "runtime": "f22ecaccca0ea493d6a340703d7350fd45e3a9c9c40d6f9d1c4d0323d3530ddc"
+        }
+      }
+    },
+    "collector_spawn_and_live_health": true,
+    "timeline_query": true,
+    "bridge_binary_stdio_and_exit_code": true,
+    "observed_synthetic_turn_and_timeline": true,
+    "managed_stop": true,
+    "missing_app_external_fallback": true,
+    "restore_original_environment_and_remove_launcher": true
+  },
+  "build_id": "9c7e82cb0e2467ad320ef14d8748a061671616f93265798b2e12ec5264aba7e6",
+  "ok": true
+}

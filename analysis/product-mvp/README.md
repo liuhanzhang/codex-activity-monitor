@@ -1,6 +1,6 @@
 # 产品实现与有限验收
 
-日期：2026-10-11。对应 [使用说明](/Users/bytedance/personal/codex_progress_monitor/dev-history/02_product_mvp/usage.md) 和 [需求与计划](/Users/bytedance/personal/codex_progress_monitor/dev-history/02_product_mvp/requirements-and-plan.md)。统计与逐流哈希见 [verification.json](/Users/bytedance/personal/codex_progress_monitor/analysis/product-mvp/verification.json)。
+日期：2026-10-11。对应 [使用说明](/Users/bytedance/personal/codex-activity-monitor/dev-history/02_product_mvp/usage.md) 和 [需求与计划](/Users/bytedance/personal/codex-activity-monitor/dev-history/02_product_mvp/requirements-and-plan.md)。统计与逐流哈希见 [verification.json](/Users/bytedance/personal/codex-activity-monitor/analysis/product-mvp/verification.json)。
 
 第一版已经实现、安装并可运行：原版 CLI 的 stdio 包装器、独立本地采集器、聊天/活动聚合、后台 tokenizer、终端总览与活动详情，以及安装恢复命令。第三轮人工提交的隔离 Desktop 核心实时采集检查已通过：正文的正速度覆盖约 17.5 秒，68 个不同快照有正速度，最终约 1,000 token 与会话文本的本地分词计数一致；20 秒命令持续显示执行阶段并 exit 0，任务期间丢弃、解析错误和活动后端断连均为 0，两条内部标题任务默认隐藏。前两轮发现并修复了临时任务混入、诊断压力和短暂停顿触发断连的问题。**主 Desktop 默认启动路径与长期自然使用仍待验收**；主 App 继续运行。本轮没有要求再次重复测试。
 
@@ -58,7 +58,7 @@ Desktop 生成聊天标题时会创建单独的 ephemeral 任务，它与用户�
 这是有限排查数据，不能证明真实模型延迟完全不受影响。
 
 - 空闲采集器的一次采样 RSS 14,528 KiB，进程生命周期平均 CPU 0.7%；空白快照 179 字节，collector.log 0 字节。这不是分词工作期峰值内存。
-- 实时样本计数开销最大约 145.23 ms，包含首次载入编码。计数工作在单独线程，合计重算成本会降低长文本/多流的计数频率；原分词规模对照继续复用 [实现前数据](/Users/bytedance/personal/codex_progress_monitor/analysis/product-preflight/tokenizer.json)。
+- 实时样本计数开销最大约 145.23 ms，包含首次载入编码。计数工作在单独线程，合计重算成本会降低长文本/多流的计数频率；原分词规模对照继续复用 [实现前数据](/Users/bytedance/personal/codex-activity-monitor/analysis/product-preflight/tokenizer.json)。
 - 本地热态 100 次约 1 KB 回显：原程序往返中位 0.012 ms，包装器 0.030 ms；P95 为 0.022 / 0.043 ms。样本没有模型调用或真实网络日志。
 - 2.31 MB 连续回显的整体进程耗时中位增加约 496.54 ms，包装器 RSS 约 23 MB；这包含 Python 启动与结束时有限旁路排空，不能将它直接解释为每次工具/首 token 的额外延迟。冷启动测量存在明显波动。
 - 停滞观察线程压力样本：2,000 次 offer，队列保持 4 包 / 262,144 字节，丢弃 1,996 包，offer 总耗时约 3.29 ms。原始协议转发不等待解析或 socket 消费。
@@ -81,7 +81,7 @@ Desktop 生成聊天标题时会创建单独的 ephemeral 任务，它与用户�
 - `tests.txt`：39 项测试结果。
 - `fb-1/`、`fb-3/`：正文与 ephemeral 辅助任务的真实复查、接收速度采样与完整文本计数对照；`fb-3/tool-replay.json` 保留状态修正后的原时间回放结果。
 - `ui-after-fix.jsonl`、`ui-second-trial.json`：第二轮人工提交的有限指标与失败摘要；不保存输出正文。
-- `ui-after-socket-fix.jsonl`、`ui-third-trial.json`：第三轮人工提交的有限指标与通过摘要。采样最多 8 分钟 / 8 MiB，达到字节上限后已自行退出；普通采集器继续运行。精简结果保存在 [desktop-ui-acceptance.json](/Users/bytedance/personal/codex_progress_monitor/analysis/product-mvp/desktop-ui-acceptance.json)。
+- `ui-after-socket-fix.jsonl`、`ui-third-trial.json`：第三轮人工提交的有限指标与通过摘要。采样最多 8 分钟 / 8 MiB，达到字节上限后已自行退出；普通采集器继续运行。精简结果保存在 [desktop-ui-acceptance.json](/Users/bytedance/personal/codex-activity-monitor/analysis/product-mvp/desktop-ui-acceptance.json)。
 
 复查命令：
 
@@ -92,7 +92,7 @@ Desktop 生成聊天标题时会创建单独的 ephemeral 任务，它与用户�
 
 手动实时验收脚本为 `tests/product_smoke.py`，必须指定自己已登录的隔离 home 和新的运行目录。它只启动自有后端和有限测试回合，不代替日常 Desktop 验收。
 
-按原计划逐项核对的实现、证据与剩余验收见 [完成核对表](/Users/bytedance/personal/codex_progress_monitor/analysis/product-mvp/completion-audit.md)。
+按原计划逐项核对的实现、证据与剩余验收见 [完成核对表](/Users/bytedance/personal/codex-activity-monitor/analysis/product-mvp/completion-audit.md)。
 
 ## 剩余验收
 

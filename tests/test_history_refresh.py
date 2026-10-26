@@ -6,8 +6,8 @@ import time
 import unittest
 from unittest.mock import Mock
 
-from codex_progress_monitor.history_refresh import HistoryPacket, HistoryRefresh
-from codex_progress_monitor.history_contract import HistorySelection
+from codex_activity_monitor.history_refresh import HistoryPacket, HistoryRefresh
+from codex_activity_monitor.history_contract import HistorySelection
 
 
 class HistoryRefreshBudgetTests(unittest.TestCase):

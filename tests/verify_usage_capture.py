@@ -4,8 +4,8 @@ import hashlib
 import json
 from pathlib import Path
 
-from codex_progress_monitor.engine import Engine
-from codex_progress_monitor.events import Event, filter_event
+from codex_activity_monitor.engine import Engine
+from codex_activity_monitor.events import Event, filter_event
 
 
 def verify(path):

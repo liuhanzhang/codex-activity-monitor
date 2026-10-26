@@ -9,8 +9,8 @@ import tempfile
 import unittest
 from unittest.mock import patch
 
-from codex_progress_monitor.app_control import AppController, ControlError, LaunchEnvironment
-from codex_progress_monitor.integration import KEYS
+from codex_activity_monitor.app_control import AppController, ControlError, LaunchEnvironment
+from codex_activity_monitor.integration import KEYS
 
 
 class MemoryEnvironment:
@@ -53,7 +53,7 @@ class FakeServices:
 
 class AppControlTests(unittest.TestCase):
     def setUp(self):
-        self.temp = tempfile.TemporaryDirectory(prefix='cpm-app-', dir='/tmp')
+        self.temp = tempfile.TemporaryDirectory(prefix='cam-app-', dir='/tmp')
         self.addCleanup(self.temp.cleanup)
         self.base = Path(self.temp.name)
         self.app = self.base / 'Fake App.app'
@@ -67,8 +67,8 @@ class AppControlTests(unittest.TestCase):
         self.environment = MemoryEnvironment()
         self.services = FakeServices()
         self.control = AppController(self.base / 'data', environment=self.environment, services=self.services)
-        self.enterContext(patch('codex_progress_monitor.cli.stop'))
-        self.enterContext(patch('codex_progress_monitor.cli.running', return_value=False))
+        self.enterContext(patch('codex_activity_monitor.cli.stop'))
+        self.enterContext(patch('codex_activity_monitor.cli.running', return_value=False))
 
     def configure(self, **kwargs):
         return self.control.configure(self.app, self.cli, **kwargs)
@@ -79,6 +79,15 @@ class AppControlTests(unittest.TestCase):
     def test_status_does_not_create_data(self):
         self.assertEqual(self.control.status()['state'], 'new')
         self.assertFalse(self.control.root.exists())
+
+    def test_fresh_gui_installation_and_terminal_reader_share_default_runtime(self):
+        from codex_activity_monitor.runtime import default_runtime, runtime_dir
+        with patch('pathlib.Path.home', return_value=self.base / 'user'), patch.dict(os.environ):
+            os.environ.pop('CODEX_ACTIVITY_MONITOR_RUNTIME', None)
+            control = AppController(default_runtime().parent,
+                                    environment=self.environment, services=self.services)
+            result = control.configure(self.app, self.cli)
+            self.assertEqual(Path(result['runtime']), runtime_dir())
 
     def test_exact_original_empty_unset_and_newline_survive_restore(self):
         originals = {KEYS[0]: '/original\npath\n', KEYS[1]: '', KEYS[2]: '1'}
@@ -227,10 +236,10 @@ class AppControlTests(unittest.TestCase):
 
     def test_second_gui_cannot_steal_or_stop_active_session(self):
         self.configure()
-        with patch('codex_progress_monitor.cli.start'):
+        with patch('codex_activity_monitor.cli.start'):
             first = self.control.resume(os.getpid())
-        with patch('codex_progress_monitor.app_control.process_alive', return_value=True):
-            with self.assertRaisesRegex(ControlError, '另一个 Monitor'):
+        with patch('codex_activity_monitor.app_control.process_alive', return_value=True):
+            with self.assertRaisesRegex(ControlError, '另一个 Codex Activity Monitor'):
                 self.control.resume(os.getpid() + 1)
         with self.assertRaises(ControlError):
             self.control.stop(os.getpid() + 1)
@@ -298,7 +307,7 @@ class AppControlTests(unittest.TestCase):
         with self.assertRaises(ControlError):
             self.control.resume(os.getpid())
         self.configure()
-        with patch('codex_progress_monitor.cli.start') as start:
+        with patch('codex_activity_monitor.cli.start') as start:
             result = self.control.resume(os.getpid())
         start.assert_called_once()
         self.assertEqual(result['session']['owner_pid'], os.getpid())

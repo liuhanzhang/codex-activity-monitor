@@ -9,8 +9,8 @@ import resource
 import time
 import tracemalloc
 
-from codex_progress_monitor.identity_budget import IdentityBudget
-from codex_progress_monitor.resource_budget import retained_bytes
+from codex_activity_monitor.identity_budget import IdentityBudget
+from codex_activity_monitor.resource_budget import retained_bytes
 
 
 def case(kind):

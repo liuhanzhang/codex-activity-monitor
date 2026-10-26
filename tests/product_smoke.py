@@ -12,8 +12,8 @@ import time
 ROOT=Path(__file__).resolve().parents[1]
 sys.path.insert(0,str(ROOT/'experiments/product-preflight'))
 from run_live import RPC,new_thread
-from codex_progress_monitor.cli import start,stop
-from codex_progress_monitor.runtime import atomic_json,read_snapshot,runtime_dir
+from codex_activity_monitor.cli import start,stop
+from codex_activity_monitor.runtime import atomic_json,read_snapshot,runtime_dir
 
 
 def main():
@@ -31,7 +31,7 @@ def main():
     env={k:v for k,v in os.environ.items() if not k.startswith(('CODEX_','PREFLIGHT_'))}
     env.update(CODEX_HOME=str(home),CODEX_SQLITE_HOME=str(home/'sqlite'),CODEX_INTERNAL_APP_SERVER_REMOTE_CONTROL_DISABLED='1')
     stderr=(run/'bridge.stderr').open('w')
-    process=subprocess.Popen([sys.executable,'-m','codex_progress_monitor.cli','--runtime',str(runtime),'bridge','--','-c','features.code_mode_host=true','-c','tools.update_plan.enabled=true','app-server'],
+    process=subprocess.Popen([sys.executable,'-m','codex_activity_monitor.cli','--runtime',str(runtime),'bridge','--','-c','features.code_mode_host=true','-c','tools.update_plan.enabled=true','app-server'],
                              stdin=subprocess.PIPE,stdout=subprocess.PIPE,stderr=stderr,text=True,bufsize=1,env=env,cwd=run)
     rpc=RPC(process,run/'protocol.jsonl')
     result={'scope':'product collector/bridge on owned stdio backend','phases':{},'display_labels':{},'peak_rates':{},'recovery':False,

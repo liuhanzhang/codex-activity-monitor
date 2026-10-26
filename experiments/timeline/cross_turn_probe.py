@@ -12,9 +12,9 @@ import time
 ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT / 'experiments/product-preflight'))
 from run_live import RPC, CLI
-from codex_progress_monitor.cli import start, stop
-from codex_progress_monitor.runtime import runtime_dir, read_snapshot
-from codex_progress_monitor.timeline_query import query_runtime
+from codex_activity_monitor.cli import start, stop
+from codex_activity_monitor.runtime import runtime_dir, read_snapshot
+from codex_activity_monitor.timeline_query import query_runtime
 
 
 def main():
@@ -33,7 +33,7 @@ def main():
     env.update(PYTHONPATH=str(ROOT / 'src'), CODEX_HOME=str(home), CODEX_SQLITE_HOME=str(home / 'sqlite'),
                CODEX_INTERNAL_APP_SERVER_REMOTE_CONTROL_DISABLED='1')
     stderr = (run / 'stderr.log').open('w')
-    process = subprocess.Popen([sys.executable, '-m', 'codex_progress_monitor.cli', '--runtime', str(runtime),
+    process = subprocess.Popen([sys.executable, '-m', 'codex_activity_monitor.cli', '--runtime', str(runtime),
                                 'bridge', '--real-cli', str(CLI), '--', 'app-server'],
                                stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=stderr, env=env, cwd=run, text=True)
     rpc = RPC(process, run / 'protocol.jsonl')

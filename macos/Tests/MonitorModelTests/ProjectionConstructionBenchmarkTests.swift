@@ -5,7 +5,7 @@ import Testing
 
 /// Includes the work moved out of getters; report separately from the unchanged
 /// P0 getter workload so a cache hit cannot hide graph construction costs.
-@Test(.enabled(if: ProcessInfo.processInfo.environment["CPM_PROJECTION_BENCHMARK"] == "1"))
+@Test(.enabled(if: ProcessInfo.processInfo.environment["CAM_PROJECTION_BENCHMARK"] == "1"))
 func syntheticProjectionConstructionAndMemoryBenchmark() throws {
     var samples: [[String: Any]] = []
     for count in [10, 100, 300, 3000] {
@@ -35,5 +35,5 @@ func syntheticProjectionConstructionAndMemoryBenchmark() throws {
             "cycle_steps": measured.cycleSteps, "ancestor_steps": measured.ancestorSteps])
     }
     let data = try JSONSerialization.data(withJSONObject: ["build": "swift-test-debug", "samples": samples], options: [.sortedKeys])
-    print("CPM_PROJECTION_CONSTRUCTION " + String(decoding: data, as: UTF8.self))
+    print("CAM_PROJECTION_CONSTRUCTION " + String(decoding: data, as: UTF8.self))
 }

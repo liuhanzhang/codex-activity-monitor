@@ -2,7 +2,7 @@
 
 整理日期：2026-10-11，Asia/Shanghai。
 
-对应 [第一版产品需求与实施计划](/Users/bytedance/personal/codex_progress_monitor/dev-history/02_product_mvp/requirements-and-plan.md)。需求范围已明确；采集入口、并发身份映射与实际模型的 tokenizer 匹配需要由实验决定。
+对应 [第一版产品需求与实施计划](/Users/bytedance/personal/codex-activity-monitor/dev-history/02_product_mvp/requirements-and-plan.md)。需求范围已明确；采集入口、并发身份映射与实际模型的 tokenizer 匹配需要由实验决定。
 
 ## 1. 实现前只读核查
 
@@ -19,9 +19,9 @@
 
 CLI 位置：`/Applications/ChatGPT.app/Contents/Resources/codex-cli/CodexCLI.app/Contents/MacOS/codex`。
 
-旧 trace 路径与版本依据见 [verification.json](/Users/bytedance/personal/codex_progress_monitor/analysis/upstream-stream/verification.json)。按用户 2026-10-11 的明确要求，复用已验证的接入结论，对小更新只做有限回归，不重新提取安装包或重复验证整个架构。
+旧 trace 路径与版本依据见 [verification.json](/Users/bytedance/personal/codex-activity-monitor/analysis/upstream-stream/verification.json)。按用户 2026-10-11 的明确要求，复用已验证的接入结论，对小更新只做有限回归，不重新提取安装包或重复验证整个架构。
 
-以上表格记录执行前的核查快照。后续验证已经执行，最新结果见 [实现前验证结果](/Users/bytedance/personal/codex_progress_monitor/analysis/product-preflight/README.md)。
+以上表格记录执行前的核查快照。后续验证已经执行，最新结果见 [实现前验证结果](/Users/bytedance/personal/codex-activity-monitor/analysis/product-preflight/README.md)。
 
 ## 2. E1：正常 Desktop 启动路径的采集入口
 
@@ -168,4 +168,4 @@ observation_quality
 
 已完成独立 Desktop 启动回归、两个并发实时运行、审批拒绝、取消、tokenizer 分块与开销实验，以及 7 类传输故障注入。选择原版 CLI + 透明 stdio 转发 + 本地聚合路线。12 个实时内容流全部与上游完成项及持久化项目一致，未出现串流或未关联增量。
 
-日常 Desktop 用户提交任务到看板的整体试用、完整后台工具覆盖与长期运行验收留在产品集成阶段。具体统计、哈希和覆盖边界见 [验证报告](/Users/bytedance/personal/codex_progress_monitor/analysis/product-preflight/README.md)。
+日常 Desktop 用户提交任务到看板的整体试用、完整后台工具覆盖与长期运行验收留在产品集成阶段。具体统计、哈希和覆盖边界见 [验证报告](/Users/bytedance/personal/codex-activity-monitor/analysis/product-preflight/README.md)。

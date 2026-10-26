@@ -29,12 +29,12 @@ def fixtures(base, case):
                                       'parent_thread_id': 'root'})
             current['phases'].append({**phase, 'id': identity + '-model', 'thread_id': identity, 'turn_id': identity + '-turn'})
     root = snapshot['threads'][0]
-    root.update(name='改进 Monitor 面板', cwd='/synthetic/codex_progress_monitor')
+    root.update(name='改进 Codex Activity Monitor 面板', cwd='/synthetic/codex-activity-monitor')
     snapshot['threads'] = []
     for i in range(count):
         identity = 'root' if i == 0 else 'chat-' + str(i)
         row = deepcopy(root)
-        row.update(id=identity, name='改进 Monitor 面板' if i == 0 else '活跃聊天 ' + str(i+1))
+        row.update(id=identity, name='改进 Codex Activity Monitor 面板' if i == 0 else '活跃聊天 ' + str(i+1))
         snapshot['threads'].append(row)
         if i:
             bundle = deepcopy(current)

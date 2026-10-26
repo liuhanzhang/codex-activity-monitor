@@ -120,7 +120,7 @@ import Testing
 
     @Test func launchFailureAndExitStatusStayDistinct() async throws {
         await #expect(throws: ProcessExecutionError.launchFailed(ENOENT)) {
-            try await ProcessExecutor().execute(ProcessRequest(executable: "/nonexistent-cpm-test"))
+            try await ProcessExecutor().execute(ProcessRequest(executable: "/nonexistent-cam-test"))
         }
         let result = try await ProcessExecutor().execute(request("import sys; print('payload'); sys.exit(9)"))
         #expect(result.exitCode == 9 && String(decoding: result.stdout, as: UTF8.self) == "payload\n")
@@ -154,9 +154,9 @@ import Testing
         let directory = marker()
         try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
         defer { try? FileManager.default.removeItem(at: directory) }
-        var value = request("import os,sys,json; print(json.dumps([os.getcwd(),os.environ['CPM_PROCESS_TEST'],sys.argv[1],sys.stdin.read()]))")
+        var value = request("import os,sys,json; print(json.dumps([os.getcwd(),os.environ['CAM_PROCESS_TEST'],sys.argv[1],sys.stdin.read()]))")
         let literal = "literal $(command) `value`; spaces"
-        value.arguments.append(literal); value.environment["CPM_PROCESS_TEST"] = "line\nvalue"
+        value.arguments.append(literal); value.environment["CAM_PROCESS_TEST"] = "line\nvalue"
         value.directory = directory.path
         let result = try await ProcessExecutor().execute(value)
         let values = try JSONDecoder().decode([String].self, from: result.stdout)

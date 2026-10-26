@@ -1,7 +1,7 @@
 from unittest.mock import patch
 import unittest
 
-from codex_progress_monitor.observation_lease import LeaseError, ObservationLease, SessionGrant
+from codex_activity_monitor.observation_lease import LeaseError, ObservationLease, SessionGrant
 
 
 def grant(pid=100, id='i'*32, secret='s'*64):

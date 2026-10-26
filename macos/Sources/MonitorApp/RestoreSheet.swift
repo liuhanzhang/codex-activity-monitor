@@ -14,7 +14,7 @@ struct RestoreSheet: LocalizedView {
                 .font(.callout).foregroundStyle(.secondary)
                 .fixedSize(horizontal: false, vertical: true)
             Toggle(L("清理本机数据并退出，用于卸载"), isOn: $purge)
-            Text(purge ? L("等待 Codex 安全退出并完成清理后，Monitor 将退出。之后可手动删除 App；再次打开会按首次启动处理。") :
+            Text(purge ? L("等待 Codex 安全退出并完成清理后，Codex Activity Monitor 将退出。之后可手动删除 App；再次打开会按首次启动处理。") :
                  L("保留 App 设置与已恢复状态。以后打开仍保持未接入，需要时点击配置即可重新启用。"))
                 .font(.caption).foregroundStyle(.secondary)
                 .fixedSize(horizontal: false, vertical: true)

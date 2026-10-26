@@ -10,9 +10,9 @@ import sys
 import time
 
 from rich.console import Console
-from codex_progress_monitor.cli import start, stop
-from codex_progress_monitor.display import render
-from codex_progress_monitor.runtime import atomic_json, read_snapshot, runtime_dir
+from codex_activity_monitor.cli import start, stop
+from codex_activity_monitor.display import render
+from codex_activity_monitor.runtime import atomic_json, read_snapshot, runtime_dir
 
 ROOT=Path(__file__).resolve().parents[1]
 sys.path.insert(0,str(ROOT/'experiments/product-preflight'))
@@ -34,7 +34,7 @@ def main():
     env.update(CODEX_HOME=str(args.home.resolve()),CODEX_SQLITE_HOME=str(args.home.resolve()/'sqlite'),
                CODEX_INTERNAL_APP_SERVER_REMOTE_CONTROL_DISABLED='1')
     stderr=(run/'stderr.log').open('w')
-    process=subprocess.Popen([sys.executable,'-m','codex_progress_monitor.cli','--runtime',str(runtime),'bridge','--','app-server'],
+    process=subprocess.Popen([sys.executable,'-m','codex_activity_monitor.cli','--runtime',str(runtime),'bridge','--','app-server'],
                              stdin=subprocess.PIPE,stdout=subprocess.PIPE,stderr=stderr,text=True,env=env,cwd=run)
     rpc=RPC(process,run/'protocol.jsonl')
     evidence={'scope':'owned stdio backend and isolated collector','turns':[],'restart_preserved':False}

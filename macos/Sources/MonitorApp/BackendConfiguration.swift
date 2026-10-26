@@ -22,7 +22,7 @@ struct BackendConfiguration: Decodable, Sendable {
               FileManager.default.isExecutableFile(atPath: backend.path) else {
             throw CocoaError(.fileReadCorruptFile)
         }
-        let root = userHome.appendingPathComponent("Library/Application Support/CodexProgressMonitor").path
+        let root = userHome.appendingPathComponent("Library/Application Support/CodexActivityMonitor").path
         return Self(python: backend.path, source_root: app.path, runtime: root + "/run",
                     data_root: root, build_id: manifest.build_id, mode: "bundled")
     }
@@ -30,7 +30,7 @@ struct BackendConfiguration: Decodable, Sendable {
     func request(arguments: [String]) -> ProcessRequest {
         let bundled = mode == "bundled"
         var request = ProcessRequest(executable: python,
-            arguments: (bundled ? [] : ["-m", "codex_progress_monitor.cli"]) + arguments)
+            arguments: (bundled ? [] : ["-m", "codex_activity_monitor.cli"]) + arguments)
         request.directory = source_root
         if bundled {
             request.environment.removeValue(forKey: "PYTHONPATH")

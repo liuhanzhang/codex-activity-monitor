@@ -16,14 +16,14 @@ MCP 取名优先利用已保留的 `appContext.appName/actionName` 和有可靠�
 
 | 文件 / 模块 | 计划调整 |
 | --- | --- |
-| [progress_state.py](../../src/codex_progress_monitor/progress_state.py) | 生成语言无关的活动 / 聊天展示描述；中文比较改为语义条件；已结束活动与进行中活动分开构造文案。 |
-| [tool_labels.py](../../src/codex_progress_monitor/tool_labels.py) | 增加有界的命令名提取与 MCP 名称解析，保留现有扫描器和诊断摘要。 |
-| [engine.py](../../src/codex_progress_monitor/engine.py) | 关联名称元数据，生成结构化快照字段；原始工具名、活动身份和计时保持独立。 |
-| [events.py](../../src/codex_progress_monitor/events.py) | 按实际需要保留最小展示字段；现有 `appContext` 字段优先复用。 |
-| [display.py](../../src/codex_progress_monitor/display.py) | 统一渲染消息、表头与提示；整秒耗时；1Hz 定时刷新和即时按键处理。 |
-| [cli.py](../../src/codex_progress_monitor/cli.py) | 接入语言选择与文案资源，向 watch 传递选定语言。 |
-| [runtime.py](../../src/codex_progress_monitor/runtime.py) | 复用原子 JSON 写入，读取 / 保存独立的界面设置。 |
-| [collector.py](../../src/codex_progress_monitor/collector.py) | 重启恢复与观测缺口的展示描述也使用语义字段；采集节奏沿用现状。 |
+| [progress_state.py](../../src/codex_activity_monitor/progress_state.py) | 生成语言无关的活动 / 聊天展示描述；中文比较改为语义条件；已结束活动与进行中活动分开构造文案。 |
+| [tool_labels.py](../../src/codex_activity_monitor/tool_labels.py) | 增加有界的命令名提取与 MCP 名称解析，保留现有扫描器和诊断摘要。 |
+| [engine.py](../../src/codex_activity_monitor/engine.py) | 关联名称元数据，生成结构化快照字段；原始工具名、活动身份和计时保持独立。 |
+| [events.py](../../src/codex_activity_monitor/events.py) | 按实际需要保留最小展示字段；现有 `appContext` 字段优先复用。 |
+| [display.py](../../src/codex_activity_monitor/display.py) | 统一渲染消息、表头与提示；整秒耗时；1Hz 定时刷新和即时按键处理。 |
+| [cli.py](../../src/codex_activity_monitor/cli.py) | 接入语言选择与文案资源，向 watch 传递选定语言。 |
+| [runtime.py](../../src/codex_activity_monitor/runtime.py) | 复用原子 JSON 写入，读取 / 保存独立的界面设置。 |
+| [collector.py](../../src/codex_activity_monitor/collector.py) | 重启恢复与观测缺口的展示描述也使用语义字段；采集节奏沿用现状。 |
 | 新增 `i18n.py` 与中文资源模块 | 消息格式化、语言注册、资源回退、时间 / 数量表达；完整英文资源以后注册。 |
 | [tests](../../tests) | 更新相关显示断言，补充影响语义和回退边界的用例。 |
 

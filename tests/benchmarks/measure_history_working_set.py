@@ -10,8 +10,8 @@ import tempfile
 import time
 from unittest.mock import patch
 
-from codex_progress_monitor.history import HistoryProvider
-from codex_progress_monitor.history_index import _HistoryProjection
+from codex_activity_monitor.history import HistoryProvider
+from codex_activity_monitor.history_index import _HistoryProjection
 
 
 def main():
@@ -34,7 +34,7 @@ def main():
               'sources': args.sources, 'turns_per_source': args.turns, 'items_per_turn': 4,
               'selected_turns_per_source': min(args.turns, args.selected_turns), 'cycles': [],
               'note': 'Provider cache pressure only; sequential calls, not parallel ingestion or natural soak.'}
-    with tempfile.TemporaryDirectory(prefix='cpm-history-working-set-') as tmp:
+    with tempfile.TemporaryDirectory(prefix='cam-history-working-set-') as tmp:
         home = Path(tmp); (home/'sessions').mkdir()
         size = rows = largest = 0
         for owner in range(args.sources):

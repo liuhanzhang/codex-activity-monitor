@@ -29,12 +29,12 @@ def source_identity(*modules):
 
 
 def default_runtime():
-    return (Path.home()/'Library/Application Support/CodexProgressMonitor/run'
-            if is_frozen() else ROOT/'.local/runtime')
+    # A fresh GUI installation and its terminal reader share one runtime.
+    return Path.home()/'Library/Application Support/CodexActivityMonitor/run'
 
 
 def runtime_dir(value=None, language=DEFAULT_LANGUAGE):
-    path = Path(value or os.environ.get('CODEX_PROGRESS_RUNTIME', default_runtime())).expanduser().resolve()
+    path = Path(value or os.environ.get('CODEX_ACTIVITY_MONITOR_RUNTIME', default_runtime())).expanduser().resolve()
     path.mkdir(parents=True, exist_ok=True, mode=0o700)
     path.chmod(0o700)
     if len(str(path/'events.sock').encode())>103:

@@ -11,9 +11,9 @@ import tempfile
 import time
 import tracemalloc
 
-from codex_progress_monitor.history import HistoryProvider
-from codex_progress_monitor.query_response import MAX_RESPONSE_BYTES, encode_response
-from codex_progress_monitor.timeline_query import TimelineQuery
+from codex_activity_monitor.history import HistoryProvider
+from codex_activity_monitor.query_response import MAX_RESPONSE_BYTES, encode_response
+from codex_activity_monitor.timeline_query import TimelineQuery
 
 
 class FullReferenceAdapter(HistoryProvider):
@@ -36,7 +36,7 @@ def main():
     args = parser.parse_args()
     if args.phases < 1:
         parser.error('phase count must be positive')
-    with tempfile.TemporaryDirectory(prefix='cpm-timeline-response-') as temporary:
+    with tempfile.TemporaryDirectory(prefix='cam-timeline-response-') as temporary:
         home = Path(temporary)
         (home/'sessions').mkdir()
         source = home/'sessions'/'fixture-thread.jsonl'

@@ -17,8 +17,8 @@ Python 依赖约束保存在 `requirements-build.lock`，项目直接依赖仍�
 
 默认输出：
 
-- `.local/standalone/Codex Monitor.app`
-- `.local/standalone/Codex-Monitor-0.1.0-arm64-dev.zip`
+- `.local/standalone/Codex Activity Monitor.app`
+- `.local/standalone/Codex-Activity-Codex Activity Monitor-0.1.0-arm64-dev.zip`
 - `.local/standalone/build-result.json`：构建身份、ZIP SHA-256、体积与逐个二进制检查结果。
 
 外层 App 的包标识固定为 `com.liuhanzhang.codexactivitymonitor`，后端包标识为 `com.liuhanzhang.codexactivitymonitor.backend`，开发版与后续正式版沿用同一身份。ZIP 文件名中的 `dev` 仅表示发布阶段。本地 GUI 构建使用相同的主 App 标识，Preview 构建追加 `.preview` 后缀。
@@ -29,7 +29,7 @@ Python 依赖约束保存在 `requirements-build.lock`，项目直接依赖仍�
 
 ```sh
 .local/packaging/portable-venv/bin/python packaging/verify_app.py \
-  .local/standalone/Codex-Monitor-0.1.0-arm64-dev.zip \
+  .local/standalone/Codex-Activity-Codex Activity Monitor-0.1.0-arm64-dev.zip \
   --result .local/standalone/acceptance-result.json --gui
 ```
 

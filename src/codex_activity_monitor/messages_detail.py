@@ -1,4 +1,4 @@
-"""Monitor-owned section headings and notices, separate from source bodies."""
+"""Codex Activity Monitor-owned section headings and notices, separate from source bodies."""
 ZH = {
  'detail.input': '参数', 'detail.output': '结果', 'detail.user': '用户输入',
  'detail.body': '正文', 'detail.attachments': '图片附件', 'detail.reasoning': '可见思考摘要',

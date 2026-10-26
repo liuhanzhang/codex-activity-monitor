@@ -2,7 +2,7 @@
 
 import unittest
 
-from codex_progress_monitor.metrics import TextStream, TokenCounter
+from codex_activity_monitor.metrics import TextStream, TokenCounter
 
 
 class ReceiveWindowTests(unittest.TestCase):

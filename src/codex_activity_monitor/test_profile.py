@@ -57,7 +57,7 @@ def controller(root, app=None):
     allowed = (Path('/tmp').resolve(), Path(tempfile.gettempdir()).resolve(), ROOT / '.local')
     if not any(root.is_relative_to(base) and root != base for base in allowed):
         raise ControlError('invalid_test_profile', '隔离配置必须位于临时或本机测试目录。')
-    if read_json(root / 'profile.json').get('kind') != 'codex-monitor-disposable-test':
+    if read_json(root / 'profile.json').get('kind') != 'codex-activity-monitor-disposable-test':
         raise ControlError('invalid_test_profile', '缺少明确的可丢弃测试标记。')
     data = root / 'data'
     if data.resolve() != data:

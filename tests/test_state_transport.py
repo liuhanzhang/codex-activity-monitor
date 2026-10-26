@@ -10,10 +10,10 @@ import tempfile
 import time
 import unittest
 
-from codex_progress_monitor.publication import DetachedSnapshot
-from codex_progress_monitor.runtime import collector_alive
-from codex_progress_monitor.state_transport import StateServer, MAX_REQUEST_BYTES
-from codex_progress_monitor.observation_lease import ObservationLease, SessionGrant
+from codex_activity_monitor.publication import DetachedSnapshot
+from codex_activity_monitor.runtime import collector_alive
+from codex_activity_monitor.state_transport import StateServer, MAX_REQUEST_BYTES
+from codex_activity_monitor.observation_lease import ObservationLease, SessionGrant
 
 
 class JSONPeer:
@@ -45,7 +45,7 @@ class JSONPeer:
 
 class StateTransportTests(unittest.TestCase):
     def setUp(self):
-        self.directory = tempfile.TemporaryDirectory(prefix='cpm-state-', dir='/tmp')
+        self.directory = tempfile.TemporaryDirectory(prefix='cam-state-', dir='/tmp')
         self.addCleanup(self.directory.cleanup)
         self.path = Path(self.directory.name)/'state.sock'
         self.server = StateServer(self.path)
@@ -168,13 +168,13 @@ class StateTransportTests(unittest.TestCase):
 
 class CollectorPublicationTests(unittest.TestCase):
     def test_thirty_second_archive_stall_keeps_events_health_and_shutdown_responsive(self):
-        with tempfile.TemporaryDirectory(prefix='cpm-stall-', dir='/tmp') as directory:
+        with tempfile.TemporaryDirectory(prefix='cam-stall-', dir='/tmp') as directory:
             runtime = Path(directory)
             script = '''
 import time
 from pathlib import Path
-import codex_progress_monitor.runtime as persistence
-from codex_progress_monitor.collector import serve
+import codex_activity_monitor.runtime as persistence
+from codex_activity_monitor.collector import serve
 original = persistence.atomic_json
 def stalled(path, value):
     if path.name == 'snapshot.json':
@@ -243,7 +243,7 @@ serve(Path(RUNTIME))
 
 class LeaseTransportTests(unittest.TestCase):
     def setUp(self):
-        directory = tempfile.TemporaryDirectory(prefix='cpm-owner-', dir='/tmp')
+        directory = tempfile.TemporaryDirectory(prefix='cam-owner-', dir='/tmp')
         self.addCleanup(directory.cleanup)
         self.path = Path(directory.name)/'state.sock'
         self.record = {'version': 2, 'id': 'i'*32, 'owner_pid': 100, 'secret': 's'*64, 'active': True}

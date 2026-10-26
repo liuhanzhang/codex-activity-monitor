@@ -31,12 +31,12 @@ def main():
     args = parser.parse_args()
     archive = args.archive.resolve()
     result = {'archive_sha256': hashlib.sha256(archive.read_bytes()).hexdigest(), 'checks': {}}
-    with tempfile.TemporaryDirectory(prefix='cpm-package-', dir='/private/tmp') as directory:
+    with tempfile.TemporaryDirectory(prefix='cam-package-', dir='/private/tmp') as directory:
         root = Path(directory)
         moved = root/'中文 moved application'
         moved.mkdir()
         subprocess.run(['/usr/bin/ditto', '-x', '-k', str(archive), str(moved)], check=True)
-        app = moved/'Codex Monitor.app'
+        app = moved/'Codex Activity Monitor.app'
         backend = app/'Contents/Helpers/MonitorBackend.app/Contents/MacOS/monitor-backend'
         config = json.loads((app/'Contents/Resources/backend.json').read_text())
         assert config['backend'] == str(backend.relative_to(app)) and config['mode'] == 'bundled'
@@ -101,7 +101,7 @@ def main():
         def profile(name):
             path = root/name
             path.mkdir()
-            (path/'profile.json').write_text(json.dumps({'kind': 'codex-monitor-disposable-test'}))
+            (path/'profile.json').write_text(json.dumps({'kind': 'codex-activity-monitor-disposable-test'}))
             original = path/'original-cli'
             original.write_text('#!/bin/sh\ncat\necho dev-stderr >&2\nexit 17\n')
             original.chmod(0o700)

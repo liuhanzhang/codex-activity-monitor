@@ -1,6 +1,6 @@
 # 第一版完成核对
 
-日期：2026-10-11。依据原 [需求与计划](/Users/bytedance/personal/codex_progress_monitor/dev-history/02_product_mvp/requirements-and-plan.md)，仅报告已有实现和实际检查。机器可读结果见 [verification.json](/Users/bytedance/personal/codex_progress_monitor/analysis/product-mvp/verification.json)。
+日期：2026-10-11。依据原 [需求与计划](/Users/bytedance/personal/codex-activity-monitor/dev-history/02_product_mvp/requirements-and-plan.md)，仅报告已有实现和实际检查。机器可读结果见 [verification.json](/Users/bytedance/personal/codex-activity-monitor/analysis/product-mvp/verification.json)。
 
 ## 实施阶段
 
@@ -32,7 +32,7 @@
 
 Computer Use 已明确拒绝操作 Codex 应用窗口，隔离实例也受相同应用标识限制。后端任务测试和启动回归已用于完成其余可自动验证的工作。当前不通过其他界面技术绕过该限制，也不主动重启承载用户任务的主 App。
 
-第三轮人工提交已通过隔离 Desktop 的核心实时采集检查，结果见 [验证摘要](/Users/bytedance/personal/codex_progress_monitor/analysis/product-mvp/desktop-ui-acceptance.json)。无需再重复这组测试；主 App 等其他任务结束后正常重开接入，并按 [使用说明](/Users/bytedance/personal/codex_progress_monitor/dev-history/02_product_mvp/usage.md) 在日常任务中试用。短参数生成约 150 ms，本轮没有参数正速度快照，不能据此记录 GUI 参数速度通过；已有长参数后端检查保留独立边界。长期自然使用和更多工具类型继续属于阶段 D。
+第三轮人工提交已通过隔离 Desktop 的核心实时采集检查，结果见 [验证摘要](/Users/bytedance/personal/codex-activity-monitor/analysis/product-mvp/desktop-ui-acceptance.json)。无需再重复这组测试；主 App 等其他任务结束后正常重开接入，并按 [使用说明](/Users/bytedance/personal/codex-activity-monitor/dev-history/02_product_mvp/usage.md) 在日常任务中试用。短参数生成约 150 ms，本轮没有参数正速度快照，不能据此记录 GUI 参数速度通过；已有长参数后端检查保留独立边界。长期自然使用和更多工具类型继续属于阶段 D。
 
 ## 实施目标收尾
 

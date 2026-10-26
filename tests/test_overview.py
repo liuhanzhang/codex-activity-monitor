@@ -1,9 +1,9 @@
 from collections import OrderedDict
 import unittest
 
-from codex_progress_monitor.engine import Activity, Engine
-from codex_progress_monitor.metrics import TextStream
-from codex_progress_monitor.overview import annotate_parents
+from codex_activity_monitor.engine import Activity, Engine
+from codex_activity_monitor.metrics import TextStream
+from codex_activity_monitor.overview import annotate_parents
 
 
 class OverviewTests(unittest.TestCase):

@@ -3,9 +3,9 @@
 from concurrent.futures import Future
 import unittest
 
-from codex_progress_monitor.metrics import TextStream, TokenCounter, count_text
-from codex_progress_monitor.engine import Engine
-from codex_progress_monitor.events import Event
+from codex_activity_monitor.metrics import TextStream, TokenCounter, count_text
+from codex_activity_monitor.engine import Engine
+from codex_activity_monitor.events import Event
 
 
 class ManualCounter:

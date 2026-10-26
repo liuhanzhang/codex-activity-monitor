@@ -4,15 +4,15 @@ import time
 import unittest
 from unittest.mock import patch
 
-from codex_progress_monitor.observation_lease import ObservationLease
-from codex_progress_monitor.publication import DetachedSnapshot
-from codex_progress_monitor.state_client import authorize_session, state_once, StateClientError
-from codex_progress_monitor.state_transport import StateServer
+from codex_activity_monitor.observation_lease import ObservationLease
+from codex_activity_monitor.publication import DetachedSnapshot
+from codex_activity_monitor.state_client import authorize_session, state_once, StateClientError
+from codex_activity_monitor.state_transport import StateServer
 
 
 class StateClientTests(unittest.TestCase):
     def setUp(self):
-        directory = tempfile.TemporaryDirectory(prefix='cpm-client-', dir='/tmp')
+        directory = tempfile.TemporaryDirectory(prefix='cam-client-', dir='/tmp')
         self.addCleanup(directory.cleanup)
         self.runtime = Path(directory.name)
         self.lease = ObservationLease(managed=True)

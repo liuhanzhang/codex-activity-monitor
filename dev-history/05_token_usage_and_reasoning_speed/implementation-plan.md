@@ -18,13 +18,13 @@
 
 | 文件 / 模块 | 计划调整 |
 | --- | --- |
-| [events.py](../../src/codex_progress_monitor/events.py) | 放行 `thread/tokenUsage/updated` 的最小数值字段；上游终止 response 保留 usage、response ID、身份与 item IDs，校验形状。 |
+| [events.py](../../src/codex_activity_monitor/events.py) | 放行 `thread/tokenUsage/updated` 的最小数值字段；上游终止 response 保留 usage、response ID、身份与 item IDs，校验形状。 |
 | 新增 `usage.py` | 管理响应去重、回合累计 / 基线、reasoning 完整边界和最近有效均速结果；不依赖 tokenizer。 |
-| [engine.py](../../src/codex_progress_monitor/engine.py) | 接入新 turn、reasoning 边界、response 完成与 usage 通知；可靠关联后调用 usage 状态，生成新增快照字段。 |
-| [bridge.py](../../src/codex_progress_monitor/bridge.py) | 缓存恢复所需的最新 usage 基线 / 有界响应元数据，明确重放身份；保留原事件观测时间，不扩展正文缓存。 |
-| [collector.py](../../src/codex_progress_monitor/collector.py) | 按逻辑 thread / turn 恢复已确认计数和最近有效均速，避免历史快照与新事件双计或串回合。 |
-| [display.py](../../src/codex_progress_monitor/display.py)、[中文资源](../../src/codex_progress_monitor/messages_zh_cn.py) | 五列布局、本轮两种计数、生成速度与最近推理均速；旧字段兼容、窄终端与历史静态结果展示。 |
-| [runtime.py](../../src/codex_progress_monitor/runtime.py)及进程身份 | 新模块纳入实际依赖方的加载身份检查；复用已有原子快照机制。 |
+| [engine.py](../../src/codex_activity_monitor/engine.py) | 接入新 turn、reasoning 边界、response 完成与 usage 通知；可靠关联后调用 usage 状态，生成新增快照字段。 |
+| [bridge.py](../../src/codex_activity_monitor/bridge.py) | 缓存恢复所需的最新 usage 基线 / 有界响应元数据，明确重放身份；保留原事件观测时间，不扩展正文缓存。 |
+| [collector.py](../../src/codex_activity_monitor/collector.py) | 按逻辑 thread / turn 恢复已确认计数和最近有效均速，避免历史快照与新事件双计或串回合。 |
+| [display.py](../../src/codex_activity_monitor/display.py)、[中文资源](../../src/codex_activity_monitor/messages_zh_cn.py) | 五列布局、本轮两种计数、生成速度与最近推理均速；旧字段兼容、窄终端与历史静态结果展示。 |
+| [runtime.py](../../src/codex_activity_monitor/runtime.py)及进程身份 | 新模块纳入实际依赖方的加载身份检查；复用已有原子快照机制。 |
 | [tests](../../tests) | 增加语义测试，更新此前“usage 被过滤”的边界断言，覆盖恢复与显示。 |
 
 新增模块名是实施约定。现有 `metrics.py` 的 TextStream 和 TokenCounter 算法继续用于接收文本速度，不复用为服务端累计器。

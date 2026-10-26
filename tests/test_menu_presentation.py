@@ -1,8 +1,8 @@
 from collections import OrderedDict
 import unittest
 
-from codex_progress_monitor.engine import Activity, Engine
-from codex_progress_monitor.metrics import TextStream
+from codex_activity_monitor.engine import Activity, Engine
+from codex_activity_monitor.metrics import TextStream
 
 
 class MenuPresentationTests(unittest.TestCase):

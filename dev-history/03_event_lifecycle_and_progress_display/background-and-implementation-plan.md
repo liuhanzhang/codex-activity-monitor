@@ -138,7 +138,7 @@ Q1 / Q2 的源码入口是 [命令事件映射](/Users/bytedance/playground/code
 5. 调整主状态：有真实工作优先展示动作；所有前台工作确实被阻塞才暂停。自动审核具有独立进行中 / 结束状态；没有其他实际工作时可成为主状态，并行时也保留可见活动。命令参数完成或审核通过不作为实际执行证据。
 6. 补齐重连的最小快照、关闭标记和重复事件处理；观测缺失时停止速度并使过期状态失效。后台进程按独立生命周期维护。
 
-主要文件：[events.py](/Users/bytedance/personal/codex_progress_monitor/src/codex_progress_monitor/events.py)、[engine.py](/Users/bytedance/personal/codex_progress_monitor/src/codex_progress_monitor/engine.py)、[bridge.py](/Users/bytedance/personal/codex_progress_monitor/src/codex_progress_monitor/bridge.py)、必要时的 [collector.py](/Users/bytedance/personal/codex_progress_monitor/src/codex_progress_monitor/collector.py)。
+主要文件：[events.py](/Users/bytedance/personal/codex-activity-monitor/src/codex_activity_monitor/events.py)、[engine.py](/Users/bytedance/personal/codex-activity-monitor/src/codex_activity_monitor/engine.py)、[bridge.py](/Users/bytedance/personal/codex-activity-monitor/src/codex_activity_monitor/bridge.py)、必要时的 [collector.py](/Users/bytedance/personal/codex-activity-monitor/src/codex_activity_monitor/collector.py)。
 
 完成条件：已定位字段 / 类型 / 清理问题不再复现；参数、审核、执行与结束不互相替代；并行工作不被另一个请求覆盖；已结束请求和流不残留；无事件依据的外层结束不再被当作运行事实。
 
@@ -151,7 +151,7 @@ Q1 / Q2 的源码入口是 [命令事件映射](/Users/bytedance/playground/code
 5. 约 2 秒接收窗口内的有效生成流可以显示速率；未知 encoding 标记估算。没有可观测生成流时显示 `—`；结束内容只校正计数，不倒填实时速度。命令输出、进度消息和服务端 usage 不计入。
 6. 移除默认技术字段，保留具体动作、耗时和必要并行上下文。合并短暂等待，保持状态连续；失败、终止和断线立即呈现。1 秒 / 3 秒的初始合并阈值通过回放调整。
 
-主要文件：[tool_labels.py](/Users/bytedance/personal/codex_progress_monitor/src/codex_progress_monitor/tool_labels.py)、[metrics.py](/Users/bytedance/personal/codex_progress_monitor/src/codex_progress_monitor/metrics.py)、[engine.py](/Users/bytedance/personal/codex_progress_monitor/src/codex_progress_monitor/engine.py)、[display.py](/Users/bytedance/personal/codex_progress_monitor/src/codex_progress_monitor/display.py)。
+主要文件：[tool_labels.py](/Users/bytedance/personal/codex-activity-monitor/src/codex_activity_monitor/tool_labels.py)、[metrics.py](/Users/bytedance/personal/codex-activity-monitor/src/codex_activity_monitor/metrics.py)、[engine.py](/Users/bytedance/personal/codex-activity-monitor/src/codex_activity_monitor/engine.py)、[display.py](/Users/bytedance/personal/codex-activity-monitor/src/codex_activity_monitor/display.py)。
 
 完成条件：默认列表符合展示方案；生成参数时可显示已有名称 / 命令前缀；工作状态和流速不会在结束后残留；普通详情不变成协议事件列表，也不出现重复用户操作提示。
 
@@ -184,7 +184,7 @@ Q1 / Q2 的源码入口是 [命令事件映射](/Users/bytedance/playground/code
 .local/venv/bin/python -m unittest discover -s tests -p 'test_*.py' -v
 ```
 
-已有 [捕获回放工具](/Users/bytedance/personal/codex_progress_monitor/tests/verify_captures.py) 可复用：
+已有 [捕获回放工具](/Users/bytedance/personal/codex-activity-monitor/tests/verify_captures.py) 可复用：
 
 ```sh
 .local/venv/bin/python tests/verify_captures.py \
@@ -196,7 +196,7 @@ Q1 / Q2 的源码入口是 [命令事件映射](/Users/bytedance/playground/code
 
 ### 6.2 当前版本真实路径验证
 
-复用 [产品 smoke](/Users/bytedance/personal/codex_progress_monitor/tests/product_smoke.py)、[后台进程 probe](/Users/bytedance/personal/codex_progress_monitor/tests/background_probe.py) 和 [审批 probe](/Users/bytedance/personal/codex_progress_monitor/experiments/product-preflight/approval_probe.py) 的隔离方式，按新快照与展示口径调整断言。脚本入口是可复用基础，不表示所有新场景已经由现有脚本覆盖。
+复用 [产品 smoke](/Users/bytedance/personal/codex-activity-monitor/tests/product_smoke.py)、[后台进程 probe](/Users/bytedance/personal/codex-activity-monitor/tests/background_probe.py) 和 [审批 probe](/Users/bytedance/personal/codex-activity-monitor/experiments/product-preflight/approval_probe.py) 的隔离方式，按新快照与展示口径调整断言。脚本入口是可复用基础，不表示所有新场景已经由现有脚本覆盖。
 
 最低场景为：生成文本与工具参数、实际短命令 / 静默命令、一个真实审批结束路径、两项并行工作、后台进程及消费者重连。计划和子任务增加可触发的真实场景；自动审核与其他条件长尾若无法触发，单独标记，不能用模拟结果替代。
 

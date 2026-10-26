@@ -5,10 +5,10 @@ import unittest
 from unittest.mock import patch
 
 from rich.console import Console
-from codex_progress_monitor.display import render
-from codex_progress_monitor.engine import Engine
-from codex_progress_monitor.events import Event, filter_event
-from codex_progress_monitor.usage import MAX_PENDING, MAX_RESPONSES, usage_fields
+from codex_activity_monitor.display import render
+from codex_activity_monitor.engine import Engine
+from codex_activity_monitor.events import Event, filter_event
+from codex_activity_monitor.usage import MAX_PENDING, MAX_RESPONSES, usage_fields
 
 
 class UsageTests(unittest.TestCase):
@@ -278,7 +278,7 @@ class UsageTests(unittest.TestCase):
             'tokens_per_second':20,'duration_seconds':2,'reasoning_tokens':40,
             'turn_id':'u','response_id':'resp','item_id':'r','source':'upstream','order':101}
         data['threads'][0]['state']['private']='SENSITIVE'
-        from codex_progress_monitor.usage import UsageBook
+        from codex_activity_monitor.usage import UsageBook
         restored=UsageBook();restored.restore(data)
         self.assertEqual((restored.view(('b','t'),'u')['output_tokens'],restored.view(('b','t'),'u')['reasoning_tokens']),(100,40))
         self.assertNotIn('latest_reasoning',json.dumps(restored.dump()))
@@ -318,7 +318,7 @@ class UsageTests(unittest.TestCase):
 
     def test_truncated_membership_requires_independent_response_identity(self):
         self.turn();self.reason()
-        with patch('codex_progress_monitor.usage.MAX_ITEMS',1):
+        with patch('codex_activity_monitor.usage.MAX_ITEMS',1):
             self.response(items=('r','unmapped'))
             self.assertIsNone(self.usage()['output_tokens'])
         self.turn('next',at=111)
@@ -327,12 +327,12 @@ class UsageTests(unittest.TestCase):
 
     def test_bounded_response_and_pending_caches_fail_conservatively(self):
         self.turn()
-        with patch('codex_progress_monitor.usage.MAX_RESPONSES',2):
+        with patch('codex_activity_monitor.usage.MAX_RESPONSES',2):
             for n in range(3):
                 self.response(str(n),100,0,(),110+n,'u','t')
             self.assertIsNone(self.usage()['output_tokens'])
             self.assertIn('response_limit',self.usage()['diagnostics'])
-        with patch('codex_progress_monitor.usage.MAX_PENDING',2):
+        with patch('codex_activity_monitor.usage.MAX_PENDING',2):
             for n in range(5):
                 self.response('unknown'+str(n),items=('unmapped'+str(n),),at=120+n)
             self.assertEqual(len(self.engine.usage.pending),2)

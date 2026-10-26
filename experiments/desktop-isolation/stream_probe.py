@@ -79,10 +79,10 @@ def main():
     try:
         driver = WebSocketProbe((endpoint.hostname, endpoint.port))
         clients.append(driver)
-        driver_info = initialize(driver, 'codex_progress_test_driver')
+        driver_info = initialize(driver, 'codex_activity_monitor_test_driver')
         observer = WebSocketProbe((endpoint.hostname, endpoint.port))
         clients.append(observer)
-        observer_info = initialize(observer, 'codex_progress_test_observer')
+        observer_info = initialize(observer, 'codex_activity_monitor_test_observer')
         for info in (driver_info, observer_info):
             if info.get('codexHome') != report['codex_home']:
                 raise RuntimeError('Unexpected backend Codex home')

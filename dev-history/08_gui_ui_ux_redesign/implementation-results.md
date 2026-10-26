@@ -23,7 +23,7 @@
 
 按同一 scope 内明确父子身份统计主聊天；父已完成、子仍工作也保留组。镜像去重、独立流加总、旧 `active_thread_count`、Output 包含 Reasoning、推理均速定义与原始数值精度不变。TUI 格式未修改。旧快照无新增投影时降级为可靠数值，未知契约版本 / 模式和过期快照不会播放动画。
 
-主要代码为 [menu_presentation.py](../../src/codex_progress_monitor/menu_presentation.py)、[Snapshot.swift](../../macos/Sources/MonitorModel/Snapshot.swift)、[DashboardView.swift](../../macos/Sources/MonitorApp/DashboardView.swift)、[PopoverController.swift](../../macos/Sources/MonitorApp/PopoverController.swift) 和 [StatusContentView.swift](../../macos/Sources/MonitorApp/StatusContentView.swift)。管理事务继续调用原实现。
+主要代码为 [menu_presentation.py](../../src/codex_activity_monitor/menu_presentation.py)、[Snapshot.swift](../../macos/Sources/MonitorModel/Snapshot.swift)、[DashboardView.swift](../../macos/Sources/MonitorApp/DashboardView.swift)、[PopoverController.swift](../../macos/Sources/MonitorApp/PopoverController.swift) 和 [StatusContentView.swift](../../macos/Sources/MonitorApp/StatusContentView.swift)。管理事务继续调用原实现。
 
 ## 自动验证
 

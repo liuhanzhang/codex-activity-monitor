@@ -9,7 +9,7 @@ from string import Formatter
 
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / 'src'))
-from codex_progress_monitor.i18n import CATALOGS, render_message
+from codex_activity_monitor.i18n import CATALOGS, render_message
 
 
 def exported():

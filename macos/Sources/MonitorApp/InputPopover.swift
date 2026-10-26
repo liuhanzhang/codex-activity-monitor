@@ -53,7 +53,7 @@ struct InputPopoverRequest: Identifiable {
 
     var notice: String? {
         guard let detail else { return nil }
-        if detail.version == 1 && detail.requiresReload { return "当前来源不支持继续加载，请更新 Monitor 后重新读取。" }
+        if detail.version == 1 && detail.requiresReload { return "当前来源不支持继续加载，请更新 Codex Activity Monitor 后重新读取。" }
         switch detail.state {
         case "content_changed": return "源内容已变化。保留已加载内容，请重新读取。"
         case "available": return nil

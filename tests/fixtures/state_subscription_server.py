@@ -6,9 +6,9 @@ import socket
 import sys
 import time
 
-from codex_progress_monitor.publication import DetachedSnapshot, encode_frame
-from codex_progress_monitor.state_transport import StateServer
-from codex_progress_monitor.observation_lease import ObservationLease, SessionGrant
+from codex_activity_monitor.publication import DetachedSnapshot, encode_frame
+from codex_activity_monitor.state_transport import StateServer
+from codex_activity_monitor.observation_lease import ObservationLease, SessionGrant
 
 
 runtime, mode = Path(sys.argv[1]), sys.argv[2]

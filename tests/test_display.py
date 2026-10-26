@@ -2,9 +2,9 @@ import io
 import time
 import unittest
 from rich.console import Console
-from codex_progress_monitor.engine import Engine
-from codex_progress_monitor.events import Event
-from codex_progress_monitor.display import render
+from codex_activity_monitor.engine import Engine
+from codex_activity_monitor.events import Event
+from codex_activity_monitor.display import render
 
 
 class DisplayTests(unittest.TestCase):
@@ -45,7 +45,7 @@ class DisplayTests(unittest.TestCase):
             engine.ingest(Event('b','protocol_out',{'method':'turn/started','params':{'threadId':'t','turn':{'id':'u'}}},100,0))
             engine.ingest(Event('b','protocol_out',{'method':'item/started','params':{'threadId':'t','turnId':'u',
                 'item':{'id':'cmd','type':'commandExecution','source':'unifiedExecStartup','processId':'123',
-                        'command':'/bin/zsh -lc "rg --files src/codex_progress_monitor/tool_labels.py"'}}},101,0))
+                        'command':'/bin/zsh -lc "rg --files src/codex_activity_monitor/tool_labels.py"'}}},101,0))
             output=io.StringIO()
             Console(file=output,width=240).print(render(engine.snapshot(102,time.time()),detail=True)[0])
             text=output.getvalue()

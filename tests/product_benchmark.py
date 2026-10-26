@@ -8,18 +8,18 @@ import sys
 import tempfile
 import time
 
-from codex_progress_monitor.bridge import Observer
+from codex_activity_monitor.bridge import Observer
 
 
 def main():
-    with tempfile.TemporaryDirectory(prefix='cpm-bench-',dir='/tmp') as directory:
+    with tempfile.TemporaryDirectory(prefix='cam-bench-',dir='/tmp') as directory:
         runtime=Path(directory)
         actual=runtime/'fake'
         actual.write_text('#!'+sys.executable+'\nimport sys\nwhile True:\n data=sys.stdin.buffer.read(65536)\n if not data:break\n sys.stdout.buffer.write(data);sys.stdout.buffer.flush()\n')
         actual.chmod(0o700)
         payload=(b'{"id":1,"result":{}}\n'*110000)
         report={'scope':'synthetic 2.31 MB stdio echo, collector absent; no model calls','runs':{}}
-        for name,cmd in [('original',[str(actual),'app-server']),('bridge',[sys.executable,'-m','codex_progress_monitor.cli','--runtime',str(runtime),'bridge','--real-cli',str(actual),'--','app-server'])]:
+        for name,cmd in [('original',[str(actual),'app-server']),('bridge',[sys.executable,'-m','codex_activity_monitor.cli','--runtime',str(runtime),'bridge','--real-cli',str(actual),'--','app-server'])]:
             records=[]
             for _ in range(3):
                 began=time.perf_counter()

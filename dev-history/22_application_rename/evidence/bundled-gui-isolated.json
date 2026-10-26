@@ -1,0 +1,13 @@
+{
+  "ok": true,
+  "build_id": "9c7e82cb0e2467ad320ef14d8748a061671616f93265798b2e12ec5264aba7e6",
+  "source_history_python_and_network_denied": true,
+  "synthetic_profile_only": true,
+  "native_gui_with_bundled_backend": {
+    "build_id": "9c7e82cb0e2467ad320ef14d8748a061671616f93265798b2e12ec5264aba7e6",
+    "management_state": "configured",
+    "transport_fresh": true,
+    "mode": "unavailable"
+  },
+  "owned_test_child_stopped_with_signal": true
+}

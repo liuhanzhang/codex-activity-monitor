@@ -5,9 +5,9 @@ from pathlib import Path
 import tempfile
 import unittest
 
-from codex_progress_monitor.history import HistoryProvider
-from codex_progress_monitor.timeline import TimelineBook, item_phase, phase_id
-from codex_progress_monitor.timeline_query import TimelineQuery
+from codex_activity_monitor.history import HistoryProvider
+from codex_activity_monitor.timeline import TimelineBook, item_phase, phase_id
+from codex_activity_monitor.timeline_query import TimelineQuery
 
 
 class HistoryDetailTests(unittest.TestCase):

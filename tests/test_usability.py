@@ -17,13 +17,13 @@ from unittest.mock import patch
 
 from rich.console import Console
 
-from codex_progress_monitor.cli import main
-from codex_progress_monitor.display import input_keys, render, seconds
-from codex_progress_monitor.engine import Engine
-from codex_progress_monitor.events import Event, filter_event
-from codex_progress_monitor.i18n import CATALOGS, message, register_catalog, render_message, tr
-from codex_progress_monitor.messages_zh_cn import MESSAGES
-from codex_progress_monitor.runtime import atomic_json, save_ui_language, ui_language
+from codex_activity_monitor.cli import main
+from codex_activity_monitor.display import input_keys, render, seconds
+from codex_activity_monitor.engine import Engine
+from codex_activity_monitor.events import Event, filter_event
+from codex_activity_monitor.i18n import CATALOGS, message, register_catalog, render_message, tr
+from codex_activity_monitor.messages_zh_cn import MESSAGES
+from codex_activity_monitor.runtime import atomic_json, save_ui_language, ui_language
 
 ROOT = Path(__file__).resolve().parents[1]
 
@@ -34,8 +34,8 @@ def test_catalog():
                     'activity.unknown': 'Unavailable', 'activity.disconnected': 'Disconnected',
                     'table.chat': 'Chat / project', 'table.activity': 'Activity',
                     'view.local': 'Local progress', 'view.header': {
-                        'one': 'Codex Progress · {state} · {count} chat',
-                        'other': 'Codex Progress · {state} · {count} chats'}})
+                        'one': 'Codex Activity Monitor · {state} · {count} chat',
+                        'other': 'Codex Activity Monitor · {state} · {count} chats'}})
     return catalog
 
 
@@ -155,7 +155,7 @@ class UsabilityTests(unittest.TestCase):
 
     def test_settings_priority_errors_and_catalog_completeness(self):
         register_catalog('test-en', test_catalog())
-        self.assertEqual(tr('view.header', 'test-en', state='Local', count=2), 'Codex Progress · Local · 2 chats')
+        self.assertEqual(tr('view.header', 'test-en', state='Local', count=2), 'Codex Activity Monitor · Local · 2 chats')
         self.assertEqual(render_message(message('not.a.real.key'), 'test-en'), '处理中')
         with self.assertRaises(ValueError):
             register_catalog('bad', {'activity.running': 'Running'})
@@ -181,8 +181,8 @@ class UsabilityTests(unittest.TestCase):
     def test_cli_once_and_published_english(self):
         with tempfile.TemporaryDirectory(dir='/tmp') as tmp:
             runtime = Path(tmp)
-            from codex_progress_monitor.state_transport import StateServer
-            from codex_progress_monitor.publication import DetachedSnapshot
+            from codex_activity_monitor.state_transport import StateServer
+            from codex_activity_monitor.publication import DetachedSnapshot
             server=StateServer(runtime/'state.sock')
             self.addCleanup(server.close)
             server.publish(DetachedSnapshot.capture({**self.snapshot(103), 'running': True}))
@@ -202,7 +202,7 @@ class WatchPTYTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as tmp:
             runtime = Path(tmp)
             atomic_json(runtime/'snapshot.json', {'updated_at': time.time(), 'threads': []})
-            process = subprocess.Popen([sys.executable, '-m', 'codex_progress_monitor.cli', '--runtime', tmp,
+            process = subprocess.Popen([sys.executable, '-m', 'codex_activity_monitor.cli', '--runtime', tmp,
                                         'watch', '--json'], cwd=ROOT, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
             try:
                 stamps, buffer = [], b''
@@ -251,9 +251,9 @@ class WatchPTYTests(unittest.TestCase):
             script = '''
 import sys,time
 from pathlib import Path
-import codex_progress_monitor.display as display
-from codex_progress_monitor.i18n import register_catalog
-from codex_progress_monitor.messages_zh_cn import MESSAGES
+import codex_activity_monitor.display as display
+from codex_activity_monitor.i18n import register_catalog
+from codex_activity_monitor.messages_zh_cn import MESSAGES
 register_catalog('test-en', dict(MESSAGES))
 runtime=Path(sys.argv[1])
 read=display.current_state

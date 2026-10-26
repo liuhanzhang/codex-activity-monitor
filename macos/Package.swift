@@ -2,7 +2,7 @@
 import PackageDescription
 
 let package = Package(
-    name: "CodexProgressMonitor",
+    name: "CodexActivityMonitor",
     defaultLocalization: "zh-Hans",
     platforms: [.macOS("26.0")],
     products: [.executable(name: "MonitorApp", targets: ["MonitorApp"])],

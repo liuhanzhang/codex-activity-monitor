@@ -5,16 +5,16 @@ import multiprocessing
 if __name__ == '__main__':
     multiprocessing.freeze_support()
 
-    from codex_progress_monitor.execution import initialize_bundle
+    from codex_activity_monitor.execution import initialize_bundle
     initialize_bundle()
 
     import sys
     if sys.argv[1:] == ['--self-check']:
         import json
-        from codex_progress_monitor.execution import bundle_resources
-        from codex_progress_monitor.metrics import count_text
-        from codex_progress_monitor.runtime import source_identity
-        from codex_progress_monitor.tokenizer_process import TokenizerProcess
+        from codex_activity_monitor.execution import bundle_resources
+        from codex_activity_monitor.metrics import count_text
+        from codex_activity_monitor.runtime import source_identity
+        from codex_activity_monitor.tokenizer_process import TokenizerProcess
         manifest = json.loads((bundle_resources()/'build-manifest.json').read_text())
         worker = TokenizerProcess(timeout=10)
         counts = {}
@@ -31,5 +31,5 @@ if __name__ == '__main__':
         finally:
             worker.close()
     else:
-        from codex_progress_monitor.cli import main
+        from codex_activity_monitor.cli import main
         raise SystemExit(main())

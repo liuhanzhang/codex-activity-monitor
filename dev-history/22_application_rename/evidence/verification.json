@@ -1,0 +1,61 @@
+{
+  "date": "2026-10-26",
+  "baseline": "83a3ee7758c0ed7e6158a0215fd44172a5e96fa0",
+  "python_regression": {
+    "tests": 487,
+    "passed": true,
+    "environment": "final directory, inherited PYTHONPATH/PYTHONHOME removed",
+    "before_final_abbreviated_copy_update": true
+  },
+  "swift_regression": {
+    "tests": 119,
+    "passed": true,
+    "skips": "Existing opt-in benchmark/window tests remain opt-in"
+  },
+  "final_localization_regression": {
+    "tests": 6,
+    "passed": true
+  },
+  "native_ui_observed": {
+    "preview_title": "Codex Activity Monitor · 只读验证",
+    "daily_app_name": "Codex Activity Monitor",
+    "daily_quit_menu": "退出 Codex Activity Monitor",
+    "daily_state": "已连接，1 个活跃聊天；真实模型和工具时间线及计数已显示"
+  },
+  "daily_collector_healthy": true,
+  "natural_turn_verified": true,
+  "archive": {
+    "name": "Codex-Activity-Monitor-0.1.0-arm64-dev.zip",
+    "build_id": "9c7e82cb0e2467ad320ef14d8748a061671616f93265798b2e12ec5264aba7e6",
+    "sha256": "819973141d6418fe16480b225b197ee101ce6403a63473869e2928886ab0e99f",
+    "isolated_acceptance_passed": true,
+    "native_gui_isolated_acceptance_passed": true
+  },
+  "cleanup": {
+    "generated_paths_removed": 186,
+    "removed_allocated_bytes_from_manifest": 3260039168,
+    "old_timeline_file_bytes_removed": 69820416,
+    "old_snapshot_and_logs_removed": true,
+    "additional_old_build_caches_removed": true,
+    "legacy_bridge_support_retained_until_restart": false,
+    "legacy_data_root_removed": true,
+    "legacy_source_environment_and_app_removed": true,
+    "temporary_original_environment_backups_removed": true,
+    "old_cwd_placeholder_retained_for_tool_workers": false,
+    "old_directory_removed": true,
+    "final_placeholder_removed_by": "user; absence verified read-only"
+  },
+  "repository": {
+    "local": "/Users/bytedance/personal/codex-activity-monitor",
+    "remote_rename_complete": true,
+    "origin_changed": true,
+    "git_history_preserved": true,
+    "committed_or_pushed": false,
+    "remote_url": "https://github.com/liuhanzhang/codex-activity-monitor",
+    "origin": "git@github.com:LiuHanzhang/codex-activity-monitor.git",
+    "snapshot_before_requested_commit": true
+  },
+  "pending": [],
+  "user_codex_restart_verified": true,
+  "completion_verified_date": "2026-10-26"
+}

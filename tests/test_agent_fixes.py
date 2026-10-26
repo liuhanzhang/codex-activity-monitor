@@ -7,14 +7,14 @@ import unittest
 import threading
 from unittest.mock import patch
 
-from codex_progress_monitor.agent_presentation import scoped_status
-from codex_progress_monitor.history import HistoryProvider
-from codex_progress_monitor.overview import annotate_parents
-from codex_progress_monitor.timeline import TimelineBook, item_phase
-from codex_progress_monitor.timeline_query import TimelineQuery
-from codex_progress_monitor.agent_identity import AgentIdentityCache, read_header
-from codex_progress_monitor.agent_relations import raw_coordination
-from codex_progress_monitor.engine import Activity, Engine
+from codex_activity_monitor.agent_presentation import scoped_status
+from codex_activity_monitor.history import HistoryProvider
+from codex_activity_monitor.overview import annotate_parents
+from codex_activity_monitor.timeline import TimelineBook, item_phase
+from codex_activity_monitor.timeline_query import TimelineQuery
+from codex_activity_monitor.agent_identity import AgentIdentityCache, read_header
+from codex_activity_monitor.agent_relations import raw_coordination
+from codex_activity_monitor.engine import Activity, Engine
 
 
 class AgentFixTests(unittest.TestCase):
@@ -86,7 +86,7 @@ class AgentFixTests(unittest.TestCase):
         def read(*args):
             entered.set(); release.wait(2)
             return None, {'quality':['identity_unavailable']}
-        with patch('codex_progress_monitor.agent_identity.read_header', side_effect=read):
+        with patch('codex_activity_monitor.agent_identity.read_header', side_effect=read):
             cache = AgentIdentityCache()
             try:
                 with cache.lock:

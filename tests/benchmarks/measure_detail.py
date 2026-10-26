@@ -11,9 +11,9 @@ import tempfile
 import time
 import tracemalloc
 
-from codex_progress_monitor.history import HistoryProvider
-from codex_progress_monitor.timeline import phase_id
-from codex_progress_monitor.timeline_query import TimelineQuery
+from codex_activity_monitor.history import HistoryProvider
+from codex_activity_monitor.timeline import phase_id
+from codex_activity_monitor.timeline_query import TimelineQuery
 
 
 class FullTurnAdapter(HistoryProvider):
@@ -35,7 +35,7 @@ def main():
     parser.add_argument('--output', type=Path, required=True)
     args = parser.parse_args()
     if args.phases < 1 or args.body_repeats < 1: parser.error('phase count and body repeats must be positive')
-    with tempfile.TemporaryDirectory(prefix='cpm-detail-projection-') as tmp:
+    with tempfile.TemporaryDirectory(prefix='cam-detail-projection-') as tmp:
         home = Path(tmp); (home/'sessions').mkdir(); path = home/'sessions'/'fixture-thread.jsonl'
         with path.open('w') as stream:
             def row(payload): stream.write(json.dumps({'type': 'event_msg', 'payload': payload})+'\n')

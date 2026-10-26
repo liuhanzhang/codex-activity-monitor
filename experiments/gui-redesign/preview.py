@@ -10,7 +10,7 @@ CASES = ['multiple','aggregate','slow','fast','thinking','executing','generating
 
 
 def fixture(case):
-    def chat(identity, title, project='codex_progress_monitor', active=True):
+    def chat(identity, title, project='codex_activity_monitor', active=True):
         return dict(id=identity, home='/preview', name=title, cwd='/preview/'+project,
                     model='preview-model', status='inProgress' if active else 'completed',
                     connected=True, visible=True, has_active_work=active,
@@ -21,7 +21,7 @@ def fixture(case):
                                      active=active, status='inProgress' if active else 'completed', duration_seconds=18,
                                      start_known=True)])
 
-    threads = [chat('design', '打磨 Monitor 界面'), chat('capture', '调查活动采集', 'cairn')]
+    threads = [chat('design', '打磨 Codex Activity Monitor 界面'), chat('capture', '调查活动采集', 'cairn')]
     threads[1].update(display_label='运行命令', generation_rate=None, display_seconds=42)
     threads += [chat('recent1', '检查状态切换', active=False), chat('recent2', '整理界面需求', active=False)]
     mode, count, rate, coverage = 'speed', 2, 48.2, 'complete'

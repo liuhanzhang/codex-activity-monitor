@@ -9,12 +9,12 @@ import threading
 import unittest
 from unittest.mock import patch
 
-from codex_progress_monitor.app_control import AppController, ControlError
-from codex_progress_monitor.cli import main
-from codex_progress_monitor.history import item_content, raw_section
-from codex_progress_monitor.i18n import CATALOGS, message, render_message, tr
-from codex_progress_monitor.runtime import save_ui_language, ui_language
-from codex_progress_monitor.timeline import display_phase, item_phase
+from codex_activity_monitor.app_control import AppController, ControlError
+from codex_activity_monitor.cli import main
+from codex_activity_monitor.history import item_content, raw_section
+from codex_activity_monitor.i18n import CATALOGS, message, render_message, tr
+from codex_activity_monitor.runtime import save_ui_language, ui_language
+from codex_activity_monitor.timeline import display_phase, item_phase
 
 ROOT = Path(__file__).resolve().parents[1]
 
@@ -25,7 +25,7 @@ class LocalizationTests(unittest.TestCase):
         self.assertEqual(set(CATALOGS['en']), set(CATALOGS['zh-CN']))
         for count, noun in [(0, 'chats'), (1, 'chat'), (2, 'chats')]:
             self.assertEqual(tr('view.header', 'en', state='Local', count=count),
-                             f'Codex Progress · Local · {count} {noun}')
+                             f'Codex Activity Monitor · Local · {count} {noun}')
         value = message('activity.recent', activity=message('activity.file_editing_more', target='中文.py', count=1))
         before = copy.deepcopy(value)
         self.assertEqual(render_message(value, 'en'), 'Just completed · Editing · 中文.py (+1 more)')
@@ -90,13 +90,13 @@ class LocalizationTests(unittest.TestCase):
             self.assertEqual(main(['app', 'configure', '--state-protocol', '1', '--data-root', root]), 1)
         result = json.loads(output.getvalue())
         self.assertEqual(result['code'], 'app_missing')
-        self.assertEqual(render_message(result['display_message'], 'en'), 'Configuration requires the Monitor App path.')
+        self.assertEqual(render_message(result['display_message'], 'en'), 'Configuration requires the Codex Activity Monitor App path.')
 
     def test_cli_english_and_machine_output_preserve_source_content(self):
         with tempfile.TemporaryDirectory(dir='/tmp') as tmp:
             snapshot = {'schema_version': 1, 'running': True, 'updated_at': 0, 'threads': [], 'source': '原始内容'}
-            from codex_progress_monitor.state_transport import StateServer
-            from codex_progress_monitor.publication import DetachedSnapshot
+            from codex_activity_monitor.state_transport import StateServer
+            from codex_activity_monitor.publication import DetachedSnapshot
             server = StateServer(Path(tmp)/'state.sock')
             self.addCleanup(server.close)
             server.publish(DetachedSnapshot.capture(snapshot))

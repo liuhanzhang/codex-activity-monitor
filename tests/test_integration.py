@@ -6,12 +6,12 @@ import tempfile
 import unittest
 from unittest.mock import patch
 
-from codex_progress_monitor import integration
+from codex_activity_monitor import integration
 
 
 class IntegrationTests(unittest.TestCase):
     def setUp(self):
-        self.temp=tempfile.TemporaryDirectory(prefix='cpm-integration-',dir='/tmp')
+        self.temp=tempfile.TemporaryDirectory(prefix='cam-integration-',dir='/tmp')
         self.addCleanup(self.temp.cleanup)
         self.home=Path(self.temp.name)/'home'
         self.home.mkdir()
@@ -19,10 +19,10 @@ class IntegrationTests(unittest.TestCase):
         self.runtime.mkdir()
         self.env={}
         self.calls=[]
-        self.enterContext(patch('codex_progress_monitor.cli.start'))
-        self.enterContext(patch('codex_progress_monitor.cli.stop'))
-        self.enterContext(patch('codex_progress_monitor.integration.Path.home',return_value=self.home))
-        self.enterContext(patch('codex_progress_monitor.integration._run',side_effect=self.run_command))
+        self.enterContext(patch('codex_activity_monitor.cli.start'))
+        self.enterContext(patch('codex_activity_monitor.cli.stop'))
+        self.enterContext(patch('codex_activity_monitor.integration.Path.home',return_value=self.home))
+        self.enterContext(patch('codex_activity_monitor.integration._run',side_effect=self.run_command))
 
     def run_command(self,args,check=True):
         self.calls.append(args)

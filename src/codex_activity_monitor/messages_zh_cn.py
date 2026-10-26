@@ -44,7 +44,7 @@ MESSAGES = {
     'usage.generation': '生成',
     'table.detail_activity': '活动', 'table.status': '状态',
     'view.unnamed': '未命名聊天', 'view.local': '本机进度',
-    'view.header': 'Codex Progress · {state} · {count} 条聊天',
+    'view.header': 'Codex Activity Monitor · {state} · {count} 条聊天',
     'view.empty': '等待 Codex 任务。',
     'view.turn_finished': ' · 回合已完成',
     'view.parallel': ' · 另 {count} 项进行中',

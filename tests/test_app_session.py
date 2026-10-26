@@ -8,16 +8,16 @@ import time
 import select
 import unittest
 
-from codex_progress_monitor.app_session import load_lease
-from codex_progress_monitor.observation_lease import LeaseError
-from codex_progress_monitor.bridge import Observer
-from codex_progress_monitor.state_client import current_state
+from codex_activity_monitor.app_session import load_lease
+from codex_activity_monitor.observation_lease import LeaseError
+from codex_activity_monitor.bridge import Observer
+from codex_activity_monitor.state_client import current_state
 from tests.test_state_transport import JSONPeer
 
 
 class AppSessionTests(unittest.TestCase):
     def setUp(self):
-        self.temp = tempfile.TemporaryDirectory(prefix='cpm-lease-', dir='/tmp')
+        self.temp = tempfile.TemporaryDirectory(prefix='cam-lease-', dir='/tmp')
         self.addCleanup(self.temp.cleanup)
         self.root = Path(self.temp.name)
 
@@ -61,7 +61,7 @@ class AppSessionTests(unittest.TestCase):
         return session
 
     def collector(self):
-        process=subprocess.Popen([sys.executable, '-m', 'codex_progress_monitor.cli', '--runtime', str(self.root), 'collect'],
+        process=subprocess.Popen([sys.executable, '-m', 'codex_activity_monitor.cli', '--runtime', str(self.root), 'collect'],
                                  stdout=subprocess.DEVNULL, stderr=subprocess.PIPE, text=True)
         def cleanup():
             if process.poll() is None:
@@ -103,7 +103,7 @@ class AppSessionTests(unittest.TestCase):
         cli=self.root/'echo-cli'
         cli.write_text('#!'+sys.executable+'\nimport sys\nfor line in sys.stdin:\n sys.stdout.write(line);sys.stdout.flush()\n')
         cli.chmod(0o700)
-        bridge=subprocess.Popen([sys.executable,'-m','codex_progress_monitor.cli','--runtime',str(self.root),
+        bridge=subprocess.Popen([sys.executable,'-m','codex_activity_monitor.cli','--runtime',str(self.root),
                                  'bridge','--real-cli',str(cli),'--','app-server'],
                                 stdin=subprocess.PIPE,stdout=subprocess.PIPE,stderr=subprocess.PIPE,text=True)
         def cleanup():

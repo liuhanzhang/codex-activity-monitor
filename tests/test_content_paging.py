@@ -9,15 +9,15 @@ import tempfile
 import unittest
 from unittest.mock import patch
 
-from codex_progress_monitor.history import RolloutIndex
-from codex_progress_monitor.timeline import TimelineBook, item_phase
-from codex_progress_monitor.timeline_query import TimelineQuery
-from codex_progress_monitor.content_version import SectionVersion, paginate, page_request
+from codex_activity_monitor.history import RolloutIndex
+from codex_activity_monitor.timeline import TimelineBook, item_phase
+from codex_activity_monitor.timeline_query import TimelineQuery
+from codex_activity_monitor.content_version import SectionVersion, paginate, page_request
 
 
 class ContentPagingTests(unittest.TestCase):
     def setUp(self):
-        directory = tempfile.TemporaryDirectory(prefix='cpm-page-', dir='/tmp')
+        directory = tempfile.TemporaryDirectory(prefix='cam-page-', dir='/tmp')
         self.addCleanup(directory.cleanup)
         self.home = Path(directory.name)
         sessions = self.home/'sessions'; sessions.mkdir()
@@ -60,7 +60,7 @@ class ContentPagingTests(unittest.TestCase):
         request = {'action': 'detail', 'scope_id': self.scope, 'thread_id': 't', 'turn_id': 'u',
                    'phase_id': phase['id'], 'section_id': section['id'], 'offset': section['next_offset'],
                    'page_token': section['page_token']}
-        result = subprocess.run([sys.executable, '-m', 'codex_progress_monitor.cli', '--runtime',
+        result = subprocess.run([sys.executable, '-m', 'codex_activity_monitor.cli', '--runtime',
             str(self.home/'absent-runtime'), 'timeline-query', json.dumps(request)], capture_output=True, timeout=5)
         self.assertEqual(result.returncode, 0, result.stderr)
         page = json.loads(result.stdout)
@@ -171,7 +171,7 @@ class ContentPagingTests(unittest.TestCase):
         query = TimelineQuery(); phase, section = self.first(query)
         version = SectionVersion.parse(section['page_token'])
         forged = SectionVersion(version.identity, version.snapshot_chars, version.metadata, '0'*64, version.token)
-        with patch('codex_progress_monitor.content_version.SectionVersion.parse', return_value=forged):
+        with patch('codex_activity_monitor.content_version.SectionVersion.parse', return_value=forged):
             result = self.more(query, phase, section)
         self.assertEqual(result['state'], 'content_changed')
         self.assertFalse(result['sections'])

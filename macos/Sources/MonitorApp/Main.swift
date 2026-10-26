@@ -55,7 +55,7 @@ enum MonitorApplication {
 
 @MainActor final class AppDelegate: NSObject, NSApplicationDelegate {
     private func L(_ key: String) -> String {
-        localizedText(key, language: store?.language ?? DashboardStore.savedLanguage(at: NSHomeDirectory() + "/Library/Application Support/CodexProgressMonitor"))
+        localizedText(key, language: store?.language ?? DashboardStore.savedLanguage(at: NSHomeDirectory() + "/Library/Application Support/CodexActivityMonitor"))
     }
     private var item: NSStatusItem!
     private var panel: PopoverController!
@@ -118,9 +118,9 @@ enum MonitorApplication {
                 case .speed: self.store.menuTitle
                 }
                 self.item.button?.toolTip = state + " · " + self.L("点击查看实时活动")
-                self.item.button?.setAccessibilityLabel("Codex Monitor · " + state)
+                self.item.button?.setAccessibilityLabel("Codex Activity Monitor · " + state)
                 self.activityViewer?.updateLanguage()
-                self.previewWindow?.title = self.store.testProfile != nil ? self.L("Codex Monitor · 隔离验证") : (self.store.readOnly ? self.L("Codex Monitor · 只读验证") : "Codex Monitor")
+                self.previewWindow?.title = self.store.testProfile != nil ? self.L("Codex Activity Monitor · 隔离验证") : (self.store.readOnly ? self.L("Codex Activity Monitor · 只读验证") : "Codex Activity Monitor")
                 self.writeDiagnostics("tick")
             }
             store.onPurgeComplete = { NSApplication.shared.terminate(nil) }
@@ -138,7 +138,7 @@ enum MonitorApplication {
                 store.panelVisible = true
                 let window = NSWindow(contentRect: NSRect(x: 0, y: 0, width: 420, height: 300),
                                       styleMask: [.titled, .closable, .resizable], backing: .buffered, defer: false)
-                window.title = store.testProfile != nil ? L("Codex Monitor · 隔离验证") : (store.readOnly ? L("Codex Monitor · 只读验证") : "Codex Monitor")
+                window.title = store.testProfile != nil ? L("Codex Activity Monitor · 隔离验证") : (store.readOnly ? L("Codex Activity Monitor · 只读验证") : "Codex Activity Monitor")
                 let host = NSHostingController(rootView: DashboardView(store: store, quit: { NSApplication.shared.terminate(nil) }))
                 host.sizingOptions = [.preferredContentSize]
                 window.contentViewController = host
@@ -159,7 +159,7 @@ enum MonitorApplication {
             }
         } catch {
             let alert = NSAlert()
-            alert.messageText = L("无法启动 Codex Monitor")
+            alert.messageText = L("无法启动 Codex Activity Monitor")
             alert.informativeText = L("请使用 bin/build-gui 重新构建本机 App。") + "\n" + error.localizedDescription
             alert.addButton(withTitle: L("关闭提示"))
             alert.runModal()

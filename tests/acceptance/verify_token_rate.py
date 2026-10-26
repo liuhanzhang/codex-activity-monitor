@@ -14,8 +14,8 @@ import sys
 import tempfile
 import time
 
-from codex_progress_monitor.metrics import count_text
-from codex_progress_monitor.state_client import state_once
+from codex_activity_monitor.metrics import count_text
+from codex_activity_monitor.state_client import state_once
 
 
 def main():
@@ -27,12 +27,12 @@ def main():
     text = ' x' * 25
     assert count_text(text, 'o200k_base')[0] == 25
     samples, sent = [], []
-    with tempfile.TemporaryDirectory(prefix='cpm-rate-', dir='/tmp') as directory:
+    with tempfile.TemporaryDirectory(prefix='cam-rate-', dir='/tmp') as directory:
         runtime = Path(directory)
         home = runtime / 'synthetic-home'
         home.mkdir()
         with (runtime / 'collector.log').open('w') as log:
-            collector = subprocess.Popen([sys.executable, '-m', 'codex_progress_monitor.cli',
+            collector = subprocess.Popen([sys.executable, '-m', 'codex_activity_monitor.cli',
                 '--runtime', str(runtime), 'collect'], cwd=root,
                 env={**os.environ, 'PYTHONPATH': str(root / 'src')},
                 stdin=subprocess.DEVNULL, stdout=log, stderr=subprocess.STDOUT)

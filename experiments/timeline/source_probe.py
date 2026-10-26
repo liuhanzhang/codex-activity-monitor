@@ -33,11 +33,11 @@ def main():
     env['PYTHONPATH'] = str(ROOT / 'src')
     command = [str(CLI), 'app-server']
     if args.runtime:
-        from codex_progress_monitor.cli import start
-        from codex_progress_monitor.runtime import runtime_dir
+        from codex_activity_monitor.cli import start
+        from codex_activity_monitor.runtime import runtime_dir
         args.runtime = runtime_dir(args.runtime)
         start(args.runtime)
-        command = [sys.executable, '-m', 'codex_progress_monitor.cli', '--runtime', str(args.runtime),
+        command = [sys.executable, '-m', 'codex_activity_monitor.cli', '--runtime', str(args.runtime),
                    'bridge', '--real-cli', str(CLI), '--', 'app-server']
     stderr = (run / 'stderr.log').open('w')
     process = subprocess.Popen(command, stdin=subprocess.PIPE,
@@ -99,8 +99,8 @@ def main():
         result.update(methods=dict(methods), items=dict(items), shapes=shapes, user_inputs=inputs,
                       command_results=command_results, new_turn_count=methods['turn/started'], status='complete')
         if args.runtime:
-            from codex_progress_monitor.timeline_query import query_runtime
-            from codex_progress_monitor.runtime import read_snapshot
+            from codex_activity_monitor.timeline_query import query_runtime
+            from codex_activity_monitor.runtime import read_snapshot
             bundle = query_runtime(args.runtime, {'action': 'timeline', 'scope_id': str(home), 'thread_id': thread})
             parameters = [p for p in bundle['phases'] if p['namespace'] == 'input']
             details = [query_runtime(args.runtime, {'action': 'detail', 'scope_id': str(home), 'thread_id': thread,
@@ -125,7 +125,7 @@ def main():
                 process.terminate(); process.wait(timeout=8)
         stderr.close()
         if args.runtime:
-            from codex_progress_monitor.cli import stop
+            from codex_activity_monitor.cli import stop
             stop(args.runtime)
         result['config_unchanged'] = hashlib.sha256((home / 'config.toml').read_bytes()).hexdigest() == config_before
         (run / 'result.json').write_text(json.dumps(result, ensure_ascii=False, indent=2) + '\n')

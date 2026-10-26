@@ -1,4 +1,4 @@
-// Monitor-owned copy. Source content is never translated.
+// Codex Activity Monitor-owned copy. Source content is never translated.
 "%.0f 毫秒" = "%.0f ms";
 "%.1f 秒" = "%.1f s";
 "%d 个智能体" = "%d agents";
@@ -9,8 +9,8 @@
 "%d 毫秒" = "%d ms";
 "%d 项工具" = "%d tools";
 "%d 项工具.one" = "%d tool";
-"Codex Monitor · 只读验证" = "Codex Monitor · Read-only preview";
-"Codex Monitor · 隔离验证" = "Codex Monitor · Isolated preview";
+"Codex Activity Monitor · 只读验证" = "Codex Activity Monitor · Read-only preview";
+"Codex Activity Monitor · 隔离验证" = "Codex Activity Monitor · Isolated preview";
 "Codex 保留的活动记录" = "Activity records retained by Codex";
 "Codex 生成速度 · 点击查看实时活动" = "Codex generation speed · Click to view live activity";
 "Codex 记录的活动生命周期。" = "Activity lifecycle recorded by Codex.";
@@ -18,8 +18,8 @@
 "Details" = "Activity details";
 "Empty" = "No chats to display";
 "Live" = "Live activity";
-"Monitor" = "Codex Monitor";
-"Monitor · 动画刷新验证" = "Monitor · Animation preview";
+"Codex Activity Monitor" = "Codex Activity Monitor";
+"Codex Activity Monitor · 动画刷新验证" = "Codex Activity Monitor · Animation preview";
 "NoConnection" = "Waiting for Codex";
 "NoticeAssociatingEvents" = "Some activities have not been associated with a chat. Their speed is unknown.";
 "NoticeIdentityConflict" = "Duplicate or conflicting connections make the affected speed unknown.";
@@ -28,7 +28,7 @@
 "NoticeStreamUnavailable" = "Some current generation rates are unavailable.";
 "NoticeTotalUnavailable" = "This connection does not currently provide total speed data.";
 "NoticeWaitingForConnection" = "If Codex is already open, reopen it after your tasks finish to connect.";
-"Quit" = "Quit Monitor";
+"Quit" = "Quit Codex Activity Monitor";
 "ReadOnly" = "Read-only preview";
 "Restore" = "Restore configuration…";
 "Stale" = "Collection stopped or data expired";
@@ -104,7 +104,7 @@
 "归属待确认的子任务（%d）.one" = "Unassigned subtask (%d)";
 "当前内容为部分观测，完成后将从历史补齐。" = "Content is partially observed. History will fill it in after completion.";
 "当前找不到可读取的源历史。" = "No readable source history was found.";
-"当前来源不支持继续加载，请更新 Monitor 后重新读取。" = "This source cannot load more content. Update Monitor and reload.";
+"当前来源不支持继续加载，请更新 Codex Activity Monitor 后重新读取。" = "This source cannot load more content. Update Codex Activity Monitor and reload.";
 "当前来源不支持读取此类内容。" = "This source does not support reading this content type.";
 "当前模型" = "Current model";
 "当前没有活跃聊天" = "No active chats";
@@ -128,10 +128,10 @@
 "数据不可用" = "Data unavailable";
 "压缩" = "Compaction";
 "整理上下文" = "Compaction";
-"无法启动 Codex Monitor" = "Cannot start Codex Monitor";
+"无法启动 Codex Activity Monitor" = "Cannot start Codex Activity Monitor";
 "无法启动后台命令。" = "Could not start the background command.";
 "无法读取后台命令结果。" = "Could not read the background command result.";
-"旧接入仍在运行；任务结束后重开 Codex，以启用退出暂停采集。" = "A previous integration is still running. Reopen Codex after tasks finish to enable pausing collection when Monitor quits.";
+"旧接入仍在运行；任务结束后重开 Codex，以启用退出暂停采集。" = "A previous integration is still running. Reopen Codex after tasks finish to enable pausing collection when Codex Activity Monitor quits.";
 "时间线暂不可用" = "Timeline unavailable";
 "显示最近完成（%d）" = "Show recently completed (%d)";
 "显示最近完成（%d）.one" = "Show recently completed (%d)";
@@ -201,7 +201,7 @@
 "短工具以粗线标记；重叠处增强颜色，点击直接查看此处的工具详情。" = "Short tools appear as thick marks; overlaps have stronger colors. Click to view tool details.";
 "短活动以粗线标记，符号宽度不代表耗时；点击查看活动详情。" = "Short activities appear as thick marks. Mark width does not indicate duration; click for details.";
 "空闲 · 暂无活动聊天" = "Idle · No active chats";
-"等待 Codex 安全退出并完成清理后，Monitor 将退出。之后可手动删除 App；再次打开会按首次启动处理。" = "Monitor will quit after Codex exits safely and cleanup finishes. You can then delete the app; reopening it will be treated as a first launch.";
+"等待 Codex 安全退出并完成清理后，Codex Activity Monitor 将退出。之后可手动删除 App；再次打开会按首次启动处理。" = "Codex Activity Monitor will quit after Codex exits safely and cleanup finishes. You can then delete the app; reopening it will be treated as a first launch.";
 "等待子智能体消息" = "Waiting for subagent messages";
 "等待执行" = "Waiting to execute";
 "等待接入" = "Waiting for connection";

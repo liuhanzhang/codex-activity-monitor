@@ -11,8 +11,8 @@ import tempfile
 import time
 import tracemalloc
 
-from codex_progress_monitor.history import HistoryProvider
-from codex_progress_monitor.history_refresh import HistoryPacket
+from codex_activity_monitor.history import HistoryProvider
+from codex_activity_monitor.history_refresh import HistoryPacket
 
 
 def timed(call):
@@ -27,7 +27,7 @@ def main():
     parser.add_argument('--output', type=Path, required=True)
     args = parser.parse_args()
     if args.phases < 22: parser.error('need at least 22 phases to separate requests from the seed window')
-    with tempfile.TemporaryDirectory(prefix='cpm-fact-projection-') as tmp:
+    with tempfile.TemporaryDirectory(prefix='cam-fact-projection-') as tmp:
         home = Path(tmp); (home/'sessions').mkdir(); path = home/'sessions'/'fixture-thread.jsonl'
         with path.open('w') as stream:
             def row(payload): stream.write(json.dumps({'type': 'event_msg', 'payload': payload})+'\n')

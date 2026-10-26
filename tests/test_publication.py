@@ -6,7 +6,7 @@ import threading
 import time
 import unittest
 
-from codex_progress_monitor.publication import DetachedSnapshot, RecoveryWriter
+from codex_activity_monitor.publication import DetachedSnapshot, RecoveryWriter
 
 
 class RecordingPublisher:

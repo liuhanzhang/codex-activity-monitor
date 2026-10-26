@@ -14,7 +14,7 @@ import MonitorModel
         guard let screen else { fputs("No display available\n", stderr); exit(1) }
         let window = NSPanel(contentRect: NSRect(x: 0, y: 0, width: 200, height: 60),
             styleMask: [.titled, .nonactivatingPanel], backing: .buffered, defer: false)
-        window.title = "Monitor · 动画刷新验证"
+        window.title = "Codex Activity Monitor · 动画刷新验证"
         window.isReleasedWhenClosed = false
         window.level = .floating
         let container = NSView(frame: NSRect(x: 0, y: 0, width: 200, height: 60))

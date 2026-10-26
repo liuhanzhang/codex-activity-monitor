@@ -6,11 +6,11 @@ import time
 import unittest
 
 from rich.console import Console
-from codex_progress_monitor.bridge import Observer
-from codex_progress_monitor.display import render
-from codex_progress_monitor.engine import Engine
-from codex_progress_monitor.events import Event, ITEM_TYPES, NOTIFICATION_KINDS, filter_event
-from codex_progress_monitor.metrics import count_text
+from codex_activity_monitor.bridge import Observer
+from codex_activity_monitor.display import render
+from codex_activity_monitor.engine import Engine
+from codex_activity_monitor.events import Event, ITEM_TYPES, NOTIFICATION_KINDS, filter_event
+from codex_activity_monitor.metrics import count_text
 
 ROOT = Path(__file__).resolve().parents[1]
 

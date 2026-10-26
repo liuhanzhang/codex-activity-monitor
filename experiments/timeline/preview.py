@@ -5,8 +5,8 @@ import json
 from pathlib import Path
 import time
 
-from codex_progress_monitor.runtime import atomic_json
-from codex_progress_monitor.history import item_content, raw_section
+from codex_activity_monitor.runtime import atomic_json
+from codex_activity_monitor.history import item_content, raw_section
 
 
 def fixtures(base, now):
@@ -103,10 +103,10 @@ def fixtures(base, now):
                                 'attachments': [], 'source': 'synthetic'}
             continue
         if kind == 'file_edit_input':
-            body = '*** Begin Patch\n*** Update File: Monitor.swift\n@@\n-    showTextHistory()\n+    showActivityTimeline()\n*** End Patch'
+            body = '*** Begin Patch\n*** Update File: Codex Activity Monitor.swift\n@@\n-    showTextHistory()\n+    showActivityTimeline()\n*** End Patch'
             format = 'code'; title = '编辑内容'
         elif p['id'] == 'file-apply':
-            body = '--- Monitor.swift\n+++ Monitor.swift\n@@ -12,1 +12,1 @@\n-    showTextHistory()\n+    showActivityTimeline()'
+            body = '--- Codex Activity Monitor.swift\n+++ Codex Activity Monitor.swift\n@@ -12,1 +12,1 @@\n-    showTextHistory()\n+    showActivityTimeline()'
             format = 'diff'; title = '文件改动'
         elif kind == 'tool_input':
             body = 'const result = await tools.exec_command({cmd: "python3 -B -c \'print(42)\'"});\ntext(result.output);'
@@ -129,7 +129,7 @@ def fixtures(base, now):
                 {'type': 'text', 'text': '合成工具结果', 'example': {'success': False, 'value': None}}])]
         elif p['id'] == 'file-apply':
             sections, _ = item_content({'type': 'FileChange', 'status': 'completed',
-                'changes': {'Monitor.swift': {'unified_diff': '@@\n- old()\n+ new()'}}})
+                'changes': {'Codex Activity Monitor.swift': {'unified_diff': '@@\n- old()\n+ new()'}}})
         elif kind == 'tool_execution':
             sections, _ = item_content({'type': 'CommandExecution', 'command': ['python3', '-c', 'print(42)'],
                 'cwd': '/example/monitor', 'aggregated_output': body, 'exit_code': 1 if p['status'] == 'failed' else 0,

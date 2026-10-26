@@ -17,7 +17,7 @@ import Testing
     let home = directory.appendingPathComponent("another-user")
     let first = try BackendConfiguration.load(bundleURL: app, userHome: home)
     #expect(first.python == backend.path)
-    #expect(first.data_root == home.path + "/Library/Application Support/CodexProgressMonitor")
+    #expect(first.data_root == home.path + "/Library/Application Support/CodexActivityMonitor")
     #expect(first.runtime == first.data_root + "/run")
     let moved = directory.appendingPathComponent("Moved.app")
     try FileManager.default.moveItem(at: app, to: moved)
@@ -47,7 +47,7 @@ import Testing
     let data = Data("{\"python\":\"/python\",\"source_root\":\"/source\",\"runtime\":\"/run\",\"data_root\":\"/data\",\"build_id\":\"test\"}".utf8)
     let config = try JSONDecoder().decode(BackendConfiguration.self, from: data)
     let request = config.request(arguments: ["app", "status"])
-    #expect(request.arguments == ["-m", "codex_progress_monitor.cli", "app", "status"])
+    #expect(request.arguments == ["-m", "codex_activity_monitor.cli", "app", "status"])
     #expect(request.environment["PYTHONPATH"] == "/source/src")
     #expect(request.environment["TIKTOKEN_CACHE_DIR"] == "/source/.local/tokenizer-cache")
 }
@@ -64,7 +64,7 @@ func sourceTokenizerWorksWithEmptyTemporaryCacheAndNoNetwork() async throws {
         source_root: root.path, runtime: temporary.path, data_root: temporary.path, build_id: "fixture")
     var request = config.request(arguments: [])
     request.arguments = ["-c", """
-        from codex_progress_monitor.tokenizer_process import TokenizerProcess
+        from codex_activity_monitor.tokenizer_process import TokenizerProcess
         worker = TokenizerProcess(timeout=3)
         try:
             for encoding in ('o200k_base', 'cl100k_base'):

@@ -1,0 +1,26 @@
+{
+  "ok": true,
+  "verified_date": "2026-10-26",
+  "thread_id": "01a1783c-dc17-77b2-81bf-35044c5848d9",
+  "turn_id": "01a1786e-afce-79b3-9228-f55940e2b4a4",
+  "turn_status": "completed",
+  "start_ms": 1793021882000.0,
+  "end_ms": 1793023954000.0,
+  "phase_count": 188,
+  "phase_kinds": {
+    "text": 9,
+    "tool_input": 40,
+    "tool_execution": 59,
+    "reasoning": 80
+  },
+  "phase_statuses": {
+    "completed": 179,
+    "failed": 8,
+    "declined": 1
+  },
+  "no_unfinished_phases": true,
+  "nonzero_counts_observed_in_live_gui_and_streams": true,
+  "transport_nonce_health_verified": true,
+  "body_content_retained": false,
+  "note": "Failed and declined tool calls retain their observed terminal states; they are not rewritten as success."
+}

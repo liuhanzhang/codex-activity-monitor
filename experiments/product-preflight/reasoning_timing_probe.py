@@ -24,8 +24,8 @@ import subprocess
 import time
 import tomllib
 
-from codex_progress_monitor.events import decode_log
-from codex_progress_monitor.usage import response_metadata
+from codex_activity_monitor.events import decode_log
+from codex_activity_monitor.usage import response_metadata
 
 
 ROOT = Path(__file__).resolve().parents[2]

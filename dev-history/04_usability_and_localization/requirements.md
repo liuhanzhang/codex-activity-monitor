@@ -24,14 +24,14 @@
 
 | 位置 | 当前行为 | 本轮涉及的调整 |
 | --- | --- | --- |
-| [progress_state.py](../../src/codex_progress_monitor/progress_state.py) 的 `activity_label()` | 参数生成阶段显示“准备命令 / 准备操作”；命令执行显示“运行命令”；普通工具只展示工具短名。 | 统一准备 / 运行文案，增加 MCP 产品名，区分进行中与已结束活动。 |
+| [progress_state.py](../../src/codex_activity_monitor/progress_state.py) 的 `activity_label()` | 参数生成阶段显示“准备命令 / 准备操作”；命令执行显示“运行命令”；普通工具只展示工具短名。 | 统一准备 / 运行文案，增加 MCP 产品名，区分进行中与已结束活动。 |
 | 同文件的 `presentation()` | 直接比较“连接中断”“状态暂不可用”等中文字符串，决定可见活动与生成速度。 | 状态判断改用语义值，避免文案或语言影响行为。 |
-| [tool_labels.py](../../src/codex_progress_monitor/tool_labels.py) 的 `command_summary()` | 可去掉部分 shell 包装，但保留命令首行和参数；参数预览有有界扫描。 | 增加独立的命令名提取，复用有界解析；不执行生成代码。 |
-| [display.py](../../src/codex_progress_monitor/display.py) | Rich 定时刷新为 4Hz，渲染循环约 250ms；JSON 连续输出约 500ms；小于一分钟的耗时保留一位小数。 | 定时展示刷新统一为 1Hz，耗时用整秒。 |
-| [events.py](../../src/codex_progress_monitor/events.py) 的 `item_metadata()` | 已保留 `server/tool/namespace`，以及 `appContext.appName/actionName`；工具目录展示信息尚未系统接入。 | 优先利用现有可用元数据，必要时有条件地补充最小展示字段。 |
-| [engine.py](../../src/codex_progress_monitor/engine.py) 的 `_tool_metadata()` | 尚未用上述 `appContext` 生成产品 / 工具展示名称。 | 保存与消费名称元数据，同时保留原始工具身份。 |
-| [collector.py](../../src/codex_progress_monitor/collector.py) | 指标 tick 与快照写入约 250ms。 | 本轮保留采集 / 指标节奏，1Hz 作用于看板与 watch 连续输出。 |
-| [cli.py](../../src/codex_progress_monitor/cli.py)、状态与渲染代码 | 中文表头、状态、提示等散落在多个位置，尚无界面语言设置。 | 文案资源化，新增界面语言选择机制。 |
+| [tool_labels.py](../../src/codex_activity_monitor/tool_labels.py) 的 `command_summary()` | 可去掉部分 shell 包装，但保留命令首行和参数；参数预览有有界扫描。 | 增加独立的命令名提取，复用有界解析；不执行生成代码。 |
+| [display.py](../../src/codex_activity_monitor/display.py) | Rich 定时刷新为 4Hz，渲染循环约 250ms；JSON 连续输出约 500ms；小于一分钟的耗时保留一位小数。 | 定时展示刷新统一为 1Hz，耗时用整秒。 |
+| [events.py](../../src/codex_activity_monitor/events.py) 的 `item_metadata()` | 已保留 `server/tool/namespace`，以及 `appContext.appName/actionName`；工具目录展示信息尚未系统接入。 | 优先利用现有可用元数据，必要时有条件地补充最小展示字段。 |
+| [engine.py](../../src/codex_activity_monitor/engine.py) 的 `_tool_metadata()` | 尚未用上述 `appContext` 生成产品 / 工具展示名称。 | 保存与消费名称元数据，同时保留原始工具身份。 |
+| [collector.py](../../src/codex_activity_monitor/collector.py) | 指标 tick 与快照写入约 250ms。 | 本轮保留采集 / 指标节奏，1Hz 作用于看板与 watch 连续输出。 |
+| [cli.py](../../src/codex_activity_monitor/cli.py)、状态与渲染代码 | 中文表头、状态、提示等散落在多个位置，尚无界面语言设置。 | 文案资源化，新增界面语言选择机制。 |
 
 ## 3. 活动文案与状态边界
 

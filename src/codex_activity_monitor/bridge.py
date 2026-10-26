@@ -380,7 +380,7 @@ class Observer:
 
 
 def forward(args,runtime,actual=None):
-    actual=Path(actual or os.environ.get('CODEX_PROGRESS_REAL_CLI',REAL_CLI)).resolve()
+    actual=Path(actual or os.environ.get('CODEX_ACTIVITY_MONITOR_REAL_CLI',REAL_CLI)).resolve()
     if actual==Path(sys.argv[0]).resolve():
         raise ValueError('Recursive CLI override')
     if not observes_stdio(args):

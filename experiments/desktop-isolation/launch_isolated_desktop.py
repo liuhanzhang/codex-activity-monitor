@@ -120,7 +120,7 @@ class WebSocketProbe:
 
     def initialize(self):
         result = self.request(1, 'initialize', {
-            'clientInfo': {'name': 'codex_progress_probe', 'version': '0.1.0'},
+            'clientInfo': {'name': 'codex_activity_monitor_probe', 'version': '0.1.0'},
         })
         self.send_json({'method': 'initialized'})
         return result

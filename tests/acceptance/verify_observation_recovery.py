@@ -10,7 +10,7 @@ import sys
 import tempfile
 import time
 
-from codex_progress_monitor.state_client import state_once
+from codex_activity_monitor.state_client import state_once
 
 
 def main():
@@ -19,10 +19,10 @@ def main():
     args = parser.parse_args()
     root = Path(__file__).resolve().parents[2]
     samples = {}
-    with tempfile.TemporaryDirectory(prefix='cpm-gap-', dir='/tmp') as directory:
+    with tempfile.TemporaryDirectory(prefix='cam-gap-', dir='/tmp') as directory:
         runtime = Path(directory)
         with (runtime/'collector.log').open('w') as log:
-            collector = subprocess.Popen([sys.executable, '-m', 'codex_progress_monitor.cli',
+            collector = subprocess.Popen([sys.executable, '-m', 'codex_activity_monitor.cli',
                 '--runtime', str(runtime), 'collect'], cwd=root,
                 env={**os.environ, 'PYTHONPATH': str(root/'src')}, stdin=subprocess.DEVNULL,
                 stdout=log, stderr=subprocess.STDOUT)

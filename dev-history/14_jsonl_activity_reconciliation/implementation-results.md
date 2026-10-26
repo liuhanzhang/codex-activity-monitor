@@ -10,14 +10,14 @@
 
 | 位置 | 已实现内容 |
 | --- | --- |
-| [`history.py`](../../src/codex_progress_monitor/history.py) | canonical 完成摘要增加明确终止标记和可用退出码；提供无正文的校正摘要。文件替换、截断或重写会产生新的索引 generation；查询使用分离的索引视图，避免后台更新其正在使用的对象。 |
-| [`reconciliation.py`](../../src/codex_progress_monitor/reconciliation.py) | 有界后台读取，候选按数据源和线程去重；未决项约每秒读取，完成项先快速重试、之后退避。队列轮转避免容量用尽时始终跳过后面的线程。文件 I/O 不占用实时事件锁。 |
-| [`collector.py`](../../src/codex_progress_monitor/collector.py) | 与时间线查询共享历史 provider，在发布快照前应用就绪摘要；面板关闭同样有效。重启恢复未决身份并继续从 JSONL 校正，不恢复旧速度，也不保留另一份永久权威快照。 |
-| [`engine.py`](../../src/codex_progress_monitor/engine.py) | 按 scope、thread、turn、item 类型和 ID 合并；JSONL 完成覆盖残留运行状态。区分正在工作与未知是否仍在工作，保留真实后台进程、较新的回合及其他不可靠活动。源时间独立保存，不写入单调时钟字段。 |
-| [`metrics.py`](../../src/codex_progress_monitor/metrics.py) | 历史确认终止后停止该流的实时贡献、拒绝后续追加并释放已完成计数的临时文本；没有实时结束时间时不补造流式耗时或速度。 |
-| [`overview.py`](../../src/codex_progress_monitor/overview.py)、[`menu_presentation.py`](../../src/codex_progress_monitor/menu_presentation.py) | 总速度与菜单状态采用相同的已结束流判定，历史确认结束的流不再计为当前生成。 |
-| [`timeline.py`](../../src/codex_progress_monitor/timeline.py)、[`timeline_query.py`](../../src/codex_progress_monitor/timeline_query.py) | 对已经观测的阶段应用同一历史完成事实；历史时间优先于接收时间，保留缺口和终止冲突。完整历史和原始内容仍按需读取。 |
-| [`progress_state.py`](../../src/codex_progress_monitor/progress_state.py)、[`timeline_storage.py`](../../src/codex_progress_monitor/timeline_storage.py) | 未决活动显示状态未知；sidecar 只扩展必要元数据 allowlist，没有迁移表结构或复制正文。 |
+| [`history.py`](../../src/codex_activity_monitor/history.py) | canonical 完成摘要增加明确终止标记和可用退出码；提供无正文的校正摘要。文件替换、截断或重写会产生新的索引 generation；查询使用分离的索引视图，避免后台更新其正在使用的对象。 |
+| [`reconciliation.py`](../../src/codex_activity_monitor/reconciliation.py) | 有界后台读取，候选按数据源和线程去重；未决项约每秒读取，完成项先快速重试、之后退避。队列轮转避免容量用尽时始终跳过后面的线程。文件 I/O 不占用实时事件锁。 |
+| [`collector.py`](../../src/codex_activity_monitor/collector.py) | 与时间线查询共享历史 provider，在发布快照前应用就绪摘要；面板关闭同样有效。重启恢复未决身份并继续从 JSONL 校正，不恢复旧速度，也不保留另一份永久权威快照。 |
+| [`engine.py`](../../src/codex_activity_monitor/engine.py) | 按 scope、thread、turn、item 类型和 ID 合并；JSONL 完成覆盖残留运行状态。区分正在工作与未知是否仍在工作，保留真实后台进程、较新的回合及其他不可靠活动。源时间独立保存，不写入单调时钟字段。 |
+| [`metrics.py`](../../src/codex_activity_monitor/metrics.py) | 历史确认终止后停止该流的实时贡献、拒绝后续追加并释放已完成计数的临时文本；没有实时结束时间时不补造流式耗时或速度。 |
+| [`overview.py`](../../src/codex_activity_monitor/overview.py)、[`menu_presentation.py`](../../src/codex_activity_monitor/menu_presentation.py) | 总速度与菜单状态采用相同的已结束流判定，历史确认结束的流不再计为当前生成。 |
+| [`timeline.py`](../../src/codex_activity_monitor/timeline.py)、[`timeline_query.py`](../../src/codex_activity_monitor/timeline_query.py) | 对已经观测的阶段应用同一历史完成事实；历史时间优先于接收时间，保留缺口和终止冲突。完整历史和原始内容仍按需读取。 |
+| [`progress_state.py`](../../src/codex_activity_monitor/progress_state.py)、[`timeline_storage.py`](../../src/codex_activity_monitor/timeline_storage.py) | 未决活动显示状态未知；sidecar 只扩展必要元数据 allowlist，没有迁移表结构或复制正文。 |
 
 Swift 源码、GUI 布局、官方用量账本和 Codex writer 路由没有改动。快照中新来源字段为补充字段，原生界面继续使用原有状态和耗时字段；本次用正在运行的 GUI 检查了解码及查看器兼容，没有重建 App。
 

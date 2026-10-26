@@ -21,7 +21,7 @@ from .execution import backend_command, is_frozen
 from .state_client import state_once, authorize_session, StateClientError
 from .i18n import CATALOGS, DEFAULT_LANGUAGE, message, render_message, validate_language
 
-DATA_ROOT = Path.home() / 'Library/Application Support/CodexProgressMonitor'
+DATA_ROOT = Path.home() / 'Library/Application Support/CodexActivityMonitor'
 
 
 class ControlError(RuntimeError):
@@ -219,8 +219,8 @@ class AppController:
             if not marker.exists():
                 if any(p.name != 'management.lock' for p in self.root.iterdir()):
                     raise ControlError('foreign_data_root', 'control.foreign_data_root')
-                marker.write_text('codex-progress-monitor:1\n')
-            elif marker.read_text() != 'codex-progress-monitor:1\n':
+                marker.write_text('codex-activity-monitor:1\n')
+            elif marker.read_text() != 'codex-activity-monitor:1\n':
                 raise ControlError('foreign_data_root', 'control.foreign_data_root.2')
             yield
 
@@ -277,7 +277,7 @@ class AppController:
             raise ControlError('app_missing', 'control.app_missing')
         if not os.access(actual, os.X_OK) or not os.access(python, os.X_OK):
             raise ControlError('entry_missing', 'control.entry_missing')
-        if not is_frozen() and not (source / 'src/codex_progress_monitor/cli.py').is_file():
+        if not is_frozen() and not (source / 'src/codex_activity_monitor/cli.py').is_file():
             raise ControlError('source_missing', 'control.source_missing')
         with self.locked():
             old = self._receipt()
@@ -404,7 +404,7 @@ class AppController:
                        else ['PYTHONPATH=' + str(source / 'src')])
         command = ['exec', '/usr/bin/env', *environment,
                    *backend_command('--runtime', runtime, 'bridge', '--real-cli', actual, '--', executable=python)]
-        source_check = '' if is_frozen() else f' && [ -f {quote(str(source / "src/codex_progress_monitor/cli.py"))} ]'
+        source_check = '' if is_frozen() else f' && [ -f {quote(str(source / "src/codex_activity_monitor/cli.py"))} ]'
         return ('#!/bin/sh\n'
                 f'if [ ! -x {quote(str(actual))} ]; then echo "Codex 原版 CLI 不可用" >&2; exit 127; fi\n'
                 f'if [ -f {quote(str(self.enabled))} ] && [ -x {quote(str(app / "Contents/MacOS/MonitorApp"))} ] && '

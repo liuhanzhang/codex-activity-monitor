@@ -76,11 +76,11 @@ tiktoken 版本固定为 0.14.0；其模型映射未包含 gpt-6-luna、gpt-6.1-
 
 ## 文件与复查
 
-- [live.json](/Users/bytedance/personal/codex_progress_monitor/analysis/product-preflight/live.json)：两个实时运行的字段映射、计数、哈希、持久化一致性与证据路径。
-- [desktop.json](/Users/bytedance/personal/codex_progress_monitor/analysis/product-preflight/desktop.json)：独立 Desktop 启动回归与恢复。
-- [tokenizer.json](/Users/bytedance/personal/codex_progress_monitor/analysis/product-preflight/tokenizer.json)：模型映射、分块一致性、修正与计算开销。
-- [approval.json](/Users/bytedance/personal/codex_progress_monitor/analysis/product-preflight/approval.json)：审批请求及 declined 生命周期。
-- [faults.json](/Users/bytedance/personal/codex_progress_monitor/analysis/product-preflight/faults.json)：传输故障与重放验证。
-- [实验运行说明](/Users/bytedance/personal/codex_progress_monitor/experiments/product-preflight/README.md)：可复用脚本与复查方法。
+- [live.json](/Users/bytedance/personal/codex-activity-monitor/analysis/product-preflight/live.json)：两个实时运行的字段映射、计数、哈希、持久化一致性与证据路径。
+- [desktop.json](/Users/bytedance/personal/codex-activity-monitor/analysis/product-preflight/desktop.json)：独立 Desktop 启动回归与恢复。
+- [tokenizer.json](/Users/bytedance/personal/codex-activity-monitor/analysis/product-preflight/tokenizer.json)：模型映射、分块一致性、修正与计算开销。
+- [approval.json](/Users/bytedance/personal/codex-activity-monitor/analysis/product-preflight/approval.json)：审批请求及 declined 生命周期。
+- [faults.json](/Users/bytedance/personal/codex-activity-monitor/analysis/product-preflight/faults.json)：传输故障与重放验证。
+- [实验运行说明](/Users/bytedance/personal/codex-activity-monitor/experiments/product-preflight/README.md)：可复用脚本与复查方法。
 
 原始内容、配置备份、Desktop profile 和依赖都在被忽略的 `.local/product-preflight/`；真实任务会话记录保留于原隔离 CODEX_HOME。所有新建实验进程已结束，原有空闲隔离 WebSocket 后端保留。

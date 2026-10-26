@@ -12,8 +12,8 @@ import threading
 import unittest
 from unittest.mock import Mock, patch
 
-from codex_progress_monitor.query_response import MAX_RESPONSE_BYTES, encode_response, read_response
-from codex_progress_monitor.timeline_query import QueryServer, query_runtime
+from codex_activity_monitor.query_response import MAX_RESPONSE_BYTES, encode_response, read_response
+from codex_activity_monitor.timeline_query import QueryServer, query_runtime
 
 
 class QueryResponseTests(unittest.TestCase):
@@ -42,7 +42,7 @@ class QueryResponseTests(unittest.TestCase):
 
 class QueryFallbackTests(unittest.TestCase):
     def setUp(self):
-        tmp = tempfile.TemporaryDirectory(prefix='cpm-query-', dir='/tmp'); self.addCleanup(tmp.cleanup)
+        tmp = tempfile.TemporaryDirectory(prefix='cam-query-', dir='/tmp'); self.addCleanup(tmp.cleanup)
         self.runtime = Path(tmp.name)
         self.request = {'action': 'timeline', 'scope_id': str(self.runtime/'source'), 'thread_id': 't'}
 
@@ -64,7 +64,7 @@ class QueryFallbackTests(unittest.TestCase):
             with self.subTest(frame=frame):
                 (self.runtime/'tl.sock').unlink(missing_ok=True)
                 self.peer(frame)
-                with patch('codex_progress_monitor.timeline_query.TimelineQuery', side_effect=AssertionError('duplicate scan')):
+                with patch('codex_activity_monitor.timeline_query.TimelineQuery', side_effect=AssertionError('duplicate scan')):
                     result = query_runtime(self.runtime, self.request)
                 # A complete first line is accepted; a later line is not part
                 # of this single-response protocol. Other inputs are failures.
@@ -72,16 +72,16 @@ class QueryFallbackTests(unittest.TestCase):
 
     def test_oversized_peer_returns_a_small_error_without_offline_retry(self):
         self.peer(b'x'*(MAX_RESPONSE_BYTES+1))
-        with patch('codex_progress_monitor.timeline_query.TimelineQuery', side_effect=AssertionError('duplicate scan')):
+        with patch('codex_activity_monitor.timeline_query.TimelineQuery', side_effect=AssertionError('duplicate scan')):
             self.assertEqual(query_runtime(self.runtime, self.request)['error'], 'query_too_large')
 
     def test_offline_fallback_requires_absent_collector_ownership(self):
         provider = Mock(); provider.query.return_value = {'version': 1, 'offline': True}
-        with patch('codex_progress_monitor.timeline_query.collector_alive', return_value=True), \
-                patch('codex_progress_monitor.timeline_query.TimelineQuery', side_effect=AssertionError('live runtime')):
+        with patch('codex_activity_monitor.timeline_query.collector_alive', return_value=True), \
+                patch('codex_activity_monitor.timeline_query.TimelineQuery', side_effect=AssertionError('live runtime')):
             self.assertEqual(query_runtime(self.runtime, self.request)['error'], 'query_unavailable')
-        with patch('codex_progress_monitor.timeline_query.collector_alive', return_value=False), \
-                patch('codex_progress_monitor.timeline_query.TimelineQuery', return_value=provider):
+        with patch('codex_activity_monitor.timeline_query.collector_alive', return_value=False), \
+                patch('codex_activity_monitor.timeline_query.TimelineQuery', return_value=provider):
             self.assertEqual(query_runtime(self.runtime, self.request), {'version': 1, 'offline': True})
         provider.query.assert_called_once()
 
@@ -92,7 +92,7 @@ class QueryFallbackTests(unittest.TestCase):
         thread = threading.Thread(target=server.serve_forever, kwargs={'poll_interval': .02}, daemon=True)
         thread.start()
         try:
-            command = [sys.executable, '-m', 'codex_progress_monitor.cli', '--runtime', str(self.runtime),
+            command = [sys.executable, '-m', 'codex_activity_monitor.cli', '--runtime', str(self.runtime),
                        'timeline-query', json.dumps(self.request)]
             env = dict(os.environ, PYTHONIOENCODING='ascii')
             oversized = subprocess.run(command, capture_output=True, env=env, timeout=5)

@@ -1,7 +1,7 @@
 altgraph==0.17.5
 certifi==2026.10.23
 charset-normalizer==3.5.2
-codex-progress-monitor==0.1.0
+codex-activity-monitor==0.1.0
 idna==3.20
 macholib==1.16.4
 markdown-it-py==4.2.0

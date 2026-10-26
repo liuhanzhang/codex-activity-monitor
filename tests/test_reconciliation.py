@@ -6,13 +6,13 @@ import time
 import unittest
 from unittest.mock import Mock
 
-from codex_progress_monitor.engine import Engine
-from codex_progress_monitor.events import Event
-from codex_progress_monitor.history import HistoryProvider
-from codex_progress_monitor.history_refresh import HistoryRefresh
-from codex_progress_monitor.history_contract import HistorySelection
-from codex_progress_monitor.timeline import TimelineBook
-from codex_progress_monitor.timeline_query import TimelineQuery
+from codex_activity_monitor.engine import Engine
+from codex_activity_monitor.events import Event
+from codex_activity_monitor.history import HistoryProvider
+from codex_activity_monitor.history_refresh import HistoryRefresh
+from codex_activity_monitor.history_contract import HistorySelection
+from codex_activity_monitor.timeline import TimelineBook
+from codex_activity_monitor.timeline_query import TimelineQuery
 
 
 class ReconciliationTests(unittest.TestCase):
@@ -107,7 +107,7 @@ class ReconciliationTests(unittest.TestCase):
         self.assertFalse(phases['outside'].get('history_retired', False))
 
     def test_engine_requests_cover_its_activities_and_retained_timeline_items(self):
-        from codex_progress_monitor.timeline import item_phase
+        from codex_activity_monitor.timeline import item_phase
         self.book._put(item_phase(str(self.home), 't', 'u',
             {'id': 'retained-only', 'type': 'agentMessage'}, self.wall*1000))
         request, = self.engine.history_requests()
@@ -339,7 +339,7 @@ class ReconciliationTests(unittest.TestCase):
         self.assertIn('thinking', self.model_ids())
 
     def test_old_turn_retirement_keeps_new_model_activity_and_explicit_raw_input(self):
-        from codex_progress_monitor.timeline import item_phase
+        from codex_activity_monitor.timeline import item_phase
         self.thinking()
         parameters = item_phase(str(self.home), 't', 'u',
                                 {'id': 'params', 'type': 'custom_tool_call', 'name': 'exec'},
@@ -374,7 +374,7 @@ class ReconciliationTests(unittest.TestCase):
         self.assertIn('thinking', self.model_ids())
 
     def test_retirement_is_preserved_in_metadata_for_stopped_queries(self):
-        from codex_progress_monitor.timeline_storage import TimelineStorage, read_records
+        from codex_activity_monitor.timeline_storage import TimelineStorage, read_records
         self.thinking()
         self.finish_turn()
         self.reconcile([self.row('event_msg', {'type': 'task_complete', 'turn_id': 'u'})])
@@ -472,7 +472,7 @@ class ReconciliationTests(unittest.TestCase):
         self.assertIsNone(phase['end_ms'])
 
     def test_stopped_sidecar_invalidates_removed_authoritative_history(self):
-        from codex_progress_monitor.timeline_storage import TimelineStorage
+        from codex_activity_monitor.timeline_storage import TimelineStorage
         self.reconcile([self.completion()])
         path = self.home/'metadata.sqlite3'
         store = TimelineStorage(path)

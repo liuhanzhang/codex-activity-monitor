@@ -5,9 +5,9 @@ import time
 import unittest
 from unittest.mock import patch, MagicMock
 
-from codex_progress_monitor.bridge import Observer
-from codex_progress_monitor.observer_permit import PermitExchange
-from codex_progress_monitor.publication import encode_frame
+from codex_activity_monitor.bridge import Observer
+from codex_activity_monitor.observer_permit import PermitExchange
+from codex_activity_monitor.publication import encode_frame
 
 
 class ObserverPermitTests(unittest.TestCase):
@@ -55,7 +55,7 @@ class ObserverPermitTests(unittest.TestCase):
             observer = Observer(Path(directory), 'source', '/synthetic', '/bin/echo')
             observer.permits.until = time.monotonic()+1
             with (patch('pathlib.Path.read_text', side_effect=AssertionError('disk read')),
-                  patch('codex_progress_monitor.bridge.socket.socket', side_effect=AssertionError('socket work'))):
+                  patch('codex_activity_monitor.bridge.socket.socket', side_effect=AssertionError('socket work'))):
                 observer.offer('stdout', b'authorized synthetic bytes')
                 observer.permits.until = 0
                 observer.offer('stdout', b'private paused bytes')

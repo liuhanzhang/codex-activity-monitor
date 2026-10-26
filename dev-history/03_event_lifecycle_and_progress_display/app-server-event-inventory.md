@@ -42,7 +42,7 @@ core 到 v2 的主要转换在 [bespoke_event_handling.rs](/Users/bytedance/play
 
 “消费”在这里指产生明确语义状态或指标，不包括只登记 thread/turn 身份。未处理的消息可能经过身份登记代码，但不能算功能支持。过滤、消费和展示是三个不同环节。
 
-monitor 的核对入口分别是 [events.py：过滤](/Users/bytedance/personal/codex_progress_monitor/src/codex_progress_monitor/events.py:43)、[engine.py：协议消费](/Users/bytedance/personal/codex_progress_monitor/src/codex_progress_monitor/engine.py:216)、[engine.py：上游消费](/Users/bytedance/personal/codex_progress_monitor/src/codex_progress_monitor/engine.py:416)、[display.py：展示](/Users/bytedance/personal/codex_progress_monitor/src/codex_progress_monitor/display.py:27)。
+monitor 的核对入口分别是 [events.py：过滤](/Users/bytedance/personal/codex-activity-monitor/src/codex_activity_monitor/events.py:43)、[engine.py：协议消费](/Users/bytedance/personal/codex-activity-monitor/src/codex_activity_monitor/engine.py:216)、[engine.py：上游消费](/Users/bytedance/personal/codex-activity-monitor/src/codex_activity_monitor/engine.py:416)、[display.py：展示](/Users/bytedance/personal/codex-activity-monitor/src/codex_activity_monitor/display.py:27)。
 
 ## 与日常进度最相关的结果（当前实现）
 
@@ -221,7 +221,7 @@ monitor 的核对入口分别是 [events.py：过滤](/Users/bytedance/personal/
 
 ## 参数生成为什么还要另一条数据源
 
-[bridge.py](/Users/bytedance/personal/codex_progress_monitor/src/codex_progress_monitor/bridge.py:20) 同时观察 stdio 与 stderr 的模型传输 trace。当前只消费以下 10 种上游事件：
+[bridge.py](/Users/bytedance/personal/codex-activity-monitor/src/codex_activity_monitor/bridge.py:20) 同时观察 stdio 与 stderr 的模型传输 trace。当前只消费以下 10 种上游事件：
 
 | 上游事件 | 当前处理与展示 |
 | --- | --- |

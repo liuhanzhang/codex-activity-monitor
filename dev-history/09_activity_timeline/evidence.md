@@ -69,10 +69,10 @@
 | 分页历史 API 在该源码中存在 | `codex-rs/app-server-protocol/src/protocol/v2/thread.rs`，`ThreadTurnsListParams / ThreadItemsListParams` | 本轮没有执行真实 API 请求，也未证明安全连接方式 |
 | steering 目标是活动轮，并返回接受的原 turn ID | `codex-rs/app-server/src/request_processors/turn_processor.rs`，`turn_steer_inner` | 输入消息的实时／历史去重仍需验证 |
 | 工具可并行；yield 是等待控制 | `codex-rs/core/src/tools/parallel.rs`、`codex-rs/core/src/tools/handlers/shell_spec.rs`、`codex-rs/core/src/unified_exec/process_manager.rs` | 不构成统一前台／后台分类 |
-| 当前参数活动会改为 tool_ready 并重置开始时间 | [engine.py](../../src/codex_progress_monitor/engine.py)，`_upstream` | 应在转换前建立独立生成阶段，不能从最终快照反推 |
-| 当前线程终态活动只留最近 20 条 | [engine.py](../../src/codex_progress_monitor/engine.py)，`tick` | 不能直接用于整轮历史时间线 |
-| 原始事件过滤保留双时钟，尚未保留 turn/steer 请求 | [events.py](../../src/codex_progress_monitor/events.py)，`Event.from_row / filter_event` | 新功能需最小扩展，不改变旧速度时钟 |
-| 文件编辑身份／静态识别已有保守边界 | [tool_labels.py](../../src/codex_progress_monitor/tool_labels.py)与[test_file_editing.py](../../tests/test_file_editing.py) | 不能推广到任意动态脚本的写文件意图 |
+| 当前参数活动会改为 tool_ready 并重置开始时间 | [engine.py](../../src/codex_activity_monitor/engine.py)，`_upstream` | 应在转换前建立独立生成阶段，不能从最终快照反推 |
+| 当前线程终态活动只留最近 20 条 | [engine.py](../../src/codex_activity_monitor/engine.py)，`tick` | 不能直接用于整轮历史时间线 |
+| 原始事件过滤保留双时钟，尚未保留 turn/steer 请求 | [events.py](../../src/codex_activity_monitor/events.py)，`Event.from_row / filter_event` | 新功能需最小扩展，不改变旧速度时钟 |
+| 文件编辑身份／静态识别已有保守边界 | [tool_labels.py](../../src/codex_activity_monitor/tool_labels.py)与[test_file_editing.py](../../tests/test_file_editing.py) | 不能推广到任意动态脚本的写文件意图 |
 | 原生应用是 accessory，popover 与现有 preview 窗口已有承载 | [Main.swift](../../macos/Sources/MonitorApp/Main.swift)、[PopoverController.swift](../../macos/Sources/MonitorApp/PopoverController.swift) | 不代表新活动查看器的焦点／关闭行为已验证 |
 
 协议语义也可复查 OpenAI 的[活动轮 steering](https://learn.chatgpt.com/docs/app-server#steer-an-active-turn)、[item 生命周期](https://learn.chatgpt.com/docs/app-server#items)与[函数参数流式生成](https://developers.openai.com/api/docs/guides/function-calling#streaming)。网页会变化，工程兼容性以明确版本的源码、通知和实测共同确定。

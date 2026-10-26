@@ -8,8 +8,8 @@ import time
 import unittest
 from unittest.mock import patch
 
-from codex_progress_monitor.timeline import TimelineBook
-from codex_progress_monitor.timeline_storage import TimelineStorage, read_records
+from codex_activity_monitor.timeline import TimelineBook
+from codex_activity_monitor.timeline_storage import TimelineStorage, read_records
 
 
 class StorageTests(unittest.TestCase):
@@ -71,7 +71,7 @@ class StorageTests(unittest.TestCase):
         store = TimelineStorage(self.path)
         store.close()
         before = self.path.read_bytes()
-        with patch('codex_progress_monitor.timeline_storage.sqlite3.connect',
+        with patch('codex_activity_monitor.timeline_storage.sqlite3.connect',
                    side_effect=sqlite3.OperationalError('unable to open database file')):
             with self.assertRaises(OSError):
                 TimelineStorage(self.path)

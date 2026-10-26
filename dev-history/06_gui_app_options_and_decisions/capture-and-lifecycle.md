@@ -17,7 +17,7 @@
 
 “速度来自日志”不表示当前已经在尾读某个原生日志文件。现有产品读取的是包装器截获的 stderr 管道，同时使用协议补充身份、生命周期和可信度。
 
-源码依据：[bridge.py](../../src/codex_progress_monitor/bridge.py)、[events.py](../../src/codex_progress_monitor/events.py)、[engine.py](../../src/codex_progress_monitor/engine.py)和[既有架构](../02_product_mvp/architecture.md)。
+源码依据：[bridge.py](../../src/codex_activity_monitor/bridge.py)、[events.py](../../src/codex_activity_monitor/events.py)、[engine.py](../../src/codex_activity_monitor/engine.py)和[既有架构](../02_product_mvp/architecture.md)。
 
 ## 2. 三条采集路线的比较与选择
 
@@ -109,7 +109,7 @@ Desktop 将 RUST_LOG 传入原 CLI，并使用 JSON 日志格式
 
 目标是首次全新启动由 App 完成发现 Codex、检查兼容性、保存原值、准备运行文件、应用接入配置与检查健康状态；之后可以主动恢复并再次配置。提供默认开启、可关闭的登录启动选项。重复配置 / 重装不覆盖尚未恢复的原始记录，中途失败应回滚本次已经完成的更改。
 
-当前 [integration.py](../../src/codex_progress_monitor/integration.py) 已有包装器、LaunchAgent 和环境备份基础，但不是完整事务式安装器。它目前管理的四个 Desktop 启动变量为：
+当前 [integration.py](../../src/codex_activity_monitor/integration.py) 已有包装器、LaunchAgent 和环境备份基础，但不是完整事务式安装器。它目前管理的四个 Desktop 启动变量为：
 
 | 变量 | 当前接入值 |
 | --- | --- |

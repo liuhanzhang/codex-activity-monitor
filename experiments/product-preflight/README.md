@@ -1,6 +1,6 @@
 # 产品实现前验证脚本
 
-结果见 [验证报告](/Users/bytedance/personal/codex_progress_monitor/analysis/product-preflight/README.md)。这是验证原型，不是常驻产品。
+结果见 [验证报告](/Users/bytedance/personal/codex-activity-monitor/analysis/product-preflight/README.md)。这是验证原型，不是常驻产品。
 
 ## 环境与运行
 

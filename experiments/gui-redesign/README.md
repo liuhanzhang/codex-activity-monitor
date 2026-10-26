@@ -11,7 +11,7 @@ python3 experiments/gui-redesign/preview.py --case multiple \
 另一个终端打开原生预览：
 
 ```sh
-open '.local/gui-preview/Codex Monitor Preview.app' --args \
+open '.local/gui-preview/Codex Activity Monitor Preview.app' --args \
   --snapshot "$PWD/.local/gui-preview/fixtures/snapshot.json" --show
 ```
 
@@ -48,7 +48,7 @@ printf '%s\n' thinking > .local/gui-preview/fixtures/case.txt
 在内屏进行约 10 秒的独立原生采样（短暂显示测试窗口，不接入采集、不创建管理租约，结束自动退出）：
 
 ```sh
-'.local/gui-preview/Codex Monitor Preview.app/Contents/MacOS/MonitorApp' \
+'.local/gui-preview/Codex Activity Monitor Preview.app/Contents/MacOS/MonitorApp' \
   --probe-status-cadence "$PWD/.local/animation-120hz/builtin-cadence.json"
 ```
 
@@ -60,7 +60,7 @@ printf '%s\n' thinking > .local/gui-preview/fixtures/case.txt
 当前沙滩图标的原生离屏导出（共用日常绘制器，47×22 pt、2x，不配置接入）：
 
 ```sh
-'.local/gui-preview/Codex Monitor Preview.app/Contents/MacOS/MonitorApp' \
+'.local/gui-preview/Codex Activity Monitor Preview.app/Contents/MacOS/MonitorApp' \
   --render-idle-beach-previews "$PWD/.local/idle-beach-native-preview"
 ```
 
@@ -69,7 +69,7 @@ printf '%s\n' thinking > .local/gui-preview/fixtures/case.txt
 锤子角度与曲线的原生采样导出：
 
 ```sh
-'.local/gui-preview/Codex Monitor Preview.app/Contents/MacOS/MonitorApp' \
+'.local/gui-preview/Codex Activity Monitor Preview.app/Contents/MacOS/MonitorApp' \
   --render-hammer-previews "$PWD/.local/hammer-tuning/native"
 ```
 
@@ -80,7 +80,7 @@ printf '%s\n' thinking > .local/gui-preview/fixtures/case.txt
 开发用原生离屏导出仍可复现小狗动效（共用绘制器，不配置接入）：
 
 ```sh
-'.local/gui-preview/Codex Monitor Preview.app/Contents/MacOS/MonitorApp' \
+'.local/gui-preview/Codex Activity Monitor Preview.app/Contents/MacOS/MonitorApp' \
   --render-idle-pet-previews "$PWD/.local/idle-pet-native-preview"
 ```
 

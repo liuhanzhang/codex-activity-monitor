@@ -432,19 +432,19 @@ Preparing 继续用一个动作词，具体对象由工具名补充，详情用 
 
 | 清单范围 | 源码入口 |
 | --- | --- |
-| A / F / C / B / Q 英文 | [src/codex_progress_monitor/messages_en.py](../../src/codex_progress_monitor/messages_en.py) |
-| A / F / C / B / Q 中文 | [src/codex_progress_monitor/messages_zh_cn.py](../../src/codex_progress_monitor/messages_zh_cn.py) |
-| 列表活动含义与优先级 | [src/codex_progress_monitor/progress_state.py](../../src/codex_progress_monitor/progress_state.py) |
-| 阶段键与 target 拼接 | [src/codex_progress_monitor/i18n.py](../../src/codex_progress_monitor/i18n.py) |
+| A / F / C / B / Q 英文 | [src/codex_progress_monitor/messages_en.py](../../src/codex_activity_monitor/messages_en.py) |
+| A / F / C / B / Q 中文 | [src/codex_progress_monitor/messages_zh_cn.py](../../src/codex_activity_monitor/messages_zh_cn.py) |
+| 列表活动含义与优先级 | [src/codex_progress_monitor/progress_state.py](../../src/codex_activity_monitor/progress_state.py) |
+| 阶段键与 target 拼接 | [src/codex_progress_monitor/i18n.py](../../src/codex_activity_monitor/i18n.py) |
 | L 与速度提示 | [macos/Sources/MonitorApp/ChatRowView.swift](../../macos/Sources/MonitorApp/ChatRowView.swift) |
 | G 固定图例 | [macos/Sources/MonitorApp/TimelineLegend.swift](../../macos/Sources/MonitorApp/TimelineLegend.swift) |
 | K / J / S / R 类型、状态、协作 | [macos/Sources/MonitorModel/Timeline.swift](../../macos/Sources/MonitorModel/Timeline.swift) |
-| 时间线分类 | [src/codex_progress_monitor/timeline.py](../../src/codex_progress_monitor/timeline.py) |
+| 时间线分类 | [src/codex_progress_monitor/timeline.py](../../src/codex_activity_monitor/timeline.py) |
 | 时间线控件与图例旁说明 | [macos/Sources/MonitorApp/TimelinePanelView.swift](../../macos/Sources/MonitorApp/TimelinePanelView.swift) |
 | 时间块悬浮／辅助功能提示 | [macos/Sources/MonitorApp/TimelineSurface.swift](../../macos/Sources/MonitorApp/TimelineSurface.swift) |
-| D 内容标签 | [src/codex_progress_monitor/messages_detail.py](../../src/codex_progress_monitor/messages_detail.py) |
-| 历史内容类型与标签选择 | [src/codex_progress_monitor/history_content.py](../../src/codex_progress_monitor/history_content.py) |
-| 实时内容标签选择 | [src/codex_progress_monitor/timeline_query.py](../../src/codex_progress_monitor/timeline_query.py) |
+| D 内容标签 | [src/codex_progress_monitor/messages_detail.py](../../src/codex_activity_monitor/messages_detail.py) |
+| 历史内容类型与标签选择 | [src/codex_progress_monitor/history_content.py](../../src/codex_activity_monitor/history_content.py) |
+| 实时内容标签选择 | [src/codex_progress_monitor/timeline_query.py](../../src/codex_activity_monitor/timeline_query.py) |
 | N 与详情控件 | [macos/Sources/MonitorApp/ActivityViewer.swift](../../macos/Sources/MonitorApp/ActivityViewer.swift) |
 | 输入浮层 | [macos/Sources/MonitorApp/InputPopover.swift](../../macos/Sources/MonitorApp/InputPopover.swift) |
 | 统计与旁注 | [macos/Sources/MonitorApp/ChatDetailsView.swift](../../macos/Sources/MonitorApp/ChatDetailsView.swift) |

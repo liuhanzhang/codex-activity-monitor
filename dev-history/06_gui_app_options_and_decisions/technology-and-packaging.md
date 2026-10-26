@@ -45,8 +45,8 @@ Python 可以打包成用户直接执行的程序。以 PyInstaller 为例，产
 
 | 当前实现 | 发行版需要适配的地方 |
 | --- | --- |
-| [cli.py](../../src/codex_progress_monitor/cli.py) 和 [integration.py](../../src/codex_progress_monitor/integration.py) 用 `sys.executable -m ...` 启动子进程 | 冻结后 `sys.executable` 指向产品程序，需要定义清楚的桥接 / 采集子命令入口；不因此增加常驻卸载 Helper。 |
-| [runtime.py](../../src/codex_progress_monitor/runtime.py) 从源码目录推导 `.local/runtime` | 区分 App 内只读资源与用户目录中的设置、socket、快照和恢复记录，不能向签名包写运行数据。 |
+| [cli.py](../../src/codex_activity_monitor/cli.py) 和 [integration.py](../../src/codex_activity_monitor/integration.py) 用 `sys.executable -m ...` 启动子进程 | 冻结后 `sys.executable` 指向产品程序，需要定义清楚的桥接 / 采集子命令入口；不因此增加常驻卸载 Helper。 |
+| [runtime.py](../../src/codex_activity_monitor/runtime.py) 从源码目录推导 `.local/runtime` | 区分 App 内只读资源与用户目录中的设置、socket、快照和恢复记录，不能向签名包写运行数据。 |
 | `source_identity()` 读取 `.py` 文件计算指纹 | 冻结后改用可复核的构建身份或随包 manifest，不能假设源码文件仍存在。 |
 | 当前包装器保存开发机 Python 与 CLI 的绝对路径 | 轻量脚本与备份移到 App 外的固定目录，回退分支不依赖 App 内 Python；处理 App 缺失、移动、升级和旧进程依赖。 |
 | `tiktoken` 动态加载编码资源 | 显式收集扩展、动态导入和所需词表，验证无系统 Python、无开发缓存、离线的首次运行。 |

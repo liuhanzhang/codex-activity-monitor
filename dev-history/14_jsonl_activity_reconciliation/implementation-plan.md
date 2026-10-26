@@ -20,11 +20,11 @@ JSONL 已保存的轮次、活动状态和内容引用构成基础；实时信�
 
 | 位置 | 计划改动 |
 | --- | --- |
-| [`history.py`](../../src/codex_progress_monitor/history.py) | 复用 header 校验、路径缓存、offset 增量索引及替换检测；提供可合并的轮次／活动元数据。当前 phase 已有状态和起止时间，退出码等需要从原始完成记录补充，不能假设现有 phase 已包含。 |
-| [`collector.py`](../../src/codex_progress_monitor/collector.py) | 调度后台读取；在发布快照前应用已就绪的历史更新。关闭面板不停止校正；文件扫描和解析不占用实时事件锁。 |
-| [`engine.py`](../../src/codex_progress_monitor/engine.py) | 按明确身份应用历史状态和时间，结束残留活动及其当前生成贡献；保留实时尚未落盘的信息。修正 gap 后仍持续宣称已知运行的路径，确保迟到事件不会重新打开已完成活动。 |
-| [`overview.py`](../../src/codex_progress_monitor/overview.py) | 使用合并后的当前活动集合；已完成活动的旧缺口不影响当前总速度，不清除其他真实不可用原因。 |
-| [`timeline.py`](../../src/codex_progress_monitor/timeline.py)、[`timeline_query.py`](../../src/codex_progress_monitor/timeline_query.py) | 复用相同身份、状态和时间合并规则。查询仍可懒加载所选历史内容，但不再只有查询结果知道活动已完成；后台更新与查询不得共享可被并发修改的裸索引对象。 |
+| [`history.py`](../../src/codex_activity_monitor/history.py) | 复用 header 校验、路径缓存、offset 增量索引及替换检测；提供可合并的轮次／活动元数据。当前 phase 已有状态和起止时间，退出码等需要从原始完成记录补充，不能假设现有 phase 已包含。 |
+| [`collector.py`](../../src/codex_activity_monitor/collector.py) | 调度后台读取；在发布快照前应用已就绪的历史更新。关闭面板不停止校正；文件扫描和解析不占用实时事件锁。 |
+| [`engine.py`](../../src/codex_activity_monitor/engine.py) | 按明确身份应用历史状态和时间，结束残留活动及其当前生成贡献；保留实时尚未落盘的信息。修正 gap 后仍持续宣称已知运行的路径，确保迟到事件不会重新打开已完成活动。 |
+| [`overview.py`](../../src/codex_activity_monitor/overview.py) | 使用合并后的当前活动集合；已完成活动的旧缺口不影响当前总速度，不清除其他真实不可用原因。 |
+| [`timeline.py`](../../src/codex_activity_monitor/timeline.py)、[`timeline_query.py`](../../src/codex_activity_monitor/timeline_query.py) | 复用相同身份、状态和时间合并规则。查询仍可懒加载所选历史内容，但不再只有查询结果知道活动已完成；后台更新与查询不得共享可被并发修改的裸索引对象。 |
 | Swift 快照／时间线模型 | 优先保持现有接口。仅当来源时间或质量提示需要新增字段时增加可选字段和旧格式回退，不另做布局改造。 |
 
 ## 3. 后台读取范围与节奏

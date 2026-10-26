@@ -14,7 +14,7 @@ def bundle_resources():
 
 
 def backend_command(*arguments, executable=None):
-    prefix = [] if is_frozen() else ['-m', 'codex_progress_monitor.cli']
+    prefix = [] if is_frozen() else ['-m', 'codex_activity_monitor.cli']
     return [str(executable or sys.executable), *prefix, *(str(value) for value in arguments)]
 
 

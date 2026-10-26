@@ -2,7 +2,7 @@
 
 更新日期：2026-10-15。本文按当前 macOS 实现说明如何启动主 Codex App、隔离测试 App 和 Monitor，以及各进程和配置的关系。命令中的绝对路径使用本机现有安装；其他机器需替换路径。
 
-方案选择与配置前后对比见 [架构文档](/Users/bytedance/personal/codex_progress_monitor/dev-history/02_product_mvp/architecture.md)，看板操作与指标含义见 [使用说明](/Users/bytedance/personal/codex_progress_monitor/dev-history/02_product_mvp/usage.md)。
+方案选择与配置前后对比见 [架构文档](/Users/bytedance/personal/codex-activity-monitor/dev-history/02_product_mvp/architecture.md)，看板操作与指标含义见 [使用说明](/Users/bytedance/personal/codex-activity-monitor/dev-history/02_product_mvp/usage.md)。
 
 ## 1. 哪些进程在运行
 
@@ -11,10 +11,10 @@ Monitor 的包装器、采集器、看板是独立的 Python 进程，共用同�
 | 进程 | 谁启动、管理它 | 职责与源码 |
 | --- | --- | --- |
 | Desktop 主进程 | 用户打开 App | 管理界面与后端连接 |
-| 包装器：`bridge` | Desktop | 启动原版后端、转发协议、读取日志、发送观察事件；[bridge.py](/Users/bytedance/personal/codex_progress_monitor/src/codex_progress_monitor/bridge.py:246) |
+| 包装器：`bridge` | Desktop | 启动原版后端、转发协议、读取日志、发送观察事件；[bridge.py](/Users/bytedance/personal/codex-activity-monitor/src/codex_activity_monitor/bridge.py:246) |
 | 原版 `app-server` | 包装器 | 管理任务、请求模型、运行工具；包装器负责其启动、信号传递和回收 |
-| 采集器：`collect` | 登录启动模式下由 macOS LaunchAgent 管理；手动模式下由 Monitor 命令启动 | 接收事件、聚合状态、计算 token/s、写快照；[collector.py](/Users/bytedance/personal/codex_progress_monitor/src/codex_progress_monitor/collector.py:17) |
-| 看板：`watch` | 用户在终端启动 | 读取快照并刷新显示；[display.py](/Users/bytedance/personal/codex_progress_monitor/src/codex_progress_monitor/display.py:109) |
+| 采集器：`collect` | 登录启动模式下由 macOS LaunchAgent 管理；手动模式下由 Monitor 命令启动 | 接收事件、聚合状态、计算 token/s、写快照；[collector.py](/Users/bytedance/personal/codex-activity-monitor/src/codex_activity_monitor/collector.py:17) |
+| 看板：`watch` | 用户在终端启动 | 读取快照并刷新显示；[display.py](/Users/bytedance/personal/codex-activity-monitor/src/codex_activity_monitor/display.py:109) |
 
 ```mermaid
 flowchart LR
@@ -28,7 +28,7 @@ flowchart LR
     S -->|"读取"| V["终端看板 watch"]
 ```
 
-包装器先转发协议字节，再复制观察数据到有界队列。它的观察线程解析、过滤事件，通过本机 [events.sock](/Users/bytedance/personal/codex_progress_monitor/.local/runtime/events.sock) 发送逐行 JSON，包含后端身份、接收时间和事件内容。采集器按 backend / thread / turn / item 关联事件，调用 [engine.py](/Users/bytedance/personal/codex_progress_monitor/src/codex_progress_monitor/engine.py:56) 和 [metrics.py](/Users/bytedance/personal/codex_progress_monitor/src/codex_progress_monitor/metrics.py:117)，写入 [snapshot.json](/Users/bytedance/personal/codex_progress_monitor/.local/runtime/snapshot.json)。看板只读取快照。
+包装器先转发协议字节，再复制观察数据到有界队列。它的观察线程解析、过滤事件，通过本机 [events.sock](/Users/bytedance/personal/codex-activity-monitor/.local/runtime/events.sock) 发送逐行 JSON，包含后端身份、接收时间和事件内容。采集器按 backend / thread / turn / item 关联事件，调用 [engine.py](/Users/bytedance/personal/codex-activity-monitor/src/codex_activity_monitor/engine.py:56) 和 [metrics.py](/Users/bytedance/personal/codex-activity-monitor/src/codex_activity_monitor/metrics.py:117)，写入 [snapshot.json](/Users/bytedance/personal/codex-activity-monitor/.local/runtime/snapshot.json)。看板只读取快照。
 
 每个被接入的后端都有自己的包装器。同一个 runtime 使用一个采集器，可同时接收主 App 和隔离实例的数据；它们的后端和聊天仍各自独立。采集器不负责启动或关闭 app-server。
 
@@ -36,8 +36,8 @@ flowchart LR
 
 | 入口 | 用途 |
 | --- | --- |
-| [bin/codex-progress](/Users/bytedance/personal/codex_progress_monitor/bin/codex-progress) | 随项目提交的命令入口，调用 Python CLI，支持 `setup`、`desktop`、`watch` 等子命令 |
-| [.local/runtime/codex-observed](/Users/bytedance/personal/codex_progress_monitor/.local/runtime/codex-observed) | 安装时生成的 Desktop 包装器入口，写入本机 Python、原 CLI、runtime 的绝对路径，固定调用 `bridge` |
+| [bin/codex-progress](/Users/bytedance/personal/codex-activity-monitor/bin/codex-activity-monitor) | 随项目提交的命令入口，调用 Python CLI，支持 `setup`、`desktop`、`watch` 等子命令 |
+| [.local/runtime/codex-observed](/Users/bytedance/personal/codex-activity-monitor/.local/runtime/codex-observed) | 安装时生成的 Desktop 包装器入口，写入本机 Python、原 CLI、runtime 的绝对路径，固定调用 `bridge` |
 
 后一个文件是本机安装配置的一部分，虽然放在 runtime 中，也需要保留到承载中的任务结束。
 
@@ -50,16 +50,16 @@ flowchart LR
 | 位置 | 保存什么、由谁读取 |
 | --- | --- |
 | [LaunchAgent plist](/Users/bytedance/Library/LaunchAgents/com.local.codex-progress-monitor.plist) | 保存启动脚本路径、`RunAtLoad=true`、`KeepAlive=true`；由 macOS 读取 |
-| [login-start](/Users/bytedance/personal/codex_progress_monitor/.local/runtime/login-start) | 保存四个接入变量；运行 `launchctl setenv`，最后执行 `collect` |
-| [desktop-environment.json](/Users/bytedance/personal/codex_progress_monitor/.local/runtime/desktop-environment.json) | 保存安装前的变量和安装值，供卸载恢复；Desktop 不读取它 |
+| [login-start](/Users/bytedance/personal/codex-activity-monitor/.local/runtime/login-start) | 保存四个接入变量；运行 `launchctl setenv`，最后执行 `collect` |
+| [desktop-environment.json](/Users/bytedance/personal/codex-activity-monitor/.local/runtime/desktop-environment.json) | 保存安装前的变量和安装值，供卸载恢复；Desktop 不读取它 |
 
-启动脚本设置 `CODEX_CLI_PATH`、`CODEX_APP_SERVER_FORCE_CLI`、`CODEX_APP_SERVER_USE_LOCAL_DAEMON` 和 `CODEX_APP_SERVER_WS_URL`。值和具体影响见 [架构文档的配置表](/Users/bytedance/personal/codex_progress_monitor/dev-history/02_product_mvp/architecture.md#43-实际修改的配置和架构)。
+启动脚本设置 `CODEX_CLI_PATH`、`CODEX_APP_SERVER_FORCE_CLI`、`CODEX_APP_SERVER_USE_LOCAL_DAEMON` 和 `CODEX_APP_SERVER_WS_URL`。值和具体影响见 [架构文档的配置表](/Users/bytedance/personal/codex-activity-monitor/dev-history/02_product_mvp/architecture.md#43-实际修改的配置和架构)。
 
 `CODEX_APP_SERVER_FORCE_CLI` 从 2026-10-15 起设为 `0`，避免把 Desktop 的 `durable` 云连接强制变成额外本地后端。已有登录安装也要更新 `login-start` 和备份文件的 `installed` 字段；`previous` 保留第一次安装前的值。修改 GUI 会话变量后，正在运行的 Desktop 仍保留旧副本，需等任务结束后完整退出并重新打开。重开 `watch` 或只重启 collector 不会切换 Desktop 的连接方式。
 
 `launchctl setenv` 把变量设置到当前用户的 GUI 登录会话中。之后从正常入口启动的 Desktop 会获得这些变量。下次登录时，macOS 再运行脚本，重新设置变量并启动采集器。持久保存的是我们的安装文件，Desktop 没有把这组配置写入自己的设置文件。
 
-显式执行 `codex-progress desktop` 时，命令通过 `open --env` 给那次新启动的 App 传入变量。它使用同一包装器，不依赖提前设置 GUI 会话变量，也不会改变已有实例的环境。实现见 [integration.py](/Users/bytedance/personal/codex_progress_monitor/src/codex_progress_monitor/integration.py:25)。
+显式执行 `codex-progress desktop` 时，命令通过 `open --env` 给那次新启动的 App 传入变量。它使用同一包装器，不依赖提前设置 GUI 会话变量，也不会改变已有实例的环境。实现见 [integration.py](/Users/bytedance/personal/codex-activity-monitor/src/codex_activity_monitor/integration.py:25)。
 
 ## 3. 启动步骤，每步做什么
 
@@ -128,13 +128,13 @@ Monitor 没有主 App / 隔离 App 监听模式开关。两个实例都接入时
 
 `running` 表示采集器快照是否新鲜且 socket 存在；后端的 `connected` 和 `home` 表示哪些环境已连接。采集器正常运行不代表某个 App 已接入，打开看板也不会主动接入一个旧后端。
 
-2026-10-12 的本机会话只读检查确认：GUI 接入变量已设置、LaunchAgent 正在运行，采集器已连接主 home 的后端。这是当前连接状态的观察；从日常入口重新启动的独立验收和长期使用边界仍按 [验证报告](/Users/bytedance/personal/codex_progress_monitor/analysis/product-mvp/README.md) 记录。
+2026-10-12 的本机会话只读检查确认：GUI 接入变量已设置、LaunchAgent 正在运行，采集器已连接主 home 的后端。这是当前连接状态的观察；从日常入口重新启动的独立验收和长期使用边界仍按 [验证报告](/Users/bytedance/personal/codex-activity-monitor/analysis/product-mvp/README.md) 记录。
 
 ## 4. 停止、恢复与卸载
 
 ### 4.1 关闭看板或 Codex
 
-看板按 `q`，只关闭显示。正常退出某个 Codex 实例，会关闭它对应的包装器和后端；采集器继续运行。包装器负责 EOF、信号和退出状态传递，已有验证及异常清理边界见 [架构文档](/Users/bytedance/personal/codex_progress_monitor/dev-history/02_product_mvp/architecture.md#41-当前方案怎样工作)。
+看板按 `q`，只关闭显示。正常退出某个 Codex 实例，会关闭它对应的包装器和后端；采集器继续运行。包装器负责 EOF、信号和退出状态传递，已有验证及异常清理边界见 [架构文档](/Users/bytedance/personal/codex-activity-monitor/dev-history/02_product_mvp/architecture.md#41-当前方案怎样工作)。
 
 ### 4.2 登录启动模式：暂停采集、再恢复
 
@@ -164,7 +164,7 @@ macOS 再运行 `login-start`，重新设置变量并启动采集器。未删除
 /Users/bytedance/personal/codex_progress_monitor/bin/codex-progress stop
 ```
 
-`start` 检查采集器是否已运行，必要时创建后台 `collect` 进程。`stop` 通过同一 Unix socket 发送带本机控制 token 的停止请求，让采集器清理并退出，不终止包装器或后端。实现见 [cli.py](/Users/bytedance/personal/codex_progress_monitor/src/codex_progress_monitor/cli.py:19)。
+`start` 检查采集器是否已运行，必要时创建后台 `collect` 进程。`stop` 通过同一 Unix socket 发送带本机控制 token 的停止请求，让采集器清理并退出，不终止包装器或后端。实现见 [cli.py](/Users/bytedance/personal/codex-activity-monitor/src/codex_activity_monitor/cli.py:19)。
 
 ### 4.4 完全卸载接入配置
 

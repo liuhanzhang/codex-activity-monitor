@@ -30,11 +30,11 @@ flowchart LR
 
 | 位置 | 原有能力 | 设计时缺口 |
 | --- | --- | --- |
-| [events.py](../../src/codex_progress_monitor/events.py) | 通知白名单、双时钟、item／call 元数据、正文和参数增量 | `turn/steer` 请求与结果缺口；完整详情未通用保留；需核对时间字段实际序列化命名 |
-| [engine.py](../../src/codex_progress_monitor/engine.py) | 活动、turn／item 身份、明确工具状态、镜像去重 | 参数结束会转 `tool_ready` 并重置起点；终态活动仅保留最近 20 条；不能直接充当完整时间线仓库 |
-| [collector.py](../../src/codex_progress_monitor/collector.py) | 聚合、快照、观察会话和重启恢复 | 无分轮历史查询／侧存储；不能在事件循环同步扫描大历史 |
-| [progress_state.py](../../src/codex_progress_monitor/progress_state.py) | 当前动作与优先级、防抖 | 适合当前状态，不用于重建历史阶段 |
-| [tool_labels.py](../../src/codex_progress_monitor/tool_labels.py) | 工具身份、有界 patch／Code Mode 静态识别 | 复用分类依据，不通过中文标签反向解析 |
+| [events.py](../../src/codex_activity_monitor/events.py) | 通知白名单、双时钟、item／call 元数据、正文和参数增量 | `turn/steer` 请求与结果缺口；完整详情未通用保留；需核对时间字段实际序列化命名 |
+| [engine.py](../../src/codex_activity_monitor/engine.py) | 活动、turn／item 身份、明确工具状态、镜像去重 | 参数结束会转 `tool_ready` 并重置起点；终态活动仅保留最近 20 条；不能直接充当完整时间线仓库 |
+| [collector.py](../../src/codex_activity_monitor/collector.py) | 聚合、快照、观察会话和重启恢复 | 无分轮历史查询／侧存储；不能在事件循环同步扫描大历史 |
+| [progress_state.py](../../src/codex_activity_monitor/progress_state.py) | 当前动作与优先级、防抖 | 适合当前状态，不用于重建历史阶段 |
+| [tool_labels.py](../../src/codex_activity_monitor/tool_labels.py) | 工具身份、有界 patch／Code Mode 静态识别 | 复用分类依据，不通过中文标签反向解析 |
 | [Snapshot.swift](../../macos/Sources/MonitorModel/Snapshot.swift) | 旧活动摘要、聊天树、菜单栏语义 | 缺少分轮、阶段、绝对边界、来源引用和时间线 DTO |
 | [ChatRowView.swift](../../macos/Sources/MonitorApp/ChatRowView.swift) | 展开指标与纯文本活动列表 | 固定双轨、轮次选择、横向导航与活动选择 |
 | [DashboardStore.swift](../../macos/Sources/MonitorApp/DashboardStore.swift) | 每秒读取快照、稳定聊天顺序和展开状态 | 时间线独立懒加载状态、选择与异步取消 |

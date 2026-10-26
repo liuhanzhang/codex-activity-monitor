@@ -7,11 +7,11 @@ import unittest
 
 from rich.console import Console
 
-from codex_progress_monitor.display import render
-from codex_progress_monitor.engine import Engine
-from codex_progress_monitor.events import Event, filter_event
-from codex_progress_monitor.metrics import count_text
-from codex_progress_monitor.tool_labels import MAX_CODE_PREFIX, MAX_PATCH_FILES, file_edit_preview
+from codex_activity_monitor.display import render
+from codex_activity_monitor.engine import Engine
+from codex_activity_monitor.events import Event, filter_event
+from codex_activity_monitor.metrics import count_text
+from codex_activity_monitor.tool_labels import MAX_CODE_PREFIX, MAX_PATCH_FILES, file_edit_preview
 
 
 PATCH = '*** Begin Patch\n*** Update File: src/first.py\n@@\n-OLD_PRIVATE\n+NEW_PRIVATE\n*** Add File: tests/second.py\n+PRIVATE_BODY\n*** End Patch\n'

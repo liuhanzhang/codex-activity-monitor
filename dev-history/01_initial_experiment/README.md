@@ -6,11 +6,11 @@
 
 ## 阅读顺序
 
-1. [架构与通信原理](/Users/bytedance/personal/codex_progress_monitor/dev-history/01_initial_experiment/architecture.md)：Desktop、CLI / app-server、daemon、Code Mode 与 OpenAI 服务之间的关系。
-2. [状态与用量的数据来源](/Users/bytedance/personal/codex_progress_monitor/dev-history/01_initial_experiment/data-sources.md)：通信事件、日志、sessions、hooks、限额接口及开源工具的取数方式。
-3. [需求、方案与验证计划](/Users/bytedance/personal/codex_progress_monitor/dev-history/01_initial_experiment/requirements-and-plan.md)：监控指标、状态表达、组合采集方案、接入决策和验收标准。
+1. [架构与通信原理](/Users/bytedance/personal/codex-activity-monitor/dev-history/01_initial_experiment/architecture.md)：Desktop、CLI / app-server、daemon、Code Mode 与 OpenAI 服务之间的关系。
+2. [状态与用量的数据来源](/Users/bytedance/personal/codex-activity-monitor/dev-history/01_initial_experiment/data-sources.md)：通信事件、日志、sessions、hooks、限额接口及开源工具的取数方式。
+3. [需求、方案与验证计划](/Users/bytedance/personal/codex-activity-monitor/dev-history/01_initial_experiment/requirements-and-plan.md)：监控指标、状态表达、组合采集方案、接入决策和验收标准。
 
-工作区的目录归属和清理记录见 [工作区整理说明](/Users/bytedance/personal/codex_progress_monitor/dev-history/01_initial_experiment/workspace-organization.md)。
+工作区的目录归属和清理记录见 [工作区整理说明](/Users/bytedance/personal/codex-activity-monitor/dev-history/01_initial_experiment/workspace-organization.md)。
 
 ## 当前判断
 

@@ -1,8 +1,8 @@
 import unittest
 
-from codex_progress_monitor.engine import Engine
-from codex_progress_monitor.events import Event, filter_event
-from codex_progress_monitor.timeline import TimelineBook, phase_id, merge_phase
+from codex_activity_monitor.engine import Engine
+from codex_activity_monitor.events import Event, filter_event
+from codex_activity_monitor.timeline import TimelineBook, phase_id, merge_phase
 
 
 class TimelineTests(unittest.TestCase):
@@ -121,7 +121,7 @@ class TimelineTests(unittest.TestCase):
         self.assertEqual(len([p for p in self.phases() if p['kind'] == 'input']), 1)
 
     def test_failed_steering_and_resolved_question_do_not_create_input_markers(self):
-        from codex_progress_monitor.timeline_query import TimelineQuery
+        from codex_activity_monitor.timeline_query import TimelineQuery
         self.item(kind='userMessage', item='first', event='completed', at=101, status='completed')
         self.send({'id': 52, 'method': 'turn/steer', 'params': {'threadId': 't', 'expectedTurnId': 'u'}},
                   102, 'protocol_in')
@@ -137,7 +137,7 @@ class TimelineTests(unittest.TestCase):
         self.assertEqual(len(self.book.turns), 1)
 
     def test_compaction_lifecycle_and_old_completion_notification_are_one_visible_process(self):
-        from codex_progress_monitor.timeline_query import TimelineQuery
+        from codex_activity_monitor.timeline_query import TimelineQuery
         self.item(kind='contextCompaction', item='compact', at=101)
         original_id = self.phases()[0]['id']
         self.item(kind='contextCompaction', item='compact', event='completed', at=104, status='completed')
@@ -209,7 +209,7 @@ class TimelineTests(unittest.TestCase):
         self.assertEqual(next(p for p in self.phases() if p['thread_id'] == 'other')['status'], 'active')
 
     def test_wall_clock_jump_keeps_work_identity_but_refuses_false_alignment(self):
-        from codex_progress_monitor.timeline_query import TimelineQuery
+        from codex_activity_monitor.timeline_query import TimelineQuery
         self.raw(kind='message')
         self.engine.ingest(Event('b', 'upstream', {'type': 'response.output_text.delta', 'item_id': 'call',
                                                   'delta': 'observed'}, 102, 1700003702))

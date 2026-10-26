@@ -2,7 +2,7 @@
 
 整理日期：2026-10-10。整理时工作区包含可行性实验、研究证据和隔离 App 的本机运行环境，尚未初始化 Git，也尚未实现监控产品。
 
-本次释放约 **212 MiB**，文件内容总量从约 **1.19 GiB** 降至 **0.98 GiB**。这些数值按文件逻辑大小统计，不等同于文件系统实际分配空间；运行中的环境会继续产生数据。逐项路径、大小和压缩前校验值见 [清理清单](/Users/bytedance/personal/codex_progress_monitor/analysis/workspace-cleanup/2026-10-10.json)。
+本次释放约 **212 MiB**，文件内容总量从约 **1.19 GiB** 降至 **0.98 GiB**。这些数值按文件逻辑大小统计，不等同于文件系统实际分配空间；运行中的环境会继续产生数据。逐项路径、大小和压缩前校验值见 [清理清单](/Users/bytedance/personal/codex-activity-monitor/analysis/workspace-cleanup/2026-10-10.json)。
 
 ## 目录归属
 
@@ -60,7 +60,7 @@ codex_progress_monitor/
 
 该运行环境仍占约 **800 MiB**，是剩余体积的主要来源。进一步清理应在停止相应实验进程后，先保留独有证据，再判断下载缓存和临时运行文件是否可以移除。
 
-`runs/`、`latest-run.txt`、`baseline-processes.json` 和本机生成材料已通过 `.gitignore` 排除。以后初始化 Git 时，登录状态、原始对话、数据库和下载依赖不应随项目提交。可复用脚本的用途见 [隔离实验说明](/Users/bytedance/personal/codex_progress_monitor/experiments/desktop-isolation/README.md)。
+`runs/`、`latest-run.txt`、`baseline-processes.json` 和本机生成材料已通过 `.gitignore` 排除。以后初始化 Git 时，登录状态、原始对话、数据库和下载依赖不应随项目提交。可复用脚本的用途见 [隔离实验说明](/Users/bytedance/personal/codex-activity-monitor/experiments/desktop-isolation/README.md)。
 
 ## 验证
 

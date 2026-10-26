@@ -56,7 +56,7 @@
 - 新采集器已接入主 home 的 2 个后端。当前主 App 快照观察到 `exec → clock__curr_time, exec_command` 及去壳命令摘要，终端渲染已检查。
 - 采集器重载造成当前回合短暂观测缺口；30 秒主 App 采样未捕获内部名称处于参数生成阶段的快照，因此该阶段的验证依据为测试和上游实测回放。缺口期间参数缓冲不可用时，内部名称可由最终完成项补齐；不据此声称新增独立 Desktop 回合或长期验收完成。
 
-精简结果与捕获哈希见 [验证记录](/Users/bytedance/personal/codex_progress_monitor/analysis/product-mvp/tool-display-verification.json)。本机渲染文本和 30 秒采样存放于 `.local/product-implementation/tool-label-render.txt` 与 `tool-label-live.json`，不提交原始聊天与运行快照。
+精简结果与捕获哈希见 [验证记录](/Users/bytedance/personal/codex-activity-monitor/analysis/product-mvp/tool-display-verification.json)。本机渲染文本和 30 秒采样存放于 `.local/product-implementation/tool-label-render.txt` 与 `tool-label-live.json`，不提交原始聊天与运行快照。
 
 ### 命令参数预览扩展
 

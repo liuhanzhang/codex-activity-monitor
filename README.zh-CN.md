@@ -1,4 +1,4 @@
-# Codex Progress Monitor
+# Codex Activity Monitor
 
 [English](README.md) · [参与开发](CONTRIBUTING.md) · [架构记录](dev-history/18_engineering_hardening/implemented-architecture.md) · [开发历史](dev-history/README.md)
 
@@ -27,21 +27,21 @@ bin/build-gui
 bin/run-gui
 ```
 
-首次打开日常 App 会配置 macOS GUI 会话的 CLI 包装器并管理采集器。先结束正在执行的 Codex 任务，再退出并重新打开 Codex Desktop，使新进程使用接入配置。设置中的恢复入口会恢复原配置、保留用户后来的变更，并等待 Codex 退出后清理所属数据。GUI 管理的运行环境会在 Monitor 退出后暂停观察。
+首次打开日常 App 会配置 macOS GUI 会话的 CLI 包装器并管理采集器。先结束正在执行的 Codex 任务，再退出并重新打开 Codex Desktop，使新进程使用接入配置。设置中的恢复入口会恢复原配置、保留用户后来的变更，并等待 Codex 退出后清理所属数据。GUI 管理的运行环境会在 Codex Activity Monitor 退出后暂停观察。
 
 开发验证使用独立的只读预览：
 
 ```sh
 bin/build-gui --preview
-open '.local/gui-preview/Codex Monitor Preview.app'
+open '.local/gui-preview/Codex Activity Monitor Preview.app'
 ```
 
 日常 GUI 运行时，终端可读取同一采集器：
 
 ```sh
-bin/codex-progress watch
-bin/codex-progress watch --lang en
-bin/codex-progress status
+bin/codex-activity-monitor watch
+bin/codex-activity-monitor watch --lang en
+bin/codex-activity-monitor status
 ```
 
 更多配置与恢复步骤见 [GUI 使用](dev-history/06_gui_app_options_and_decisions/usage.md)及[启动与进程管理](dev-history/02_product_mvp/startup-and-processes.md)。历史文档中的本机路径仅用于说明当时的验证环境。
@@ -50,7 +50,7 @@ bin/codex-progress status
 
 包装器转发原版后端的 stdio，通过有界队列和独立 Unix socket 复制观察事件。Python 聚合状态，Swift 通过 `state.sock` 订阅完整状态和带 nonce 的健康响应；独立有界 worker 保存可丢弃的恢复检查点。只读历史查询从 Codex JSONL 取得完整详情，SQLite 仅保存阶段元数据。采集不会启动第二个会话 writer。
 
-快照可能包含聊天标题、路径、命令预览和数值指标，并非匿名数据。实时文本在内存中用于本地分词和所选活动详情；Monitor 不上传对话。依赖安装和 tokenizer 首次下载资源可能需要网络。不要将运行数据、登录状态、原始聊天或私密截图放入 Git 或问题报告。
+快照可能包含聊天标题、路径、命令预览和数值指标，并非匿名数据。实时文本在内存中用于本地分词和所选活动详情；Codex Activity Monitor 不上传对话。依赖安装和 tokenizer 首次下载资源可能需要网络。不要将运行数据、登录状态、原始聊天或私密截图放入 Git 或问题报告。
 
 产品代码位于 `src/`、`macos/Sources/` 和 `bin/`。`dev-history/` 按迭代保存需求、决策和历史验收，内容对应记录时的版本，不作为随版本持续更新的产品手册。`experiments/` 保存实验方法，`analysis/` 保存精简结论，`.local/` 是 Git 忽略的本机环境与数据。
 

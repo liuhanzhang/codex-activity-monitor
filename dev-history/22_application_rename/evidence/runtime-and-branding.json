@@ -1,0 +1,27 @@
+{
+  "new_integration_state": "configured",
+  "runtime": "/Users/bytedance/Library/Application Support/CodexActivityMonitor/run",
+  "environment_matches_installation": {
+    "CODEX_CLI_PATH": true,
+    "CODEX_APP_SERVER_FORCE_CLI": true,
+    "CODEX_APP_SERVER_USE_LOCAL_DAEMON": true,
+    "CODEX_APP_SERVER_WS_URL": true
+  },
+  "artifacts": [
+    {
+      "kind": "gui",
+      "name": "Codex Activity Monitor",
+      "bundle_id": "com.liuhanzhang.codexactivitymonitor"
+    },
+    {
+      "kind": "gui-preview",
+      "name": "Codex Activity Monitor Preview",
+      "bundle_id": "com.liuhanzhang.codexactivitymonitor.preview"
+    },
+    {
+      "kind": "standalone",
+      "name": "Codex Activity Monitor",
+      "bundle_id": "com.liuhanzhang.codexactivitymonitor"
+    }
+  ]
+}

@@ -13,7 +13,7 @@ private final class StateServerFixture: @unchecked Sendable {
         let root = URL(fileURLWithPath: #filePath).deletingLastPathComponent().deletingLastPathComponent()
             .deletingLastPathComponent().deletingLastPathComponent()
         // Short /tmp paths respect sockaddr_un's byte limit on macOS.
-        directory = URL(fileURLWithPath: "/tmp/cpm-s-"+UUID().uuidString.prefix(8))
+        directory = URL(fileURLWithPath: "/tmp/cam-s-"+UUID().uuidString.prefix(8))
         try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
         process = Process()
         process.executableURL = root.appendingPathComponent(".local/venv/bin/python")

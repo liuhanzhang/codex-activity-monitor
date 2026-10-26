@@ -5,8 +5,8 @@ import json
 from pathlib import Path
 from unittest.mock import patch
 
-from codex_progress_monitor.metrics import TextStream, TokenCounter, count_text
-from codex_progress_monitor.runtime import source_identity
+from codex_activity_monitor.metrics import TextStream, TokenCounter, count_text
+from codex_activity_monitor.runtime import source_identity
 
 
 def measure(interval, tokens):
@@ -15,7 +15,7 @@ def measure(interval, tokens):
     next_receipt = 108.125
     receipts, samples = [], []
     try:
-        with patch('codex_progress_monitor.metrics.count_text', side_effect=lambda text, encoding: (count_text(text, encoding)[0], 0)):
+        with patch('codex_activity_monitor.metrics.count_text', side_effect=lambda text, encoding: (count_text(text, encoding)[0], 0)):
             for tick in range(1, 81):
                 now = 108+tick/4
                 while next_receipt <= now+1e-8:

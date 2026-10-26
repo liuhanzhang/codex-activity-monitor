@@ -19,7 +19,7 @@ bin/build-gui --preview
 
 The default test suites use synthetic data, temporary runtimes, and injected management services. They do not require a Codex account or configure your Desktop. Tests requiring a window session are opt-in via `MONITOR_WINDOW_TESTS=1`; live experiments in `experiments/` and the other scripts in `tests/` are separate acceptance tools. Read a live script before using it.
 
-The preview bundle is `.local/gui-preview/Codex Monitor Preview.app`. It defaults to read-only operation. Do not use the daily app or real `launchctl` environment as a development fixture.
+The preview bundle is `.local/gui-preview/Codex Activity Monitor Preview.app`. It defaults to read-only operation. Do not use the daily app or real `launchctl` environment as a development fixture.
 
 ## Changes
 

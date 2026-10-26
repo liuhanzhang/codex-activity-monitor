@@ -1,0 +1,17 @@
+{
+  "date": "2026-10-26",
+  "old_bridge_processes_absent": true,
+  "old_routing_references_absent_in_codex_and_python_processes": true,
+  "legacy_root_deleted": true,
+  "legacy_contents_removed": true,
+  "pending_empty_working_directory_removal": false,
+  "legacy_data_root_deleted": "/Users/bytedance/Library/Application Support/CodexProgressMonitor",
+  "shared_login_bundle_id_preserved": "com.liuhanzhang.codexactivitymonitor",
+  "separate_old_login_identity_removed": false,
+  "new_installation_environment_preserved": true,
+  "temporary_old_backup_directory_deleted": true,
+  "git_history_preserved": true,
+  "final_placeholder_removed_by": "user",
+  "absence_verified_date": "2026-10-26",
+  "new_collector_healthy_after_user_removal": true
+}

@@ -4,7 +4,7 @@
 
 **当前方案：在 Desktop 与原版后端之间加入 stdio 包装器，复制运行事件，读取 Rust 日志中的流式增量。** 它满足首版的本机实时监控需求；选择依据是数据覆盖、日常接入方式和已有验证，不是已经证明它在所有场景下优于 WebSocket。
 
-主 App / 隔离 App 的逐步启动、环境变量保存位置，以及包装器、采集器、看板的启动和停止关系，见 [启动步骤与进程管理](/Users/bytedance/personal/codex_progress_monitor/dev-history/02_product_mvp/startup-and-processes.md)。
+主 App / 隔离 App 的逐步启动、环境变量保存位置，以及包装器、采集器、看板的启动和停止关系，见 [启动步骤与进程管理](/Users/bytedance/personal/codex-activity-monitor/dev-history/02_product_mvp/startup-and-processes.md)。
 
 ## 1. Codex Desktop 本来怎样工作
 
@@ -50,7 +50,7 @@ stderr 的历史名称是“标准错误输出”，但正常的 INFO、DEBUG、
 
 Desktop 还支持连接已有 WebSocket 后端，以及有条件地连接本地常驻服务（daemon）；远程主机也有自己的后端连接。初始实验采用的正是“我们先启动 WebSocket 后端，Desktop 再连接它”。一个后端可以管理多条聊天，一个 Desktop 也可以连接多个后端。共享数据目录不代表共享正在执行的任务。
 
-源码依据：[Desktop 的 IPC 接收](/Users/bytedance/personal/codex_progress_monitor/analysis/upstream-stream/desktop-source/main.pretty.js:160126)、[Desktop 创建三条管道](/Users/bytedance/personal/codex_progress_monitor/analysis/upstream-stream/desktop-source/application-network-startup.pretty.js:13739)、[Rust 日志写入 stderr](/Users/bytedance/playground/codex/codex-rs/app-server/src/lib.rs:715)。原生架构的详细研究见 [初始架构文档](/Users/bytedance/personal/codex_progress_monitor/dev-history/01_initial_experiment/architecture.md)。
+源码依据：[Desktop 的 IPC 接收](/Users/bytedance/personal/codex-activity-monitor/analysis/upstream-stream/desktop-source/main.pretty.js:160126)、[Desktop 创建三条管道](/Users/bytedance/personal/codex-activity-monitor/analysis/upstream-stream/desktop-source/application-network-startup.pretty.js:13739)、[Rust 日志写入 stderr](/Users/bytedance/playground/codex/codex-rs/app-server/src/lib.rs:715)。原生架构的详细研究见 [初始架构文档](/Users/bytedance/personal/codex-activity-monitor/dev-history/01_initial_experiment/architecture.md)。
 
 ## 2. 可以配置哪些部分，怎样配置
 
@@ -82,7 +82,7 @@ Desktop 还支持连接已有 WebSocket 后端，以及有条件地连接本地�
 
 主 App 和隔离 App 使用的是同一个应用程序，区别主要在 home / profile 和启动参数。只要两者都经包装器接入同一个采集器，Monitor 就能同时收集它们；当前没有“只监听主 App”的开关。
 
-依据：[WebSocket 与强制 CLI 的选择](/Users/bytedance/personal/codex_progress_monitor/analysis/upstream-stream/desktop-source/application-network-startup.pretty.js:11873)、[daemon 的选择条件](/Users/bytedance/personal/codex_progress_monitor/analysis/upstream-stream/desktop-source/application-network-startup.pretty.js:13944)、[项目安装与启动配置](/Users/bytedance/personal/codex_progress_monitor/src/codex_progress_monitor/integration.py:21)。
+依据：[WebSocket 与强制 CLI 的选择](/Users/bytedance/personal/codex-activity-monitor/analysis/upstream-stream/desktop-source/application-network-startup.pretty.js:11873)、[daemon 的选择条件](/Users/bytedance/personal/codex-activity-monitor/analysis/upstream-stream/desktop-source/application-network-startup.pretty.js:13944)、[项目安装与启动配置](/Users/bytedance/personal/codex-activity-monitor/src/codex_activity_monitor/integration.py:21)。
 
 ## 3. 要知道进度，需要监听哪里
 
@@ -112,7 +112,7 @@ Rust 日志中的关键增量包括 `response.output_text.delta`、`response.cus
 
 只看 Desktop 界面受其渲染和折叠行为限制；会话文件保存的是完整内容和部分事件，未保存逐段正文/参数增量，无法满足长参数生成期间的实时反馈。不同方案是否可行，应以实际事件覆盖为准，不能只看“有没有连接上”。
 
-证据：[初始协议与上游日志对照](/Users/bytedance/personal/codex_progress_monitor/dev-history/01_initial_experiment/data-sources.md:44)、[初始 WebSocket 实验方案](/Users/bytedance/personal/codex_progress_monitor/dev-history/01_initial_experiment/requirements-and-plan.md:101)。
+证据：[初始协议与上游日志对照](/Users/bytedance/personal/codex-activity-monitor/dev-history/01_initial_experiment/data-sources.md:44)、[初始 WebSocket 实验方案](/Users/bytedance/personal/codex-activity-monitor/dev-history/01_initial_experiment/requirements-and-plan.md:101)。
 
 ## 4. 为什么选择当前方案，具体改了什么
 
@@ -141,7 +141,7 @@ flowchart LR
 | 向 Desktop 写 stdout 失败 | 向后端进程组发送 `SIGTERM`，避免协议消费端消失后继续运行 |
 | app-server 退出 | 等待并回收子进程，有限等待输出排空；向 Desktop 返回原退出码，或以相同信号退出 |
 
-已有测试覆盖 EOF、退出码和 `SIGTERM` 传递，真实隔离后端也验证过正常结束。**这不等于异常清理已经完整：** 当前没有后端拒绝退出时的超时强杀；包装器被 `SIGKILL` 强杀时无法执行清理；Desktop 崩溃及自行脱离该进程组的工具也没有完整验收。相关实现与测试见 [包装器进程管理](/Users/bytedance/personal/codex_progress_monitor/src/codex_progress_monitor/bridge.py:246) 和 [运行测试](/Users/bytedance/personal/codex_progress_monitor/tests/test_runtime.py:35)。
+已有测试覆盖 EOF、退出码和 `SIGTERM` 传递，真实隔离后端也验证过正常结束。**这不等于异常清理已经完整：** 当前没有后端拒绝退出时的超时强杀；包装器被 `SIGKILL` 强杀时无法执行清理；Desktop 崩溃及自行脱离该进程组的工具也没有完整验收。相关实现与测试见 [包装器进程管理](/Users/bytedance/personal/codex-activity-monitor/src/codex_activity_monitor/bridge.py:246) 和 [运行测试](/Users/bytedance/personal/codex-activity-monitor/tests/test_runtime.py:35)。
 
 这里由 Desktop 管理的是承载通信的包装器。独立采集器由 Monitor 命令或 LaunchAgent 启动，终端看板由用户启动，它们不属于 Desktop 的子进程管理链。
 
@@ -159,7 +159,7 @@ Rust 后端接收并解码模型事件，写出 stderr 日志；包装器解析�
 
 这是“当前适合推进首版”的判断。WebSocket 实验没有失败；它把更多责任放在独立服务与观察连接上，stdio 则把责任放在转发和子进程管理上。没有对照实验证明 stdio 的总复杂度更低、性能更好或稳定性更高。
 
-选择记录见 [实现前验证结论](/Users/bytedance/personal/codex_progress_monitor/analysis/product-preflight/README.md:5)。
+选择记录见 [实现前验证结论](/Users/bytedance/personal/codex-activity-monitor/analysis/product-preflight/README.md:5)。
 
 ### 4.3 实际修改的配置和架构
 
@@ -182,7 +182,7 @@ Monitor 的改动是**启动配置、日志配置，以及新增的进程和通�
 
 表中的“基准行为不变”仅指上述原生本机 stdio 场景。如果原先配置了普通主机 WebSocket 或启用了 daemon，接入会改为 CLI / stdio；`durable` 云连接保留。2026-10-15 修正了旧版全局设置 `FORCE_CLI=1` 的副作用：它会将 `durable` 也变成第二个本地 app-server。原因、升级恢复和验证边界见 [远程连接修复记录](../07_remote_transport_repair/README.md)。
 
-Desktop 的原默认值见 [子进程环境构造](/Users/bytedance/personal/codex_progress_monitor/analysis/upstream-stream/desktop-source/application-network-startup.pretty.js:14004)。原本已经走 stdio 的本机实例，接入后仍走 stdio，但中间增加了包装器。
+Desktop 的原默认值见 [子进程环境构造](/Users/bytedance/personal/codex-activity-monitor/analysis/upstream-stream/desktop-source/application-network-startup.pretty.js:14004)。原本已经走 stdio 的本机实例，接入后仍走 stdio，但中间增加了包装器。
 
 登录启动配置作用于当前用户的 GUI 会话，可能同时影响以后启动的主 App 和隔离实例；它不是只针对某个窗口的开关。隔离启动额外指定独立 home / profile。主 App 接入不写它的 `config.toml`，不替换模型、工具模式、沙箱和审批配置；请求参数原样交给原 CLI，认证和模型连接仍由原 CLI 处理。
 
@@ -194,7 +194,7 @@ Desktop 的原默认值见 [子进程环境构造](/Users/bytedance/personal/cod
 
 因此，当前实现可以减少新增高频日志进入 Desktop，却不能称为“完全恢复默认日志”。若要保留接入前的诊断筛选语义，需要保存并复用原日志策略；当前尚未实现。
 
-代码依据：[安装配置与恢复记录](/Users/bytedance/personal/codex_progress_monitor/src/codex_progress_monitor/integration.py:25)、[原 CLI 启动与转发](/Users/bytedance/personal/codex_progress_monitor/src/codex_progress_monitor/bridge.py:246)、[日志筛选](/Users/bytedance/personal/codex_progress_monitor/src/codex_progress_monitor/bridge.py:282)。
+代码依据：[安装配置与恢复记录](/Users/bytedance/personal/codex-activity-monitor/src/codex_activity_monitor/integration.py:25)、[原 CLI 启动与转发](/Users/bytedance/personal/codex-activity-monitor/src/codex_activity_monitor/bridge.py:246)、[日志筛选](/Users/bytedance/personal/codex-activity-monitor/src/codex_activity_monitor/bridge.py:282)。
 
 ### 4.4 对效果、性能和稳定性有何影响
 
@@ -210,7 +210,7 @@ Desktop 的原默认值见 [子进程环境构造](/Users/bytedance/personal/cod
 | 12 个真实流重放，最新隔离 UI 的长正文与约 20 秒命令检查通过 | 已取得完成前反馈，有限样本的最终计数和归属正确 | 不代表所有主机/模型；短参数可能在速度刷新前结束 |
 | 有限本地传输、分词与资源测试 | 已排查部分开销和容量问题 | 存在开销；真实模型任务整体额外延迟及长期并行负载尚待量化 |
 
-主 App 默认启动的完整验收与长期自然使用，在现有验收记录中仍是后续确认项。架构说明不能代替这些实测。详细数字与边界见 [产品验证报告](/Users/bytedance/personal/codex_progress_monitor/analysis/product-mvp/README.md) 和 [完成核对](/Users/bytedance/personal/codex_progress_monitor/analysis/product-mvp/completion-audit.md)。
+主 App 默认启动的完整验收与长期自然使用，在现有验收记录中仍是后续确认项。架构说明不能代替这些实测。详细数字与边界见 [产品验证报告](/Users/bytedance/personal/codex-activity-monitor/analysis/product-mvp/README.md) 和 [完成核对](/Users/bytedance/personal/codex-activity-monitor/analysis/product-mvp/completion-audit.md)。
 
 ### 4.5 怎样恢复
 
@@ -220,4 +220,4 @@ Desktop 的原默认值见 [子进程环境构造](/Users/bytedance/personal/cod
 /Users/bytedance/personal/codex_progress_monitor/bin/codex-progress uninstall
 ```
 
-已有任务使用的包装器和依赖应保留到任务结束。完整安装、试用和恢复步骤见 [使用说明](/Users/bytedance/personal/codex_progress_monitor/dev-history/02_product_mvp/usage.md)。
+已有任务使用的包装器和依赖应保留到任务结束。完整安装、试用和恢复步骤见 [使用说明](/Users/bytedance/personal/codex-activity-monitor/dev-history/02_product_mvp/usage.md)。

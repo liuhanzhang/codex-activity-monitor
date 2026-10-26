@@ -6,13 +6,13 @@ import time
 import unittest
 from unittest.mock import Mock, patch
 
-from codex_progress_monitor.engine import Engine
-from codex_progress_monitor.events import Event, filter_event
-from codex_progress_monitor.history import HistoryProvider
-from codex_progress_monitor.metrics import TextStream, TokenCounter, TokenizationError, count_text
-from codex_progress_monitor.state import Activity
-from codex_progress_monitor.identity_budget import IdentityBudget
-from codex_progress_monitor.timeline import TimelineBook
+from codex_activity_monitor.engine import Engine
+from codex_activity_monitor.events import Event, filter_event
+from codex_activity_monitor.history import HistoryProvider
+from codex_activity_monitor.metrics import TextStream, TokenCounter, TokenizationError, count_text
+from codex_activity_monitor.state import Activity
+from codex_activity_monitor.identity_budget import IdentityBudget
+from codex_activity_monitor.timeline import TimelineBook
 
 
 class ResourceBudgetTests(unittest.TestCase):
@@ -43,7 +43,7 @@ class ResourceBudgetTests(unittest.TestCase):
                 stream.append('input', 2)
                 counter = TokenCounter(asynchronous, isolated=False)
                 try:
-                    with patch('codex_progress_monitor.metrics.tiktoken.get_encoding', return_value=broken):
+                    with patch('codex_activity_monitor.metrics.tiktoken.get_encoding', return_value=broken):
                         counter.tick([stream], 2)
                         if asynchronous:
                             deadline = time.monotonic()+1
@@ -65,10 +65,10 @@ class ResourceBudgetTests(unittest.TestCase):
     def test_count_failure_adapter_preserves_interpreter_control_signals(self):
         for signal in (KeyboardInterrupt, SystemExit, GeneratorExit):
             encoding = Mock(); encoding.encode_ordinary.side_effect = signal
-            with patch('codex_progress_monitor.metrics.tiktoken.get_encoding', return_value=encoding):
+            with patch('codex_activity_monitor.metrics.tiktoken.get_encoding', return_value=encoding):
                 with self.assertRaises(signal): count_text('input', 'o200k_base')
         encoding = Mock(); encoding.encode_ordinary.side_effect = ValueError('synthetic')
-        with patch('codex_progress_monitor.metrics.tiktoken.get_encoding', return_value=encoding):
+        with patch('codex_activity_monitor.metrics.tiktoken.get_encoding', return_value=encoding):
             with self.assertRaises(TokenizationError): count_text('input', 'o200k_base')
 
     def test_history_diagnostics_never_wait_for_a_blocked_source_reader(self):
@@ -95,7 +95,7 @@ class ResourceBudgetTests(unittest.TestCase):
         def blocked(text, encoding):
             gate.wait(2)
             return len(text), .01
-        with patch('codex_progress_monitor.metrics.count_text', blocked):
+        with patch('codex_activity_monitor.metrics.count_text', blocked):
             counter.tick(streams, 2)
             self.assertEqual(counter.diagnostics()['jobs'], 2)
             self.assertEqual(counter.diagnostics()['pending_bytes'], 8)

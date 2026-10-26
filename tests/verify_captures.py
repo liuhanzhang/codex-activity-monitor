@@ -5,9 +5,9 @@ import json
 from pathlib import Path
 import time
 
-from codex_progress_monitor.engine import Engine
-from codex_progress_monitor.events import Event,filter_event,DELTA_KINDS
-from codex_progress_monitor.metrics import count_text
+from codex_activity_monitor.engine import Engine
+from codex_activity_monitor.events import Event,filter_event,DELTA_KINDS
+from codex_activity_monitor.metrics import count_text
 
 
 def verify(path):

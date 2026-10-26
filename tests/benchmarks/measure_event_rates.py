@@ -12,10 +12,10 @@ import resource
 import statistics
 import time
 
-from codex_progress_monitor.engine import Engine
-from codex_progress_monitor.events import Event, filter_event
-from codex_progress_monitor.publication import DetachedSnapshot
-from codex_progress_monitor.timeline import TimelineBook
+from codex_activity_monitor.engine import Engine
+from codex_activity_monitor.events import Event, filter_event
+from codex_activity_monitor.publication import DetachedSnapshot
+from codex_activity_monitor.timeline import TimelineBook
 
 
 def summary(values):

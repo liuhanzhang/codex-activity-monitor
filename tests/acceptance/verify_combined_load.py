@@ -21,11 +21,11 @@ import threading
 import time
 import uuid
 
-from codex_progress_monitor.runtime import ROOT, atomic_json, collector_alive
-from codex_progress_monitor.state_client import state_once
-from codex_progress_monitor.test_profile import controller
-from codex_progress_monitor.timeline import phase_id
-from codex_progress_monitor.timeline_query import query_runtime
+from codex_activity_monitor.runtime import ROOT, atomic_json, collector_alive
+from codex_activity_monitor.state_client import state_once
+from codex_activity_monitor.test_profile import controller
+from codex_activity_monitor.timeline import phase_id
+from codex_activity_monitor.timeline_query import query_runtime
 from verify_state_transport import COLLECTOR, records, wait
 
 
@@ -97,9 +97,9 @@ def main():
     written = hashlib.sha256(); received = hashlib.sha256()
     threads = []
     slow = None
-    with tempfile.TemporaryDirectory(prefix='cpm-combined-', dir='/tmp') as temporary:
+    with tempfile.TemporaryDirectory(prefix='cam-combined-', dir='/tmp') as temporary:
         profile = Path(temporary)
-        atomic_json(profile/'profile.json', {'kind': 'codex-monitor-disposable-test'})
+        atomic_json(profile/'profile.json', {'kind': 'codex-activity-monitor-disposable-test'})
         original = profile/'original-cli'
         original.write_text('#!'+sys.executable+'\nimport sys\nfor line in sys.stdin.buffer:\n sys.stdout.buffer.write(line);sys.stdout.buffer.flush()\nsys.exit(17)\n')
         original.chmod(0o700)
@@ -137,7 +137,7 @@ def main():
                         return False
                 wait(owner_ready, timeout=10)
                 wait(lambda:any(r.get('transport_fresh') for r in records(diagnostic)), timeout=10)
-                bridge = subprocess.Popen([sys.executable, '-m', 'codex_progress_monitor.cli', '--runtime', str(runtime),
+                bridge = subprocess.Popen([sys.executable, '-m', 'codex_activity_monitor.cli', '--runtime', str(runtime),
                     'bridge', '--real-cli', str(original), '--', 'app-server'], stdin=subprocess.PIPE,
                     stdout=subprocess.PIPE, stderr=log, env={**os.environ, 'CODEX_HOME': str(home)})
                 processes.append(bridge)

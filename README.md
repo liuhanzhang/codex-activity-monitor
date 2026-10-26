@@ -1,4 +1,4 @@
-# Codex Progress Monitor
+# Codex Activity Monitor
 
 [简体中文](README.zh-CN.md) · [Contributing](CONTRIBUTING.md) · [Architecture notes](dev-history/18_engineering_hardening/implemented-architecture.md) · [Development history](dev-history/README.md)
 
@@ -27,20 +27,20 @@ bin/build-gui
 bin/run-gui
 ```
 
-Launching the daily app configures a local CLI wrapper through the macOS GUI-session environment and manages its collector. Finish active Codex tasks, then quit and reopen Codex Desktop to use the integration. The app's settings can restore the previous configuration, preserve later user changes, and clean up owned data after Codex exits. Closing Monitor pauses observation in GUI-managed runtimes.
+Launching the daily app configures a local CLI wrapper through the macOS GUI-session environment and manages its collector. Finish active Codex tasks, then quit and reopen Codex Desktop to use the integration. The app's settings can restore the previous configuration, preserve later user changes, and clean up owned data after Codex exits. Closing Codex Activity Monitor pauses observation in GUI-managed runtimes.
 
 For development, build the separate read-only preview instead:
 
 ```sh
 bin/build-gui --preview
-open '.local/gui-preview/Codex Monitor Preview.app'
+open '.local/gui-preview/Codex Activity Monitor Preview.app'
 ```
 
 With the daily GUI running, the terminal can read the same collector:
 
 ```sh
-bin/codex-progress watch --lang en
-bin/codex-progress status
+bin/codex-activity-monitor watch --lang en
+bin/codex-activity-monitor status
 ```
 
 Detailed [GUI usage](dev-history/06_gui_app_options_and_decisions/usage.md) and [process lifecycle](dev-history/02_product_mvp/startup-and-processes.md) explain integration and restoration. These historical documents are in Chinese and may reference local validation evidence.
@@ -61,7 +61,7 @@ Codex Desktop ⇄ stdio wrapper ⇄ original Codex app-server
 
 The wrapper keeps the original backend and forwards its stdio. Observation uses a separate bounded queue and Unix socket. The collector combines protocol lifecycle events and selected upstream deltas; the GUI subscribes to full state and nonce-bound health through `state.sock`. A bounded worker writes disposable recovery checkpoints independently. Read-only JSONL history reconciles persisted activity. The sidecar stores phase metadata, while full historical content stays in Codex-owned files.
 
-Monitor keeps local metadata, snapshots, and integration backups. Snapshots can contain chat titles, paths, command previews, and numeric metrics; they are not anonymous. Transient text is used for local tokenization and selected live details. Monitor does not upload conversations. Dependency installation and the tokenizer's initial asset download may require network access. Keep runtime data out of issue reports and Git.
+Codex Activity Monitor keeps local metadata, snapshots, and integration backups. Snapshots can contain chat titles, paths, command previews, and numeric metrics; they are not anonymous. Transient text is used for local tokenization and selected live details. Codex Activity Monitor does not upload conversations. Dependency installation and the tokenizer's initial asset download may require network access. Keep runtime data out of issue reports and Git.
 
 ## Development and limitations
 

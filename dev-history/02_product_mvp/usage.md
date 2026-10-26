@@ -2,9 +2,9 @@
 
 本机终端看板已实现。正文、工具参数与摘要分别统计，采集器独立运行，关闭看板不会停止采集或 Codex 任务。当前机器已安装登录启动和 Desktop 默认包装器；原环境保存在 `.local/runtime/desktop-environment.json`，不纳入 Git。
 
-各组件如何通信、具体监听哪些事件，以及主 App / 隔离实例如何识别，见 [产品架构与工作方式](/Users/bytedance/personal/codex_progress_monitor/dev-history/02_product_mvp/architecture.md)。
+各组件如何通信、具体监听哪些事件，以及主 App / 隔离实例如何识别，见 [产品架构与工作方式](/Users/bytedance/personal/codex-activity-monitor/dev-history/02_product_mvp/architecture.md)。
 
-每个启动步骤做什么、环境变量保存在哪里、如何暂停采集器并恢复，见 [启动步骤与进程管理](/Users/bytedance/personal/codex_progress_monitor/dev-history/02_product_mvp/startup-and-processes.md)。
+每个启动步骤做什么、环境变量保存在哪里、如何暂停采集器并恢复，见 [启动步骤与进程管理](/Users/bytedance/personal/codex-activity-monitor/dev-history/02_product_mvp/startup-and-processes.md)。
 
 ## 界面语言
 
@@ -97,7 +97,7 @@ bin/codex-progress stop
 bin/codex-progress start
 ```
 
-已经安装登录启动时，LaunchAgent 会自动重启退出的采集器。仅暂停本次登录会话的采集可使用 `launchctl bootout`，恢复使用 `bootstrap`，具体步骤见 [停止与恢复](/Users/bytedance/personal/codex_progress_monitor/dev-history/02_product_mvp/startup-and-processes.md#4-停止恢复与卸载)；完全卸载接入使用 `uninstall`。恢复期间漏收的内容会标为观测缺口，速度不可用；完整完成项到达后可校准最终计数，不能补造漏收期间的速度。
+已经安装登录启动时，LaunchAgent 会自动重启退出的采集器。仅暂停本次登录会话的采集可使用 `launchctl bootout`，恢复使用 `bootstrap`，具体步骤见 [停止与恢复](/Users/bytedance/personal/codex-activity-monitor/dev-history/02_product_mvp/startup-and-processes.md#4-停止恢复与卸载)；完全卸载接入使用 `uninstall`。恢复期间漏收的内容会标为观测缺口，速度不可用；完整完成项到达后可校准最终计数，不能补造漏收期间的速度。
 
 重连时重放的是有限生命周期元数据，已收到的最终指标可以恢复；终止元数据不缓存正文或完整参数。身份冲突或某条并行流计数不完整时，对应合计速度也显示为不可用。
 
@@ -131,4 +131,4 @@ bin/codex-progress desktop --home /已登录的隔离home --profile /独立profi
 - 旁路解析、聚合器或看板故障可降级；关键 stdio 包装器进程自身故障可能影响其承载的任务。恢复原入口的命令已经提供，不能保证杀死包装器也对任务无影响。
 - 接入变量与上游诊断格式属于当前版本适配点。小更新沿用既有结论并做有限回归；出现实际缺口再定位，不自动重复全套实验。
 
-具体证据和未完成验收见 [产品实现验证报告](/Users/bytedance/personal/codex_progress_monitor/analysis/product-mvp/README.md)。
+具体证据和未完成验收见 [产品实现验证报告](/Users/bytedance/personal/codex-activity-monitor/analysis/product-mvp/README.md)。

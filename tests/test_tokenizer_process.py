@@ -7,8 +7,8 @@ import threading
 import time
 import unittest
 
-from codex_progress_monitor.tokenizer_process import TokenizerProcess, TokenizerUnavailable
-from codex_progress_monitor.metrics import TextStream, TokenCounter
+from codex_activity_monitor.tokenizer_process import TokenizerProcess, TokenizerUnavailable
+from codex_activity_monitor.metrics import TextStream, TokenCounter
 
 
 def synthetic_worker(connection):
