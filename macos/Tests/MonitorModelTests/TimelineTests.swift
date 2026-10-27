@@ -94,9 +94,11 @@ private func toolsLayout(_ phases: [TimelinePhase], now: Double = 5000,
 }
 
 @Test func shortToolsUseVisibleLinesAtSourcePositionsWithoutTransparentHitPadding() throws {
-    let tools = try (0..<100).map { n in
-        try timelinePhase(["id": String(format: "%03d", n), "track": "tool", "kind": "tool_execution",
-                           "start_ms": 1000 + n * 1000, "end_ms": 1000 + n * 1000 + 1])
+    let tools: [TimelinePhase] = try (0..<100).map { n in
+        let start = 1000 + n * 1000
+        let fields: [String: Any] = ["id": String(format: "%03d", n), "track": "tool", "kind": "tool_execution",
+                                     "start_ms": start, "end_ms": start + 1]
+        return try timelinePhase(fields)
     }
     let layout = toolsLayout(tools), reversed = toolsLayout(Array(tools.reversed()))
     for tool in tools {
