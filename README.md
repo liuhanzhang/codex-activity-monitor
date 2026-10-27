@@ -39,7 +39,7 @@ Click a timeline block to open the activity viewer. Read the available user inpu
 
 ## Installation
 
-Install packages will be published on [GitHub Releases](https://github.com/LiuHanzhang/codex-activity-monitor/releases). **No release is available yet.** For now, you can [build from source](#build-from-source).
+Download the Apple Silicon ZIP from [v0.1.0 Alpha](https://github.com/LiuHanzhang/codex-activity-monitor/releases/tag/v0.1.0). This is an early prerelease with ad-hoc signing and no Apple notarization; follow the opening instructions below. You can also [build from source](#build-from-source).
 
 ### Runtime requirements
 
