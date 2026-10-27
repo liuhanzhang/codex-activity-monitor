@@ -6,7 +6,7 @@ The [development history index](dev-history/README.md) organizes iteration-speci
 
 ## Development
 
-Use macOS 26+, Python 3.11+, and Xcode 26+ with its Swift toolchain. Create the local environment and install the package:
+Use Python 3.11+ and Xcode 26+ with its Swift toolchain on a macOS version supported by that Xcode. The app's deployment target is macOS 14.0; this differs from the build machine's requirements. Create the local environment and install the package:
 
 ```sh
 python3 -m venv .local/venv

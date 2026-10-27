@@ -25,9 +25,8 @@ struct RestoreSheet: LocalizedView {
                     let shouldPurge = purge
                     dismiss()
                     Task { await store.restore(purge: shouldPurge) }
-                }.buttonStyle(.glassProminent).keyboardShortcut(.defaultAction)
+                }.buttonStyle(.borderedProminent).keyboardShortcut(.defaultAction)
             }
         }.padding(20).frame(width: 420).fixedSize(horizontal: false, vertical: true)
-            .presentationSizing(.fitted)
     }
 }

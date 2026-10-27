@@ -16,4 +16,4 @@ exe = EXE(pyz, a.scripts, [], exclude_binaries=True, name='monitor-backend',
 collection = COLLECT(exe, a.binaries, a.datas, strip=False, upx=False, name='monitor-backend')
 app = BUNDLE(collection, name='MonitorBackend.app',
              bundle_identifier='com.liuhanzhang.codexactivitymonitor.backend',
-             info_plist={'LSUIElement': True, 'LSMinimumSystemVersion': '26.0'})
+             info_plist={'LSUIElement': True, 'LSMinimumSystemVersion': '14.0'})

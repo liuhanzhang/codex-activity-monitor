@@ -6,7 +6,7 @@
 
 <img src="docs/assets/overview.jpg" width="560" alt="Menu bar token generation speed, chat overview, and main-agent and subagent timeline">
 
-**Development version · macOS 26+ · MIT.** No Developer ID-signed, notarized public release is available yet. The standalone development build targets Apple Silicon.
+**Development version · macOS 14+ target · MIT.** No Developer ID-signed, notarized public release is available yet. The standalone development build targets Apple Silicon. The macOS 14 deployment target is checked at build time; runtime validation on macOS 14 remains pending.
 
 ## Features
 
@@ -43,7 +43,7 @@ Watch token generation speed update in the menu bar, then select a chat, explore
 
 ## Install or build
 
-You need **macOS 26 or later** and a local Codex Desktop installation. The default integration expects its original CLI at:
+The app targets **macOS 14 or later** and requires a local Codex Desktop installation. The default integration expects its original CLI at:
 
 ```text
 /Applications/ChatGPT.app/Contents/Resources/codex-cli/CodexCLI.app/Contents/MacOS/codex
@@ -53,7 +53,7 @@ The GUI currently has no CLI-path picker. A non-default Codex installation needs
 
 ### Build a standalone app
 
-Use an **Apple Silicon Mac**, **Xcode 26+ with its Swift toolchain**, and **Python 3.11+** to bootstrap the build. From a checkout of this repository:
+Use an **Apple Silicon Mac**, **Xcode 26+ with its Swift toolchain**, and **Python 3.11+** to bootstrap the build. The build machine must run a macOS version supported by the selected Xcode. From a checkout of this repository:
 
 ```sh
 bin/prepare-standalone
@@ -74,7 +74,7 @@ The current build is ad-hoc signed and is **not notarized**; Gatekeeper may requ
 
 ### Run from source
 
-For local development, use macOS 26+, Python 3.11+, and Xcode 26+ with its Swift toolchain:
+For local development, use Python 3.11+ and Xcode 26+ with its Swift toolchain on a macOS version supported by that Xcode:
 
 ```sh
 python3 -m venv .local/venv

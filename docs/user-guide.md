@@ -2,7 +2,7 @@
 
 [English README](../README.md) · [中文 README](../README.zh-CN.md) · [Architecture](architecture.md)
 
-The current app supports local Codex Desktop observation on macOS 26+. See the README for build requirements and first-launch instructions. Interface labels below use English; the gear menu can switch the app to Simplified Chinese.
+The current app targets local Codex Desktop observation on macOS 14+. The deployment target is checked at build time; runtime validation on macOS 14 remains pending. See the README for build requirements and first-launch instructions. Interface labels below use English; the gear menu can switch the app to Simplified Chinese.
 
 ## Read the menu bar
 

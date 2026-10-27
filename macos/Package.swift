@@ -4,7 +4,7 @@ import PackageDescription
 let package = Package(
     name: "CodexActivityMonitor",
     defaultLocalization: "zh-Hans",
-    platforms: [.macOS("26.0")],
+    platforms: [.macOS("14.0")],
     products: [.executable(name: "MonitorApp", targets: ["MonitorApp"])],
     targets: [
         .target(name: "MonitorModel", resources: [.process("Resources")]),

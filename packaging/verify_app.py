@@ -42,15 +42,22 @@ def main():
         assert config['backend'] == str(backend.relative_to(app)) and config['mode'] == 'bundled'
         assert str(ROOT) not in json.dumps(config) and '/Users/' not in json.dumps(config)
         with (app/'Contents/Info.plist').open('rb') as source:
-            app_id = plistlib.load(source)['CFBundleIdentifier']
+            app_info = plistlib.load(source)
         with (app/'Contents/Helpers/MonitorBackend.app/Contents/Info.plist').open('rb') as source:
-            backend_id = plistlib.load(source)['CFBundleIdentifier']
+            backend_info = plistlib.load(source)
+        app_id = app_info['CFBundleIdentifier']
+        backend_id = backend_info['CFBundleIdentifier']
         assert app_id == 'com.liuhanzhang.codexactivitymonitor', app_id
         assert backend_id == 'com.liuhanzhang.codexactivitymonitor.backend', backend_id
         result['checks']['bundle_ids'] = {'app': app_id, 'backend': backend_id}
+        minimum_systems = {'app': app_info['LSMinimumSystemVersion'],
+                           'backend': backend_info['LSMinimumSystemVersion']}
+        assert minimum_systems == {'app': '14.0', 'backend': '14.0'}, minimum_systems
+        result['checks']['minimum_system_versions'] = minimum_systems
         result['build_id'] = config['build_id']
         subprocess.run(['codesign', '--verify', '--deep', '--strict', str(app)], check=True)
-        denied = [ROOT, Path(sys.base_prefix), Path('/opt/homebrew'), Path.home()/'.codex', Path.home()/'Library/Caches',
+        developer = Path(subprocess.check_output(['/usr/bin/xcode-select', '-p'], text=True).strip())
+        denied = [ROOT, Path(sys.base_prefix), developer, Path('/opt/homebrew'), Path.home()/'.codex', Path.home()/'Library/Caches',
                   Path(tempfile.gettempdir())/'data-gym-cache', Path('/Library/Frameworks/Python.framework')]
         policy = ('(version 1)(allow default)'
                   '(deny network-outbound (remote ip "*:*"))'
@@ -92,6 +99,7 @@ def main():
             responder.join(2.5)
         assert network.returncode == 7 and not connected.is_set(), network.stderr
         result['checks']['source_python_and_network_denial'] = True
+        result['checks']['build_toolchain_denial'] = str(developer)
         self_check = json.loads(cli('--self-check').stdout)
         assert self_check['ok'] and self_check['worker']['starts'] == 1
         assert self_check['build_id'] == config['build_id']

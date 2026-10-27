@@ -30,8 +30,8 @@ def inspect(app):
             if match:
                 parts = tuple(map(int, match[1].split('.')))
                 version = (*parts, *(0 for _ in range(3-len(parts))))
-                if version > (26, 0, 0):
-                    raise RuntimeError(f'Deployment target exceeds macOS 26.0: {path.name}: {match[1]}')
+                if version > (14, 0, 0):
+                    raise RuntimeError(f'Deployment target exceeds macOS 14.0: {path.name}: {match[1]}')
                 maximum = max(maximum, version)
                 versions.append(match[1])
         links = subprocess.check_output(['otool', '-L', str(path)], text=True).splitlines()[1:]

@@ -16,6 +16,7 @@ import tomllib
 import urllib.request
 
 from inspect_app import inspect
+from prepare_swift_binary import prepare
 
 ROOT = Path(__file__).resolve().parents[1]
 
@@ -97,6 +98,7 @@ def main():
     run(ROOT/'bin/build-app-icon', resources/'AppIcon.icns')
     shutil.copy2(ROOT/'LICENSE', resources/'LICENSE')
     shutil.copy2(binary_dir/'MonitorApp', contents/'MacOS/MonitorApp')
+    prepare(contents/'MacOS/MonitorApp')
     for bundle in binary_dir.glob('*.bundle'):
         if not bundle.name.endswith('Tests.bundle'):
             shutil.copytree(bundle, resources/bundle.name, symlinks=True)
@@ -125,7 +127,7 @@ def main():
     version = tomllib.loads((ROOT/'pyproject.toml').read_text())['project']['version']
     info = {'CFBundleExecutable': 'MonitorApp', 'CFBundleIdentifier': 'com.liuhanzhang.codexactivitymonitor',
             'CFBundleName': 'Codex Activity Monitor', 'CFBundleDisplayName': 'Codex Activity Monitor', 'CFBundlePackageType': 'APPL',
-            'CFBundleShortVersionString': version, 'CFBundleVersion': '1', 'LSMinimumSystemVersion': '26.0',
+            'CFBundleShortVersionString': version, 'CFBundleVersion': '1', 'LSMinimumSystemVersion': '14.0',
             'LSUIElement': True, 'NSPrincipalClass': 'NSApplication', 'CFBundleIconFile': 'AppIcon.icns'}
     (contents/'Info.plist').write_bytes(plistlib.dumps(info))
     run('codesign', '--force', '--deep', '--sign', '-', stage)

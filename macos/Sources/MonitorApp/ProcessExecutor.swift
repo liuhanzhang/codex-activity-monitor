@@ -127,7 +127,11 @@ private final class ProcessOperation: @unchecked Sendable {
         try check(posix_spawn_file_actions_adddup2(&actions, stdout, STDOUT_FILENO))
         try check(posix_spawn_file_actions_adddup2(&actions, stderr, STDERR_FILENO))
         if let directory = request.directory {
-            try check(posix_spawn_file_actions_addchdir(&actions, directory))
+            if #available(macOS 26.0, *) {
+                try check(posix_spawn_file_actions_addchdir(&actions, directory))
+            } else {
+                try check(posix_spawn_file_actions_addchdir_np(&actions, directory))
+            }
         }
         // Creation, not a racing setpgid() after exec, proves group ownership.
         let flags = POSIX_SPAWN_SETPGROUP | POSIX_SPAWN_CLOEXEC_DEFAULT | POSIX_SPAWN_SETSIGMASK | POSIX_SPAWN_SETSIGDEF

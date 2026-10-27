@@ -6,7 +6,7 @@
 
 <img src="docs/assets/overview.jpg" width="560" alt="菜单栏 Token 生成速度、聊天活动概览与主子智能体时间线">
 
-**开发版本 · macOS 26+ · MIT。** 当前尚无经过 Developer ID 签名和公证的公开发行包。独立开发版面向 Apple Silicon。
+**开发版本 · 目标 macOS 14+ · MIT。** 当前尚无经过 Developer ID 签名和公证的公开发行包。独立开发版面向 Apple Silicon。构建会检查 macOS 14 部署目标；macOS 14 实际运行验证仍待完成。
 
 ## 主要功能
 
@@ -43,7 +43,7 @@ Token 生成速度（T/s）按最近一秒内本地收到的正文和工具参�
 
 ## 安装或构建
 
-需要 **macOS 26 或更新版本**，并已在本机安装 Codex Desktop。默认接入使用以下原版 CLI 路径：
+App 目标系统为 **macOS 14 或更新版本**，并要求本机已安装 Codex Desktop。默认接入使用以下原版 CLI 路径：
 
 ```text
 /Applications/ChatGPT.app/Contents/Resources/codex-cli/CodexCLI.app/Contents/MacOS/codex
@@ -53,7 +53,7 @@ GUI 当前没有 CLI 路径选择器。Codex 安装在其他位置时需要定�
 
 ### 构建独立 App
 
-构建需要 **Apple Silicon Mac**、**Xcode 26+ 及其 Swift 工具链**，以及用于引导构建的 **Python 3.11+**。在仓库根目录运行：
+构建需要 **Apple Silicon Mac**、**Xcode 26+ 及其 Swift 工具链**，以及用于引导构建的 **Python 3.11+**。构建机器的 macOS 版本须满足所选 Xcode 的要求。在仓库根目录运行：
 
 ```sh
 bin/prepare-standalone
@@ -74,7 +74,7 @@ open '.local/standalone/Codex Activity Monitor.app'
 
 ### 从源码运行
 
-本机开发需要 macOS 26+、Python 3.11+、Xcode 26+ 及其 Swift 工具链：
+本机开发需要 Python 3.11+、Xcode 26+ 及其 Swift 工具链，macOS 版本须满足所选 Xcode 的要求：
 
 ```sh
 python3 -m venv .local/venv
