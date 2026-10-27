@@ -1,0 +1,51 @@
+{
+  "version": 2,
+  "date": "2026-10-27",
+  "language": "en",
+  "source": "Native read-only preview, entirely invented developer tasks and numeric values",
+  "not_a_benchmark": true,
+  "fixture": "experiments/readme-demo/preview.py",
+  "fixture_sha256": "8a6666d1ccbcd0dce824052a1cd1be6e7fd7c59cff5fa14654496b04df2a6bce",
+  "exporter": "experiments/readme-demo/export_desktop.py",
+  "desktop_recording_build_id": "43bfe5b812ce2cf791254e3c88c1f554c441a96bcfa2a65b3b8426ef41f70662",
+  "detail_capture_build_id": null,
+  "capture": {
+    "desktop_overview": "Source second 42 of a macOS native recording of the built-in display; 3456 \u00d7 2234",
+    "activity_detail": "Separate native-window screenshot via cua_repl",
+    "raw_captures": "Local ignored files; not distributed in this repository"
+  },
+  "edits": {
+    "desktop-overview.jpg": "Crop source frame x=2100,y=0,w=1356,h=1200; preserve native controls and values; no presentation-text overlay",
+    "speed-overview.jpg": "Reframe native menu bar crop (2564,10,132,46) and overview crop (2306,110,840,470) on captured wallpaper; magnify the menu bar crop and mask its rounded boundary",
+    "timeline.jpg": "Reframe native timeline crop (2306,580,840,500) on captured wallpaper",
+    "activity-detail.jpg": "Crop native window to remove OS sharing chrome, preview footer and unused lower space; frame on captured wallpaper",
+    "app-icon.png": "Resize the existing repository AppIcon.png to 192 \u00d7 192"
+  },
+  "source_sha256": {
+    "zoom-frame.png": "6529b6e2254a9ab30aeca0e090a2c3fac4d01ec4e86a0c2d7d107d2db9e15319",
+    "native-result.png": "72df939da084bcb254d64575ba8386cffa7df7aca5b0ff2d3eab47b24128dcb6",
+    "launch-settled.png": "cfd48c729d9b7bfb406f263abc4634ff85d8e746a0f47841d4983db7aa1645e2"
+  },
+  "assets": {
+    "activity-detail.jpg": {
+      "bytes": 210396,
+      "sha256": "eedcb531894afe8e389a5b105d4f516520cff680939fa3ec1a3ef15b61b7793f"
+    },
+    "app-icon.png": {
+      "bytes": 26235,
+      "sha256": "119cdc9f2053d68bf132d992795ebc9cb16e55e66619d5a9590d76986e16a1f7"
+    },
+    "desktop-overview.jpg": {
+      "bytes": 293796,
+      "sha256": "16fdb3fae80ded0e0a93debf8dcc76f21c6317dc93fb786e244c956c06393713"
+    },
+    "speed-overview.jpg": {
+      "bytes": 138911,
+      "sha256": "8c4368986f5d6e1978474a8510423589ee7ffde4f69b1edb4ced4283c2a6c348"
+    },
+    "timeline.jpg": {
+      "bytes": 131971,
+      "sha256": "6c6a6ad5dd830e0c03ed3f8f6f97959c4b2ca4a99a9daf801910f3f000d12e05"
+    }
+  }
+}

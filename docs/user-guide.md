@@ -66,7 +66,13 @@ If the monitor exits before cleanup completes, reopen the same app to continue. 
 
 ## Local data
 
-The default GUI data directory is:
+### Codex chat history
+
+Monitor reads Codex chat history from `~/.codex/` by default, where `~` is your user home directory. If the wrapped Codex backend process inherits a `CODEX_HOME` environment variable, Monitor uses that directory instead. It reads history files under `sessions/` and `archived_sessions/` without modifying them. The GUI has no option to select a different Codex data directory.
+
+### Monitor settings and data
+
+The default directory for Monitor's own data is:
 
 ```text
 ~/Library/Application Support/CodexActivityMonitor/
@@ -94,7 +100,9 @@ Only source content that Codex exposes and the monitor can read is available. So
 
 ### Updates or moving the app have not taken effect
 
-Use **Configure** from the app's current location. Finish tasks and fully restart Codex Desktop so its new wrappers use the updated integration. A source build still depends on its original checkout and virtual environment.
+To move an already configured app, finish tasks and quit both Codex and Monitor. Move the app, open Monitor from its new location, then reopen Codex Desktop. For the same macOS user, app locations and the daily source-built GUI share settings and data under `~/Library/Application Support/CodexActivityMonitor/`; no data migration is needed. A source build still depends on its original checkout and virtual environment.
+
+If an update or move has not taken effect, use **Configure** from the app's current location. Finish tasks and fully restart Codex Desktop so its new wrappers use the updated integration.
 
 ### Restoration is waiting for Codex to exit
 
@@ -102,7 +110,13 @@ Finish work, then fully quit Codex Desktop. Leave the monitor running so it can 
 
 ### Codex is installed somewhere else
 
-The current GUI assumes the original CLI path shown in the README and has no path picker. The command-line management layer has a `--real-cli` option, but that is a custom integration path, not a supported GUI quick-start recipe. Include the installation layout in a bug report or contribution proposal.
+Monitor currently uses the Codex command-line component bundled inside `/Applications/ChatGPT.app`. The full path it expects is:
+
+```text
+/Applications/ChatGPT.app/Contents/Resources/codex-cli/CodexCLI.app/Contents/MacOS/codex
+```
+
+The GUI has no option to choose another path. The command-line management layer has a `--real-cli` option, but that is a custom integration path, not a supported GUI quick-start recipe. Include the installation layout in a bug report or contribution proposal.
 
 ## Optional terminal view
 

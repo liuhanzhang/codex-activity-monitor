@@ -1,80 +1,121 @@
-# Codex Activity Monitor
+<p align="right"><strong>English</strong> · <a href="README.zh-CN.md">简体中文</a></p>
 
-[简体中文](README.zh-CN.md) · [User guide](docs/user-guide.md) · [Architecture](docs/architecture.md) · [Contributing](CONTRIBUTING.md)
+<div align="center">
+  <img src="docs/assets/showcase/app-icon.png" width="72" alt="Codex Activity Monitor icon">
+  <h1>Codex Activity Monitor</h1>
+  <p>A macOS menu bar app for monitoring Codex Desktop token speed, chat status, and agent activity timelines.</p>
+  <p>
+    <img src="https://img.shields.io/badge/status-alpha-B7791F?style=flat-square" alt="Alpha stage">
+    <img src="https://img.shields.io/badge/macOS-14%2B-black?style=flat-square&amp;logo=apple" alt="macOS 14+">
+    <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-3B7A57?style=flat-square" alt="MIT license"></a>
+  </p>
+</div>
 
-**See Codex’s live token generation speed in your macOS menu bar.** Track chats, tool calls, and subagents in one place, and explore each turn on an activity timeline.
-
-<img src="docs/assets/overview.jpg" width="560" alt="Menu bar token generation speed, chat overview, and main-agent and subagent timeline">
-
-**Development version · macOS 14+ target · MIT.** No Developer ID-signed, notarized public release is available yet. The standalone development build targets Apple Silicon. The macOS 14 deployment target is checked at build time; runtime validation on macOS 14 remains pending.
+<a id="see-it-in-action"></a>
+<p align="center">
+  <a href="docs/assets/showcase/desktop-overview.jpg"><img src="docs/assets/showcase/desktop-overview.jpg" width="720" alt="Native Codex Activity Monitor overview showing token speed, three chats, and a shared main-agent and subagent timeline"></a>
+</p>
+<p align="center"><sub>Chat overview and main-agent/subagent timeline.</sub></p>
+<p align="center"><a href="#installation">Installation</a> · <a href="#first-launch">First launch</a> · <a href="#build-from-source">Build from source</a> · <a href="docs/user-guide.md">User guide</a></p>
 
 ## Features
 
-- **Live token generation speed:** see tokens per second directly in the menu bar and for each active chat.
-- **Chat overview:** follow current activity, elapsed time, and recently completed tasks.
-- **Activity timeline:** separate model and tool lanes, with explicitly linked subagents on a shared time axis.
-- **Explore a turn:** zoom between 30 / 60 / 120-second reference scales, scroll back, and return to the latest activity.
-- **Inspect the details:** open user input, visible model output, tool arguments, results, and file changes in a separate activity viewer.
-- **Understand usage:** see Codex-reported Output and Reasoning token counts for the selected turn. Output already includes Reasoning.
-- **Use your language:** English and Simplified Chinese, with an optional launch-at-login setting.
+<table>
+  <tr>
+    <td width="435" align="center"><a href="docs/assets/showcase/speed-overview.jpg"><img src="docs/assets/showcase/speed-overview.jpg" width="420" alt="Native menu bar token speed and an overview of three active chats"></a></td>
+    <td width="435" align="center"><a href="docs/assets/showcase/timeline.jpg"><img src="docs/assets/showcase/timeline.jpg" width="420" alt="Separate model and tool lanes for the main agent and two reviewers, on a shared timeline"></a></td>
+  </tr>
+  <tr>
+    <td width="435" valign="top"><b>Real-time token speed</b><br>See the aggregate rate in the menu bar and each chat's speed, current activity, and elapsed time in the overview.</td>
+    <td width="435" valign="top"><b>Agent activity timeline</b><br>Compare model activity and tool calls across the main agent and explicitly linked subagents. Zoom, scroll back, and return to the latest activity.</td>
+  </tr>
+</table>
 
-Token generation speed (T/s) is calculated from text and tool input received in the latest one-second window; hidden reasoning is excluded. `—` means unavailable; a known zero appears as `0`.
+### Activity details
 
-## See it in action
+Click a timeline block to open the activity viewer. Read the available user input, visible model output, tool arguments, results, or file changes, with explicit labels for partial, truncated, and unavailable content.
 
-[![Watch Codex Activity Monitor in action](docs/assets/demo-poster.jpg)](docs/assets/demo.mp4)
+<p align="center"><a href="docs/assets/showcase/activity-detail.jpg"><img src="docs/assets/showcase/activity-detail.jpg" width="870" alt="Native activity viewer with the main-agent and reviewer timeline, a Python test command, and its result"></a></p>
 
-[Watch or download the demo (MP4)](docs/assets/demo.mp4) · [Animated walkthrough (GIF)](docs/assets/demo.gif)
+## Installation
 
-Watch token generation speed update in the menu bar, then select a chat, explore its timeline, and inspect a tool’s input and result.
+Install packages will be published on [GitHub Releases](https://github.com/LiuHanzhang/codex-activity-monitor/releases). **No release is available yet.** For now, you can [build from source](#build-from-source).
 
-<details>
-<summary>More screenshots: subagent timeline and activity details</summary>
+### Runtime requirements
 
-**Main agent and two reviewers, on the same clock**
+| Requirement | Current scope |
+| --- | --- |
+| Mac | Apple Silicon Mac, macOS 14+. Runtime validation on macOS 14 remains pending. |
+| Codex | Local Codex Desktop; see the installation and data locations below. |
 
-![Timeline with separate model and tool lanes for the main agent, test reviewer, and documentation reviewer](docs/assets/timeline.jpg)
+The standalone app includes its runtime and required resources.
 
-**Read a tool's arguments and result**
+### Where Codex is installed
 
-![Activity viewer showing a Python test command and its output](docs/assets/activity-detail.jpg)
+The current version uses the Codex components included in `ChatGPT.app`. Make sure `ChatGPT.app` is in your Mac's Applications folder, at `/Applications/ChatGPT.app`. Monitor automatically finds the components it needs inside that app.
 
-</details>
+If you use another installation method, rename the app, or install it elsewhere, Monitor currently has no option in its interface to select another location. See [the user guide](docs/user-guide.md#codex-is-installed-somewhere-else) for details.
 
-## Install or build
+### Local data locations
 
-The app targets **macOS 14 or later** and requires a local Codex Desktop installation. The default integration expects its original CLI at:
+Codex chat history is stored in `~/.codex/` by default (`~` means your user home directory). Monitor reads that history without modifying it to display activity details and reconcile the timeline. If you use a custom Codex data directory, see [the user guide](docs/user-guide.md#local-data).
 
-```text
-/Applications/ChatGPT.app/Contents/Resources/codex-cli/CodexCLI.app/Contents/MacOS/codex
-```
+Monitor's own settings, integration configuration backups, and timeline data are stored in `~/Library/Application Support/CodexActivityMonitor/`.
 
-The GUI currently has no CLI-path picker. A non-default Codex installation needs a custom setup and is outside the quick start below.
+### Install the app
 
-### Build a standalone app
+Once you have a ZIP package:
 
-Use an **Apple Silicon Mac**, **Xcode 26+ with its Swift toolchain**, and **Python 3.11+** to bootstrap the build. The build machine must run a macOS version supported by the selected Xcode. From a checkout of this repository:
+1. Extract the ZIP to get `Codex Activity Monitor.app`.
+2. Move the app to your Applications folder (`/Applications`).
+3. Double-click the app. If macOS blocks it, follow the steps below to allow it to open.
 
-```sh
-bin/prepare-standalone
-bin/build-standalone
-```
+### Allow the app to open
 
-The resulting app includes Python, its dependencies, and tokenizer assets. It can run without the checkout, a separate Python installation, or Xcode. The build also produces `.local/standalone/Codex-Activity-Monitor-0.1.0-arm64-dev.zip`.
+The current Alpha build **has no Developer ID signature and has not been notarized by Apple**. When you first open a downloaded copy, macOS may report that it cannot verify the developer or check the app for malicious software.
 
-For daily use, move the app to `/Applications` before opening it so later builds do not replace the copy you use. You can also run it directly from the build directory:
+After confirming that the app came from this project, try opening it. If macOS blocks it:
 
-```sh
-open '.local/standalone/Codex Activity Monitor.app'
-```
+1. Open **System Settings → Privacy & Security**.
+2. Scroll down and click **Open Anyway** next to the message about Codex Activity Monitor being blocked.
+3. Authenticate if prompted, then click **Open** in the confirmation dialog.
 
-For the same macOS user, both locations default to the same settings and data under `~/Library/Application Support/CodexActivityMonitor/`, shared with the daily source-built GUI. Moving the app requires no data migration. To move an already configured app, finish tasks and quit Codex and Monitor first; then open Monitor from its new location before reopening Codex.
+See [Apple's instructions](https://support.apple.com/en-us/102445) for details.
 
-The current build is ad-hoc signed and is **not notarized**; Gatekeeper may require manual approval when it is transferred to another Mac. See the [packaging guide](packaging/README.md) for build details and validation boundaries.
+## First launch
+
+1. Let active Codex tasks finish.
+2. Open Codex Activity Monitor. It automatically configures the local integration and starts its collector on first launch.
+3. Fully quit and reopen Codex Desktop so new processes inherit the integration configuration.
+4. Start a local Codex task, then click the monitor's menu bar item. Select a chat to see its current turn, timeline, and usage.
+
+Keep Monitor running while observing. Initial configuration enables launch at login; change it in **Settings → Launch at login**. macOS may ask you to allow the login item. The gear menu also switches between **English / 简体中文**; original conversation and tool content keep their own language.
+
+## Privacy and compatibility
+
+- Processing is local; Monitor does not upload conversations. This does not change Codex Desktop's own network behavior.
+- Local state can contain chat titles, project paths, command previews, and metrics. Transient text is used for local tokenization and selected live details.
+- Observation covers connected local chats. Remote sessions and chats outside the configured backend are outside this quick start.
+- Integration relies on version-specific Codex protocol and TRACE behavior. Upstream updates can affect observation.
+
+## Configure, disconnect, or uninstall
+
+**Restore configuration before deleting the app.** Deleting only the `.app` leaves integration configuration and local data behind.
+
+| Action | Steps |
+| --- | --- |
+| Enable or repair integration | **Settings → Configure**; reopen Codex after active work finishes. The original configuration backup is retained. |
+| Pause observation | Quit Monitor. Integration stays configured; reopen Monitor to resume. |
+| Disconnect, keeping the app | **Settings → Restore configuration… → Restore configuration**, leaving the cleanup option unchecked. App settings remain; future launches stay disconnected until you choose **Configure**. |
+| Uninstall | In **Restore configuration…**, check **Remove local data and quit to uninstall** and restore. Finish tasks, fully quit Codex, and wait for cleanup and Monitor to exit. Then delete the `.app`. |
+
+Restoration preserves configuration values you changed after integration and does not forcibly end tasks. Leave Monitor open until cleanup finishes; reopen it to continue if interrupted. Codex-owned conversations, source checkouts, and development virtual environments are outside the uninstall cleanup scope. See [the full uninstall guide](docs/user-guide.md#uninstall).
+
+## Build from source
+
+These steps are for developers and run from the repository root. Use Python 3.11+ and Xcode 26+ with its Swift toolchain; the build machine's macOS must support the selected Xcode. Installing dependencies and downloading tokenizer assets for the first time require network access.
 
 ### Run from source
-
-For local development, use Python 3.11+ and Xcode 26+ with its Swift toolchain on a macOS version supported by that Xcode:
 
 ```sh
 python3 -m venv .local/venv
@@ -83,92 +124,32 @@ bin/build-gui
 bin/run-gui
 ```
 
-This app depends on the checkout and `.local/venv`; keep them in place. Dependency installation and the first tokenizer-asset download require network access.
+The output is `.local/gui/Codex Activity Monitor.app`. Keep the checkout and `.local/venv` in place: this build depends on both. See [CONTRIBUTING.md](CONTRIBUTING.md) for development tests and the read-only Preview build.
 
-## First launch
+### Build a standalone app
 
-1. Let active Codex tasks finish.
-2. Open Codex Activity Monitor. On first launch it automatically configures the local integration and starts its collector.
-3. Fully quit and reopen Codex Desktop so its new processes inherit the configuration.
-4. Start a task in Codex, then click the monitor's menu bar item. Its connection indicator and chat list show the observed activity.
+This build currently supports Apple Silicon Macs only. Prepare the isolated packaging environment before your first build:
 
-Keep the monitor open while observing. Launch at login is enabled on initial configuration; you can change it in **Settings → Launch at login**. macOS may ask you to allow the login item.
+```sh
+bin/prepare-standalone
+bin/build-standalone
+```
 
-## Usage
+The output is `.local/standalone/Codex Activity Monitor.app` and a ZIP package in the same directory. The app includes Python, dependencies, and tokenizer assets; running it does not require the checkout, Python, or Xcode. For daily use, move the app to `/Applications`, then follow the [first-launch steps](#first-launch) above to connect it.
 
-- **Open the overview:** click the menu bar item. Select a chat to see its current turn, timeline, and usage.
-- **Read the request:** click the speech-bubble button beside the turn selector.
-- **Explore time:** use `−` / `+` to change the reference scale. Scroll horizontally to inspect earlier activity; **Back to latest** resumes following.
-- **Inspect an activity:** click a timeline block to open the activity viewer. Select its tabs to read arguments, output, or other available source content.
-- **Switch language:** open the gear menu, then **Language → English / 简体中文**. Conversation and tool content keep their original language.
-
-Some reasoning activities have no visible summary. Empty reasoning content is normal; the app does not expose hidden reasoning. Partial observations and unavailable or truncated content are labeled explicitly.
-
-For menu bar states, data locations, and troubleshooting, see the [user guide](docs/user-guide.md).
-
-## Configure, disconnect, or uninstall
-
-These actions have different effects:
-
-| Action | Steps | Result |
-| --- | --- | --- |
-| Enable or repair integration | **Settings → Configure**; reopen Codex after active work finishes | Enables observation and retains the original configuration backup |
-| Pause observation | **Settings → Quit Codex Activity Monitor** | Stops observation; keeps integration configured. Reopen the monitor to resume |
-| Disconnect, keeping the app | **Settings → Restore configuration… → Restore configuration**, leaving the cleanup option unchecked | Restores the previous configuration and keeps app settings. Future launches stay disconnected until you choose **Configure** |
-| Uninstall | **Settings → Restore configuration…**, check **Remove local data and quit to uninstall**, then restore | Restores configuration, waits for Codex to exit, removes owned local data and the login item, then quits. Delete the `.app` afterward |
-
-Restoration preserves configuration values you changed after integration. Existing Codex processes keep their inherited environment until they exit; the monitor waits for safe cleanup rather than forcibly ending tasks. Leave it open until cleanup completes. If interrupted, reopen it to continue.
-
-**Restore before deleting the app.** Dragging the app to Trash alone leaves configuration and local data behind. Uninstalling a source build does not delete your checkout or development virtual environment. Codex-owned conversations are outside the monitor's cleanup scope.
+The current build is ad-hoc signed and not notarized. See the [packaging guide](packaging/README.md) for the build environment, isolation checks, and compatibility validation boundaries.
 
 ## How it works
 
-The wrapper launches the original Codex `app-server` and forwards its stdio protocol. It observes both protocol lifecycle events and selected stderr TRACE logs, which expose streaming text and tool-input deltas.
+A wrapper launches the original Codex `app-server`, forwards its stdio protocol, and observes lifecycle events plus selected streaming TRACE deltas. A local collector associates chats, turns, and activities, counts received tokens, and publishes state to the native Swift app.
 
-```mermaid
-flowchart TB
-    Desktop["Codex Desktop"] <-->|"stdio"| Wrapper["CLI wrapper"]
-    Wrapper <-->|"stdio"| Backend["Original Codex app-server"]
-    Backend <-->|"Model stream"| Service["Model service"]
-    Backend <--> Tools["Tool runtime"]
-    Backend -->|"Selected stderr TRACE"| Wrapper
-    Wrapper -.->|"Bounded queue · events.sock"| Collector["Python collector"]
-    Collector -->|"state.sock"| GUI["Swift menu bar app"]
-```
-
-The collector associates events with chats, turns, and activities. A local tokenizer counts the text to calculate token generation speed. Live state reaches the GUI through `state.sock`; timeline and activity details use separate read-only queries through `tl.sock`.
-
-```mermaid
-flowchart TB
-    Events["Protocol events + TRACE deltas"] --> Engine["Engine + TimelineBook"]
-    Engine -->|"Text"| Tokenizer["tiktoken worker"]
-    Tokenizer -->|"Token counts"| Engine
-    History["Codex session JSONL"] -->|"Read-only reconciliation"| Engine
-    Engine -->|"state.sock"| GUI["Live status + token speed"]
-    Engine --> SQLite[("SQLite phase metadata")]
-    Engine --> Checkpoint["snapshot.json · recovery"]
-    GUI <-->|"tl.sock"| Query["Timeline and detail queries"]
-    Query --> Engine
-    Query -->|"Read only"| History
-    Query -->|"Read metadata"| SQLite
-```
-
-Codex keeps ownership of its conversation history. Monitor reads that history for persisted content and reconciliation; its own SQLite sidecar stores phase metadata, and `snapshot.json` provides a recovery checkpoint. See [Architecture](docs/architecture.md) for the component boundaries and configuration changes.
-
-## Privacy and compatibility
-
-- Processing is local. Codex Activity Monitor does not upload conversations. This does not change Codex Desktop's own network behavior.
-- Local state can contain chat titles, project paths, command previews, and numeric metrics. Transient text is used for tokenization and selected live details.
-- Observation covers connected local chats. Remote sessions and chats outside the configured local backend are not supported by this quick start.
-- The integration depends on version-specific Codex protocol and trace behavior. Upstream updates can affect observation.
+Codex retains ownership of conversation history. Monitor reads it for persisted content and reconciliation; its own SQLite sidecar stores phase metadata. See [Architecture](docs/architecture.md) for the data flow, measurement boundaries, and integration changes.
 
 ## Troubleshooting and contributing
 
-**No chats or no data?** Finish active tasks, fully quit Codex Desktop, reopen it while the monitor is running, and start a new task. Check the connection indicator. More cases are covered in [Troubleshooting](docs/user-guide.md#troubleshooting).
+**No chats or no data?** With Monitor configured and running, finish active tasks, fully quit and reopen Codex Desktop, then start a new local task. Check the connection indicator. See [Troubleshooting](docs/user-guide.md#troubleshooting) for other cases.
 
-For bugs, include your macOS version, Codex version, monitor build, and reproducible steps. Remove private conversation content, credentials, and configuration backups before sharing logs or screenshots.
-
-See [CONTRIBUTING.md](CONTRIBUTING.md) to build, test, and contribute changes.
+For bug reports, include your macOS version, Codex version, Monitor build, and reproducible steps. Remove private conversation content, credentials, and configuration backups before sharing logs or screenshots. See [CONTRIBUTING.md](CONTRIBUTING.md) to build, test, and contribute.
 
 ## License
 
