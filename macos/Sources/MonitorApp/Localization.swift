@@ -11,8 +11,9 @@ extension EnvironmentValues {
 }
 
 func L(_ key: String, language: MonitorLanguage = .chinese) -> String {
-    guard let path = Bundle.module.path(forResource: language.resourceName, ofType: "lproj"),
-          let bundle = Bundle(path: path) else { return key }
+    guard let path = Bundle.module.path(forResource: "Localizable", ofType: "strings",
+                                        inDirectory: nil, forLocalization: language.resourceName),
+          let bundle = Bundle(path: URL(fileURLWithPath: path).deletingLastPathComponent().path) else { return key }
     return bundle.localizedString(forKey: key, value: key, table: nil)
 }
 

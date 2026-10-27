@@ -109,8 +109,10 @@ public enum CoreLocalizer {
 /// Shared model presentation copy. View-specific resources remain in MonitorApp.
 public enum ModelLocalizer {
     public static func text(_ key: String, _ language: MonitorLanguage = .chinese) -> String {
-        guard let path = Bundle.module.path(forResource: language.resourceName, ofType: "lproj"),
-              let bundle = Bundle(path: path) else { return key }
+        // SwiftPM normalizes zh-Hans.lproj to zh-hans.lproj; resolve by locale.
+        guard let path = Bundle.module.path(forResource: "Localizable", ofType: "strings",
+                                            inDirectory: nil, forLocalization: language.resourceName),
+              let bundle = Bundle(path: URL(fileURLWithPath: path).deletingLastPathComponent().path) else { return key }
         return bundle.localizedString(forKey: key, value: key, table: nil)
     }
 }
