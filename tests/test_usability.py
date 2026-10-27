@@ -1,6 +1,7 @@
 """Usability requirements exercised through filtering, snapshots and a real PTY."""
 
 import copy
+import errno
 import io
 import json
 import os
@@ -284,7 +285,19 @@ display.watch(runtime)
                 self.assertEqual(json.loads((runtime/'ui-settings.json').read_text())['language'], 'en')
                 sent = time.monotonic()
                 os.write(master, b'q')
-                process.wait(timeout=.5)
+                # A real terminal keeps consuming output during shutdown. Rich
+                # can still be rendering the language switch or restoring the
+                # screen; leaving the PTY unread can block those writes on CI.
+                deadline = sent+.5
+                while process.poll() is None and time.monotonic() < deadline:
+                    remaining = max(0, deadline-time.monotonic())
+                    if select.select([master], [], [], min(.01, remaining))[0]:
+                        try:
+                            os.read(master, 65536)
+                        except OSError as error:
+                            if error.errno != errno.EIO:
+                                raise
+                process.wait(timeout=max(0, deadline-time.monotonic()))
                 self.assertEqual(process.returncode, 0)
                 self.assertLess(time.monotonic()-sent, .5)
             finally:
