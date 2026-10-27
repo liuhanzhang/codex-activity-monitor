@@ -15,6 +15,9 @@ dependencies = ["tiktoken==0.14.0", "rich==15.0.0"]
 [project.scripts]
 codex-activity-monitor = "codex_activity_monitor.cli:main"
 
+[tool.codex-activity-monitor]
+prerelease = "alpha.1"
+
 [tool.setuptools.packages.find]
 where = ["src"]
 include = ["codex_activity_monitor*"]

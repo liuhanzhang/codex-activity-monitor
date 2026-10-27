@@ -29,6 +29,10 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--output', type=Path, default=ROOT/'.local/standalone')
     args = parser.parse_args()
+    metadata = tomllib.loads((ROOT/'pyproject.toml').read_text())
+    version = metadata['project']['version']
+    prerelease = metadata.get('tool', {}).get('codex-activity-monitor', {}).get('prerelease')
+    release_version = version + (f'-{prerelease}' if prerelease else '')
     if sys.platform != 'darwin' or platform.machine() != 'arm64':
         parser.error('This dev build supports native arm64 macOS only.')
     distribution_build = Path(sys.base_prefix)/'BUILD'
@@ -71,7 +75,7 @@ def main():
                for path in sorted(ROOT.glob('src/codex_activity_monitor/*.py'))}
     dependencies = {dist.metadata['Name']: dist.version for dist in importlib.metadata.distributions()
                     if dist.metadata.get('Name')}
-    manifest = {'version': 1, 'build_id': build_id, 'modules': modules, 'encodings': encodings,
+    manifest = {'version': 1, 'release_version': release_version, 'build_id': build_id, 'modules': modules, 'encodings': encodings,
                 'python': platform.python_version(), 'dependencies': dependencies,
                 'python_distribution': {'provider': 'python-build-standalone', 'build': '20261021'},
                 'tokenizer_assets': {p.name: hashlib.sha256(p.read_bytes()).hexdigest()
@@ -124,7 +128,6 @@ def main():
                     destination = licenses/name/Path(*file.parts[1:])
                     destination.parent.mkdir(parents=True, exist_ok=True)
                     shutil.copy2(source, destination)
-    version = tomllib.loads((ROOT/'pyproject.toml').read_text())['project']['version']
     info = {'CFBundleExecutable': 'MonitorApp', 'CFBundleIdentifier': 'com.liuhanzhang.codexactivitymonitor',
             'CFBundleName': 'Codex Activity Monitor', 'CFBundleDisplayName': 'Codex Activity Monitor', 'CFBundlePackageType': 'APPL',
             'CFBundleShortVersionString': version, 'CFBundleVersion': '1', 'LSMinimumSystemVersion': '14.0',
@@ -137,9 +140,9 @@ def main():
     if final.exists():
         shutil.rmtree(final)
     stage.rename(final)
-    archive = output/f'Codex-Activity-Monitor-{version}-arm64-dev.zip'
+    archive = output/f'Codex-Activity-Monitor-{release_version}-macos-arm64.zip'
     run('/usr/bin/ditto', '-c', '-k', '--sequesterRsrc', '--keepParent', final, archive)
-    summary = {'app': str(final), 'archive': str(archive), 'build_id': build_id,
+    summary = {'app': str(final), 'archive': str(archive), 'release_version': release_version, 'build_id': build_id,
                'archive_sha256': hashlib.sha256(archive.read_bytes()).hexdigest(),
                'archive_bytes': archive.stat().st_size,
                'binary_inspection': inspection,
