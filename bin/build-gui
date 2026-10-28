@@ -48,7 +48,7 @@ sources += [root/'macos/Assets/AppIcon.png', root/'bin/build-app-icon', root/'pa
 build=hashlib.sha256(b''.join(str(p.relative_to(root)).encode()+b'\0'+p.read_bytes() for p in sources)).hexdigest()
 info={'CFBundleExecutable':'MonitorApp','CFBundleIdentifier':'com.liuhanzhang.codexactivitymonitor',
       'CFBundleName':'Codex Activity Monitor','CFBundleDisplayName':'Codex Activity Monitor','CFBundlePackageType':'APPL',
-      'CFBundleShortVersionString':'0.1.0','CFBundleVersion':'1','LSMinimumSystemVersion':'14.0',
+      'CFBundleShortVersionString':'0.1.0','CFBundleVersion':'2','LSMinimumSystemVersion':'14.0',
       'LSUIElement':True,'NSPrincipalClass':'NSApplication','CFBundleIconFile':'AppIcon.icns'}
 if preview:
     info.update(CFBundleIdentifier=info['CFBundleIdentifier']+'.preview',

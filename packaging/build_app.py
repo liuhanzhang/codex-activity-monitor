@@ -130,7 +130,7 @@ def main():
                     shutil.copy2(source, destination)
     info = {'CFBundleExecutable': 'MonitorApp', 'CFBundleIdentifier': 'com.liuhanzhang.codexactivitymonitor',
             'CFBundleName': 'Codex Activity Monitor', 'CFBundleDisplayName': 'Codex Activity Monitor', 'CFBundlePackageType': 'APPL',
-            'CFBundleShortVersionString': version, 'CFBundleVersion': '1', 'LSMinimumSystemVersion': '14.0',
+            'CFBundleShortVersionString': version, 'CFBundleVersion': '2', 'LSMinimumSystemVersion': '14.0',
             'LSUIElement': True, 'NSPrincipalClass': 'NSApplication', 'CFBundleIconFile': 'AppIcon.icns'}
     (contents/'Info.plist').write_bytes(plistlib.dumps(info))
     run('codesign', '--force', '--deep', '--sign', '-', stage)

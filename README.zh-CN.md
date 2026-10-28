@@ -39,7 +39,7 @@
 
 ## 安装
 
-从 [v0.1.0-alpha.1](https://github.com/LiuHanzhang/codex-activity-monitor/releases/tag/v0.1.0-alpha.1) 下载 Apple Silicon ZIP。这是使用 ad-hoc 签名、尚未经过 Apple 公证的早期预发布版本；首次打开请按下方步骤手动允许。也可以[从源码构建](#从源码构建)。
+从 [v0.1.0-alpha.2](https://github.com/LiuHanzhang/codex-activity-monitor/releases/tag/v0.1.0-alpha.2) 下载 Apple Silicon ZIP。这是使用 ad-hoc 签名、尚未经过 Apple 公证的早期预发布版本；首次打开请按下方步骤手动允许。也可以[从源码构建](#从源码构建)。
 
 ### 运行要求
 

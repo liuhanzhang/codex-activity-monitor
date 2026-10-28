@@ -124,6 +124,8 @@ def main():
             return value
 
         configured = management('configure')
+        assert configured['integration_status']['version'] == 1
+        result['checks']['integration_diagnostics_schema'] = True
         runtime = Path(configured['runtime'])
         try:
             resumed = management('resume', '--owner-pid', str(os.getpid()))
@@ -159,6 +161,28 @@ def main():
             assert timeline.get('selected_turn_id') == 'dev-turn' and timeline.get('phases'), timeline
             assert json.loads(cli('--runtime', runtime, 'status').stdout)['threads'] == 1
             result['checks']['observed_synthetic_turn_and_timeline'] = True
+            sessions = Path(environment['CODEX_HOME'])/'sessions'
+            sessions.mkdir(parents=True, exist_ok=True)
+            usage = {'input_tokens': 200, 'output_tokens': 100,
+                     'cached_input_tokens': 0, 'reasoning_output_tokens': 20}
+            rows = [
+                {'type': 'session_meta', 'payload': {'id': 'packaging-rate'}},
+                {'type': 'turn_context', 'timestamp': '2026-01-01T00:00:00Z',
+                 'payload': {'turn_id': 'rate-turn'}},
+                {'type': 'token_usage_record', 'timestamp': '2026-01-01T00:00:01Z',
+                 'payload': {'thread_id': 'packaging-rate', 'turn_id': 'rate-turn',
+                             'response_id': 'rate-response', 'usage': usage}},
+                {'type': 'event_msg', 'timestamp': '2026-01-01T00:00:01Z',
+                 'payload': {'type': 'token_count', 'info': {
+                     'last_token_usage': usage, 'total_token_usage': usage}}},
+            ]
+            (sessions/'rollout-packaging-rate.jsonl').write_text(''.join(json.dumps(row)+'\n' for row in rows))
+            rate_query = {'action': 'timeline', 'scope_id': environment['CODEX_HOME'],
+                          'thread_id': 'packaging-rate', 'turn_id': 'rate-turn'}
+            rate = json.loads(cli('--runtime', runtime, 'timeline-query', json.dumps(rate_query)).stdout)['average_speed']
+            assert rate['tokens_per_second'] == 100 and rate['timed_output_tokens'] == 100, rate
+            assert rate['timed_duration_ms'] == 1000 and rate['pending_response_count'] == 0, rate
+            result['checks']['bundled_selected_turn_average_speed'] = True
             management('stop', '--owner-pid', str(os.getpid()))
             assert not json.loads(cli('--runtime', runtime, 'status').stdout)['running']
             result['checks']['managed_stop'] = True

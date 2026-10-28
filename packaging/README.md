@@ -18,10 +18,10 @@ Python 依赖约束保存在 `requirements-build.lock`，项目直接依赖仍�
 默认输出：
 
 - `.local/standalone/Codex Activity Monitor.app`
-- `.local/standalone/Codex-Activity-Monitor-0.1.0-alpha.1-macos-arm64.zip`
+- `.local/standalone/Codex-Activity-Monitor-0.1.0-alpha.2-macos-arm64.zip`
 - `.local/standalone/build-result.json`：构建身份、ZIP SHA-256、体积与逐个二进制检查结果。
 
-发布版本由 `pyproject.toml` 中的项目版本和 `[tool.codex-activity-monitor].prerelease` 组合而成，当前为 `0.1.0-alpha.1`；正式发布时移除 `prerelease`。ZIP 文件名使用 `Codex-Activity-Monitor-{发布版本}-macos-arm64.zip`，tag 使用 `v{发布版本}`，构建清单与结果也记录完整发布版本。App 的数字版本保持为 `0.1.0`。Alpha 阶段与签名、公证状态分别记录。
+发布版本由 `pyproject.toml` 中的项目版本和 `[tool.codex-activity-monitor].prerelease` 组合而成，当前为 `0.1.0-alpha.2`；正式发布时移除 `prerelease`。ZIP 文件名使用 `Codex-Activity-Monitor-{发布版本}-macos-arm64.zip`，tag 使用 `v{发布版本}`，构建清单与结果也记录完整发布版本。App 的数字版本保持为 `0.1.0`。Alpha 阶段与签名、公证状态分别记录。
 
 外层 App 的包标识固定为 `com.liuhanzhang.codexactivitymonitor`，后端包标识为 `com.liuhanzhang.codexactivitymonitor.backend`，开发版与后续正式版沿用同一身份。本地 GUI 构建使用相同的主 App 标识，Preview 构建追加 `.preview` 后缀。
 
@@ -35,7 +35,7 @@ SwiftPM 可能为较低部署目标加入构建机器的 Swift 兼容库搜索�
 
 ```sh
 .local/packaging/portable-venv/bin/python packaging/verify_app.py \
-  .local/standalone/Codex-Activity-Monitor-0.1.0-alpha.1-macos-arm64.zip \
+  .local/standalone/Codex-Activity-Monitor-0.1.0-alpha.2-macos-arm64.zip \
   --result .local/standalone/acceptance-result.json --gui
 ```
 
