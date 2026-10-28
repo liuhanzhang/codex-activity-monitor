@@ -45,6 +45,8 @@ The Python collector owns activity identity, lifecycle, local tokenization, and 
 
 The interface preserves unknown values and known zeros separately. Timeline placement follows source timing where available, with uncertainty retained. A displayed reasoning duration describes an observed activity lifecycle; it does not establish how long a server spent computing.
 
+The selected turn's average speed is a separate JSONL estimate: `HistoryDirectory` feeds its incremental scan into `RequestRateBook`, and `TimelineQuery` returns a versioned, optional `average_speed` projection. Each usage can publish a preview; later token counts confirm or retract the paired output and duration. The rate uses sums over the same valid response set, includes reasoning output and first-token waiting, and never advances with query-time wall clocks. Ledgers reset with the source version and participate in the existing weighted history cache. Parent and child threads have independent rates. See [chapter 24](../dev-history/24_average_token_speed/implementation.md) for timing and coverage boundaries.
+
 The app can read selected content from Codex history and use transient text for live details and tokenization. Derived state can include chat titles, paths, command previews, and metrics. These files can contain private information.
 
 ## Integration changes

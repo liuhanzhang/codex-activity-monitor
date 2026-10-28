@@ -248,3 +248,42 @@ private func panelUsage(_ fields: [String: Any]) throws -> Usage {
     let other = try await client.timeline(scope: "fixture", thread: "other", turn: nil)
     #expect(root.thread_id == "root" && other.thread_id == "other")
 }
+
+private func panelAverage(_ fields: [String: Any] = [:]) throws -> TimelineAverageSpeed {
+    let base: [String: Any] = ["version": 1, "thread_id": "root", "turn_id": "turn",
+        "tokens_per_second": 39.4, "timed_output_tokens": 394, "timed_duration_ms": 10000,
+        "sample_count": 2, "untimed_response_count": 0, "pending_response_count": 1,
+        "coverage": "complete", "estimated": true, "quality": []]
+    return try JSONDecoder().decode(TimelineAverageSpeed.self,
+        from: JSONSerialization.data(withJSONObject: base.merging(fields) { _, new in new }))
+}
+
+@Test func panelAverageUsesSelectedThreadAndTurnIndependentlyOfLiveUsage() throws {
+    let average = try panelAverage()
+    let result = PanelStatistics(usage: nil, selectedTurn: "turn", average: average, thread: "root")
+    #expect(result.averageSpeed == 39.4 && result.averageText == "39.4 T/s")
+    #expect(result.outputTokens == nil && !result.averageIsPartial)
+    #expect(PanelStatistics(usage: nil, selectedTurn: "old", average: average, thread: "root").averageSpeed == nil)
+    #expect(PanelStatistics(usage: nil, selectedTurn: "turn", average: average, thread: "child").averageSpeed == nil)
+    #expect(PanelStatistics(usage: nil, selectedTurn: "turn", switchingTurn: true,
+                            average: average, thread: "root").averageSpeed == nil)
+    #expect(PanelStatistics(usage: nil, selectedTurn: "turn").averageText == "—")
+}
+
+@Test func panelAveragePreservesZeroAndExplainsPartialCoverage() throws {
+    let zero = try panelAverage(["tokens_per_second": 0, "timed_output_tokens": 0,
+        "coverage": "partial", "untimed_response_count": 1])
+    let result = PanelStatistics(usage: nil, selectedTurn: "turn", average: zero, thread: "root")
+    #expect(result.averageSpeed == 0 && result.averageText == "0.0 T/s" && result.averageIsPartial)
+}
+
+@Test func panelAverageRejectsUnsupportedOrInvalidSamples() throws {
+    let cases: [[String: Any]] = [["version": 2], ["tokens_per_second": -1],
+        ["tokens_per_second": NSNull()], ["timed_duration_ms": 0], ["timed_output_tokens": -1],
+        ["sample_count": 0], ["untimed_response_count": -1], ["pending_response_count": -1],
+        ["coverage": "unavailable"], ["coverage": "future"], ["estimated": false]]
+    for fields in cases {
+        let result = PanelStatistics(usage: nil, selectedTurn: "turn", average: try panelAverage(fields), thread: "root")
+        #expect(result.averageSpeed == nil)
+    }
+}

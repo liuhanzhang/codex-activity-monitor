@@ -269,6 +269,7 @@ class TimelineQuery:
             if t['turn_id'] in earlier or t['turn_id'] == selected:
                 recent.append(t)
         return {'version': 1, 'scope_id': scope, 'thread_id': thread, 'selected_turn_id': selected,
+                'average_speed': root_index.request_rates.projection(selected) if root_index else None,
                 'current_turn_id': current, 'turns': recent, 'agents': agents,
                 'phases': [p for p in visible if p['track'] != 'marker'],
                 'markers': [p for p in visible if p['track'] == 'marker'],
