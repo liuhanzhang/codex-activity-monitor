@@ -172,10 +172,19 @@ private func withStateFixture(_ mode: String, isolation: isolated (any Actor)? =
 
 @Test func stateSubscriptionCancellationClosesItsOwnedSocket() async throws {
     try await withStateFixture("fragmented") { fixture in
+        let connected = AsyncStream<Void>.makeStream(bufferingPolicy: .bufferingNewest(1))
         let task = Task {
-            for try await _ in UnixStateSubscriber().updates(at: fixture.path) { try Task.checkCancellation() }
+            defer { connected.continuation.finish() }
+            for try await value in UnixStateSubscriber().updates(at: fixture.path) {
+                if value.snapshot != nil { connected.continuation.yield(()) }
+                try Task.checkCancellation()
+            }
         }
-        try await Task.sleep(for: .milliseconds(100))
+        // Cancellation before the worker connects leaves the fixture listening;
+        // that does not exercise closure of an owned socket, especially on CI.
+        var readiness = connected.stream.makeAsyncIterator()
+        let firstState = await readiness.next()
+        try #require(firstState != nil)
         task.cancel()
         _ = await task.result
         let deadline = ContinuousClock.now.advanced(by: .seconds(1))
