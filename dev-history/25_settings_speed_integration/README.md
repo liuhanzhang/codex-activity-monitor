@@ -65,3 +65,5 @@ PYTHONPATH="$PWD/src" bin/build-gui --preview
 这次结果支持将两个功能作为整体继续验收。尚未验证日常 collector 到 GUI 的合并版本自然回合、Codex 完整重启、长期驻留、macOS 14/15/26 实机及 standalone 发布包。默认跳过的 11 项 opt-in 测试没有记为通过。
 
 机器可读摘要见 [evidence.json](evidence.json)。原始测试及构建日志保留在集成 worktree 的忽略目录 `.local/integration-validation/`。
+
+后续用户报告输出／推理暂时显示 `—`，调查发现旧连接清理导致 collector 异常退出，见[现场证据、修正与回归结果](collector-retention-fix.md)。

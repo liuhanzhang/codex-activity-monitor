@@ -227,6 +227,42 @@ class TerminalBudgetTests(unittest.TestCase):
         self.turn('u', 1003)  # The old terminal turn still cannot reopen.
         self.assertEqual(self.engine.threads[('b', 't')].turn_id, 'fresh')
 
+    def test_unresolved_stopped_thread_keeps_backend_metadata_during_new_work(self):
+        self.engine.ingest(Event('b', 'lifecycle', {'type': 'bridge/started', 'home': '/old'}, 99, 0))
+        self.turn()
+        self.item('unfinished', 'added')
+        self.engine.ingest(Event('b', 'lifecycle', {'type': 'bridge/stopped'}, 102, 0))
+        self.engine.ingest(Event('live', 'lifecycle', {'type': 'bridge/started', 'home': '/new'}, 999, 0))
+        self.send({'method': 'turn/started', 'params': {'threadId': 'live-thread',
+                   'turn': {'id': 'new-turn', 'status': 'inProgress'}}}, 999, backend='live')
+        self.engine.tick(1000)
+        snapshot = self.engine.snapshot(1000)
+        old = next(t for t in snapshot['threads'] if t['backend'] == 'b')
+        live = next(t for t in snapshot['threads'] if t['backend'] == 'live')
+        self.assertEqual(old['home'], '/old')
+        self.assertFalse(old['connected'])
+        self.assertIsNone(old['generation_rate'])
+        self.assertIsNone(old['usage']['output_tokens'])
+        self.assertTrue(live['connected'])
+        self.assertEqual(live['usage']['output_tokens'], 0)
+
+    def test_recent_history_keeps_backend_metadata_until_thread_is_released(self):
+        self.engine.ingest(Event('b', 'lifecycle', {'type': 'bridge/started', 'home': '/old'}, 99, 0))
+        self.turn()
+        self.send({'method': 'turn/completed', 'params': {'threadId': 't',
+                   'turn': {'id': 'u', 'status': 'completed'}}}, 101)
+        self.engine.ingest(Event('b', 'lifecycle', {'type': 'bridge/disconnected'}, 102, 0))
+        thread = self.engine.threads['b', 't']
+        thread.history_progress_ms = time.time() * 1000
+        self.engine.tick(1000)
+        snapshot = self.engine.snapshot(1000)
+        self.assertEqual(snapshot['threads'][0]['home'], '/old')
+        self.assertFalse(snapshot['threads'][0]['connected'])
+        thread.history_progress_ms = (time.time() - 1000) * 1000
+        self.engine.tick(1001)
+        self.assertEqual(self.engine.snapshot(1001)['threads'], [])
+        self.assertNotIn('b', self.engine.backends)
+
     def test_exhaustion_closes_observation_without_forgetting_terminal_ids(self):
         self.engine.identity_budget = IdentityBudget(capacity=4)
         self.turn(); self.item('i', 'added'); self.item('i', 'done')

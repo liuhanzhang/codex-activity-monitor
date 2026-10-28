@@ -933,8 +933,12 @@ class Engine:
         if len(self.requests)>512:
             self.requests=dict(list(self.requests.items())[-512:])
         self.approvals={k:v for k,v in self.approvals.items() if v[0] in self.threads}
+        # Unresolved work and recent history may outlive a disconnected backend's
+        # display retention. Keep its scope and connection evidence with its rows.
+        retained_backends = {thread.backend for thread in self.threads.values()}
         for backend in list(self.backends):
-            if not self.backends[backend].get('connected') and now-self.backends[backend].get('ended_at',now)>600:
+            if (backend not in retained_backends and not self.backends[backend].get('connected')
+                    and now-self.backends[backend].get('ended_at',now)>600):
                 self.backends.pop(backend,None)
         history_keys = {(self.backends.get(t.backend, {}).get('home'), t.id) for t in self.threads.values()}
         self.history_versions = {k: v for k, v in self.history_versions.items() if k in history_keys}
