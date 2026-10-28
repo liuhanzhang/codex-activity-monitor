@@ -232,6 +232,7 @@ class HistoryProvider:
                                     getattr(index, 'ranges', {}), getattr(index, 'spawn_calls', set()),
                                     getattr(index, 'phase_catalogue', {}), getattr(index, 'selected_ids', frozenset()),
                                     getattr(index, 'seed_phase_ids', frozenset()),
+                                    getattr(index, 'request_rates', None),
                                     getattr(index, 'selection', None), getattr(index, 'hint_signature', None))
             self.weights[key] = (version, weight)
         if self.weights[key][1] > self.max_cache_bytes:

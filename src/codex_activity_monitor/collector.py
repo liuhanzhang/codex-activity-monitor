@@ -85,7 +85,7 @@ def serve(runtime, diagnostic_log=None):
     implementation=source_identity('collector','app_session','engine','overview','menu_presentation','progress_state','events','usage','metrics','runtime','tool_labels','i18n','messages_zh_cn',
                                    'state','timeline','timeline_storage','timeline_query','history','reconciliation','agent_presentation','agent_relations','agent_identity',
                                    'publication','state_transport','observation_lease','history_read','content_version',
-                                   'resource_budget','identity_budget','query_request','query_response','json_encoding','history_index','history_content','history_refresh','history_contract','tokenizer_process',
+                                   'resource_budget','identity_budget','query_request','query_response','json_encoding','history_index','history_content','history_refresh','history_contract','request_rate','tokenizer_process',
                                    'diagnostic_log','diagnostic_health','integration_status')
     previous=read_snapshot(runtime)
     previous_age = snapshot_age(previous)

@@ -28,6 +28,8 @@ Click an activity to open **Activity viewer**. Its tabs expose the source conten
 
 Output and Reasoning counts belong to the selected turn when its identity is known. **Output includes Reasoning: do not add them together.** Counts are separate from locally measured generation speed. The statistics information button explains their scope.
 
+**Average speed**, at the right of the statistics row, divides official output tokens by the sum of their matched request windows in the selected turn. It updates as usage records arrive, holds between updates, and remains available after completion. Output includes reasoning; request windows can include time waiting for the first token, queueing, and network delays. This is an estimate from JSONL records. Partial coverage is explained in the statistics information popover; `—` means no valid estimate is available. Historical averages can remain readable while live observation is unavailable.
+
 ## Settings
 
 Click the gear button at the top of the overview, or press **Command-,**, to open Settings. Its sidebar has **General**, **Runtime Status**, and **Logs**. Reopening focuses the same window. **Command-W** closes Settings and keeps observation running; **Command-Q** quits Monitor.

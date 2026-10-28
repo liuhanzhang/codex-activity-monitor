@@ -1,0 +1,51 @@
+{
+  "method": "Python transcription of pinned Tokscale CodexRequestTiming; prefix-only usage preview with later token_count confirmation",
+  "confirmed_updates": 285,
+  "preview_confirmation_differences": 0,
+  "duplicate_token_count_skipped": 2,
+  "usage_updates": 285,
+  "turns": 19,
+  "multi_usage_turns": 16,
+  "timed_updates": 285,
+  "updates_with_full_output_coverage": 285,
+  "new_multi_all_within_20pct_final": 7,
+  "old_multi_all_within_20pct_final": 1,
+  "new_multi_latter_half_within_20pct_final": 14,
+  "old_multi_latter_half_within_20pct_final": 8,
+  "minimum_2_usage": {
+    "turns": 16,
+    "old_all_within_20pct_final": 1,
+    "new_all_within_20pct_final": 7,
+    "old_latter_half_within_20pct_final": 8,
+    "new_latter_half_within_20pct_final": 14,
+    "old_median_cv": 0.6746636637863891,
+    "new_median_cv": 0.08880607738741345
+  },
+  "minimum_3_usage": {
+    "turns": 12,
+    "old_all_within_20pct_final": 0,
+    "new_all_within_20pct_final": 4,
+    "old_latter_half_within_20pct_final": 4,
+    "new_latter_half_within_20pct_final": 10,
+    "old_median_cv": 0.6746636637863891,
+    "new_median_cv": 0.10748829240397845
+  },
+  "minimum_5_usage": {
+    "turns": 7,
+    "old_all_within_20pct_final": 0,
+    "new_all_within_20pct_final": 2,
+    "old_latter_half_within_20pct_final": 2,
+    "new_latter_half_within_20pct_final": 6,
+    "old_median_cv": 0.5129642989058512,
+    "new_median_cv": 0.1041512904273943
+  },
+  "minimum_10_usage": {
+    "turns": 3,
+    "old_all_within_20pct_final": 0,
+    "new_all_within_20pct_final": 0,
+    "old_latter_half_within_20pct_final": 1,
+    "new_latter_half_within_20pct_final": 3,
+    "old_median_cv": 0.2875506315744443,
+    "new_median_cv": 0.1041512904273943
+  }
+}

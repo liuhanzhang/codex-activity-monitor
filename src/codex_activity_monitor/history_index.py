@@ -13,6 +13,7 @@ import uuid
 from .agent_presentation import agent_metadata
 from .history_content import ABSENT, CANONICAL_TYPES, item_content, raw_section, source_truncated
 from .history_read import HistoryChanged, HistoryRead, HistoryReference, explicit_turn, file_stamp
+from .request_rate import RequestRateBook
 from .timeline import HISTORY_SEED_LIMIT, HISTORY_SEED_TYPES, identity, item_namespace, item_phase, phase_id, merge_history_phase, merge_phase, status, valid_ms
 
 def timestamp(value):
@@ -359,9 +360,11 @@ class HistoryDirectory(_HistoryProjection):
         # Order is first source appearance, matching the full projection. A
         # compact ID/flag catalogue does not retain completed phase dictionaries.
         self.phase_catalogue: dict[str, dict[bytes, PhaseFlags]] = {}
+        self.request_rates = RequestRateBook(thread)
 
     def _reset_projection(self):
         self.ranges.clear(); self.spawn_calls.clear(); self.phase_records = 0; self.phase_catalogue.clear()
+        self.request_rates = RequestRateBook(self.thread)
 
     def _phase(self, phase, *_):
         self.phase_records += 1
@@ -388,9 +391,12 @@ class HistoryDirectory(_HistoryProjection):
     def _row(self, row, offset, length, digest):
         payload = row.get('payload', {})
         outer, kind = row.get('type'), payload.get('type')
+        self.request_rates.observe(row)
         turn = None
         if outer == 'turn_context':
             turn = payload.get('turn_id')
+        elif outer in ('token_usage_record', 'compacted'):
+            turn = explicit_turn(payload) or (self.turn if outer == 'compacted' else None)
         elif outer == 'event_msg':
             if kind in ('task_started', 'turn_started'):
                 turn = payload.get('turn_id') or (payload.get('turn_attribution') or {}).get('turn_id')
@@ -398,8 +404,10 @@ class HistoryDirectory(_HistoryProjection):
                 turn = payload.get('turn_id') or self.turn
             elif kind == 'item_completed':
                 turn = payload.get('turn_id')
-        elif outer == 'response_item' and kind in ('message', 'agentMessage', 'reasoning', 'function_call',
-                'custom_tool_call', 'function_call_output', 'custom_tool_call_output'):
+            elif kind in ('token_count', 'user_message', 'context_compacted', 'thread_rolled_back'):
+                turn = explicit_turn(payload) or self.turn
+        elif outer == 'response_item' and (kind in ('message', 'agentMessage', 'reasoning') or
+                isinstance(kind, str) and (kind.endswith('_call') or kind.endswith('_output'))):
             turn = explicit_turn(payload) or self.turn
         if isinstance(turn, str) and turn:
             spans = self.ranges.setdefault(turn, [])

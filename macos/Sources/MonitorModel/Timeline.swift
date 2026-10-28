@@ -161,6 +161,32 @@ public struct TimelinePhase: Decodable, Identifiable, Sendable {
     }
 }
 
+public struct TimelineAverageSpeed: Decodable, Sendable {
+    public let version: Int
+    public let thread_id: String
+    public let turn_id: String
+    public let tokens_per_second: Double?
+    public let timed_output_tokens: Int
+    public let timed_duration_ms: Double
+    public let sample_count: Int
+    public let untimed_response_count: Int
+    public let pending_response_count: Int
+    public let coverage: String
+    public let estimated: Bool
+    public let quality: [String]
+
+    public func value(thread: String?, turn: String?) -> Double? {
+        guard version == 1, estimated, thread == thread_id, turn == turn_id,
+              !thread_id.isEmpty, !turn_id.isEmpty,
+              coverage == "complete" || coverage == "partial",
+              sample_count > 0, timed_output_tokens >= 0,
+              untimed_response_count >= 0, pending_response_count >= 0,
+              timed_duration_ms.isFinite, timed_duration_ms > 0,
+              let tokens_per_second, tokens_per_second.isFinite, tokens_per_second >= 0 else { return nil }
+        return tokens_per_second
+    }
+}
+
 public struct TimelineBundle: Decodable, Sendable {
     public let version: Int
     public let scope_id: String
@@ -177,6 +203,7 @@ public struct TimelineBundle: Decodable, Sendable {
     public let revision: String
     public let quality: [String]
     public let earlier_active_turns: [String]
+    public let average_speed: TimelineAverageSpeed?
 
     public var initialInput: TimelinePhase? { markers.first { $0.kind == "input" && $0.is_initial == true } }
     public var allActivities: [TimelinePhase] { (phases + markers).filter(\.isTimelineVisible) }
