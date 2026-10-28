@@ -1,0 +1,46 @@
+{
+  "date": "2026-10-28",
+  "timezone": "Asia/Shanghai",
+  "baseline": "6c39325",
+  "branch": "codex/integrate-settings-and-speed",
+  "merges": [
+    {"source": "codex/settings-and-diagnostics", "source_commit": "08e3c6d", "merge_commit": "e4b8509"},
+    {"source": "feat/per-turn-average-token-speed", "source_commit": "e518817", "merge_commit": "43ea0bf"}
+  ],
+  "conflicts_resolved": ["dev-history/README.md", "src/codex_activity_monitor/collector.py"],
+  "python": {"discovered": 529, "passed": 529, "duration_seconds": 108.485},
+  "swift": {"model_discovered": 68, "app_discovered": 135, "discovered": 203, "opt_in_skipped": 11, "executed_passed": 192},
+  "acceptance": {
+    "ok": true,
+    "checks": 15,
+    "scope": "disposable profile, synthetic CLI and JSONL, real collector and bridge processes, query socket and product CLI",
+    "first_pending_average": 100,
+    "confirmed_output_tokens": 400,
+    "confirmed_duration_ms": 3000,
+    "average_unchanged_by_repeated_queries_and_status": true
+  },
+  "derived_evidence": {"ok": true, "updates": 285, "turns": 19, "private_source_replayed": false},
+  "localization_check": "passed",
+  "preview": {
+    "build": "passed outside sandbox after iconutil sandbox failure",
+    "source_fingerprint": "e0fdef34abbf93fcdbf666dd5847240ef71fbba5df227d883300b535d4eedb79",
+    "source_matches": true,
+    "signature_verification": "passed",
+    "native_scope": "read-only synthetic snapshot and product-generated timeline fixture",
+    "observed_average_speeds": [133.3, 120.0],
+    "settings_pages_and_log_detail": "passed",
+    "close_and_reopen_settings": "passed",
+    "normal_exit_code": 0
+  },
+  "main_updated": false,
+  "pushed": false,
+  "daily_app_updated": false,
+  "not_verified": [
+    "merged daily collector-to-GUI natural turn",
+    "full Codex restart",
+    "long-duration runtime",
+    "macOS 14, 15, 26 runtime",
+    "standalone release packaging",
+    "11 opt-in Swift tests"
+  ]
+}

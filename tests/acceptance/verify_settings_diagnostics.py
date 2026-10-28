@@ -35,6 +35,27 @@ for line in sys.stdin:
 ''')
         original.chmod(0o700)
         runtime = profile / 'data/run'
+        history = profile / 'codex/sessions/rollout-fixture-thread.jsonl'
+        usage = {'input_tokens': 200, 'output_tokens': 100,
+                 'cached_input_tokens': 0, 'reasoning_output_tokens': 20}
+
+        def append_history(kind, second, **payload):
+            with history.open('a') as stream:
+                stream.write(json.dumps({'type': kind, 'timestamp': f'2026-01-01T00:00:0{second}Z',
+                                         'payload': payload}) + '\n')
+
+        append_history('session_meta', 0, id='fixture-thread')
+        append_history('turn_context', 0, turn_id='fixture-turn')
+        append_history('token_usage_record', 1, thread_id='fixture-thread', turn_id='fixture-turn',
+                       response_id='response-one', usage=usage)
+
+        def average_speed():
+            request = {'action': 'timeline', 'scope_id': str(profile / 'codex'),
+                       'thread_id': 'fixture-thread', 'turn_id': 'fixture-turn'}
+            result = subprocess.run([sys.executable, '-B', '-m', 'codex_activity_monitor.cli',
+                '--runtime', str(runtime), 'timeline-query', json.dumps(request)],
+                capture_output=True, env=environment, timeout=10, check=True)
+            return json.loads(result.stdout)['average_speed']
 
         def command(action, *extra):
             result = subprocess.run([sys.executable, '-B', '-m', 'codex_activity_monitor.cli', 'app', action,
@@ -63,6 +84,22 @@ for line in sys.stdin:
             assert state['payload']['diagnostics']['version'] == 1
             assert any(c['component'] == 'collector' and c['state'] == 'healthy'
                        for c in state['payload']['diagnostics']['components'])
+            first = average_speed()
+            assert first['tokens_per_second'] == 100 and first['pending_response_count'] == 1, first
+            append_history('event_msg', 1, type='token_count', info={
+                'last_token_usage': usage, 'total_token_usage': usage})
+            second_usage = dict(usage, output_tokens=300)
+            append_history('token_usage_record', 3, thread_id='fixture-thread', turn_id='fixture-turn',
+                           response_id='response-two', usage=second_usage)
+            append_history('event_msg', 3, type='token_count', info={
+                'last_token_usage': second_usage, 'total_token_usage': dict(usage, output_tokens=400)})
+            second = average_speed()
+            assert second['sample_count'] == 2 and second['timed_output_tokens'] == 400, second
+            assert second['timed_duration_ms'] == 3000 and second['pending_response_count'] == 0, second
+            assert abs(second['tokens_per_second'] - 400 / 3) < 1e-10, second
+            assert average_speed() == second, 'query-time clock changed the average'
+            command('status')
+            assert average_speed() == second, 'diagnostic status check changed the average'
             (profile / 'dependencies.json').write_text(json.dumps({'pending': [{'pid': bridge.pid, 'reason': 'bridge_running'}]}))
             restored = command('restore')
             assert restored['state'] == 'pending_cleanup'
@@ -81,6 +118,9 @@ for line in sys.stdin:
             assert not (profile / 'data').exists()
             print(json.dumps({'ok': True, 'scope': 'disposable profile, synthetic CLI',
                 'checks': ['stable revision', 'real bridge startup evidence', 'live health summary',
+                           'usage preview through collector query socket and CLI',
+                           'incremental average and confirmations', 'average stable between queries',
+                           'diagnostic status and average speed coexist',
                            'restore with pending bridge', 'stdio forwarding after restore',
                            'collector shutdown', 'cleanup', 'disabled status persists',
                            'diagnostics retained', 'reconfigure', 'purge']}, indent=2))
