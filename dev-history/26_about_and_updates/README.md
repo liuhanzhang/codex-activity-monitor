@@ -2,7 +2,7 @@
 
 日期：2026-10-28。用户要求在设置中增加关于页，并自动检查、提示新版本；下载暂由用户手动完成。
 
-下文记录首版关于页与 GitHub API 实现，作为本轮演进记录保留。当前更新服务迁移至 Sparkle，方案见 [Sparkle 接入方案与步骤](sparkle-plan.md)，实际验证与外部上线边界见 [Sparkle 实现结果](sparkle-results.md)。
+下文记录首版关于页与 GitHub API 实现，作为本轮演进记录保留。当前更新服务迁移至 Sparkle，方案见 [Sparkle 接入方案与步骤](sparkle-plan.md)，首次本地验证见 [Sparkle 实现结果](sparkle-results.md)。后续已完成发布分类解耦、Pages 和 alpha.3 上线，见[实施步骤](channel-release-plan.md)与[公网验收结果](channel-release-results.md)。
 
 ## 实现
 
