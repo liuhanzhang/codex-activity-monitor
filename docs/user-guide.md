@@ -42,7 +42,7 @@ Click the gear button at the top of the overview, or press **Command-,**, to ope
 | **General → Maintenance** | Separate uninstall confirmation and quit actions |
 | **Runtime Status** | Show detected component health, unknown or disabled states, and links to related logs |
 | **Logs** | Search and filter local events by level and source, select details, copy a record, or open the log folder |
-| **About** | Show the full release version, build number, developer, project links, and local licenses |
+| **About** | Show the full release version, build number, project links, and local licenses |
 | **About → Software Updates** | Enable or disable automatic checks, check manually, and open a newer release for download |
 
 Automatic update checks use Sparkle and are enabled by default, with a one-day schedule. A new version appears in the overview and About, with a dot on the Settings button. Choose **View Update** to bring up Sparkle's update window, then open the release page to download manually. Downloading does not replace the running app. Network failures do not interrupt observation; manual checks show errors. **Last Check** records a check attempt, including an unsuccessful one.

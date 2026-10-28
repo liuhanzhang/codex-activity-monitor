@@ -343,14 +343,12 @@
 "这是只读预览构建。" = "This is a read-only preview build.";
 "这是本地源码构建。" = "This app was built from local source.";
 "项目" = "Project";
-"开发者" = "Developer";
 "项目主页" = "Project Homepage";
 "发行说明" = "Release Notes";
 "问题反馈" = "Report an Issue";
-"许可与声明" = "Licenses and Acknowledgments";
+"许可" = "Licenses";
 "MIT 许可证" = "MIT License";
 "第三方许可" = "Third-Party Licenses";
-"本项目由独立开发者维护，与 OpenAI 无隶属关系。" = "An independent project, not affiliated with OpenAI.";
 "软件更新" = "Software Updates";
 "自动检查更新" = "Automatically check for updates";
 "检查更新" = "Check for Updates";

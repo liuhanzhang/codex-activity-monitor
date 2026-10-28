@@ -59,14 +59,11 @@ struct AboutSettingsView: LocalizedView {
                 if !updates.enabled { Text(L("预览和隔离验证不会联网检查更新。")) .font(.callout).foregroundStyle(.secondary) }
             }
             Section(L("项目")) {
-                LabeledContent(L("开发者"), value: "Hanzhang Liu")
                 Link(L("项目主页"), destination: project)
                 Link(L("发行说明"), destination: project.appendingPathComponent("releases"))
                 Link(L("问题反馈"), destination: project.appendingPathComponent("issues"))
             }
-            Section(L("许可与声明")) {
-                Text(info["NSHumanReadableCopyright"] as? String ?? "Copyright © 2026 Hanzhang Liu")
-                    .foregroundStyle(.secondary)
+            Section(L("许可")) {
                 if let license = localResource("LICENSE") {
                     Button(L("MIT 许可证")) { NSWorkspace.shared.open(license) }
                 } else {
@@ -75,8 +72,6 @@ struct AboutSettingsView: LocalizedView {
                 if let licenses = localResource("ThirdPartyLicenses") {
                     Button(L("第三方许可")) { NSWorkspace.shared.open(licenses) }
                 }
-                Text(L("本项目由独立开发者维护，与 OpenAI 无隶属关系。"))
-                    .font(.callout).foregroundStyle(.secondary)
             }
         }.formStyle(.grouped).textSelection(.enabled)
             .accessibilityIdentifier("monitor.settings.about")

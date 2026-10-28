@@ -3,13 +3,16 @@
 <div align="center">
   <img src="docs/assets/showcase/app-icon.png" width="72" alt="Codex Activity Monitor icon">
   <h1>Codex Activity Monitor</h1>
-  <p>A macOS menu bar app for monitoring Codex Desktop token speed, chat status, and agent activity timelines.</p>
+  <p>A macOS menu bar monitor for Codex Desktop with token output rates, session statistics, and agent execution trajectories, similar to DeepSeek Harness’s statistics and trajectory views.</p>
   <p>
-    <img src="https://img.shields.io/badge/status-alpha-B7791F?style=flat-square" alt="Alpha stage">
+    <a href="https://github.com/LiuHanzhang/codex-activity-monitor/releases#release-v0.1.0-alpha.3"><img src="https://img.shields.io/badge/release-v0.1.0--alpha.3-B7791F?style=flat-square" alt="Release v0.1.0-alpha.3"></a>
     <img src="https://img.shields.io/badge/macOS-14%2B-black?style=flat-square&amp;logo=apple" alt="macOS 14+">
     <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-3B7A57?style=flat-square" alt="MIT license"></a>
   </p>
 </div>
+
+> [!IMPORTANT]
+> The app is still in early testing, and Developer ID signing and Apple notarization are not in place yet. If macOS blocks the app on first launch, you’ll need to allow it manually in **System Settings → Privacy & Security → Open Anyway**. See [Installation](#installation) for the steps.
 
 <a id="see-it-in-action"></a>
 <p align="center">
@@ -39,7 +42,7 @@ Click a timeline block to open the activity viewer. Read the available user inpu
 
 ## Installation
 
-Download the Apple Silicon ZIP from [v0.1.0-alpha.3](https://github.com/LiuHanzhang/codex-activity-monitor/releases/tag/v0.1.0-alpha.3). This is an early prerelease with ad-hoc signing and no Apple notarization; follow the opening instructions below. You can also [build from source](#build-from-source).
+Go to [GitHub Releases](https://github.com/LiuHanzhang/codex-activity-monitor/releases) and download the Apple Silicon ZIP named `Codex-Activity-Monitor-<version>-macos-arm64.zip` from the latest release's **Assets**. This is an early prerelease with ad-hoc signing and no Apple notarization; follow the opening instructions below. You can also [build from source](#build-from-source).
 
 ### Runtime requirements
 
@@ -93,7 +96,7 @@ Keep Monitor running while observing. The gear button opens a separate Settings 
 
 **Runtime Status** shows detected component problems and recovery; **Logs** provides local diagnostic records with search, filters, details, and copy. Closing Settings keeps observation running. These checks cannot rule out every software error.
 
-**About** shows the full version, build number, developer, project links, and licenses. Sparkle checks the static update feed daily by default. A newer version appears in the overview and About; choose **View Update** to open its update window and continue to the release page for a manual download. Disable automatic checks or check manually in About. Update checks do not upload chats, logs, or usage records.
+**About** shows the full version, build number, project links, and licenses. Sparkle checks the static update feed daily by default. A newer version appears in the overview and About; choose **View Update** to open its update window and continue to the release page for a manual download. Disable automatic checks or check manually in About. Update checks do not upload chats, logs, or usage records.
 
 ## Privacy and compatibility
 
