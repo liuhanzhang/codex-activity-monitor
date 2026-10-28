@@ -65,6 +65,11 @@ enum MonitorApplication {
     private let diagnosticsStartedAt = Date()
     private var fullscreenObserver: NSObjectProtocol?
     private var activityViewer: ActivityViewerWindowController?
+    private var settingsWindow: SettingsWindowController?
+    private var settingsMenuItem: NSMenuItem?
+    private var quitMenuItem: NSMenuItem?
+    private var editMenu: NSMenu?
+    private var editMenuItem: NSMenuItem?
     private var statusCaptureIndex = 0
 
     func applicationDidFinishLaunching(_ notification: Notification) {
@@ -75,6 +80,10 @@ enum MonitorApplication {
                 arguments.append("--read-only")
             }
             store = DashboardStore(configuration: config, arguments: arguments)
+            store.onSettingsRequested = { [weak self] in
+                self?.showSettings(nil)
+            }
+            installApplicationMenu()
             if isPreview {
                 store.showRecent = arguments.contains("--preview-recent")
             }
@@ -122,6 +131,13 @@ enum MonitorApplication {
                 self.item.button?.toolTip = state + " · " + self.L("点击查看实时活动")
                 self.item.button?.setAccessibilityLabel("Codex Activity Monitor · " + state)
                 self.activityViewer?.updateLanguage()
+                self.settingsWindow?.updateLanguage()
+                self.settingsMenuItem?.title = self.L("设置…")
+                self.quitMenuItem?.title = self.L("Quit")
+                self.editMenu?.title = self.L("编辑")
+                self.editMenuItem?.title = self.L("编辑")
+                let editorKeys = ["撤销", "重做", "剪切", "复制", "粘贴", "全选"]
+                for (item, key) in zip(self.editMenu?.items.filter { !$0.isSeparatorItem } ?? [], editorKeys) { item.title = self.L(key) }
                 self.previewWindow?.title = self.store.testProfile != nil ? self.L("Codex Activity Monitor · 隔离验证") : (self.store.readOnly ? self.L("Codex Activity Monitor · 只读验证") : "Codex Activity Monitor")
                 self.writeDiagnostics("tick")
             }
@@ -136,6 +152,7 @@ enum MonitorApplication {
                 self.activityViewer?.show(timeline: timeline, phases: phases)
             }
             store.start()
+            if arguments.contains("--settings") { store.onSettingsRequested?() }
             if CommandLine.arguments.contains("--window") {
                 store.panelVisible = true
                 let window = NSWindow(contentRect: NSRect(x: 0, y: 0, width: 420, height: 300),
@@ -198,7 +215,32 @@ enum MonitorApplication {
         panel?.toggle()
     }
 
+    @objc private func showSettings(_ sender: Any?) {
+        guard let store else { return }
+        panel?.close(reason: "settings")
+        if settingsWindow == nil { settingsWindow = SettingsWindowController(store: store) }
+        settingsWindow?.show()
+    }
+
+    private func installApplicationMenu() {
+        let menu = NSMenu()
+        let application = NSMenuItem()
+        let submenu = NSMenu(title: "Codex Activity Monitor")
+        let settings = NSMenuItem(title: L("设置…"), action: #selector(showSettings(_:)), keyEquivalent: ",")
+        settings.target = self
+        submenu.addItem(settings); submenu.addItem(.separator())
+        let quit = NSMenuItem(title: L("Quit"), action: #selector(NSApplication.terminate(_:)), keyEquivalent: "q")
+        quit.target = NSApplication.shared
+        submenu.addItem(quit); application.submenu = submenu; menu.addItem(application)
+        let editor = NSMenuItem(title: L("编辑"), action: nil, keyEquivalent: "")
+        let edit = makeEditMenu(language: store.language)
+        editor.submenu = edit; menu.addItem(editor); editMenu = edit; editMenuItem = editor
+        NSApplication.shared.mainMenu = menu
+        settingsMenuItem = settings; quitMenuItem = quit
+    }
+
     func applicationShouldHandleReopen(_ sender: NSApplication, hasVisibleWindows flag: Bool) -> Bool {
+        if settingsWindow?.window?.isVisible == true { settingsWindow?.show(); return true }
         if activityViewer?.window?.isVisible == true { activityViewer?.window?.makeKeyAndOrderFront(nil); return true }
         if panel != nil && !panel.popover.isShown { panel.show() }
         return true
@@ -206,6 +248,7 @@ enum MonitorApplication {
 
     func applicationWillTerminate(_ notification: Notification) {
         activityViewer?.close()
+        settingsWindow?.close()
         panel?.stop(); statusContent?.stop()
         if let fullscreenObserver { NotificationCenter.default.removeObserver(fullscreenObserver) }
     }
@@ -267,4 +310,16 @@ enum MonitorApplication {
         }
         return .terminateLater
     }
+}
+
+@MainActor func makeEditMenu(language: MonitorLanguage) -> NSMenu {
+    let menu = NSMenu(title: localizedText("编辑", language: language))
+    for (title, selector, key) in [("撤销", Selector(("undo:")), "z"), ("重做", Selector(("redo:")), "Z"),
+                                  ("剪切", #selector(NSText.cut(_:)), "x"), ("复制", #selector(NSText.copy(_:)), "c"),
+                                  ("粘贴", #selector(NSText.paste(_:)), "v"), ("全选", #selector(NSText.selectAll(_:)), "a")] {
+        let item = NSMenuItem(title: localizedText(title, language: language), action: selector, keyEquivalent: key.lowercased())
+        if key == "Z" { item.keyEquivalentModifierMask = [.command, .shift] }
+        menu.addItem(item)
+    }
+    return menu
 }

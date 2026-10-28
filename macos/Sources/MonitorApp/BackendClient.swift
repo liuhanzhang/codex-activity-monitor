@@ -33,6 +33,7 @@ struct BackendClient: BackendManaging {
 
     private func perform(_ action: String, extra: [String], timeout: TimeInterval) async throws -> ManagementState {
         var request = configuration.request(arguments: ["app", action,
+                        "--operation-id", UUID().uuidString,
                         "--data-root", dataRoot, "--app", Bundle.main.bundleURL.path]
                 + extra + (["configure", "resume"].contains(action) ? ["--state-protocol", "1"] : [])
                 + (testProfile.map { ["--test-profile", $0] } ?? []))

@@ -45,7 +45,10 @@ def read_json(path, default=None):
 
 class LaunchEnvironment:
     def get(self, key):
-        result = subprocess.run(['/bin/launchctl', 'getenv', key], capture_output=True)
+        try:
+            result = subprocess.run(['/bin/launchctl', 'getenv', key], capture_output=True, timeout=.5)
+        except subprocess.TimeoutExpired as error:
+            raise ControlError('environment_read_failed', 'control.environment_read_failed', value=key) from error
         if result.returncode:
             raise ControlError('environment_read_failed', 'control.environment_read_failed', value=key)
         # launchctl returns success for missing values too. It adds one newline
@@ -58,7 +61,10 @@ class LaunchEnvironment:
 
     def set(self, key, value):
         args = ['setenv', key, value] if value is not None else ['unsetenv', key]
-        result = subprocess.run(['/bin/launchctl', *args], capture_output=True)
+        try:
+            result = subprocess.run(['/bin/launchctl', *args], capture_output=True, timeout=.5)
+        except subprocess.TimeoutExpired as error:
+            raise ControlError('environment_write_failed', 'control.environment_write_failed', value=key) from error
         if result.returncode:
             raise ControlError('environment_write_failed', 'control.environment_write_failed', value=key)
         if self.get(key) != value:
@@ -123,7 +129,16 @@ class SystemServices:
         path.unlink()
 
     def dependents(self, receipt):
-        result = subprocess.run(['/bin/ps', '-axo', 'pid=,comm='], capture_output=True, text=True)
+        return self._dependents(receipt, cleanup=True)
+
+    def inspect_dependents(self, receipt):
+        return self._dependents(receipt, cleanup=False, include_bridges=False)
+
+    def _dependents(self, receipt, cleanup, include_bridges=True):
+        try:
+            result = subprocess.run(['/bin/ps', '-axo', 'pid=,comm='], capture_output=True, text=True, timeout=.5)
+        except (OSError, subprocess.TimeoutExpired):
+            return [{'reason': 'process_visibility_unknown'}]
         if result.returncode:
             return [{'reason': 'process_visibility_unknown'}]
         actual = Path(receipt['real_cli'])
@@ -134,9 +149,15 @@ class SystemServices:
             parts = line.strip().split(None, 1)
             if len(parts) == 2 and (parts[1] == str(actual) or parts[1].startswith(prefix)):
                 found.append({'pid': int(parts[0]), 'reason': 'codex_running'})
+        if not include_bridges:
+            return found
         # Registered bridges are checked too, including Python bridges whose
         # executable doesn't live in the Codex bundle.
-        for path in Path(receipt['runtime']).glob('bridges/*.json'):
+        deadline = time.monotonic() + 2
+        for index, path in enumerate(Path(receipt['runtime']).glob('bridges/*.json')):
+            if index >= 128 or time.monotonic() >= deadline:
+                found.append({'reason': 'process_visibility_unknown'})
+                break
             info = read_json(path)
             pid = info.get('pid')
             if isinstance(pid, int) and process_alive(pid):
@@ -144,9 +165,9 @@ class SystemServices:
                 identity = process_identity(pid)
                 if identity is None or info.get('identity') is None or identity == info['identity']:
                     found.append({'pid': pid, 'reason': 'bridge_running'})
-                else:
+                elif cleanup:
                     path.unlink(missing_ok=True)
-            else:
+            elif cleanup:
                 path.unlink(missing_ok=True)
         return found
 
@@ -237,11 +258,13 @@ class AppController:
         except ControlError:
             prefs = {}
         state = receipt.get('state', 'restored' if prefs.get('restored') else 'new')
+        from .integration_status import inspect_integration
         return {'version': 1, 'ok': True, 'state': state,
                 'configured': state == 'configured', 'runtime': receipt.get('runtime'),
                 'purge': receipt.get('purge', False), 'pending': receipt.get('pending', []),
                 'bridge_restart_required': bridge_upgrade_required(receipt.get('runtime')),
-                'data_root': str(self.root), 'error': receipt.get('error')}
+                'data_root': str(self.root), 'error': receipt.get('error'),
+                'integration_status': inspect_integration(self, receipt, state)}
 
     def _write(self, receipt):
         receipt['updated_at'] = time.time()
@@ -286,6 +309,11 @@ class AppController:
             current = {key: self.environment.get(key) for key in KEYS}
             legacy = Path(legacy_runtime).resolve() if legacy_runtime else None
             previous = old.get('previous') if old.get('state') == 'configured' else None
+            if previous is not None:
+                previous = dict(previous)
+                for key in KEYS:
+                    if current[key] != old.get('installed', {}).get(key):
+                        previous[key] = current[key]
             runtime = Path(old['runtime']) if old.get('runtime') else (self.requested_runtime or self.root / 'run')
             imported = False
             legacy_backup = old.get('legacy_backup')
@@ -317,12 +345,19 @@ class AppController:
             if actual == launcher:
                 raise ControlError('recursive_cli', 'control.recursive_cli')
             installed = dict(zip(KEYS, (str(launcher), '0', '0', '')))
+            from .integration_status import configuration_revision
+            revision = configuration_revision(installed, app, actual)
             receipt = {'version': 1, 'id': old.get('id') if old.get('state') == 'configured' else uuid.uuid4().hex,
                        'state': 'configuring', 'previous': previous, 'installed': installed,
                        'runtime': str(runtime), 'app': str(app), 'real_cli': str(actual),
                        'python': str(python), 'source_root': str(source), 'backend_mode': 'bundled' if is_frozen() else 'source',
                        'imported_legacy': imported or old.get('imported_legacy', False),
                        'restored_keys': [], 'purge': False}
+            receipt['configuration_revision'] = revision
+            receipt['restart_processes'] = old.get('restart_processes', [])
+            if current != installed and old.get('configuration_revision') != revision:
+                from .integration_status import restart_candidates
+                receipt['restart_processes'] = restart_candidates(self, receipt)
             if legacy_backup:
                 receipt['legacy_backup'] = legacy_backup
             receipt['legacy_agent_backup'] = self.services.backup_legacy(runtime)
@@ -336,12 +371,12 @@ class AppController:
             enabled_before = self.enabled.exists()
             self._write(receipt)
             try:
-                launcher.write_text(self._launcher(app, actual, python, source, runtime))
+                launcher.write_text(self._launcher(app, actual, python, source, runtime, revision, installed))
                 launcher.chmod(0o700)
                 # A running Desktop may still hold this old absolute path.
                 # Upgrade its startup fallback too, without ending its bridge.
                 if legacy_launcher:
-                    legacy_launcher.write_text(self._launcher(app, actual, python, source, runtime))
+                    legacy_launcher.write_text(self._launcher(app, actual, python, source, runtime, revision, installed))
                     legacy_launcher.chmod(0o700)
                 atomic_json(runtime / 'app-managed.json', {'version': 1, 'lease_protocol': 2,
                                                          'session_file': str(self.session), 'enabled_file': str(self.enabled)})
@@ -398,10 +433,13 @@ class AppController:
                 raise
         return self.status()
 
-    def _launcher(self, app, actual, python, source, runtime):
+    def _launcher(self, app, actual, python, source, runtime, revision=None, installed=None):
         quote = shlex.quote
         environment = (['-u', 'PYTHONPATH', '-u', 'PYTHONHOME', 'PYINSTALLER_RESET_ENVIRONMENT=1'] if is_frozen()
                        else ['PYTHONPATH=' + str(source / 'src')])
+        if revision and installed:
+            from .integration_status import REVISION_ENV, EXPECTED_ENV, fingerprint
+            environment += [REVISION_ENV + '=' + revision, EXPECTED_ENV + '=' + fingerprint(installed)]
         command = ['exec', '/usr/bin/env', *environment,
                    *backend_command('--runtime', runtime, 'bridge', '--real-cli', actual, '--', executable=python)]
         source_check = '' if is_frozen() else f' && [ -f {quote(str(source / "src/codex_activity_monitor/cli.py"))} ]'
@@ -509,10 +547,10 @@ class AppController:
                     return self._purge_without_integration()
                 self._save_restored(True)
                 return self.status()
-            if receipt.get('state') == 'restored':
-                if not purge:
+            if receipt.get('state') in ('restored', 'pending_cleanup'):
+                if receipt.get('state') == 'restored' and not purge:
                     return self.status()
-                receipt.update(state='pending_cleanup', purge=True)
+                receipt.update(state='pending_cleanup', purge=bool(purge or receipt.get('purge')))
             else:
                 if not isinstance(receipt.get('previous'), dict) or set(receipt['previous']) != set(KEYS):
                     raise ControlError('backup_missing', 'control.backup_missing.2')
@@ -566,7 +604,7 @@ class AppController:
         record = read_json(managed)
         if record.get('session_file') == str(self.session) or receipt.get('imported_legacy'):
             for name in ('app-managed.json', 'snapshot.json', 'collector.json', 'events.sock', 'state.sock', 'tl.sock',
-                         'collector.log', 'collector.previous.log'):
+                         'collector.log', 'collector.previous.log', 'collector-output.lock'):
                 (runtime / name).unlink(missing_ok=True)
         if receipt.get('imported_legacy'):
             for name in ('codex-observed', 'login-start', 'installation.json', 'desktop-environment.json'):
@@ -593,11 +631,14 @@ class AppController:
         # Root was created for this controller; foreign directories are never
         # recursively deleted based on an installation record.
         allowed = {'management.lock', '.monitor-owned', 'integration.json', 'app-state.json', 'codex-observed',
-                   'integration.enabled', 'observation.json', 'run', 'timeline'}
+                   'integration.enabled', 'observation.json', 'run', 'timeline', 'diagnostics', 'gui-session.json'}
         unknown = [p.name for p in self.root.iterdir() if p.name not in allowed]
         if unknown:
             raise ControlError('unowned_data', 'control.unowned_data')
         from .timeline_storage import owned_directory
+        from .diagnostic_log import owned_logs
+        if not owned_logs(self.root / 'diagnostics'):
+            raise ControlError('unowned_data', 'control.unowned_data')
         if not owned_directory(self.root / 'timeline'):
             raise ControlError('unowned_data', 'control.unowned_data.2')
         run = self.root / 'run'

@@ -60,7 +60,7 @@ Configuration saves the previous macOS GUI-session environment and installs a la
 
 These controls describe the currently implemented integration, not stable upstream APIs. Already running processes retain their inherited values; a full Desktop restart is needed after changes. The app also manages its collector and a macOS login item. It does not rewrite the original Codex executable.
 
-Restoration compares current values with the values installed by the monitor. Values still owned by the integration are restored to their saved originals, including the distinction between unset and empty; later user changes are kept. Repeated configuration retains the outstanding original backup.
+Restoration compares current values with the values installed by the monitor. Values still owned by the integration are restored to their saved originals, including the distinction between unset and empty; later user changes are kept. Repeated configuration retains the outstanding original backup for values still owned by Monitor. If the user explicitly reapplies integration after an external change, that later value becomes the restoration target for the changed key.
 
 ```mermaid
 sequenceDiagram
@@ -83,6 +83,16 @@ sequenceDiagram
 ```
 
 Quitting the monitor stops GUI-managed observation but leaves configuration enabled. Restoring disables integration and remains disabled across subsequent monitor launches. Uninstall adds owned-data cleanup and login-item removal; the user deletes the app bundle after cleanup finishes.
+
+## Settings and diagnostics
+
+The menu bar overview and the independent AppKit Settings window share one `DashboardStore`, management client, and observation session. Opening or closing Settings does not configure integration or acquire another lease. The native SwiftUI sidebar contains General, Runtime Status, and Logs. The existing `NSPopover` supplies the overview background without an explicit material override; the deployment target remains macOS 14.
+
+Integration status separates configuration, operation, runtime evidence, and restart requirements. A deterministic configuration revision identifies managed values, executable locations, and relevant implementation identity. The launcher fixes that revision and an expected environment fingerprint at launch. A bridge reports its inherited configuration evidence; it does not adopt a newer receipt while running. The UI claims activation only with fresh matching live bridge evidence. Unknown or older evidence remains explicit, including mixed active and restart-required connections.
+
+The collector publishes an optional versioned health summary from component facts. Current errors, pending-work deadlines, and recovery evidence are separate from historical counters. The GUI independently evaluates connection freshness, management failures, its own log writer, and the previous end marker. These checks describe observed failures and unknowns; they cannot detect every logic error or diagnose a stopped GUI from within that process.
+
+Structured diagnostic JSONL has independent `gui`, `management`, `collector`, and `bridge` streams under `data_root/diagnostics/`. Writers use bounded queues, background filesystem work, nonblocking role locks, rotation, and retention. A separate Swift actor reads bounded log windows directly from disk, so viewing logs does not require a working collector. Raw collector output is captured through an independently drained nonblocking pipe and has its own bounded compatibility files. Ordinary restoration keeps structured logs; purge removes only explicitly owned files. See the [implementation and validation record](../dev-history/23_settings_and_diagnostics/implementation-results.md) for limits and test scope.
 
 ## Source map
 

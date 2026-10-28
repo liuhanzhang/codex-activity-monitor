@@ -133,6 +133,7 @@ def main(argv=None):
     p=subs.add_parser('timeline-query', help=tr('cli.timeline_help', language))
     p.add_argument('request', help=argparse.SUPPRESS)
     p=subs.add_parser('app', help=tr('cli.app_help', language))
+    p.add_argument('--operation-id', help=argparse.SUPPRESS)
     p.add_argument('action', choices=('status','configure','resume','stop','restore','cleanup','preferences'))
     p.add_argument('--data-root', type=Path)
     p.add_argument('--app', type=Path)
@@ -165,6 +166,7 @@ def main(argv=None):
             return 1
     if args.command == 'app':
         from .app_control import AppController, ControlError, DATA_ROOT
+        diagnostic_log = None
         try:
             if args.action in ('configure', 'resume') and args.state_protocol != 1:
                 raise ControlError('gui_upgrade_required', 'control.gui_upgrade_required')
@@ -173,6 +175,16 @@ def main(argv=None):
                 from .test_profile import controller
                 control, args.real_cli = controller(args.test_profile, args.app)
                 args.legacy_runtime = None
+            from .diagnostic_log import DiagnosticLog
+            diagnostic_log = DiagnosticLog(control.root / 'diagnostics', 'management')
+            action = args.action if args.action in ('configure', 'restore', 'resume', 'stop', 'preferences') else None
+            if action:
+                diagnostic_log.emit(action + '_started', operation_id=args.operation_id)
+            # Either action can finish a previously requested purge. Stop this
+            # command's writer before the controller removes its owned files.
+            if args.action in ('restore', 'cleanup'):
+                diagnostic_log.close()
+                diagnostic_log = None
             if args.action == 'configure':
                 if args.app is None:
                     raise ControlError('app_missing', 'control.app_missing.2')
@@ -192,17 +204,50 @@ def main(argv=None):
                 value = control.set_preferences(None if args.launch_at_login is None else args.launch_at_login == 'on', args.ui_language)
             else:
                 value = getattr(control, args.action)()
+            if diagnostic_log is None and value.get('state') != 'purged':
+                diagnostic_log = DiagnosticLog(control.root / 'diagnostics', 'management')
+            if action and diagnostic_log:
+                diagnostic_log.emit(action + '_completed', operation_id=args.operation_id)
+            elif diagnostic_log and args.action == 'cleanup' and value.get('state') == 'restored':
+                diagnostic_log.emit('cleanup_completed', operation_id=args.operation_id)
             print(json.dumps(value, ensure_ascii=False))
             return 0
         except (OSError, ValueError, RuntimeError) as exc:
+            if diagnostic_log is None and args.action in ('restore', 'cleanup') and 'control' in locals():
+                from .diagnostic_log import DiagnosticLog
+                diagnostic_log = DiagnosticLog(control.root / 'diagnostics', 'management')
+            if diagnostic_log and args.action != 'status':
+                diagnostic_log.emit('management_failed', level='error', operation_id=args.operation_id,
+                                    params={'type': type(exc).__name__, 'errno': getattr(exc, 'errno', None),
+                                            'reason': getattr(exc, 'code', 'operation_failed')})
             print(json.dumps({'version': 1, 'ok': False, 'code': getattr(exc, 'code', 'operation_failed'),
                               'error': str(exc), 'display_message': getattr(exc, 'display_message', None)}, ensure_ascii=False))
             return 1
+        finally:
+            if diagnostic_log:
+                diagnostic_log.close()
     try:
         runtime=runtime_dir(args.runtime, language)
         if args.command=='collect':
-            from .collector import serve
-            serve(runtime)
+            from .diagnostic_log import CollectorOutputCapture, DiagnosticLog
+            capture = CollectorOutputCapture(runtime)
+            log = DiagnosticLog.for_runtime(runtime, 'collector')
+            import threading
+            old_hook = threading.excepthook
+            def thread_error(args):
+                log.emit('unexpected_exception', level='error', params={'type': args.exc_type.__name__})
+                old_hook(args)
+            threading.excepthook = thread_error
+            try:
+                from .collector import serve
+                serve(runtime, diagnostic_log=log)
+            except BaseException as error:
+                log.emit('unexpected_exception', level='error', params={'type': type(error).__name__})
+                raise
+            finally:
+                threading.excepthook = old_hook
+                log.close()
+                capture.close()
         elif args.command=='start':
             start(runtime, language)
             print(tr('cli.started', language, path=str(runtime)))

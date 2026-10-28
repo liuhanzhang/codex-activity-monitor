@@ -101,6 +101,7 @@ class SnapshotPublisher:
         self.path = runtime / 'snapshot.json'
         self.failures = 0
         self.last_error = None
+        self.current_error = None
 
     def publish(self, snapshot):
         snapshot['persistence'] = {'snapshot_write_failures': self.failures,
@@ -110,7 +111,9 @@ class SnapshotPublisher:
         except OSError as error:
             self.failures += 1
             self.last_error = {'type': type(error).__name__, 'errno': error.errno}
+            self.current_error = self.last_error
             return False
+        self.current_error = None
         return True
 
 

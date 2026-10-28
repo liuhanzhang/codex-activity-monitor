@@ -89,7 +89,9 @@ See [Apple's instructions](https://support.apple.com/en-us/102445) for details.
 3. Fully quit and reopen Codex Desktop so new processes inherit the integration configuration.
 4. Start a local Codex task, then click the monitor's menu bar item. Select a chat to see its current turn, timeline, and usage.
 
-Keep Monitor running while observing. Initial configuration enables launch at login; change it in **Settings → Launch at login**. macOS may ask you to allow the login item. The gear menu also switches between **English / 简体中文**; original conversation and tool content keep their own language.
+Keep Monitor running while observing. The gear button opens a separate Settings window (also **Command-,**). In **General**, change **Launch at login** or switch between **English / 简体中文**. Initial configuration enables launch at login; macOS may ask you to allow the login item. Original conversation and tool content keep their own language.
+
+**Runtime Status** shows detected component problems and recovery; **Logs** provides local diagnostic records with search, filters, details, and copy. Closing Settings keeps observation running. These checks cannot rule out every software error.
 
 ## Privacy and compatibility
 
@@ -104,10 +106,10 @@ Keep Monitor running while observing. Initial configuration enables launch at lo
 
 | Action | Steps |
 | --- | --- |
-| Enable or repair integration | **Settings → Configure**; reopen Codex after active work finishes. The original configuration backup is retained. |
+| Enable or repair integration | Turn on **Settings → General → Codex**. Follow its configuration, connection, or restart message. For changed configuration, use **Reconfigure Integration** when offered. |
 | Pause observation | Quit Monitor. Integration stays configured; reopen Monitor to resume. |
-| Disconnect, keeping the app | **Settings → Restore configuration… → Restore configuration**, leaving the cleanup option unchecked. App settings remain; future launches stay disconnected until you choose **Configure**. |
-| Uninstall | In **Restore configuration…**, check **Remove local data and quit to uninstall** and restore. Finish tasks, fully quit Codex, and wait for cleanup and Monitor to exit. Then delete the `.app`. |
+| Disconnect, keeping the app | Turn off **Settings → General → Codex**. Original configuration is restored; preferences and diagnostic logs remain. Reopening Monitor keeps integration disabled. |
+| Uninstall | In **Settings → General → Maintenance**, choose **Remove local data and quit to uninstall** and confirm. Finish tasks, fully quit Codex, and wait for cleanup and Monitor to exit. Then delete the `.app`. |
 
 Restoration preserves configuration values you changed after integration and does not forcibly end tasks. Leave Monitor open until cleanup finishes; reopen it to continue if interrupted. Codex-owned conversations, source checkouts, and development virtual environments are outside the uninstall cleanup scope. See [the full uninstall guide](docs/user-guide.md#uninstall).
 

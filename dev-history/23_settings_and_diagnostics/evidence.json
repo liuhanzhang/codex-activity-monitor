@@ -1,0 +1,110 @@
+{
+  "date": "2026-10-28",
+  "baseline": "6c39325",
+  "os": {
+    "version": "27.0",
+    "build": "26A428",
+    "sdk": "27.0",
+    "deployment_target": "14.0"
+  },
+  "scope": "worktree Preview, read-only fixtures and disposable file-environment profile; no daily installation switch",
+  "build": {
+    "kind": "source Preview",
+    "fingerprint": "cfd47c9d2e88de6ae456f55bdf83dc7ef519bb814e5a4a99c0918949b1c49020",
+    "source_matches": true,
+    "bundle_identifier": "com.liuhanzhang.codexactivitymonitor.preview"
+  },
+  "python": {
+    "discovered": 503,
+    "result": "passed",
+    "imports": "explicit worktree src",
+    "final_focused_diagnostics": {
+      "discovered": 17,
+      "result": "passed",
+      "scope": "after moving management writer shutdown ahead of restore/cleanup purge"
+    },
+    "full_suite_timing": "before final writer shutdown ordering fix; focused suite and acceptance rerun after",
+    "final_source_fingerprint": "f1e0f4ec4fe567bc4255e307390e7524ec322b74c4fe61cebc446ece4827f4de"
+  },
+  "swift": {
+    "model_discovered": 68,
+    "app_discovered": 132,
+    "default_opt_in_skipped": 11,
+    "default_executed": 189,
+    "result": "passed",
+    "native_clipboard_separately": "passed, private pasteboard"
+  },
+  "acceptance": {
+    "ok": true,
+    "scope": "disposable profile, synthetic CLI",
+    "checks": [
+      "stable revision",
+      "real bridge startup evidence",
+      "live health summary",
+      "restore with pending bridge",
+      "stdio forwarding after restore",
+      "collector shutdown",
+      "cleanup",
+      "disabled status persists",
+      "diagnostics retained",
+      "reconfigure",
+      "purge"
+    ]
+  },
+  "native_checks": [
+    "standalone settings and shared collector lifecycle",
+    "live language switch and preference persistence",
+    "first launch auto integration",
+    "real disposable bridge activates",
+    "restore waits for bridge exit",
+    "disabled integration persists across restart",
+    "re-enable succeeds",
+    "related logs and search",
+    "JSON detail copy and native paste",
+    "uninstall confirmation cancelled",
+    "Command-W, Command-comma, Command-Q",
+    "unclean end marker reported without crash inference",
+    "light and per-app dark appearance"
+  ],
+  "cleanup": {
+    "gui_profile_owned_data": "purged",
+    "gui_profile_session_before_purge": "normal end marker active=false"
+  },
+  "not_verified": [
+    "macOS 14, 15, 26 runtime",
+    "Reduce Transparency and multi-display visual matrix",
+    "real login-item system approval",
+    "long-duration CPU and memory profile",
+    "standalone release packaging",
+    "full Codex restart and natural long-running validation after daily update"
+  ],
+  "daily_update": {
+    "date": "2026-10-28",
+    "authorized_by_user": true,
+    "app_location": "original checkout .local/gui/Codex Activity Monitor.app",
+    "source_backend": "current implementation worktree",
+    "normal_old_gui_and_collector_exit": true,
+    "new_gui_and_collector_started": true,
+    "current_collector_source_matches": true,
+    "original_configuration_backup_unchanged": true,
+    "preferences_unchanged": true,
+    "timeline_inode_preserved": true,
+    "native_health_components": "all displayed healthy",
+    "codex_restarted": false,
+    "new_startup_evidence": "awaiting a future full Codex restart"
+  },
+  "sidebar_adjustment": {
+    "date": "2026-10-28",
+    "build_id": "ef0d62a29994915413d229daede269550c147ad9cb241387731220024e24ae01",
+    "user_decision": "remove toolbar sidebar button; allow native divider dragging and hiding",
+    "implementation": "NavigationSplitView with toolbar(removing: .sidebarToggle)",
+    "diagnostics_tests_discovered": 13,
+    "native_clipboard_opt_in_skipped": 1,
+    "tests_result": "passed",
+    "native_preview": "standard centered title; no toolbar toggle; native drag-to-hide verified",
+    "daily_ui": "sidebar visible; no automatic toolbar; native splitter retained",
+    "daily_replaced_and_restarted": true,
+    "configuration_preferences_and_timeline_preserved": true,
+    "live_diagnostic_summary": 1
+  }
+}

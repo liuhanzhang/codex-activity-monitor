@@ -65,6 +65,7 @@ class RecoveryWriter:
         self.condition = threading.Condition()
         self.pending = None
         self.stopping = False
+        self.writing_since = None
         self.stats = {'snapshot_write_failures': 0, 'last_snapshot_error': None,
                       'writes': 0, 'coalesced': 0, 'pending': 0, 'writing': False}
         self.worker = threading.Thread(target=self._run, name='recovery-writer', daemon=True)
@@ -83,7 +84,8 @@ class RecoveryWriter:
 
     def diagnostics(self):
         with self.condition:
-            return deepcopy(self.stats)
+            return dict(deepcopy(self.stats), worker_alive=self.worker.is_alive(),
+                        writing_age_ms=(time.monotonic()-self.writing_since)*1000 if self.writing_since else 0)
 
     def _run(self):
         next_attempt = 0
@@ -98,6 +100,7 @@ class RecoveryWriter:
                         self.condition.wait(timeout)
                     value, self.pending = self.pending, None
                     self.stats.update(pending=0, writing=True)
+                    self.writing_since = time.monotonic()
                 try:
                     ok = self.publisher.publish(value.recovery_value())
                 except (OSError, ValueError, TypeError) as error:
@@ -107,7 +110,9 @@ class RecoveryWriter:
                     self.publisher.last_error = {'type': type(error).__name__, 'errno': getattr(error, 'errno', None)}
                     ok = False
                 with self.condition:
+                    self.writing_since = None
                     self.stats.update(writing=False,
+                                      current_error=None if ok else self.publisher.last_error,
                                       snapshot_write_failures=self.publisher.failures,
                                       last_snapshot_error=self.publisher.last_error)
                     if ok:

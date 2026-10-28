@@ -26,6 +26,10 @@ final class DashboardStore {
     var menuMode: MenuMode = .unavailable
     var fresh = false
     var management: ManagementState?
+    var managementCheckFailed = false
+    var diagnosticPulse = 0
+    @ObservationIgnored private(set) var recorder: DiagnosticRecorder!
+    var onSettingsRequested: (() -> Void)?
     private(set) var language: MonitorLanguage = .chinese
     private var operationFailure: PresentationFailure?
     var operationError: String? {
@@ -49,6 +53,7 @@ final class DashboardStore {
                     _ = try await client.command("preferences", extra: ["--ui-language", next.rawValue])
                     if pendingLanguage == nil && operationFailure?.key == "语言已切换，本次选择未能保存。" { operationFailure = nil }
                 } catch {
+                    recorder.record("preferences_failed", level: "warning", error: error)
                     if pendingLanguage == nil { operationFailure = PresentationFailure(key: "语言已切换，本次选择未能保存。") }
                 }
             }
@@ -56,7 +61,22 @@ final class DashboardStore {
         }
     }
     func waitForLanguageSave() async { await languageSaveTask?.value }
+    func retryIntegration() async {
+        guard !busy, !readOnly, !closing else { return }
+        busy = true
+        defer { busy = false }
+        do {
+            management = try await client.command("status")
+            managementCheckFailed = false
+            if management?.configured == true { try await resume() }
+            else if management?.waitingForCleanup == true {
+                management = try await client.command("cleanup")
+            }
+            operationError = nil
+        } catch { recordError(error) }
+    }
     private func recordError(_ error: any Error, prefix: String? = nil) {
+        recorder?.record("management_failed", level: "error", component: "management", error: error)
         if let state = (error as? BackendFailure)?.stateAfterFailure {
             management = state
             if let runtime = state.runtime { runtimePath = runtime }
@@ -111,6 +131,7 @@ final class DashboardStore {
     let snapshotOverride: String?
     let legacyUnset: Bool
     let testProfile: String?
+    let diagnosticFixtureDirectory: String?
     var onPurgeComplete: (() -> Void)?
     private var lease: ObservationLease?
     private var runtimePath: String
@@ -153,6 +174,9 @@ final class DashboardStore {
         timelineFixture = arguments.firstIndex(of: "--timeline-fixture").flatMap { i in i + 1 < arguments.count ? arguments[i + 1] : nil }
         let profile = arguments.firstIndex(of: "--test-profile").flatMap { i in i + 1 < arguments.count ? arguments[i + 1] : nil }
         testProfile = profile
+        diagnosticFixtureDirectory = readOnly ? arguments.firstIndex(of: "--diagnostic-fixture").flatMap {
+            $0+1 < arguments.count ? arguments[$0+1] : nil
+        } : nil
         dataRoot = profile.map { $0 + "/data" } ?? arguments.firstIndex(of: "--data-root").flatMap { i in i + 1 < arguments.count ? arguments[i + 1] : nil } ?? configuration.data_root
         if readOnly, let index = arguments.firstIndex(of: "--lang"), index + 1 < arguments.count {
             language = MonitorLanguage(rawValue: arguments[index + 1]) ?? .chinese
@@ -163,6 +187,12 @@ final class DashboardStore {
         legacyUnset = arguments.contains("--legacy-unset")
         if readOnly && timelineFixture == nil && FileManager.default.fileExists(atPath: configuration.runtime + "/timeline.json") {
             timelineFixture = configuration.runtime + "/timeline.json"
+        }
+        recorder = DiagnosticRecorder(root: readOnly ? nil : dataRoot)
+        recorder.setRuntime(runtimePath)
+        if readOnly, let index = arguments.firstIndex(of: "--management-fixture"), index+1 < arguments.count,
+           let data = try? Data(contentsOf: URL(fileURLWithPath: arguments[index+1])), data.count < 65536 {
+            management = try? JSONDecoder().decode(ManagementState.self, from: data)
         }
     }
 
@@ -189,6 +219,7 @@ final class DashboardStore {
         polling = Task {
             if !readOnly { await bootstrap() }
             while !Task.isCancelled {
+                diagnosticPulse &+= 1
                 if !readOnly && Date() >= nextManagement {
                     nextManagement = Date().addingTimeInterval(5)
                     await readManagement()
@@ -245,10 +276,15 @@ final class DashboardStore {
                         if liveState?.instanceID != update.instanceID || liveState?.sequence != update.sequence {
                             if let snapshot = update.snapshot { self.snapshot = snapshot; delay = 0.1 }
                         }
+                        if readError != nil { recorder.record("state_connected") }
                         liveState = update; readError = nil
                         updatePresentation(); onUpdate?()
                     }
-                } catch { /* Reconnect below; transport errors never become file health. */ }
+                } catch {
+                    if !Task.isCancelled, self?.readError == nil {
+                        self?.recorder.record("state_disconnected", level: "warning", component: "connection", error: error)
+                    }
+                }
                 connection.cancel()
                 guard !Task.isCancelled, let self, !closing, generation == stateSubscriptionGeneration else { return }
                 stateConnection = nil; liveState = nil
@@ -380,7 +416,7 @@ final class DashboardStore {
         if let existing = timelines[chat.id] { return existing }
         let client: any TimelineReading = readOnly
             ? FixtureTimelineClient(path: timelineFixture)
-            : SystemTimelineClient(configuration: configuration, runtime: runtimePath)
+            : SystemTimelineClient(configuration: configuration, runtime: runtimePath, recorder: recorder)
         let value = TimelineStore(scope: chat.scope, thread: chat.threadID, title: chat.name ?? "", client: client)
         value.onOpen = { [weak self] timeline, phase in self?.onActivitySelected?(timeline, phase) }
         timelines[chat.id] = value
@@ -423,9 +459,11 @@ final class DashboardStore {
     }
 
     private func bootstrap() async {
+        defer { recorder.startSession() }
         do {
             management = try await client.command("status")
             if let runtime = management?.runtime { runtimePath = runtime }
+            recorder.setRuntime(runtimePath)
             if management?.state == "new" { await configure() }
             // launchctl values are session-scoped; reapply integration on login
             // without replacing its original backup.
@@ -447,6 +485,7 @@ final class DashboardStore {
             management = try await client.command("configure", extra: extra)
             if let runtime = management?.runtime { runtimePath = runtime }
             try await resume()
+            recorder.startSession()
             let preferences = try? Data(contentsOf: URL(fileURLWithPath: dataRoot + "/app-state.json"))
             let object = preferences.flatMap { try? JSONSerialization.jsonObject(with: $0) as? [String: Any] }
             if testProfile == nil && object?["launch_at_login"] as? Bool != false {
@@ -465,6 +504,7 @@ final class DashboardStore {
         }
         lease = session
         if let runtime = result.runtime { runtimePath = runtime }
+        recorder.setRuntime(runtimePath)
         watchState()
     }
 
@@ -473,6 +513,7 @@ final class DashboardStore {
         busy = true
         defer { busy = false }
         do {
+            if purge { await recorder.finish() }
             await waitForLanguageSave()
             if let stateConnection { _ = await stateConnection.release() }
             stateConnection?.cancel(); stateWatching?.cancel()
@@ -481,7 +522,10 @@ final class DashboardStore {
             management = try await client.command("restore", extra: purge ? ["--purge"] : [])
             if management?.state == "purged" { finishPurge() }
             operationError = nil
-        } catch { recordError(error) }
+        } catch {
+            if purge { recorder = DiagnosticRecorder(root: dataRoot); recorder.startSession() }
+            recordError(error)
+        }
     }
 
     private func cleanup() async {
@@ -525,6 +569,7 @@ final class DashboardStore {
             stateWatching?.cancel()
             healthClock?.cancel()
             lease = nil
+            await recorder.finish()
             return true
         }
         catch { closing = false; stateSubscriptionKey = nil; watchState(); recordError(error); return false }
@@ -536,6 +581,7 @@ final class DashboardStore {
         defer { busy = false }
         do {
             try await updateLogin(enabled)
+            operationError = nil
         } catch { recordError(error, prefix: "登录启动未完成：") }
     }
 
@@ -550,7 +596,16 @@ final class DashboardStore {
     private func readManagement() async {
         // Finite management I/O runs independently of state subscription and its
         // health clock. A failed refresh preserves the last acknowledged config.
-        let result = try? await client.command("status")
-        if let result { management = result }
+        do {
+            let result = try await client.command("status")
+            if result.integration_status?.configuration == "partial", management?.integration_status?.configuration != "partial" {
+                recorder.record("configuration_changed", level: "warning", component: "management")
+            }
+            management = result
+            managementCheckFailed = false
+        } catch {
+            if !managementCheckFailed { recorder.record("management_status_failed", level: "warning", component: "management", error: error) }
+            managementCheckFailed = true
+        }
     }
 }

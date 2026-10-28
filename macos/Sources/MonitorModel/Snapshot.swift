@@ -114,11 +114,12 @@ public struct Snapshot: Decodable, Sendable {
     public let timeline_summary: TimelineSummary?
     public let threads: [Chat]
     public let backends: [String: Backend]?
+    public let diagnostics: DiagnosticSnapshot?
 
     public let projection: SnapshotProjection
 
     private enum CodingKeys: String, CodingKey {
-        case schema_version, updated_at, running, overview, menu_presentation, timeline_summary, threads, backends
+        case schema_version, updated_at, running, overview, menu_presentation, timeline_summary, threads, backends, diagnostics
     }
 
     public init(from decoder: any Decoder) throws {
@@ -132,6 +133,7 @@ public struct Snapshot: Decodable, Sendable {
         timeline_summary = try values.decodeIfPresent(TimelineSummary.self, forKey: .timeline_summary)
         threads = try values.decode([Chat].self, forKey: .threads)
         backends = try values.decodeIfPresent([String: Backend].self, forKey: .backends)
+        diagnostics = try? values.decodeIfPresent(DiagnosticSnapshot.self, forKey: .diagnostics)
         guard Set(threads.map(\.id)).count == threads.count else { throw SnapshotError.duplicateIdentity }
         projection = SnapshotProjection(threads: threads)
     }
@@ -250,6 +252,8 @@ public enum SnapshotError: Error { case unsupportedVersion, duplicateIdentity }
 
 public struct Backend: Decodable, Sendable {
     public let connected: Bool?
+    public let configuration_revision: String?
+    public let configuration_matches: Bool?
     public let implementation: Implementation?
     public var supportsObservationLease: Bool { implementation?.modules?["observer_permit"] != nil }
 }

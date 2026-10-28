@@ -57,7 +57,11 @@ class BundledExecutionTests(unittest.TestCase):
                 path.write_text('#!/bin/sh\n'+content+'\n')
                 path.chmod(0o700)
             control = AppController(base/'data', environment=MemoryEnvironment(), services=FakeServices())
-            with patch.object(sys, 'frozen', True, create=True):
+            resources = base / 'resources'
+            resources.mkdir()
+            (resources / 'build-manifest.json').write_text(json.dumps({'modules': {
+                name: 'synthetic-module-hash' for name in ('bridge', 'observer_permit', 'integration_status')}}))
+            with patch.object(sys, 'frozen', True, create=True), patch.object(sys, '_MEIPASS', str(resources), create=True):
                 control.configure(app, actual, python=backend, source_root=base/'absent-source')
             launcher = control.root/'codex-observed'
             result = subprocess.run([str(launcher), 'a b', '中文', '--lang', 'en'], input='payload\n', text=True, capture_output=True)

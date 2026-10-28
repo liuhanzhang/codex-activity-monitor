@@ -1,0 +1,55 @@
+"""Diagnostic codes have stable, source-free presentation in both languages."""
+
+COPY = {
+    'restart_required': ('请在任务结束后重开 Codex，让配置完成切换', 'Reopen Codex after finishing tasks to complete the configuration change'),
+    'configuration_changed': ('配置与接入记录不一致，请检查通用设置', 'Configuration differs from the integration record; check General settings'),
+    'diagnostics_unsupported': ('当前版本无法解读该组件的诊断信息', 'This version cannot interpret the component diagnostics'),
+    'collector_started': ('采集器已启动', 'Collector started'),
+    'collector_stopped': ('采集器已停止', 'Collector stopped'),
+    'collector_responsive': ('采集主循环响应正常', 'Collector loop is responsive'),
+    'bridge_started': ('Codex 接入进程已启动', 'Codex bridge started'),
+    'bridge_stopped': ('Codex 接入进程已停止', 'Codex bridge stopped'),
+    'bridge_connected': ('Codex 接入连接正常', 'Codex bridge is connected'),
+    'waiting_for_connection': ('等待 Codex 接入连接', 'Waiting for a Codex connection'),
+    'observation_gap': ('观测出现缺口，部分数据可能不完整', 'Observation gap; some data may be incomplete'),
+    'parse_error': ('部分接入数据无法解析', 'Some observation data could not be parsed'),
+    'parsing_ready': ('数据解析正常', 'Observation parsing is ready'),
+    'tokenizer_error': ('Token 计数失败', 'Token counting failed'),
+    'count_budget': ('Token 计数达到资源限制', 'Token counting reached its resource limit'),
+    'tokenizer_ready': ('Token 计数可用', 'Token counting is available'),
+    'history_read_error': ('部分对话历史读取失败', 'Some conversation history could not be read'),
+    'history_ready': ('历史读取可用', 'History reading is available'),
+    'history_slow': ('历史读取尚未完成，已超过检查期限', 'History reading has exceeded its progress deadline'),
+    'metadata_slow': ('时间线存储写入尚未完成，实时监测可继续', 'Timeline storage write is taking too long; live monitoring can continue'),
+    'checkpoint_slow': ('恢复检查点写入尚未完成，实时监测可继续', 'Recovery checkpoint write is taking too long; live monitoring can continue'),
+    'query_read_failed': ('时间线或详情读取失败', 'A timeline or detail query failed'),
+    'metadata_unavailable': ('时间线元数据存储不可用', 'Timeline metadata storage is unavailable'),
+    'metadata_write_failed': ('时间线元数据写入失败', 'Timeline metadata write failed'),
+    'metadata_queue_limit': ('时间线存储队列达到限制', 'Timeline storage queue reached its limit'),
+    'metadata_rebuilt': ('时间线派生存储已重建', 'Derived timeline storage was rebuilt'),
+    'metadata_ready': ('时间线存储可用', 'Timeline storage is available'),
+    'query_unavailable': ('时间线查询服务不可用', 'Timeline query service is unavailable'),
+    'query_ready': ('时间线查询可用', 'Timeline queries are available'),
+    'snapshot_write_failed': ('恢复检查点写入失败，实时监测可继续', 'Recovery checkpoint write failed; live monitoring can continue'),
+    'checkpoint_ready': ('恢复检查点存储可用', 'Recovery checkpoint storage is available'),
+    'logging_unavailable': ('诊断日志暂时无法写入', 'Diagnostic logs cannot currently be written'),
+    'log_dropped': ('部分诊断日志因资源限制未保留', 'Some diagnostic records were dropped due to resource limits'),
+    'logging_ready': ('诊断日志可用', 'Diagnostic logging is available'),
+    'management_failed': ('管理操作失败，请查看接入状态', 'Management operation failed; check integration status'),
+    'unexpected_exception': ('组件发生未预期异常', 'A component encountered an unexpected exception'),
+    'state_disconnected': ('采集连接中断，正在重连', 'Collector connection lost; reconnecting'),
+    'state_connected': ('采集连接已恢复', 'Collector connection restored'),
+    'management_status_failed': ('暂时无法检查配置状态', 'Configuration status could not be checked'),
+    'preferences_failed': ('设置未能保存', 'Preferences could not be saved'),
+    'gui_started': ('Monitor 已启动', 'Monitor started'),
+    'gui_stopped': ('Monitor 已正常退出', 'Monitor exited normally'),
+    'previous_exit_unclean': ('上次运行未正常结束，原因尚不明确', 'The previous run did not end normally; the cause is unknown'),
+}
+for action, zh, en in [('configure', '配置接入', 'Configure integration'), ('restore', '恢复配置', 'Restore configuration'),
+                       ('resume', '启动观察', 'Start observation'), ('cleanup', '清理', 'Cleanup'),
+                       ('stop', '停止观察', 'Stop observation'), ('preferences', '保存设置', 'Save preferences')]:
+    COPY[action + '_started'] = (zh + '：开始', en + ': started')
+    COPY[action + '_completed'] = (zh + '：操作完成', en + ': operation completed')
+
+ZH = {'diagnostics.' + key: value[0] for key, value in COPY.items()}
+EN = {'diagnostics.' + key: value[1] for key, value in COPY.items()}

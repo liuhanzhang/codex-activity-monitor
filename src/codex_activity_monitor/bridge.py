@@ -60,6 +60,8 @@ class Observer:
         from .runtime import source_identity
         self.info={'type':'bridge/started','home':home,'cli':str(cli),'bridge_pid':os.getpid(),
                    'implementation':source_identity('bridge','observer_permit','events','usage','tool_labels','runtime','i18n','messages_zh_cn')}
+        from .integration_status import startup_evidence
+        self.info.update(startup_evidence())
         self.packets=queue.Queue(maxsize=queue_size)
         self.cache=OrderedDict()
         self.cache_sizes={}
@@ -284,6 +286,18 @@ class Observer:
             self.disconnect()
 
     def run(self):
+        from .diagnostic_log import DiagnosticLog
+        log = DiagnosticLog.for_runtime(self.runtime, 'bridge')
+        log.emit('bridge_started')
+        try:
+            self._run()
+        except Exception as error:
+            log.emit('unexpected_exception', level='error', params={'type': type(error).__name__})
+        finally:
+            log.emit('bridge_stopped')
+            log.close()
+
+    def _run(self):
         buffers={'stdin':b'','stdout':b'','stderr':b''}
         observed_drops=self.framing_drops
         next_connect=next_heartbeat=0
@@ -404,7 +418,8 @@ def forward(args,runtime,actual=None):
             directory.mkdir(mode=0o700,exist_ok=True)
             registration=directory/f'{os.getpid()}.json'
             atomic_json(registration,{'pid':os.getpid(),'identity':process_identity(os.getpid()),
-                                      'cli_pid':child.pid,'started_at':time.time(),'observation_protocol':1})
+                                      'cli_pid':child.pid,'started_at':time.time(),'observation_protocol':1,
+                                      **{k: v for k, v in observer.info.items() if k.startswith('configuration_')}})
         except OSError:
             registration=None
     def stop(signum,_):

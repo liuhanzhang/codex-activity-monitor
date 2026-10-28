@@ -2,7 +2,7 @@
 
 [English README](../README.md) · [中文 README](../README.zh-CN.md) · [Architecture](architecture.md)
 
-The current app targets local Codex Desktop observation on macOS 14+. The deployment target is checked at build time; runtime validation on macOS 14 remains pending. See the README for build requirements and first-launch instructions. Interface labels below use English; the gear menu can switch the app to Simplified Chinese.
+The current app targets local Codex Desktop observation on macOS 14+. The deployment target is checked at build time; settings runtime validation on macOS 14/15 remains pending. See the README for build requirements and first-launch instructions. Interface labels below use English; Settings can switch the app to Simplified Chinese.
 
 ## Read the menu bar
 
@@ -30,37 +30,40 @@ Output and Reasoning counts belong to the selected turn when its identity is kno
 
 ## Settings
 
-Open the gear menu at the top of the overview:
+Click the gear button at the top of the overview, or press **Command-,**, to open Settings. Its sidebar has **General**, **Runtime Status**, and **Logs**. Reopening focuses the same window. **Command-W** closes Settings and keeps observation running; **Command-Q** quits Monitor.
 
 | Setting | Effect |
 | --- | --- |
-| **Language** | Switch between English and 简体中文 immediately; original conversation content is unchanged |
-| **Configure** | Enable or repair the local integration; finish active tasks and reopen Codex to use the new process configuration |
-| **Launch at login** | Register or unregister the monitor's macOS login item; initially enabled |
-| **Restore configuration…** | Undo integration, optionally removing the monitor's local data for uninstall |
-| **Quit Codex Activity Monitor** | Stop observation and keep the integration configuration |
+| **General → Language** | Switch between English and 简体中文 immediately; original conversation content is unchanged |
+| **General → Codex** | Turn on to apply integration; turn off to restore configuration and stop observation, keeping preferences and diagnostic logs |
+| **General → Launch at login** | Register or unregister the monitor's macOS login item; initially enabled |
+| **General → Maintenance** | Separate uninstall confirmation and quit actions |
+| **Runtime Status** | Show detected component health, unknown or disabled states, and links to related logs |
+| **Logs** | Search and filter local events by level and source, select details, copy a record, or open the log folder |
+
+First launch continues to enable integration automatically. The Codex switch represents confirmed configuration; its message separately explains connection and restart requirements. **Configured** is not proof that already running Codex processes use it. **Active** requires a fresh matching bridge connection and covers confirmed local connections. When requested, finish tasks, fully quit Codex, and reopen it. Monitor does not force-quit Codex.
+
+If a check fails or configuration has changed, the switch may be unavailable until the state is verified. Use **Check or Reconnect**, **Reconfigure Integration**, or **Continue Restoration** as offered. Operation errors remain visible independently of the confirmed configuration.
 
 The monitor configures the macOS GUI-session environment and saves the values it replaces. It does not require you to edit a shell startup file. The [architecture guide](architecture.md#integration-changes) lists the affected variables. Changing these variables yourself while integrated can change what restoration leaves in place.
 
 ## Disconnect without uninstalling
 
-1. Open **Settings → Restore configuration…**.
-2. Leave **Remove local data and quit to uninstall** unchecked.
-3. Choose **Restore configuration**.
-4. Finish active tasks and quit Codex Desktop when the monitor asks it to exit. Leave the monitor open until cleanup completes.
-5. Reopen Codex Desktop to use the restored configuration.
+1. Turn off **Settings → General → Codex**.
+2. Finish active tasks and quit Codex Desktop when the monitor asks it to exit. Leave the monitor open until cleanup completes.
+3. Reopen Codex Desktop to use the restored configuration.
 
-App preferences remain. Reopening the monitor keeps integration disabled; choose **Configure** when you want to enable it again. Restoration only reverts environment values still owned by this integration; later user changes are preserved.
+App preferences and structured diagnostic logs remain. Reopening the monitor keeps integration disabled; turn the Codex switch on when you want to enable it again. Restoration only reverts environment values still owned by this integration; later user changes are preserved.
 
 ## Uninstall
 
-1. Open **Settings → Restore configuration…**.
-2. Check **Remove local data and quit to uninstall** and choose **Restore configuration**.
+1. Open **Settings → General → Maintenance**.
+2. Choose **Remove local data and quit to uninstall**, then confirm **Restore and Remove Data**.
 3. Finish tasks and fully quit Codex Desktop. The monitor restores configuration first, then waits until it can safely stop its owned runtime and clean up.
 4. Wait for the monitor to finish cleaning up and quit itself.
 5. Move **Codex Activity Monitor.app** to Trash.
 
-Cleanup removes owned runtime state, derived timeline data, integration records, preferences, and the login item. It does not remove Codex-owned conversations, source checkouts, or development virtual environments. Unknown files or active processes can prevent cleanup; follow the displayed error instead of deleting the configuration backup.
+Cleanup removes owned runtime state, derived timeline data, integration records, preferences, diagnostic logs, and the login item. It does not remove Codex-owned conversations, source checkouts, or development virtual environments. Unknown files or active processes can prevent cleanup; follow the displayed error instead of deleting the configuration backup.
 
 If the monitor exits before cleanup completes, reopen the same app to continue. If you already deleted it, restore or rebuild the app and use the restoration flow. Deleting the `.app` alone is not an uninstall: an external launcher can fall back to the original CLI, but configuration and data still need cleanup.
 
@@ -78,11 +81,21 @@ The default directory for Monitor's own data is:
 ~/Library/Application Support/CodexActivityMonitor/
 ```
 
-It contains preferences, integration backups and management state, a launcher, runtime files, and derived timeline metadata. A migrated terminal installation may retain its previous runtime path; do not move it while Codex processes still use it.
+It contains preferences, integration backups and management state, a launcher, runtime files, derived timeline metadata, and a `diagnostics/` folder. A migrated terminal installation may retain its previous runtime path; do not move it while Codex processes still use it.
 
 The source build also uses the ignored `.local/` directory for its virtual environment, build products, and tokenizer cache. The standalone app bundles its runtime dependencies. Neither installation changes ownership of Codex's own session history.
 
 Local files can include titles, paths, command previews, and metrics. Backups can contain environment values. Review them before sharing; do not attach an entire data directory to a bug report.
+
+### Runtime checks and diagnostic logs
+
+Runtime Status combines current connection evidence with checks for bridge observation, parsing, token counting, history, timeline storage and queries, recovery checkpoints, and logging. A local storage problem can coexist with healthy live observation. Historical error counts alone do not keep a recovered component in an error state. Missing or stale evidence appears as unknown or unavailable. A previous-run warning only means the normal end marker was missing; it does not establish a crash or its cause.
+
+Logs record lifecycle, configuration operations, failures, and recovery, with repeated events combined. They stay on this Mac; Monitor does not upload them. Structured records omit chat bodies, tool arguments/results, environment values, credentials, and observation secrets. They still contain local diagnostic metadata, so review selected records before sharing.
+
+The four log streams (`gui`, `management`, `collector`, `bridge`) each keep a 2 MiB current file and up to three archives. Retention is up to seven days, within a 64 MiB overall design budget. The viewer initially loads 200 records and holds at most 1,000 records or 2 MiB of encoded records. Search is bounded and reports when only part of the retained range is available. Damaged or incomplete lines are skipped. Logs may be dropped under pressure or during an abrupt exit; logging failures have an independent status signal.
+
+The runtime's `collector.log` and `collector.previous.log` are bounded compatibility files for raw process output. They are not automatically imported into the structured viewer and can contain unsanitized details. Ordinary disconnection retains structured diagnostics, while runtime compatibility files can be cleaned up.
 
 ## Troubleshooting
 
@@ -102,7 +115,7 @@ Only source content that Codex exposes and the monitor can read is available. So
 
 To move an already configured app, finish tasks and quit both Codex and Monitor. Move the app, open Monitor from its new location, then reopen Codex Desktop. For the same macOS user, app locations and the daily source-built GUI share settings and data under `~/Library/Application Support/CodexActivityMonitor/`; no data migration is needed. A source build still depends on its original checkout and virtual environment.
 
-If an update or move has not taken effect, use **Configure** from the app's current location. Finish tasks and fully restart Codex Desktop so its new wrappers use the updated integration.
+If an update or move has not taken effect, check **Settings → General → Codex** from the app's current location and use **Reconfigure Integration** if offered. Finish tasks and fully restart Codex Desktop when prompted so its new wrappers use the updated integration. **Runtime Status** and **Logs** provide additional evidence if reconnection fails.
 
 ### Restoration is waiting for Codex to exit
 

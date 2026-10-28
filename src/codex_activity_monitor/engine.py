@@ -281,6 +281,7 @@ class Engine:
     def _lifecycle(self,event):
         kind = event.data.get('type')
         backend = self.backends[event.backend]
+        backend['last_observed_at'] = event.at
         old_drops = backend.get('dropped_packets', 0)-backend.get('unrelated_dropped_packets', 0)
         old_errors = backend.get('parse_errors', 0)
         old_reasons = backend.get('drop_reasons', {})
@@ -299,6 +300,9 @@ class Engine:
         if kind=='bridge/started':
             backend.update(connected=True,home=event.data.get('home'),cli=event.data.get('cli'),
                            bridge_pid=event.data.get('bridge_pid'),implementation=event.data.get('implementation'))
+            for field in ('configuration_revision', 'configuration_matches'):
+                if field in event.data:
+                    backend[field] = event.data[field]
         elif kind in ('bridge/gap','bridge/reconnected'):
             backend['gap_at']=event.at
             reasons = [key for key, count in backend.get('drop_reasons', {}).items()

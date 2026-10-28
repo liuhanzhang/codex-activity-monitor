@@ -57,6 +57,7 @@ class TimelineStorage:
         self.wake = threading.Event()
         self.stopping = False
         self.error = None
+        self.writing_since = None
         if self.path.is_symlink() or self.path.parent.is_symlink():
             raise OSError('Timeline storage must be a private regular path')
         self.path.parent.mkdir(parents=True, exist_ok=True, mode=0o700)
@@ -112,7 +113,9 @@ class TimelineStorage:
                     'inflight_records': self.inflight_records, 'inflight_bytes': self.inflight_bytes,
                     'max_pending_records': self.max_pending_records, 'max_pending_bytes': self.max_pending_bytes,
                     'peak_pending_records': self.peak_pending_records, 'peak_pending_bytes': self.peak_pending_bytes,
-                    'queue_resets': self.queue_resets, 'discarded_records': self.discarded_records}
+                    'queue_resets': self.queue_resets, 'discarded_records': self.discarded_records,
+                    'worker_alive': self.worker.is_alive(),
+                    'writing_age_ms': (time.monotonic()-self.writing_since)*1000 if self.writing_since else 0}
 
     def _enqueue(self, write):
         with self.lock:
@@ -164,9 +167,11 @@ class TimelineStorage:
                 self.pending_bytes = 0
                 self.inflight_records = len(batch)
                 self.inflight_bytes = sum(write.utf8_bytes for write in batch.values())
+                self.writing_since = time.monotonic() if batch or reset else None
             if batch or reset:
                 try:
                     self._write_batch(batch, reset)
+                    self.error = None
                 except (OSError, sqlite3.Error):
                     self.error = 'metadata_write_failed'
                     with self.lock:
@@ -174,6 +179,7 @@ class TimelineStorage:
                 finally:
                     with self.lock:
                         self.inflight_records = self.inflight_bytes = 0
+                        self.writing_since = None
             if self.stopping:
                 with self.lock:
                     if not self.pending:

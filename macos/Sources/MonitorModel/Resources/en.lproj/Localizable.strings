@@ -23,7 +23,7 @@
 "工具执行" = "Tool execution";
 "已停止" = "Stopped";
 "已完成" = "Completed";
-"已恢复 · 点击配置可重新接入" = "Restored · Choose Configure to reconnect";
+"已恢复 · 可在设置中开启接入" = "Restored · Enable integration in Settings";
 "已配置" = "Configured";
 "已阻止，未执行" = "Blocked, not executed";
 "思考" = "Reasoning";

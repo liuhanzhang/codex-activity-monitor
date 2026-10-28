@@ -1005,6 +1005,446 @@
     }
   },
   {
+    "expected": "请在任务结束后重开 Codex，让配置完成切换",
+    "language": "zh-CN",
+    "message": {
+      "key": "diagnostics.restart_required",
+      "params": {}
+    }
+  },
+  {
+    "expected": "配置与接入记录不一致，请检查通用设置",
+    "language": "zh-CN",
+    "message": {
+      "key": "diagnostics.configuration_changed",
+      "params": {}
+    }
+  },
+  {
+    "expected": "当前版本无法解读该组件的诊断信息",
+    "language": "zh-CN",
+    "message": {
+      "key": "diagnostics.diagnostics_unsupported",
+      "params": {}
+    }
+  },
+  {
+    "expected": "采集器已启动",
+    "language": "zh-CN",
+    "message": {
+      "key": "diagnostics.collector_started",
+      "params": {}
+    }
+  },
+  {
+    "expected": "采集器已停止",
+    "language": "zh-CN",
+    "message": {
+      "key": "diagnostics.collector_stopped",
+      "params": {}
+    }
+  },
+  {
+    "expected": "采集主循环响应正常",
+    "language": "zh-CN",
+    "message": {
+      "key": "diagnostics.collector_responsive",
+      "params": {}
+    }
+  },
+  {
+    "expected": "Codex 接入进程已启动",
+    "language": "zh-CN",
+    "message": {
+      "key": "diagnostics.bridge_started",
+      "params": {}
+    }
+  },
+  {
+    "expected": "Codex 接入进程已停止",
+    "language": "zh-CN",
+    "message": {
+      "key": "diagnostics.bridge_stopped",
+      "params": {}
+    }
+  },
+  {
+    "expected": "Codex 接入连接正常",
+    "language": "zh-CN",
+    "message": {
+      "key": "diagnostics.bridge_connected",
+      "params": {}
+    }
+  },
+  {
+    "expected": "等待 Codex 接入连接",
+    "language": "zh-CN",
+    "message": {
+      "key": "diagnostics.waiting_for_connection",
+      "params": {}
+    }
+  },
+  {
+    "expected": "观测出现缺口，部分数据可能不完整",
+    "language": "zh-CN",
+    "message": {
+      "key": "diagnostics.observation_gap",
+      "params": {}
+    }
+  },
+  {
+    "expected": "部分接入数据无法解析",
+    "language": "zh-CN",
+    "message": {
+      "key": "diagnostics.parse_error",
+      "params": {}
+    }
+  },
+  {
+    "expected": "数据解析正常",
+    "language": "zh-CN",
+    "message": {
+      "key": "diagnostics.parsing_ready",
+      "params": {}
+    }
+  },
+  {
+    "expected": "Token 计数失败",
+    "language": "zh-CN",
+    "message": {
+      "key": "diagnostics.tokenizer_error",
+      "params": {}
+    }
+  },
+  {
+    "expected": "Token 计数达到资源限制",
+    "language": "zh-CN",
+    "message": {
+      "key": "diagnostics.count_budget",
+      "params": {}
+    }
+  },
+  {
+    "expected": "Token 计数可用",
+    "language": "zh-CN",
+    "message": {
+      "key": "diagnostics.tokenizer_ready",
+      "params": {}
+    }
+  },
+  {
+    "expected": "部分对话历史读取失败",
+    "language": "zh-CN",
+    "message": {
+      "key": "diagnostics.history_read_error",
+      "params": {}
+    }
+  },
+  {
+    "expected": "历史读取可用",
+    "language": "zh-CN",
+    "message": {
+      "key": "diagnostics.history_ready",
+      "params": {}
+    }
+  },
+  {
+    "expected": "历史读取尚未完成，已超过检查期限",
+    "language": "zh-CN",
+    "message": {
+      "key": "diagnostics.history_slow",
+      "params": {}
+    }
+  },
+  {
+    "expected": "时间线存储写入尚未完成，实时监测可继续",
+    "language": "zh-CN",
+    "message": {
+      "key": "diagnostics.metadata_slow",
+      "params": {}
+    }
+  },
+  {
+    "expected": "恢复检查点写入尚未完成，实时监测可继续",
+    "language": "zh-CN",
+    "message": {
+      "key": "diagnostics.checkpoint_slow",
+      "params": {}
+    }
+  },
+  {
+    "expected": "时间线或详情读取失败",
+    "language": "zh-CN",
+    "message": {
+      "key": "diagnostics.query_read_failed",
+      "params": {}
+    }
+  },
+  {
+    "expected": "时间线元数据存储不可用",
+    "language": "zh-CN",
+    "message": {
+      "key": "diagnostics.metadata_unavailable",
+      "params": {}
+    }
+  },
+  {
+    "expected": "时间线元数据写入失败",
+    "language": "zh-CN",
+    "message": {
+      "key": "diagnostics.metadata_write_failed",
+      "params": {}
+    }
+  },
+  {
+    "expected": "时间线存储队列达到限制",
+    "language": "zh-CN",
+    "message": {
+      "key": "diagnostics.metadata_queue_limit",
+      "params": {}
+    }
+  },
+  {
+    "expected": "时间线派生存储已重建",
+    "language": "zh-CN",
+    "message": {
+      "key": "diagnostics.metadata_rebuilt",
+      "params": {}
+    }
+  },
+  {
+    "expected": "时间线存储可用",
+    "language": "zh-CN",
+    "message": {
+      "key": "diagnostics.metadata_ready",
+      "params": {}
+    }
+  },
+  {
+    "expected": "时间线查询服务不可用",
+    "language": "zh-CN",
+    "message": {
+      "key": "diagnostics.query_unavailable",
+      "params": {}
+    }
+  },
+  {
+    "expected": "时间线查询可用",
+    "language": "zh-CN",
+    "message": {
+      "key": "diagnostics.query_ready",
+      "params": {}
+    }
+  },
+  {
+    "expected": "恢复检查点写入失败，实时监测可继续",
+    "language": "zh-CN",
+    "message": {
+      "key": "diagnostics.snapshot_write_failed",
+      "params": {}
+    }
+  },
+  {
+    "expected": "恢复检查点存储可用",
+    "language": "zh-CN",
+    "message": {
+      "key": "diagnostics.checkpoint_ready",
+      "params": {}
+    }
+  },
+  {
+    "expected": "诊断日志暂时无法写入",
+    "language": "zh-CN",
+    "message": {
+      "key": "diagnostics.logging_unavailable",
+      "params": {}
+    }
+  },
+  {
+    "expected": "部分诊断日志因资源限制未保留",
+    "language": "zh-CN",
+    "message": {
+      "key": "diagnostics.log_dropped",
+      "params": {}
+    }
+  },
+  {
+    "expected": "诊断日志可用",
+    "language": "zh-CN",
+    "message": {
+      "key": "diagnostics.logging_ready",
+      "params": {}
+    }
+  },
+  {
+    "expected": "管理操作失败，请查看接入状态",
+    "language": "zh-CN",
+    "message": {
+      "key": "diagnostics.management_failed",
+      "params": {}
+    }
+  },
+  {
+    "expected": "组件发生未预期异常",
+    "language": "zh-CN",
+    "message": {
+      "key": "diagnostics.unexpected_exception",
+      "params": {}
+    }
+  },
+  {
+    "expected": "采集连接中断，正在重连",
+    "language": "zh-CN",
+    "message": {
+      "key": "diagnostics.state_disconnected",
+      "params": {}
+    }
+  },
+  {
+    "expected": "采集连接已恢复",
+    "language": "zh-CN",
+    "message": {
+      "key": "diagnostics.state_connected",
+      "params": {}
+    }
+  },
+  {
+    "expected": "暂时无法检查配置状态",
+    "language": "zh-CN",
+    "message": {
+      "key": "diagnostics.management_status_failed",
+      "params": {}
+    }
+  },
+  {
+    "expected": "设置未能保存",
+    "language": "zh-CN",
+    "message": {
+      "key": "diagnostics.preferences_failed",
+      "params": {}
+    }
+  },
+  {
+    "expected": "Monitor 已启动",
+    "language": "zh-CN",
+    "message": {
+      "key": "diagnostics.gui_started",
+      "params": {}
+    }
+  },
+  {
+    "expected": "Monitor 已正常退出",
+    "language": "zh-CN",
+    "message": {
+      "key": "diagnostics.gui_stopped",
+      "params": {}
+    }
+  },
+  {
+    "expected": "上次运行未正常结束，原因尚不明确",
+    "language": "zh-CN",
+    "message": {
+      "key": "diagnostics.previous_exit_unclean",
+      "params": {}
+    }
+  },
+  {
+    "expected": "配置接入：开始",
+    "language": "zh-CN",
+    "message": {
+      "key": "diagnostics.configure_started",
+      "params": {}
+    }
+  },
+  {
+    "expected": "配置接入：操作完成",
+    "language": "zh-CN",
+    "message": {
+      "key": "diagnostics.configure_completed",
+      "params": {}
+    }
+  },
+  {
+    "expected": "恢复配置：开始",
+    "language": "zh-CN",
+    "message": {
+      "key": "diagnostics.restore_started",
+      "params": {}
+    }
+  },
+  {
+    "expected": "恢复配置：操作完成",
+    "language": "zh-CN",
+    "message": {
+      "key": "diagnostics.restore_completed",
+      "params": {}
+    }
+  },
+  {
+    "expected": "启动观察：开始",
+    "language": "zh-CN",
+    "message": {
+      "key": "diagnostics.resume_started",
+      "params": {}
+    }
+  },
+  {
+    "expected": "启动观察：操作完成",
+    "language": "zh-CN",
+    "message": {
+      "key": "diagnostics.resume_completed",
+      "params": {}
+    }
+  },
+  {
+    "expected": "清理：开始",
+    "language": "zh-CN",
+    "message": {
+      "key": "diagnostics.cleanup_started",
+      "params": {}
+    }
+  },
+  {
+    "expected": "清理：操作完成",
+    "language": "zh-CN",
+    "message": {
+      "key": "diagnostics.cleanup_completed",
+      "params": {}
+    }
+  },
+  {
+    "expected": "停止观察：开始",
+    "language": "zh-CN",
+    "message": {
+      "key": "diagnostics.stop_started",
+      "params": {}
+    }
+  },
+  {
+    "expected": "停止观察：操作完成",
+    "language": "zh-CN",
+    "message": {
+      "key": "diagnostics.stop_completed",
+      "params": {}
+    }
+  },
+  {
+    "expected": "保存设置：开始",
+    "language": "zh-CN",
+    "message": {
+      "key": "diagnostics.preferences_started",
+      "params": {}
+    }
+  },
+  {
+    "expected": "保存设置：操作完成",
+    "language": "zh-CN",
+    "message": {
+      "key": "diagnostics.preferences_completed",
+      "params": {}
+    }
+  },
+  {
     "expected": "无法读取管理记录：原始内容.py",
     "language": "zh-CN",
     "message": {
@@ -2480,6 +2920,446 @@
     "language": "en",
     "message": {
       "key": "cli.desktop",
+      "params": {}
+    }
+  },
+  {
+    "expected": "Reopen Codex after finishing tasks to complete the configuration change",
+    "language": "en",
+    "message": {
+      "key": "diagnostics.restart_required",
+      "params": {}
+    }
+  },
+  {
+    "expected": "Configuration differs from the integration record; check General settings",
+    "language": "en",
+    "message": {
+      "key": "diagnostics.configuration_changed",
+      "params": {}
+    }
+  },
+  {
+    "expected": "This version cannot interpret the component diagnostics",
+    "language": "en",
+    "message": {
+      "key": "diagnostics.diagnostics_unsupported",
+      "params": {}
+    }
+  },
+  {
+    "expected": "Collector started",
+    "language": "en",
+    "message": {
+      "key": "diagnostics.collector_started",
+      "params": {}
+    }
+  },
+  {
+    "expected": "Collector stopped",
+    "language": "en",
+    "message": {
+      "key": "diagnostics.collector_stopped",
+      "params": {}
+    }
+  },
+  {
+    "expected": "Collector loop is responsive",
+    "language": "en",
+    "message": {
+      "key": "diagnostics.collector_responsive",
+      "params": {}
+    }
+  },
+  {
+    "expected": "Codex bridge started",
+    "language": "en",
+    "message": {
+      "key": "diagnostics.bridge_started",
+      "params": {}
+    }
+  },
+  {
+    "expected": "Codex bridge stopped",
+    "language": "en",
+    "message": {
+      "key": "diagnostics.bridge_stopped",
+      "params": {}
+    }
+  },
+  {
+    "expected": "Codex bridge is connected",
+    "language": "en",
+    "message": {
+      "key": "diagnostics.bridge_connected",
+      "params": {}
+    }
+  },
+  {
+    "expected": "Waiting for a Codex connection",
+    "language": "en",
+    "message": {
+      "key": "diagnostics.waiting_for_connection",
+      "params": {}
+    }
+  },
+  {
+    "expected": "Observation gap; some data may be incomplete",
+    "language": "en",
+    "message": {
+      "key": "diagnostics.observation_gap",
+      "params": {}
+    }
+  },
+  {
+    "expected": "Some observation data could not be parsed",
+    "language": "en",
+    "message": {
+      "key": "diagnostics.parse_error",
+      "params": {}
+    }
+  },
+  {
+    "expected": "Observation parsing is ready",
+    "language": "en",
+    "message": {
+      "key": "diagnostics.parsing_ready",
+      "params": {}
+    }
+  },
+  {
+    "expected": "Token counting failed",
+    "language": "en",
+    "message": {
+      "key": "diagnostics.tokenizer_error",
+      "params": {}
+    }
+  },
+  {
+    "expected": "Token counting reached its resource limit",
+    "language": "en",
+    "message": {
+      "key": "diagnostics.count_budget",
+      "params": {}
+    }
+  },
+  {
+    "expected": "Token counting is available",
+    "language": "en",
+    "message": {
+      "key": "diagnostics.tokenizer_ready",
+      "params": {}
+    }
+  },
+  {
+    "expected": "Some conversation history could not be read",
+    "language": "en",
+    "message": {
+      "key": "diagnostics.history_read_error",
+      "params": {}
+    }
+  },
+  {
+    "expected": "History reading is available",
+    "language": "en",
+    "message": {
+      "key": "diagnostics.history_ready",
+      "params": {}
+    }
+  },
+  {
+    "expected": "History reading has exceeded its progress deadline",
+    "language": "en",
+    "message": {
+      "key": "diagnostics.history_slow",
+      "params": {}
+    }
+  },
+  {
+    "expected": "Timeline storage write is taking too long; live monitoring can continue",
+    "language": "en",
+    "message": {
+      "key": "diagnostics.metadata_slow",
+      "params": {}
+    }
+  },
+  {
+    "expected": "Recovery checkpoint write is taking too long; live monitoring can continue",
+    "language": "en",
+    "message": {
+      "key": "diagnostics.checkpoint_slow",
+      "params": {}
+    }
+  },
+  {
+    "expected": "A timeline or detail query failed",
+    "language": "en",
+    "message": {
+      "key": "diagnostics.query_read_failed",
+      "params": {}
+    }
+  },
+  {
+    "expected": "Timeline metadata storage is unavailable",
+    "language": "en",
+    "message": {
+      "key": "diagnostics.metadata_unavailable",
+      "params": {}
+    }
+  },
+  {
+    "expected": "Timeline metadata write failed",
+    "language": "en",
+    "message": {
+      "key": "diagnostics.metadata_write_failed",
+      "params": {}
+    }
+  },
+  {
+    "expected": "Timeline storage queue reached its limit",
+    "language": "en",
+    "message": {
+      "key": "diagnostics.metadata_queue_limit",
+      "params": {}
+    }
+  },
+  {
+    "expected": "Derived timeline storage was rebuilt",
+    "language": "en",
+    "message": {
+      "key": "diagnostics.metadata_rebuilt",
+      "params": {}
+    }
+  },
+  {
+    "expected": "Timeline storage is available",
+    "language": "en",
+    "message": {
+      "key": "diagnostics.metadata_ready",
+      "params": {}
+    }
+  },
+  {
+    "expected": "Timeline query service is unavailable",
+    "language": "en",
+    "message": {
+      "key": "diagnostics.query_unavailable",
+      "params": {}
+    }
+  },
+  {
+    "expected": "Timeline queries are available",
+    "language": "en",
+    "message": {
+      "key": "diagnostics.query_ready",
+      "params": {}
+    }
+  },
+  {
+    "expected": "Recovery checkpoint write failed; live monitoring can continue",
+    "language": "en",
+    "message": {
+      "key": "diagnostics.snapshot_write_failed",
+      "params": {}
+    }
+  },
+  {
+    "expected": "Recovery checkpoint storage is available",
+    "language": "en",
+    "message": {
+      "key": "diagnostics.checkpoint_ready",
+      "params": {}
+    }
+  },
+  {
+    "expected": "Diagnostic logs cannot currently be written",
+    "language": "en",
+    "message": {
+      "key": "diagnostics.logging_unavailable",
+      "params": {}
+    }
+  },
+  {
+    "expected": "Some diagnostic records were dropped due to resource limits",
+    "language": "en",
+    "message": {
+      "key": "diagnostics.log_dropped",
+      "params": {}
+    }
+  },
+  {
+    "expected": "Diagnostic logging is available",
+    "language": "en",
+    "message": {
+      "key": "diagnostics.logging_ready",
+      "params": {}
+    }
+  },
+  {
+    "expected": "Management operation failed; check integration status",
+    "language": "en",
+    "message": {
+      "key": "diagnostics.management_failed",
+      "params": {}
+    }
+  },
+  {
+    "expected": "A component encountered an unexpected exception",
+    "language": "en",
+    "message": {
+      "key": "diagnostics.unexpected_exception",
+      "params": {}
+    }
+  },
+  {
+    "expected": "Collector connection lost; reconnecting",
+    "language": "en",
+    "message": {
+      "key": "diagnostics.state_disconnected",
+      "params": {}
+    }
+  },
+  {
+    "expected": "Collector connection restored",
+    "language": "en",
+    "message": {
+      "key": "diagnostics.state_connected",
+      "params": {}
+    }
+  },
+  {
+    "expected": "Configuration status could not be checked",
+    "language": "en",
+    "message": {
+      "key": "diagnostics.management_status_failed",
+      "params": {}
+    }
+  },
+  {
+    "expected": "Preferences could not be saved",
+    "language": "en",
+    "message": {
+      "key": "diagnostics.preferences_failed",
+      "params": {}
+    }
+  },
+  {
+    "expected": "Monitor started",
+    "language": "en",
+    "message": {
+      "key": "diagnostics.gui_started",
+      "params": {}
+    }
+  },
+  {
+    "expected": "Monitor exited normally",
+    "language": "en",
+    "message": {
+      "key": "diagnostics.gui_stopped",
+      "params": {}
+    }
+  },
+  {
+    "expected": "The previous run did not end normally; the cause is unknown",
+    "language": "en",
+    "message": {
+      "key": "diagnostics.previous_exit_unclean",
+      "params": {}
+    }
+  },
+  {
+    "expected": "Configure integration: started",
+    "language": "en",
+    "message": {
+      "key": "diagnostics.configure_started",
+      "params": {}
+    }
+  },
+  {
+    "expected": "Configure integration: operation completed",
+    "language": "en",
+    "message": {
+      "key": "diagnostics.configure_completed",
+      "params": {}
+    }
+  },
+  {
+    "expected": "Restore configuration: started",
+    "language": "en",
+    "message": {
+      "key": "diagnostics.restore_started",
+      "params": {}
+    }
+  },
+  {
+    "expected": "Restore configuration: operation completed",
+    "language": "en",
+    "message": {
+      "key": "diagnostics.restore_completed",
+      "params": {}
+    }
+  },
+  {
+    "expected": "Start observation: started",
+    "language": "en",
+    "message": {
+      "key": "diagnostics.resume_started",
+      "params": {}
+    }
+  },
+  {
+    "expected": "Start observation: operation completed",
+    "language": "en",
+    "message": {
+      "key": "diagnostics.resume_completed",
+      "params": {}
+    }
+  },
+  {
+    "expected": "Cleanup: started",
+    "language": "en",
+    "message": {
+      "key": "diagnostics.cleanup_started",
+      "params": {}
+    }
+  },
+  {
+    "expected": "Cleanup: operation completed",
+    "language": "en",
+    "message": {
+      "key": "diagnostics.cleanup_completed",
+      "params": {}
+    }
+  },
+  {
+    "expected": "Stop observation: started",
+    "language": "en",
+    "message": {
+      "key": "diagnostics.stop_started",
+      "params": {}
+    }
+  },
+  {
+    "expected": "Stop observation: operation completed",
+    "language": "en",
+    "message": {
+      "key": "diagnostics.stop_completed",
+      "params": {}
+    }
+  },
+  {
+    "expected": "Save preferences: started",
+    "language": "en",
+    "message": {
+      "key": "diagnostics.preferences_started",
+      "params": {}
+    }
+  },
+  {
+    "expected": "Save preferences: operation completed",
+    "language": "en",
+    "message": {
+      "key": "diagnostics.preferences_completed",
       "params": {}
     }
   },

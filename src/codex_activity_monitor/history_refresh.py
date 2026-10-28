@@ -45,6 +45,8 @@ class HistoryRefresh:
         self.peak_pending_bytes = self.peak_ready_bytes = 0
         self.deferred_requests = self.oversized_results = self.discarded_results = self.processed = 0
         self.last_read = {}
+        self.read_errors = OrderedDict()
+        self.active_since = None
         self.cursor = 0
         self.lock = threading.Lock()
         self.wake = threading.Event()
@@ -61,7 +63,9 @@ class HistoryRefresh:
                     'max_ready_bytes': self.max_ready_bytes, 'max_result_bytes': self.max_result_bytes,
                     'max_drain_bytes': self.max_drain_bytes, 'deferred_requests': self.deferred_requests,
                     'oversized_results': self.oversized_results, 'discarded_results': self.discarded_results,
-                    'processed': self.processed}
+                    'processed': self.processed, 'read_errors': len(self.read_errors),
+                    'worker_alive': self.worker.is_alive(),
+                    'reading_age_ms': (time.monotonic()-self.active_since)*1000 if self.active_since else 0}
 
     def _unavailable(self, key, quality='history_budget', error=None):
         result = {'scope_id': key[0], 'thread_id': key[1], 'quality': ['history_unavailable', quality]}
@@ -157,19 +161,29 @@ class HistoryRefresh:
                     self.pending_bytes -= request.utf8_bytes
                     now = time.monotonic()
                     self.last_read[key] = (now, self.last_read.get(key, (0, now))[1])
+                    self.active_since = now
                 try:
+                    read_error = False
                     result = self.provider.reconciliation(*key, request.turns, items=request.items)
                     packet = HistoryPacket.capture(result, self.max_result_bytes)
                     oversized = packet is None
                     if oversized:
                         packet = self._unavailable(key)
                 except (OSError, ValueError, TypeError, KeyError) as error:
+                    read_error = True
                     packet = self._unavailable(key, 'history_read_error', type(error).__name__)
                     oversized = False
                 with self.lock:
+                    self.active_since = None
                     if self.stopping:
                         return
                     self.processed += 1
+                    if read_error:
+                        self.read_errors[key] = True
+                        while len(self.read_errors) > self.capacity:
+                            self.read_errors.popitem(last=False)
+                    else:
+                        self.read_errors.pop(key, None)
                     self.oversized_results += int(oversized)
                     self._publish(key, packet)
 

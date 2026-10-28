@@ -45,6 +45,7 @@ struct SystemTimelineClient: TimelineReading {
     let configuration: BackendConfiguration
     let runtime: String
     var executor: any ProcessExecuting = ProcessExecutor()
+    var recorder: DiagnosticRecorder? = nil
 
     private func request(_ value: TimelineQueryRequest) async throws -> Data {
         let payload = String(decoding: try JSONEncoder().encode(value), as: UTF8.self)
@@ -56,16 +57,25 @@ struct SystemTimelineClient: TimelineReading {
     }
 
     func timeline(scope: String, thread: String, turn: String?) async throws -> TimelineBundle {
-        let value = TimelineQueryRequest(action: .timeline, scope: scope, thread: thread, turn: turn)
-        let bundle = try JSONDecoder().decode(TimelineQueryResponse<TimelineBundle>.self, from: await request(value)).value
-        guard bundle.version == 1 else { throw SnapshotError.unsupportedVersion }
-        return bundle
+        do {
+            let value = TimelineQueryRequest(action: .timeline, scope: scope, thread: thread, turn: turn)
+            let bundle = try JSONDecoder().decode(TimelineQueryResponse<TimelineBundle>.self, from: await request(value)).value
+            guard bundle.version == 1 else { throw SnapshotError.unsupportedVersion }
+            return bundle
+        } catch { recordFailure(error); throw error }
     }
 
     func detail(phase: TimelinePhase, page: ActivityPageCursor?) async throws -> ActivityDetail {
-        let value = TimelineQueryRequest(action: .detail, scope: phase.scope_id, thread: phase.thread_id,
-                                         turn: phase.turn_id, phase: phase.id, page: page)
-        return try JSONDecoder().decode(TimelineQueryResponse<ActivityDetail>.self, from: await request(value)).value
+        do {
+            let value = TimelineQueryRequest(action: .detail, scope: phase.scope_id, thread: phase.thread_id,
+                                             turn: phase.turn_id, phase: phase.id, page: page)
+            return try JSONDecoder().decode(TimelineQueryResponse<ActivityDetail>.self, from: await request(value)).value
+        } catch { recordFailure(error); throw error }
+    }
+    private func recordFailure(_ error: any Error) {
+        if !Task.isCancelled && !(error is CancellationError) {
+            recorder?.record("query_read_failed", level: "warning", component: "timeline_query", error: error)
+        }
     }
 }
 

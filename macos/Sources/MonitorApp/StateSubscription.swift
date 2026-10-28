@@ -4,6 +4,7 @@ import MonitorModel
 
 struct StatePersistence: Decodable, Sendable {
     let snapshot_write_failures: Int?
+    let current_error: [String: MessageValue]?
     let writing: Bool?
     let pending: Int?
 }

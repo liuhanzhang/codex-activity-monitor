@@ -47,6 +47,7 @@ public struct DisplayMessage: Codable, Sendable, Equatable {
 }
 
 public enum CoreLocalizer {
+    public static func contains(_ key: String, language: MonitorLanguage) -> Bool { catalogs[language.rawValue]?[key] != nil }
     private static let catalogs: [String: [String: MessageValue]] = {
         guard let url = Bundle.module.url(forResource: "CoreMessages", withExtension: "json"),
               let data = try? Data(contentsOf: url),

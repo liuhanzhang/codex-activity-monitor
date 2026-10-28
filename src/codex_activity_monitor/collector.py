@@ -25,7 +25,13 @@ from .menu_presentation import menu_presentation
 from .history_refresh import HistoryRefresh
 
 
-def serve(runtime):
+def serve(runtime, diagnostic_log=None):
+    from .diagnostic_log import DiagnosticLog
+    from .diagnostic_health import HealthMonitor
+    owns_log = diagnostic_log is None
+    diagnostic_log = diagnostic_log or DiagnosticLog.for_runtime(runtime, 'collector')
+    health = HealthMonitor(diagnostic_log)
+    diagnostic_log.emit('collector_started')
     observation = load_lease(runtime)
     lock=(runtime/'collector.lock').open('a+')
     try:
@@ -68,16 +74,19 @@ def serve(runtime):
     history = HistoryRefresh()
     identities = AgentIdentityCache()
     query_server = None
+    query_thread = None
     try:
         query_server = QueryServer(runtime/'tl.sock', TimelineQuery(timeline, history=history.provider))
-        threading.Thread(target=query_server.serve_forever, kwargs={'poll_interval': .1}, daemon=True,
-                         name='timeline-queries').start()
+        query_thread = threading.Thread(target=query_server.serve_forever, kwargs={'poll_interval': .1}, daemon=True,
+                                        name='timeline-queries')
+        query_thread.start()
     except OSError:
         timeline_error = 'query_unavailable'
     implementation=source_identity('collector','app_session','engine','overview','menu_presentation','progress_state','events','usage','metrics','runtime','tool_labels','i18n','messages_zh_cn',
                                    'state','timeline','timeline_storage','timeline_query','history','reconciliation','agent_presentation','agent_relations','agent_identity',
                                    'publication','state_transport','observation_lease','history_read','content_version',
-                                   'resource_budget','identity_budget','query_request','query_response','json_encoding','history_index','history_content','history_refresh','history_contract','tokenizer_process')
+                                   'resource_budget','identity_budget','query_request','query_response','json_encoding','history_index','history_content','history_refresh','history_contract','tokenizer_process',
+                                   'diagnostic_log','diagnostic_health','integration_status')
     previous=read_snapshot(runtime)
     previous_age = snapshot_age(previous)
     historical = previous.get('threads', []) if previous_age is not None and -5 <= previous_age < 600 else []
@@ -314,6 +323,8 @@ def serve(runtime):
                     snapshot['timeline_summary']={'version':1,'revision':timeline.revision,
                                                    'available':query_server is not None,
                                                    'quality':[e for e in (timeline_error, timeline_store.error if timeline_store else None) if e]}
+                    query_error = 'query_unavailable' if query_thread is not None and not query_thread.is_alive() else timeline_error
+                    snapshot['diagnostics'] = health.snapshot(engine, history, timeline_store, query_error, writer.diagnostics(), now)
                 retain_history(snapshot)
                 identities.enrich(snapshot['threads'])
                 snapshot['menu_presentation'] = menu_presentation(engine, snapshot['threads'], snapshot['overview'])
@@ -327,6 +338,9 @@ def serve(runtime):
                 last_progress=time.monotonic()
                 next_tick=now+0.25
     finally:
+        diagnostic_log.emit('collector_stopped')
+        if owns_log:
+            diagnostic_log.close()
         history.close()
         if query_server:
             query_server.shutdown()

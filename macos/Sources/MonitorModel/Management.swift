@@ -28,6 +28,7 @@ public struct ManagementState: Decodable, Sendable {
     public let language: String?
     public let session: ObservationLease?
     public let bridge_restart_required: Bool?
+    public let integration_status: IntegrationStatus?
 
     public var configured: Bool { state == "configured" }
     public var waitingForCleanup: Bool { state == "pending_cleanup" || state == "restoring" }
@@ -42,7 +43,7 @@ public struct ManagementState: Decodable, Sendable {
             pending?.isEmpty != false ? "配置已恢复，等待完成清理" :
                 (pending?.contains { $0.reason == "process_visibility_unknown" } == true ? "配置已恢复，暂时无法确认 Codex 是否已退出" : "配置已恢复，等待 Codex 退出后完成清理")
         case "restoring": "正在恢复配置"
-        case "restored": "已恢复 · 点击配置可重新接入"
+        case "restored": "已恢复 · 可在设置中开启接入"
         case "purged": "本机数据已清理"
         case "error": "上次操作未完成"
         case "configuring": "正在配置"

@@ -78,6 +78,8 @@ MESSAGES = {
 }
 
 from .messages_control import ZH as CONTROL
+from .messages_diagnostics import ZH as DIAGNOSTICS
+MESSAGES.update(DIAGNOSTICS)
 from .messages_detail import ZH as DETAIL
 
 MESSAGES.update(CONTROL)

@@ -79,6 +79,8 @@ MESSAGES = {
 }
 
 from .messages_control import EN as CONTROL
+from .messages_diagnostics import EN as DIAGNOSTICS
+MESSAGES.update(DIAGNOSTICS)
 from .messages_detail import EN as DETAIL
 
 MESSAGES.update(CONTROL)

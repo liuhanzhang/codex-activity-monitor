@@ -78,7 +78,6 @@ struct DashboardView: LocalizedView {
         }
         .frame(width: 420)
         .environment(store.auxiliary)
-        .background(.regularMaterial)
         .onChange(of: store.dismissPresentation) { restoreRequest = nil }
         .onGeometryChange(for: CGSize.self) { $0.size } action: { onSizeChange($0) }
         .environment(\.monitorLanguage, store.language)
@@ -169,9 +168,10 @@ struct DashboardView: LocalizedView {
     }
 
     private var settings: some View {
-        DashboardSettingsMenu(state: SettingsMenuState(store: store), store: store,
-            restore: { restoreRequest = RestoreRequest() }, quit: quit)
-            .equatable()
+        Button { store.onSettingsRequested?() } label: {
+            Image(systemName: "gearshape").font(.system(size: 13))
+        }.buttonStyle(.borderless).help(L("设置")).accessibilityLabel(L("设置"))
+            .accessibilityIdentifier("monitor.settings")
     }
 
     private var footer: some View {
