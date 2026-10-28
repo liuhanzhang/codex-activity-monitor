@@ -93,6 +93,8 @@ Keep Monitor running while observing. The gear button opens a separate Settings 
 
 **Runtime Status** shows detected component problems and recovery; **Logs** provides local diagnostic records with search, filters, details, and copy. Closing Settings keeps observation running. These checks cannot rule out every software error.
 
+**About** shows the full version, build number, developer, project links, and licenses. Sparkle checks the static update feed daily by default. A newer version appears in the overview and About; choose **View Update** to open its update window and continue to the release page for a manual download. Disable automatic checks or check manually in About. Update checks do not upload chats, logs, or usage records.
+
 ## Privacy and compatibility
 
 - Processing is local; Monitor does not upload conversations. This does not change Codex Desktop's own network behavior.

@@ -4,10 +4,10 @@ import MonitorModel
 import ServiceManagement
 
 enum SettingsPage: String, CaseIterable, Identifiable {
-    case general, health, logs
+    case general, health, logs, about
     var id: Self { self }
-    var title: String { switch self { case .general: "通用"; case .health: "运行状态"; case .logs: "日志" } }
-    var symbol: String { switch self { case .general: "gearshape"; case .health: "waveform.path.ecg"; case .logs: "list.bullet.rectangle" } }
+    var title: String { switch self { case .general: "通用"; case .health: "运行状态"; case .logs: "日志"; case .about: "关于" } }
+    var symbol: String { switch self { case .general: "gearshape"; case .health: "waveform.path.ecg"; case .logs: "list.bullet.rectangle"; case .about: "info.circle" } }
 }
 
 @MainActor final class SettingsWindowController: NSWindowController {
@@ -52,6 +52,7 @@ struct SettingsView: LocalizedView {
                 case .general: general
                 case .health: health
                 case .logs: DiagnosticLogView(store: store, diagnostics: diagnostics)
+                case .about: AboutSettingsView(language: language, updates: store.updates)
                 }
             }
             .navigationTitle(L("设置"))

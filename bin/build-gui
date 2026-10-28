@@ -29,7 +29,6 @@ mkdir -p "$task_app/Contents/MacOS" "$task_app/Contents/Resources"
 # atomically avoids truncating code pages during an ordinary local rebuild.
 cp "$task_binary_dir/MonitorApp" "$task_app/Contents/MacOS/MonitorApp.new"
 mv -f "$task_app/Contents/MacOS/MonitorApp.new" "$task_app/Contents/MacOS/MonitorApp"
-"$task_root/.local/venv/bin/python" "$task_root/packaging/prepare_swift_binary.py" "$task_app/Contents/MacOS/MonitorApp"
 # Test-only resource bundles are never part of the product.
 for task_resource in "$task_app/Contents/Resources/"*Tests.bundle; do
   if [ -d "$task_resource" ]; then rm -rf "$task_resource"; fi
@@ -39,25 +38,43 @@ for task_resource in "$task_binary_dir"/*.bundle; do
   if [ -d "$task_resource" ]; then cp -R "$task_resource" "$task_app/Contents/Resources/"; fi
 done
 "$task_root/.local/venv/bin/python" - "$task_root" "$task_app" "$task_preview" <<'PY'
-import hashlib,json,plistlib,sys
+import hashlib,importlib.metadata,json,plistlib,shutil,sys,tomllib
 from pathlib import Path
 root,app=map(Path,sys.argv[1:3])
 preview=sys.argv[3]=='true'
+sys.path.insert(0, str(root/'packaging'))
+from app_metadata import bundle_info
+metadata=tomllib.loads((root/'pyproject.toml').read_text())
 sources=sorted(p for p in (root/'macos/Sources').rglob('*') if p.is_file())
-sources += [root/'macos/Assets/AppIcon.png', root/'bin/build-app-icon', root/'packaging/prepare_swift_binary.py']
+sources += [root/'macos/Assets/AppIcon.png', root/'bin/build-app-icon', root/'packaging/prepare_swift_binary.py',
+            root/'packaging/embed_sparkle.py', root/'packaging/app_metadata.py', root/'macos/Package.swift',
+            root/'macos/Package.resolved', root/'pyproject.toml', root/'LICENSE']
 build=hashlib.sha256(b''.join(str(p.relative_to(root)).encode()+b'\0'+p.read_bytes() for p in sources)).hexdigest()
-info={'CFBundleExecutable':'MonitorApp','CFBundleIdentifier':'com.liuhanzhang.codexactivitymonitor',
-      'CFBundleName':'Codex Activity Monitor','CFBundleDisplayName':'Codex Activity Monitor','CFBundlePackageType':'APPL',
-      'CFBundleShortVersionString':'0.1.0','CFBundleVersion':'2','LSMinimumSystemVersion':'14.0',
-      'LSUIElement':True,'NSPrincipalClass':'NSApplication','CFBundleIconFile':'AppIcon.icns'}
-if preview:
-    info.update(CFBundleIdentifier=info['CFBundleIdentifier']+'.preview',
-                CFBundleName='Codex Activity Monitor Preview', CFBundleDisplayName='Codex Activity Monitor Preview')
+info=bundle_info(metadata, distribution='preview' if preview else 'source')
 (app/'Contents/Info.plist').write_bytes(plistlib.dumps(info))
+resources=app/'Contents/Resources'
+shutil.copy2(root/'LICENSE', resources/'LICENSE')
+licenses=resources/'ThirdPartyLicenses'
+if licenses.exists():
+    shutil.rmtree(licenses)
+licenses.mkdir()
+for dist in importlib.metadata.distributions():
+    name=dist.metadata.get('Name', '')
+    if name.lower() in ('codex-activity-monitor', 'pip', 'setuptools'):
+        continue
+    for file in dist.files or []:
+        if any(part.lower().startswith(('license', 'copying', 'notice')) for part in file.parts):
+            source=Path(dist.locate_file(file))
+            if source.is_file():
+                destination=licenses/name/Path(*file.parts[1:])
+                destination.parent.mkdir(parents=True, exist_ok=True)
+                shutil.copy2(source,destination)
 config={'python':str(root/'.local/venv/bin/python'),'source_root':str(root),
         'runtime':str(root/'.local/gui-preview/runtime' if preview else Path.home()/'Library/Application Support/CodexActivityMonitor/run'),
         'data_root':str(Path.home()/'Library/Application Support/CodexActivityMonitor'), 'build_id':build}
 (app/'Contents/Resources/backend.json').write_text(json.dumps(config))
 print(app)
 PY
+"$task_root/.local/venv/bin/python" "$task_root/packaging/embed_sparkle.py" "$task_app"
+"$task_root/.local/venv/bin/python" "$task_root/packaging/prepare_swift_binary.py" "$task_app/Contents/MacOS/MonitorApp"
 codesign --force --deep --sign - "$task_app"

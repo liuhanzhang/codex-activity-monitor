@@ -24,6 +24,7 @@ enum MonitorApplication {
         if CommandLine.arguments.contains("--login-remove") {
             do {
                 if SMAppService.mainApp.status != .notRegistered { try SMAppService.mainApp.unregister() }
+                UpdateStore.removePreferences()
                 print("{\"ok\":true}")
             } catch {
                 let data = try? JSONSerialization.data(withJSONObject: ["ok": false, "error": String(describing: error)])
@@ -281,6 +282,13 @@ enum MonitorApplication {
         value["animating"] = statusContent.animating; value["reduced_motion"] = statusContent.reducedMotion
         value["animation_frames"] = statusContent.frameDiagnostics
         value["build_id"] = store.configuration.build_id
+        value["update_available"] = store.updates.available?.version
+        value["update_status"] = store.updates.statusKey
+        value["update_enabled"] = store.updates.enabled
+        value["update_automatic"] = store.updates.automatic
+        value["update_checking"] = store.updates.checking
+        value["update_can_check"] = store.updates.canCheck
+        value["update_last_check"] = store.updates.lastChecked?.timeIntervalSince1970
         value["pid"] = ProcessInfo.processInfo.processIdentifier
         value["fullscreen"] = previewWindow?.styleMask.contains(.fullScreen) ?? false
         func viewports(_ view: NSView) -> [[String: Any]] {

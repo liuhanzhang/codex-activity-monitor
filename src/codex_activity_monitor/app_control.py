@@ -631,7 +631,7 @@ class AppController:
         # Root was created for this controller; foreign directories are never
         # recursively deleted based on an installation record.
         allowed = {'management.lock', '.monitor-owned', 'integration.json', 'app-state.json', 'codex-observed',
-                   'integration.enabled', 'observation.json', 'run', 'timeline', 'diagnostics', 'gui-session.json'}
+                   'integration.enabled', 'observation.json', 'run', 'timeline', 'diagnostics', 'gui-session.json', 'updates.json'}
         unknown = [p.name for p in self.root.iterdir() if p.name not in allowed]
         if unknown:
             raise ControlError('unowned_data', 'control.unowned_data')

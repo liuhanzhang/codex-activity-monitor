@@ -92,6 +92,8 @@ final class DashboardStore {
     private var lastActiveSelectionKey: String?
     private(set) var presentationID = 0
     let auxiliary = PanelAuxiliaryState()
+    private(set) var updates = UpdateStore()
+    private var acceptanceManualUpdateCheck = false
     var showRecent = false {
         didSet {
             guard oldValue != showRecent else { return }
@@ -178,6 +180,12 @@ final class DashboardStore {
             $0+1 < arguments.count ? arguments[$0+1] : nil
         } : nil
         dataRoot = profile.map { $0 + "/data" } ?? arguments.firstIndex(of: "--data-root").flatMap { i in i + 1 < arguments.count ? arguments[i + 1] : nil } ?? configuration.data_root
+        let updateFixture = Self.acceptsUpdateFixture(arguments: arguments, bundleID: Bundle.main.bundleIdentifier,
+            distribution: Bundle.main.object(forInfoDictionaryKey: "CAMDistribution") as? String,
+            feedURL: (Bundle.main.object(forInfoDictionaryKey: "SUFeedURL") as? String).flatMap(URL.init(string:)))
+        updates = UpdateStore(root: URL(fileURLWithPath: dataRoot),
+                              enabled: (!readOnly && profile == nil && client == nil) || updateFixture)
+        acceptanceManualUpdateCheck = updateFixture && arguments.contains("--update-manual-check")
         if readOnly, let index = arguments.firstIndex(of: "--lang"), index + 1 < arguments.count {
             language = MonitorLanguage(rawValue: arguments[index + 1]) ?? .chinese
         } else if !readOnly {
@@ -204,9 +212,25 @@ final class DashboardStore {
         return value.language
     }
 
+    /// Only a disposable acceptance bundle may check loopback or allowlisted
+    /// public feeds in read-only mode. Daily and Preview bundles cannot opt in.
+    static func acceptsUpdateFixture(arguments: [String], bundleID: String?, distribution: String?, feedURL: URL?) -> Bool {
+        let loopback = feedURL?.scheme == "http" && feedURL?.host == "127.0.0.1"
+        let publicFeed = feedURL?.scheme == "https" && feedURL?.host == "liuhanzhang.github.io"
+            && feedURL?.user == nil && feedURL?.password == nil && feedURL?.port == nil
+            && feedURL?.query == nil && feedURL?.fragment == nil
+            && ["appcast.xml", "appcast-prerelease.xml", "appcast-alpha.xml"].contains(feedURL?.lastPathComponent ?? "")
+            && feedURL?.deletingLastPathComponent().path == "/codex-activity-monitor/updates"
+        return arguments.contains("--read-only") && arguments.contains("--update-acceptance")
+            && bundleID?.hasPrefix("com.liuhanzhang.codexactivitymonitor.updatetest.") == true
+            && distribution == "update-test" && (loopback || publicFeed)
+    }
+
     private var client: any BackendManaging { injectedClient ?? BackendClient(configuration: configuration, dataRoot: dataRoot, testProfile: testProfile) }
 
     func start() {
+        updates.start()
+        if acceptanceManualUpdateCheck { updates.check() }
         watchState()
         healthClock = Task { [weak self] in
             while !Task.isCancelled {
@@ -513,7 +537,7 @@ final class DashboardStore {
         busy = true
         defer { busy = false }
         do {
-            if purge { await recorder.finish() }
+            if purge { updates.stop(); await recorder.finish() }
             await waitForLanguageSave()
             if let stateConnection { _ = await stateConnection.release() }
             stateConnection?.cancel(); stateWatching?.cancel()
@@ -523,7 +547,7 @@ final class DashboardStore {
             if management?.state == "purged" { finishPurge() }
             operationError = nil
         } catch {
-            if purge { recorder = DiagnosticRecorder(root: dataRoot); recorder.startSession() }
+            if purge { updates.start(); recorder = DiagnosticRecorder(root: dataRoot); recorder.startSession() }
             recordError(error)
         }
     }
@@ -541,6 +565,7 @@ final class DashboardStore {
 
     private func finishPurge() {
         closing = true
+        updates.stop()
         polling?.cancel()
         snapshotWatching?.cancel()
         stateWatching?.cancel()
@@ -560,6 +585,7 @@ final class DashboardStore {
             snapshotWatching?.cancel()
             stateWatching?.cancel()
             healthClock?.cancel()
+            updates.stop()
             return true
         }
         do {
@@ -568,6 +594,7 @@ final class DashboardStore {
             snapshotWatching?.cancel()
             stateWatching?.cancel()
             healthClock?.cancel()
+            updates.stop()
             lease = nil
             await recorder.finish()
             return true

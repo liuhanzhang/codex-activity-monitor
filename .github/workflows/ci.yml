@@ -28,6 +28,8 @@ jobs:
           .local/venv/bin/python -m pip install -e .
       - name: Check generated localization resources
         run: .local/venv/bin/python bin/export-localizations --check
+      - name: Check generated update feeds
+        run: python3 packaging/appcast.py --check
       - name: Test Python
         run: .local/venv/bin/python -m unittest discover -s tests -p 'test_*.py'
       - name: Test Swift

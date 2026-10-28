@@ -32,7 +32,7 @@ Output and Reasoning counts belong to the selected turn when its identity is kno
 
 ## Settings
 
-Click the gear button at the top of the overview, or press **Command-,**, to open Settings. Its sidebar has **General**, **Runtime Status**, and **Logs**. Reopening focuses the same window. **Command-W** closes Settings and keeps observation running; **Command-Q** quits Monitor.
+Click the gear button at the top of the overview, or press **Command-,**, to open Settings. Its sidebar has **General**, **Runtime Status**, **Logs**, and **About**. Reopening focuses the same window. **Command-W** closes Settings and keeps observation running; **Command-Q** quits Monitor.
 
 | Setting | Effect |
 | --- | --- |
@@ -42,6 +42,14 @@ Click the gear button at the top of the overview, or press **Command-,**, to ope
 | **General → Maintenance** | Separate uninstall confirmation and quit actions |
 | **Runtime Status** | Show detected component health, unknown or disabled states, and links to related logs |
 | **Logs** | Search and filter local events by level and source, select details, copy a record, or open the log folder |
+| **About** | Show the full release version, build number, developer, project links, and local licenses |
+| **About → Software Updates** | Enable or disable automatic checks, check manually, and open a newer release for download |
+
+Automatic update checks use Sparkle and are enabled by default, with a one-day schedule. A new version appears in the overview and About, with a dot on the Settings button. Choose **View Update** to bring up Sparkle's update window, then open the release page to download manually. Downloading does not replace the running app. Network failures do not interrupt observation; manual checks show errors. **Last Check** records a check attempt, including an unsuccessful one.
+
+Checks fetch a static HTTPS appcast from the project's update site. They do not call the GitHub Releases API or send account credentials, chat content, diagnostics, or usage records. The hosting provider receives the request and normal connection metadata. Sparkle stores preferences in an app-specific macOS preferences domain; the old `updates.json` automatic-check choice is migrated once. Uninstall cleanup removes the update preferences. Preview and disposable test profiles do not check online or read daily update preferences. The dedicated update acceptance harness is an explicit exception limited to a unique temporary bundle and either a loopback server or the three allowlisted public project feeds.
+
+The explicitly configured GitHub release type selects the default update feed: release builds receive only releases; prerelease builds also receive prereleases. Version-name suffixes such as alpha or preview do not select the channel. The old appcast-alpha.xml address remains a compatible copy of the prerelease feed. The publishing script verifies that listed releases have uploaded macOS arm64 archives. Sparkle compares build numbers and system requirements. The deployment workflow and feeds must be published before the configured update-site URL becomes available; local build success alone does not establish that the hosted service is online.
 
 First launch continues to enable integration automatically. The Codex switch represents confirmed configuration; its message separately explains connection and restart requirements. **Configured** is not proof that already running Codex processes use it. **Active** requires a fresh matching bridge connection and covers confirmed local connections. When requested, finish tasks, fully quit Codex, and reopen it. Monitor does not force-quit Codex.
 

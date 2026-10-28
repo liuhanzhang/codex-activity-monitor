@@ -17,6 +17,8 @@ import urllib.request
 
 from inspect_app import inspect
 from prepare_swift_binary import prepare
+from app_metadata import bundle_info, release_version as app_release_version
+from embed_sparkle import embed as embed_sparkle
 
 ROOT = Path(__file__).resolve().parents[1]
 
@@ -30,9 +32,8 @@ def main():
     parser.add_argument('--output', type=Path, default=ROOT/'.local/standalone')
     args = parser.parse_args()
     metadata = tomllib.loads((ROOT/'pyproject.toml').read_text())
-    version = metadata['project']['version']
-    prerelease = metadata.get('tool', {}).get('codex-activity-monitor', {}).get('prerelease')
-    release_version = version + (f'-{prerelease}' if prerelease else '')
+    app_info = bundle_info(metadata, distribution='standalone')
+    release_version = app_release_version(metadata)
     if sys.platform != 'darwin' or platform.machine() != 'arm64':
         parser.error('This dev build supports native arm64 macOS only.')
     distribution_build = Path(sys.base_prefix)/'BUILD'
@@ -65,7 +66,8 @@ def main():
 
     files = sorted([*ROOT.glob('src/codex_activity_monitor/*.py'), *ROOT.glob('macos/Sources/**/*'),
                     *ROOT.glob('packaging/*'), ROOT/'pyproject.toml', ROOT/'LICENSE',
-                    ROOT/'macos/Assets/AppIcon.png', ROOT/'bin/build-app-icon'])
+                    ROOT/'macos/Assets/AppIcon.png', ROOT/'macos/Package.swift', ROOT/'macos/Package.resolved',
+                    ROOT/'bin/build-app-icon'])
     digest = hashlib.sha256()
     for path in files:
         if path.is_file():
@@ -75,7 +77,8 @@ def main():
                for path in sorted(ROOT.glob('src/codex_activity_monitor/*.py'))}
     dependencies = {dist.metadata['Name']: dist.version for dist in importlib.metadata.distributions()
                     if dist.metadata.get('Name')}
-    manifest = {'version': 1, 'release_version': release_version, 'build_id': build_id, 'modules': modules, 'encodings': encodings,
+    manifest = {'version': 1, 'release_version': release_version, 'release_prerelease': app_info['CAMReleasePrerelease'],
+                'build_number': app_info['CFBundleVersion'], 'build_id': build_id, 'modules': modules, 'encodings': encodings,
                 'python': platform.python_version(), 'dependencies': dependencies,
                 'python_distribution': {'provider': 'python-build-standalone', 'build': '20261021'},
                 'tokenizer_assets': {p.name: hashlib.sha256(p.read_bytes()).hexdigest()
@@ -102,7 +105,6 @@ def main():
     run(ROOT/'bin/build-app-icon', resources/'AppIcon.icns')
     shutil.copy2(ROOT/'LICENSE', resources/'LICENSE')
     shutil.copy2(binary_dir/'MonitorApp', contents/'MacOS/MonitorApp')
-    prepare(contents/'MacOS/MonitorApp')
     for bundle in binary_dir.glob('*.bundle'):
         if not bundle.name.endswith('Tests.bundle'):
             shutil.copytree(bundle, resources/bundle.name, symlinks=True)
@@ -128,11 +130,10 @@ def main():
                     destination = licenses/name/Path(*file.parts[1:])
                     destination.parent.mkdir(parents=True, exist_ok=True)
                     shutil.copy2(source, destination)
-    info = {'CFBundleExecutable': 'MonitorApp', 'CFBundleIdentifier': 'com.liuhanzhang.codexactivitymonitor',
-            'CFBundleName': 'Codex Activity Monitor', 'CFBundleDisplayName': 'Codex Activity Monitor', 'CFBundlePackageType': 'APPL',
-            'CFBundleShortVersionString': version, 'CFBundleVersion': '2', 'LSMinimumSystemVersion': '14.0',
-            'LSUIElement': True, 'NSPrincipalClass': 'NSApplication', 'CFBundleIconFile': 'AppIcon.icns'}
+    info = app_info
     (contents/'Info.plist').write_bytes(plistlib.dumps(info))
+    embed_sparkle(stage)
+    prepare(contents/'MacOS/MonitorApp')
     run('codesign', '--force', '--deep', '--sign', '-', stage)
     run('codesign', '--verify', '--deep', '--strict', stage)
     inspection = inspect(stage)

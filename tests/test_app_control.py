@@ -187,6 +187,7 @@ class AppControlTests(unittest.TestCase):
 
     def test_purge_waits_for_dependencies_then_removes_data(self):
         self.configure()
+        (self.control.root / 'updates.json').write_text(json.dumps({'automatic': False}))
         self.services.dependencies = [{'pid': 123, 'reason': 'codex_running'}]
         result = self.control.restore(purge=True)
         self.assertEqual(result['state'], 'pending_cleanup')
