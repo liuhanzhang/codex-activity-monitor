@@ -1,0 +1,10 @@
+#!/bin/sh
+set -eu
+task_root=$(CDPATH= cd -- "$(dirname -- "$0")/.." && pwd)
+task_python="$task_root/.local/packaging/portable-venv/bin/python"
+if [ ! -x "$task_python" ]; then task_python="$task_root/.local/venv/bin/python"; fi
+if [ ! -x "$task_python" ]; then
+  echo 'Prepare the build environment first (see packaging/README.md).' >&2
+  exit 1
+fi
+exec "$task_python" "$task_root/packaging/build_dmg.py" "$@"

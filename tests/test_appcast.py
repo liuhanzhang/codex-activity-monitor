@@ -1,4 +1,5 @@
 import importlib.util
+import json
 from pathlib import Path
 import unittest
 from unittest.mock import patch
@@ -10,6 +11,26 @@ spec.loader.exec_module(appcast)
 
 
 class AppcastTests(unittest.TestCase):
+    def test_published_release_accepts_dmg_and_legacy_zip_assets(self):
+        record = {'version': '0.1.0-alpha.4'}
+        for extension in ('dmg', 'zip'):
+            release = {'draft': False, 'assets': [{
+                'name': f'Codex-Activity-Monitor-0.1.0-alpha.4-macos-arm64.{extension}', 'state': 'uploaded'}]}
+            with self.subTest(extension=extension), \
+                 patch.object(appcast.subprocess, 'check_output', return_value=json.dumps(release).encode()):
+                self.assertEqual(appcast.published_release(record), release)
+
+    def test_release_requires_matching_uploaded_installer(self):
+        for draft, name, state in ((True, '0.1.0-alpha.4-macos-arm64.dmg', 'uploaded'),
+                                   (False, '0.1.0-alpha.3-macos-arm64.dmg', 'uploaded'),
+                                   (False, '0.1.0-alpha.4-macos-arm64.dmg', 'new'),
+                                   (False, '0.1.0-alpha.4-macos-arm64.exe', 'uploaded')):
+            release = {'draft': draft, 'assets': [{'name': 'Codex-Activity-Monitor-' + name, 'state': state}]}
+            with self.subTest(release=release), \
+                 patch.object(appcast.subprocess, 'check_output', return_value=json.dumps(release).encode()), \
+                 self.assertRaises(ValueError):
+                appcast.published_release({'version': '0.1.0-alpha.4'})
+
     def test_channels_and_build_numbers_generate_only_web_downloads(self):
         records = [dict(version='0.2.0-alpha.1', build=3, prerelease=True, published_at='2026-10-28T12:00:00Z'),
                    dict(version='0.1.0', build=2, prerelease=False, published_at='2026-10-28T11:00:00Z')]

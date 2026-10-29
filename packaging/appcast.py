@@ -56,8 +56,9 @@ def render(records, *, prereleases):
 def published_release(record):
     tag = 'v' + record['version']
     release = json.loads(subprocess.check_output(['gh', 'api', f'repos/{PROJECT}/releases/tags/{tag}']))
-    expected = f'Codex-Activity-Monitor-{record["version"]}-macos-arm64.zip'
-    if release['draft'] or not any(asset['name'] == expected and asset['state'] == 'uploaded' for asset in release['assets']):
+    prefix = f'Codex-Activity-Monitor-{record["version"]}-macos-arm64'
+    expected = {prefix + '.dmg', prefix + '.zip'}
+    if release['draft'] or not any(asset['name'] in expected and asset['state'] == 'uploaded' for asset in release['assets']):
         raise ValueError(f'{tag} is not a published release with its expected macOS arm64 archive.')
     return release
 

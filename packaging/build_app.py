@@ -19,6 +19,7 @@ from inspect_app import inspect
 from prepare_swift_binary import prepare
 from app_metadata import bundle_info, release_version as app_release_version
 from embed_sparkle import embed as embed_sparkle
+from build_dmg import build as build_dmg
 
 ROOT = Path(__file__).resolve().parents[1]
 
@@ -141,11 +142,8 @@ def main():
     if final.exists():
         shutil.rmtree(final)
     stage.rename(final)
-    archive = output/f'Codex-Activity-Monitor-{release_version}-macos-arm64.zip'
-    run('/usr/bin/ditto', '-c', '-k', '--sequesterRsrc', '--keepParent', final, archive)
-    summary = {'app': str(final), 'archive': str(archive), 'release_version': release_version, 'build_id': build_id,
-               'archive_sha256': hashlib.sha256(archive.read_bytes()).hexdigest(),
-               'archive_bytes': archive.stat().st_size,
+    dmg = build_dmg(final, output/f'Codex-Activity-Monitor-{release_version}-macos-arm64.dmg')
+    summary = {'app': str(final), 'release_version': release_version, 'build_id': build_id, **dmg,
                'binary_inspection': inspection,
                'installed_bytes': sum(p.stat().st_size for p in final.rglob('*') if p.is_file() and not p.is_symlink())}
     (output/'build-result.json').write_text(json.dumps(summary, indent=2)+'\n')

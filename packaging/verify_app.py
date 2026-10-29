@@ -1,4 +1,4 @@
-"""Validate an extracted development build under source and network denial.
+"""Validate an app copied from its release DMG under source and network denial.
 
 Only explicit disposable profiles are configured. No launchctl or real Codex
 installation is changed. Run outside an enclosing sandbox so sandbox-exec can
@@ -20,23 +20,29 @@ import tempfile
 import threading
 import time
 
+from build_dmg import APP_NAME, mounted_dmg
+
 ROOT = Path(__file__).resolve().parents[1]
 
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument('archive', type=Path)
+    parser.add_argument('dmg', type=Path)
     parser.add_argument('--result', type=Path, required=True)
     parser.add_argument('--gui', action='store_true')
     args = parser.parse_args()
-    archive = args.archive.resolve()
-    result = {'archive_sha256': hashlib.sha256(archive.read_bytes()).hexdigest(), 'checks': {}}
+    dmg = args.dmg.resolve()
+    if dmg.suffix.lower() != '.dmg':
+        parser.error('Provide the release .dmg installer.')
+    result = {'dmg': str(dmg), 'dmg_sha256': hashlib.sha256(dmg.read_bytes()).hexdigest(), 'checks': {}}
     with tempfile.TemporaryDirectory(prefix='cam-package-', dir='/private/tmp') as directory:
         root = Path(directory)
         moved = root/'中文 moved application'
         moved.mkdir()
-        subprocess.run(['/usr/bin/ditto', '-x', '-k', str(archive), str(moved)], check=True)
-        app = moved/'Codex Activity Monitor.app'
+        with mounted_dmg(dmg, root/'mounted') as mounted:
+            subprocess.run(['/usr/bin/ditto', str(mounted/APP_NAME), str(moved/APP_NAME)], check=True)
+        app = moved/APP_NAME
+        result['checks']['dmg_copy_out_and_eject'] = True
         backend = app/'Contents/Helpers/MonitorBackend.app/Contents/MacOS/monitor-backend'
         config = json.loads((app/'Contents/Resources/backend.json').read_text())
         assert config['backend'] == str(backend.relative_to(app)) and config['mode'] == 'bundled'
@@ -159,7 +165,15 @@ def main():
                     break
                 time.sleep(.1)
             assert timeline.get('selected_turn_id') == 'dev-turn' and timeline.get('phases'), timeline
-            assert json.loads(cli('--runtime', runtime, 'status').stdout)['threads'] == 1
+            # Timeline queries and published state have independent cadences.
+            # Seeing the phase does not mean the next state tick has published.
+            deadline = time.monotonic()+5
+            while time.monotonic() < deadline:
+                state = json.loads(cli('--runtime', runtime, 'status').stdout)
+                if state['threads'] == 1:
+                    break
+                time.sleep(.1)
+            assert state['threads'] == 1, state
             result['checks']['observed_synthetic_turn_and_timeline'] = True
             sessions = Path(environment['CODEX_HOME'])/'sessions'
             sessions.mkdir(parents=True, exist_ok=True)

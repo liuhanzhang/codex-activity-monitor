@@ -42,7 +42,7 @@ Click a timeline block to open the activity viewer. Read the available user inpu
 
 ## Installation
 
-Go to [GitHub Releases](https://github.com/LiuHanzhang/codex-activity-monitor/releases) and download the Apple Silicon ZIP named `Codex-Activity-Monitor-<version>-macos-arm64.zip` from the latest release's **Assets**. This is an early prerelease with ad-hoc signing and no Apple notarization; follow the opening instructions below. You can also [build from source](#build-from-source).
+Go to [GitHub Releases](https://github.com/LiuHanzhang/codex-activity-monitor/releases) and prefer the Apple Silicon installer named `Codex-Activity-Monitor-<version>-macos-arm64.dmg` in the latest release's **Assets**. Earlier releases only provide the corresponding ZIP. This is an early prerelease with ad-hoc signing and no Apple notarization; follow the opening instructions below. You can also [build from source](#build-from-source).
 
 ### Runtime requirements
 
@@ -67,11 +67,13 @@ Monitor's own settings, integration configuration backups, and timeline data are
 
 ### Install the app
 
-Once you have a ZIP package:
+Once you have a DMG:
 
-1. Extract the ZIP to get `Codex Activity Monitor.app`.
-2. Move the app to your Applications folder (`/Applications`).
-3. Double-click the app. If macOS blocks it, follow the steps below to allow it to open.
+1. Double-click the DMG to open the installation window.
+2. Drag **Codex Activity Monitor** on the left into **Applications** on the right.
+3. Wait for copying to finish, eject the disk image, then open the app from Applications. If macOS blocks it, follow the steps below to allow it to open.
+
+For a ZIP release, extract `Codex Activity Monitor.app`, drag it into Applications, then open the installed copy.
 
 ### Allow the app to open
 
@@ -88,7 +90,7 @@ See [Apple's instructions](https://support.apple.com/en-us/102445) for details.
 ### Upgrade an existing installation
 
 1. Finish active Codex tasks, then fully quit both Codex Desktop and Monitor.
-2. Extract the new release and replace the app in `/Applications`.
+2. Open the new DMG, drag the app into Applications, confirm replacement in Finder, and eject the image after copying finishes. For a ZIP release, extract it before replacing the app.
 3. Open Monitor and let integration configuration finish, then open Codex Desktop.
 
 The Monitor UI, collector, and Desktop-owned bridge are separate processes. Quitting Monitor leaves the existing Codex connection's bridge running; replacing the app does not reload that process. The new Monitor can be running while an older, protocol-compatible bridge continues to provide data. Changes to the bridge implementation or app location require a full Codex restart to complete the switch. Reopening the same Monitor build does not require restarting Codex. See [updates and moving the app](docs/user-guide.md#updates-or-moving-the-app-have-not-taken-effect).
@@ -100,7 +102,7 @@ The Monitor UI, collector, and Desktop-owned bridge are separate processes. Quit
 3. Fully quit and reopen Codex Desktop so new processes inherit the integration configuration.
 4. Start a local Codex task, then click the monitor's menu bar item. Select a chat to see its current turn, timeline, and usage.
 
-Keep Monitor running while observing. The gear button opens a separate Settings window (also **Command-,**). Without a saved language choice, the app uses Simplified Chinese when the primary system language is Chinese, including Traditional Chinese variants, and English for every other language. In **General**, switch between **English / 简体中文**; a manual choice is saved and takes precedence. You can also change **Launch at login**. Initial configuration enables launch at login; macOS may ask you to allow the login item. Original conversation and tool content keep their own language.
+Keep Monitor running while observing. The gear button opens a separate Settings window (also **Command-,**). Without a saved language choice, the app uses Simplified Chinese when the primary system language is Chinese, including Traditional Chinese variants, and English for every other language. In **General**, switch between **English / 简体中文**; a manual choice is saved and takes precedence. You can also change **Launch at login**. Initial configuration enables launch at login; macOS may ask you to allow the login item. Original conversation and tool content keep their own language. The DMG drag-install guide always displays both Chinese and English.
 
 **Runtime Status** shows detected component problems and recovery; **Logs** provides local diagnostic records with search, filters, details, and copy. Closing Settings keeps observation running. These checks cannot rule out every software error.
 
@@ -150,7 +152,7 @@ bin/prepare-standalone
 bin/build-standalone
 ```
 
-The output is `.local/standalone/Codex Activity Monitor.app` and a ZIP package in the same directory. The app includes Python, dependencies, and tokenizer assets; running it does not require the checkout, Python, or Xcode. For daily use, move the app to `/Applications`, then follow the [first-launch steps](#first-launch) above to connect it.
+The output is `.local/standalone/Codex Activity Monitor.app` plus a DMG and `SHA256SUMS.txt` in the same directory. The DMG is the only release installer; isolated acceptance copies the app directly from it. The app includes Python, dependencies, and tokenizer assets; running it does not require the checkout, Python, or Xcode. For daily use, install the app in `/Applications`, then follow the [first-launch steps](#first-launch) above to connect it.
 
 The current build is ad-hoc signed and not notarized. See the [packaging guide](packaging/README.md) for the build environment, isolation checks, and compatibility validation boundaries.
 

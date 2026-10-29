@@ -42,7 +42,7 @@
 
 ## 安装
 
-前往 [GitHub Releases](https://github.com/LiuHanzhang/codex-activity-monitor/releases)，在最新发布的 **Assets** 中下载名为 `Codex-Activity-Monitor-<版本号>-macos-arm64.zip` 的 Apple Silicon 安装包。这是使用 ad-hoc 签名、尚未经过 Apple 公证的早期预发布版本；首次打开请按下方步骤手动允许。也可以[从源码构建](#从源码构建)。
+前往 [GitHub Releases](https://github.com/LiuHanzhang/codex-activity-monitor/releases)，在最新发布的 **Assets** 中优先下载名为 `Codex-Activity-Monitor-<版本号>-macos-arm64.dmg` 的 Apple Silicon 安装包。早期版本仅提供同名 ZIP。这是使用 ad-hoc 签名、尚未经过 Apple 公证的早期预发布版本；首次打开请按下方步骤手动允许。也可以[从源码构建](#从源码构建)。
 
 ### 运行要求
 
@@ -67,11 +67,13 @@ Monitor 自己的设置、接入配置备份和时间线数据保存在 `~/Libra
 
 ### 安装 App
 
-取得 ZIP 安装包后：
+取得 DMG 安装包后：
 
-1. 解压 ZIP，得到 `Codex Activity Monitor.app`。
-2. 将 App 移入“应用程序”（`/Applications`）文件夹。
-3. 双击打开 App。如果 macOS 阻止打开，请按下方步骤手动允许。
+1. 双击 DMG，打开安装窗口。
+2. 将左侧的 **Codex Activity Monitor** 图标拖到右侧的 **Applications（应用程序）** 文件夹。
+3. 等待复制完成，推出磁盘映像，再从“应用程序”打开 App。如果 macOS 阻止打开，请按下方步骤手动允许。
+
+如果下载的是 ZIP，解压后将 `Codex Activity Monitor.app` 拖入“应用程序”，再打开安装后的 App。
 
 ### 首次打开时手动允许
 
@@ -88,7 +90,7 @@ Monitor 自己的设置、接入配置备份和时间线数据保存在 `~/Libra
 ### 升级已有安装
 
 1. 等待当前 Codex 任务结束，完全退出 Codex Desktop 和 Monitor。
-2. 解压新版本，将 `/Applications` 中的 App 替换为新版本。
+2. 打开新版本 DMG，将 App 拖到“应用程序”，按访达提示替换旧版，复制完成后推出映像；ZIP 版本先解压再替换。
 3. 先打开 Monitor，等待接入配置完成，再打开 Codex Desktop。
 
 Monitor 的界面、采集器和由 Codex Desktop 启动的桥接进程分别运行。仅退出 Monitor 不会结束已有 Codex 连接中的桥接；替换 App 也不会让该进程自动加载新版代码。新版 Monitor 可以已启动而旧桥接仍在使用，协议兼容时也可能继续显示数据。桥接实现或 App 路径改变后，需要完全退出并重开 Codex 才能完成切换；原样退出再打开同一构建的 Monitor 无需重启 Codex。详情见[升级与移动应用](docs/user-guide.md#updates-or-moving-the-app-have-not-taken-effect)。
@@ -100,7 +102,7 @@ Monitor 的界面、采集器和由 Codex Desktop 启动的桥接进程分别运
 3. 完全退出并重新打开 Codex Desktop，让新进程继承接入配置。
 4. 开始一个本机 Codex 任务，点击菜单栏入口，选择聊天，查看当前轮次、时间线和用量。
 
-观察期间请保持 Monitor 运行。齿轮按钮打开独立设置窗口，也可使用 **Command-,**。未保存过语言选择时，App 按系统首选语言显示：中文（含简繁体系统）使用简体中文，其他语言使用英语。在 **通用** 中可切换 **English／简体中文**，手动选择会保存并优先使用；这里也可调整 **登录时启动**。首次配置默认开启登录启动，macOS 可能要求允许该登录项。对话与工具原文保持原语言。
+观察期间请保持 Monitor 运行。齿轮按钮打开独立设置窗口，也可使用 **Command-,**。未保存过语言选择时，App 按系统首选语言显示：中文（含简繁体系统）使用简体中文，其他语言使用英语。在 **通用** 中可切换 **English／简体中文**，手动选择会保存并优先使用；这里也可调整 **登录时启动**。首次配置默认开启登录启动，macOS 可能要求允许该登录项。对话与工具原文保持原语言。DMG 拖拽引导固定同时显示中英文。
 
 **运行状态** 显示已检测到的组件异常及恢复，**日志** 提供本地诊断记录，支持搜索、筛选、详情和复制。关闭设置窗口不会停止观察；这些检查不能排除所有软件错误。
 
@@ -150,7 +152,7 @@ bin/prepare-standalone
 bin/build-standalone
 ```
 
-产物为 `.local/standalone/Codex Activity Monitor.app` 及同目录下的 ZIP 安装包。App 包含 Python、依赖和分词资源，运行时无需源码目录、另装 Python 或 Xcode。日常使用请先将 App 移入 `/Applications`，再按上方的[首次使用](#首次使用)步骤接入。
+产物为 `.local/standalone/Codex Activity Monitor.app`，以及同目录下的 DMG 和 `SHA256SUMS.txt`。发行安装包只生成 DMG，并直接从 DMG 复制 App 进行隔离验收。App 包含 Python、依赖和分词资源，运行时无需源码目录、另装 Python 或 Xcode。日常使用请先安装到 `/Applications`，再按上方的[首次使用](#首次使用)步骤接入。
 
 当前构建使用 ad-hoc 签名，尚未公证。打包环境、隔离验收与兼容性验证边界见[打包指南](packaging/README.md)。
 

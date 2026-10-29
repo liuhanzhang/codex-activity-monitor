@@ -9,7 +9,7 @@
 - `packaging/app_metadata.py`：统一生成 `SUFeedURL`、`SUDefaultsDomain`、每日检查、禁止自动安装与关闭可选统计等 Info.plist 字段。
 - `packaging/embed_sparkle.py`：嵌入 framework、保留符号链接、arm64 裁剪、内到外签名与第三方许可。
 - `website/updates/releases.json`：已发布发行记录。机器比较构建号，界面显示完整版本；每次发行的构建号必须全局递增。
-- `bin/generate-appcast`：生成稳定与预发布清单，或检查生成结果、验证 GitHub Release 和 arm64 ZIP 存在。
+- `bin/generate-appcast`：生成稳定与预发布清单，或检查生成结果、验证 GitHub Release 和 arm64 DMG／ZIP 存在。
 
 配置的 HTTPS 地址：
 
@@ -30,8 +30,8 @@ Pages 已于 2026-10-28 上线；三个地址（含旧兼容地址）通过无�
 ## 后续发布
 
 1. 在 `pyproject.toml` 更新版本，并递增 `build-number`。已发布的 alpha.2 为构建 `2`，alpha.3 为构建 `3`。构建号可以跳号，但不能复用旧号发布新内容。
-2. 构建与验收 ZIP，确认包内 `CFBundleVersion` 与记录的构建号一致。
-3. 发布 GitHub Release 和 `Codex-Activity-Monitor-{完整版本}-macos-arm64.zip`。
+2. 构建 DMG，检查自动验证记录，并运行 DMG 隔离验收，确认包内 `CFBundleVersion` 与记录的构建号一致。
+3. 发布 GitHub Release，上传 `Codex-Activity-Monitor-{完整版本}-macos-arm64.dmg` 和 `SHA256SUMS.txt`；发行说明使用 DMG 拖拽安装步骤。
 4. 将实际发行追加到 `website/updates/releases.json`，记录完整版本、包内构建号；分类和发布时间通过下一步从 GitHub 同步。两项初始值可先抄取刚发布的 Release，不能从版本后缀推断。
 5. 运行：
 
@@ -42,7 +42,7 @@ Pages 已于 2026-10-28 上线；三个地址（含旧兼容地址）通过无�
 
 6. 提交并推送清单，等待 Pages workflow 成功，最后用旧构建检查新版。
 
-普通构建不会自动发布清单。部署前脚本会拒绝草稿、缺失的 Release／ZIP、重复构建号、非法版本及错误预发布分类；清单没有 `<enclosure>`，客户端也拒绝安装类型的条目。预发布清单包含稳定发行，稳定清单过滤预发布。当前尚无稳定发行，稳定清单刻意为空。版本名称带 `alpha` 可以对应 GitHub 正式 Release；纯数字版本也可以标记为 Pre-release。旧客户端使用的 `appcast-alpha.xml` 保留为预发布清单的兼容副本。
+普通构建不会自动发布清单。部署前脚本会拒绝草稿、缺失的 Release／匹配安装包、重复构建号、非法版本及错误预发布分类；匹配安装包接受 DMG 或旧版 ZIP。清单没有 `<enclosure>`，客户端也拒绝安装类型的条目。预发布清单包含稳定发行，稳定清单过滤预发布。当前尚无稳定发行，稳定清单刻意为空。版本名称带 `alpha` 可以对应 GitHub 正式 Release；纯数字版本也可以标记为 Pre-release。旧客户端使用的 `appcast-alpha.xml` 保留为预发布清单的兼容副本。
 
 ## 密钥与偏好
 

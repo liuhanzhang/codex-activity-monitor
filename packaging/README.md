@@ -18,10 +18,23 @@ Python 依赖约束保存在 `requirements-build.lock`，项目直接依赖仍�
 默认输出：
 
 - `.local/standalone/Codex Activity Monitor.app`
-- `.local/standalone/Codex-Activity-Monitor-0.1.0-alpha.3-macos-arm64.zip`
-- `.local/standalone/build-result.json`：构建身份、ZIP SHA-256、体积与逐个二进制检查结果。
+- `.local/standalone/Codex-Activity-Monitor-0.1.0-alpha.3-macos-arm64.dmg`：带中英文拖拽引导的只读安装映像。
+- `.local/standalone/SHA256SUMS.txt`：DMG 的 SHA-256。
+- `.local/standalone/build-result.json`：构建身份、DMG SHA-256、体积与逐个二进制检查结果。
 
-发布版本由 `pyproject.toml` 中的项目版本和 `[tool.codex-activity-monitor].version-suffix` 组合而成，当前为 `0.1.0-alpha.3`；`version-suffix` 仅影响显示名称；GitHub 发布类型由独立的 `release-prerelease` 布尔值指定，两者不推断也不强制一致。ZIP 文件名使用 `Codex-Activity-Monitor-{发布版本}-macos-arm64.zip`，tag 使用 `v{发布版本}`，构建清单与结果也记录完整发布版本。App 的数字版本保持为 `0.1.0`。Alpha 阶段与签名、公证状态分别记录。
+DMG 使用固定版本 `dmgbuild` 生成 Finder 布局，无需控制 Finder 或 AppleScript 授权。背景由 `packaging/dmg_background.swift` 渲染为 1x／2x 图片，包含安装及升级提示；映像只展示 App 和指向 `/Applications` 的文件夹快捷方式。构建后自动验证映像校验和、只读状态、快捷方式、图标位置、App 逐文件内容与符号链接，并将 App 复制到一次性目录复核签名。构建和验收不会安装或启动 App。镜像创建与挂载需要正常的 macOS 磁盘服务；在工具沙箱内运行时可能需要对打包命令单独放行。
+
+拖拽窗口使用静态背景，固定同时显示中英文，不按打包机器或用户系统选择单一语言。App 自身在没有保存语言选择时按系统首选语言初始化：中文使用简体中文，其余使用英语；明确保存的语言优先。打包不对 App 设置隐藏扩展名的 FinderInfo 属性，以保持严格签名校验通过。
+
+已有独立 App 时，也可以只重做 DMG：
+
+```sh
+bin/build-dmg '.local/standalone/Codex Activity Monitor.app'
+```
+
+默认输出与 App 同目录，版本取自 App 本身，并生成同名 JSON 验证记录及 `SHA256SUMS.txt`。可用 `--output /绝对路径/installer.dmg` 指定输出。开发虚拟环境也可安装 `packaging/requirements-build.txt` 中的打包依赖后运行该命令。发行安装包只生成 DMG。DMG 是拖拽安装引导；签名、公证和运行要求与其中的 App 相同。
+
+发布版本由 `pyproject.toml` 中的项目版本和 `[tool.codex-activity-monitor].version-suffix` 组合而成，当前为 `0.1.0-alpha.3`；`version-suffix` 仅影响显示名称；GitHub 发布类型由独立的 `release-prerelease` 布尔值指定，两者不推断也不强制一致。安装包文件名使用 `Codex-Activity-Monitor-{发布版本}-macos-arm64.dmg`，tag 使用 `v{发布版本}`，构建清单与结果也记录完整发布版本。App 的数字版本保持为 `0.1.0`。Alpha 阶段与签名、公证状态分别记录。
 
 外层 App 的包标识固定为 `com.liuhanzhang.codexactivitymonitor`，后端包标识为 `com.liuhanzhang.codexactivitymonitor.backend`，开发版与后续正式版沿用同一身份。本地 GUI 构建使用相同的主 App 标识，Preview 构建追加 `.preview` 后缀。
 
@@ -35,11 +48,11 @@ SwiftPM 可能为较低部署目标加入构建机器的 Swift 兼容库搜索�
 
 ```sh
 .local/packaging/portable-venv/bin/python packaging/verify_app.py \
-  .local/standalone/Codex-Activity-Monitor-0.1.0-alpha.3-macos-arm64.zip \
+  .local/standalone/Codex-Activity-Monitor-0.1.0-alpha.3-macos-arm64.dmg \
   --result .local/standalone/acceptance-result.json --gui
 ```
 
-macOS 不允许嵌套调用 sandbox-exec，所以在 Codex 工具沙箱中运行时需要对这条验收命令单独放行。脚本先解压 ZIP 到 `/private/tmp/` 中包含中文和空格的路径，再给被测子进程施加禁止源码目录、Homebrew、构建 Python、当前 Xcode 工具链、用户 Codex 历史、外部 tokenizer 缓存及 IP 网络访问的 policy。用可达的本地临时 HTTP 服务作为负对照，确认被测进程确实不能联网。
+macOS 不允许嵌套调用 sandbox-exec，所以在 Codex 工具沙箱中运行时需要对这条验收命令单独放行。脚本先只读挂载 DMG，将 App 复制到 `/private/tmp/` 中包含中文和空格的路径并推出映像，再给被测子进程施加禁止源码目录、Homebrew、构建 Python、当前 Xcode 工具链、用户 Codex 历史、外部 tokenizer 缓存及 IP 网络访问的 policy。用可达的本地临时 HTTP 服务作为负对照，确认被测进程确实不能联网。
 
 所有接入操作使用显式 disposable profile（FileEnvironment / ProfileServices），不调用日常 launchctl，不读取真实会话；假 CLI 回显合成事件与二进制内容并返回 17。GUI 也仅通过 `--test-profile` 启动。测试后退出 GUI、停止测试 collector 并清理临时目录。
 
