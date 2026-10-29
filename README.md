@@ -5,7 +5,7 @@
   <h1>Codex Activity Monitor</h1>
   <p>A macOS menu bar monitor for Codex Desktop with token output rates, session statistics, and agent execution trajectories, similar to DeepSeek Harness’s statistics and trajectory views.</p>
   <p>
-    <a href="https://github.com/LiuHanzhang/codex-activity-monitor/releases#release-v0.1.0-alpha.3"><img src="https://img.shields.io/badge/release-v0.1.0--alpha.3-B7791F?style=flat-square" alt="Release v0.1.0-alpha.3"></a>
+    <a href="https://github.com/LiuHanzhang/codex-activity-monitor/releases/tag/v0.1.0-alpha.4"><img src="https://img.shields.io/badge/release-v0.1.0--alpha.4-B7791F?style=flat-square" alt="Release v0.1.0-alpha.4"></a>
     <img src="https://img.shields.io/badge/macOS-14%2B-black?style=flat-square&amp;logo=apple" alt="macOS 14+">
     <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-3B7A57?style=flat-square" alt="MIT license"></a>
   </p>
