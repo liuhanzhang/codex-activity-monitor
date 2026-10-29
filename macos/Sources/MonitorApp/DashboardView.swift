@@ -35,10 +35,6 @@ struct DashboardView: LocalizedView {
                     }.padding(.horizontal, 14).padding(.bottom, 8)
                 }
                 notices
-                if let release = store.updates.available {
-                    UpdateAvailableView(release: release, language: language, onOpen: store.updates.check)
-                        .font(.system(size: 12)).padding(.horizontal, 14).padding(.bottom, 10)
-                }
             }
             .onGeometryChange(for: CGFloat.self) { $0.size.height } action: { topHeight = $0 }
             Divider()
@@ -172,15 +168,19 @@ struct DashboardView: LocalizedView {
     }
 
     private var settings: some View {
-        Button { store.onSettingsRequested?() } label: {
-            Image(systemName: "gearshape").font(.system(size: 13))
-                .overlay(alignment: .topTrailing) {
-                    if store.updates.available != nil {
-                        Circle().fill(.tint).frame(width: 5, height: 5).offset(x: 3, y: -3)
-                    }
-                }
-        }.buttonStyle(.borderless).help(L("设置")).accessibilityLabel(L("设置"))
-            .accessibilityIdentifier("monitor.settings")
+        HStack(spacing: 10) {
+            if let release = store.updates.available {
+                Button { store.onUpdatesRequested?() } label: { UpdateIndicator() }
+                    .buttonStyle(.borderless)
+                    .help(String(format: L("有新版本 %@"), release.version))
+                    .accessibilityLabel(String(format: L("有新版本 %@"), release.version))
+                    .accessibilityIdentifier("monitor.updates.openSettings")
+            }
+            Button { store.onSettingsRequested?() } label: {
+                Image(systemName: "gearshape").font(.system(size: 13))
+            }.buttonStyle(.borderless).help(L("设置")).accessibilityLabel(L("设置"))
+                .accessibilityIdentifier("monitor.settings")
+        }
     }
 
     private var footer: some View {

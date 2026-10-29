@@ -96,7 +96,7 @@ Keep Monitor running while observing. The gear button opens a separate Settings 
 
 **Runtime Status** shows detected component problems and recovery; **Logs** provides local diagnostic records with search, filters, details, and copy. Closing Settings keeps observation running. These checks cannot rule out every software error.
 
-**About** shows the full version, build number, project links, and licenses. Sparkle checks the static update feed daily by default. A newer version appears in the overview and About; choose **View Update** to open its update window and continue to the release page for a manual download. Disable automatic checks or check manually in About. Update checks do not upload chats, logs, or usage records.
+**About** shows the full version, build number, project links, and licenses. Sparkle checks the static update feed daily by default. When an update is available, a green upward arrow appears beside Settings in the overview and at the right of the About sidebar row. Click the overview arrow to open About → Software Updates; choose **View Update** there to open the standard update window and continue to the release page for a manual download. The indicator survives restarts and choosing Remind Me Later; upgrading or explicitly skipping that version clears it. Disable automatic checks or check manually in About. Update checks do not upload chats, logs, or usage records.
 
 ## Privacy and compatibility
 

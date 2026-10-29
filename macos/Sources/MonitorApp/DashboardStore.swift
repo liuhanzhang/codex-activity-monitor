@@ -30,6 +30,7 @@ final class DashboardStore {
     var diagnosticPulse = 0
     @ObservationIgnored private(set) var recorder: DiagnosticRecorder!
     var onSettingsRequested: (() -> Void)?
+    var onUpdatesRequested: (() -> Void)?
     private(set) var language: MonitorLanguage = .chinese
     private var operationFailure: PresentationFailure?
     var operationError: String? {

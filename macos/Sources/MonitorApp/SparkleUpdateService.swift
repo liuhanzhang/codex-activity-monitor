@@ -79,6 +79,12 @@ import Sparkle
         onResult?(.failed)
     }
 
+    func updater(_ updater: SPUUpdater, userDidMake choice: SPUUserUpdateChoice, forUpdate item: SUAppcastItem,
+                 state: SPUUserUpdateState) {
+        guard !stopped else { return }
+        if choice == .skip { onResult?(.skipped(item.versionString)) }
+    }
+
     nonisolated var supportsGentleScheduledUpdateReminders: Bool { true }
 
     nonisolated func standardUserDriverRequestsVersionDisplayer() -> (any SUVersionDisplay)? { versionDisplay }
@@ -98,13 +104,13 @@ import Sparkle
     nonisolated func standardUserDriverWillFinishUpdateSession() {
         MainActor.assumeIsolated {
             guard !stopped else { return }
-            onResult?(.dismissed)
+            onResult?(.sessionEnded)
         }
     }
 
     private func release(_ item: SUAppcastItem) -> UpdateRelease? {
         guard let url = item.infoURL else { return nil }
-        return UpdateRelease(version: item.displayVersionString, pageURL: url)
+        return UpdateRelease(version: item.displayVersionString, build: item.versionString, pageURL: url)
     }
 }
 

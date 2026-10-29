@@ -26,7 +26,7 @@ import Testing
 }
 
 private func sampleRelease() throws -> UpdateRelease {
-    try #require(UpdateRelease(version: "0.1.0-alpha.3", pageURL: URL(string:
+    try #require(UpdateRelease(version: "0.1.0-alpha.3", build: "3", pageURL: URL(string:
         "https://github.com/LiuHanzhang/codex-activity-monitor/releases/tag/v0.1.0-alpha.3")!))
 }
 
@@ -43,8 +43,10 @@ private func sampleRelease() throws -> UpdateRelease {
     #expect(store.available == nil && store.statusKey == "当前已是最新版本。")
     #expect(!store.checking && store.canCheck)
     service.complete(.available(try sampleRelease()))
-    service.complete(.dismissed)
-    #expect(store.available == nil && store.canCheck)
+    service.complete(.sessionEnded)
+    #expect(store.available != nil && store.canCheck)
+    service.complete(.skipped("3"))
+    #expect(store.available == nil)
 }
 
 @Test @MainActor func manualChecksRemainAvailableWhenAutomaticChecksAreDisabled() {
@@ -119,7 +121,7 @@ private func sampleRelease() throws -> UpdateRelease {
                     "https://github.com/other/repo/releases/tag/v1.0.0",
                     "https://github.com/LiuHanzhang/codex-activity-monitor/issues/1",
                     "https://user@github.com/LiuHanzhang/codex-activity-monitor/releases/tag/v1.0.0"] {
-        #expect(UpdateRelease(version: "1.0.0", pageURL: URL(string: address)!) == nil)
+        #expect(UpdateRelease(version: "1.0.0", build: "42", pageURL: URL(string: address)!) == nil)
     }
 }
 
@@ -170,4 +172,95 @@ private func sampleRelease() throws -> UpdateRelease {
     UpdateStore.removePreferences(bundle: bundle)
     #expect(defaults.object(forKey: "SUEnableAutomaticChecks") == nil)
     #expect(other.string(forKey: "fixture") == "keep")
+}
+
+@Test @MainActor func updateIndicatorSurvivesSessionEndRestartAndNetworkFailureButClearsAfterUpgrade() throws {
+    let domain = "com.liuhanzhang.codexactivitymonitor.test." + UUID().uuidString
+    let defaults = try #require(UserDefaults(suiteName: domain))
+    defer { defaults.removePersistentDomain(forName: domain) }
+    let feed = "https://liuhanzhang.github.io/codex-activity-monitor/updates/appcast-prerelease.xml"
+    let firstService = UpdateFixture()
+    let first = UpdateStore(enabled: true, service: firstService, defaults: defaults, currentBuild: "2", feedURL: feed)
+    first.start()
+    firstService.complete(.available(try sampleRelease()))
+    firstService.complete(.sessionEnded)
+    #expect(first.available?.build == "3")
+    first.stop()
+
+    let restoredService = UpdateFixture()
+    let restored = UpdateStore(enabled: true, service: restoredService, defaults: defaults, currentBuild: "2", feedURL: feed)
+    restored.start()
+    #expect(restored.available == first.available)
+    #expect(restoredService.checks == 0) // Restore the notice without bypassing SDK scheduling.
+    restoredService.complete(.failed)
+    #expect(restored.available?.build == "3" && restored.statusKey == nil)
+    restored.stop()
+
+    let upgraded = UpdateStore(enabled: true, service: UpdateFixture(), defaults: defaults, currentBuild: "3", feedURL: feed)
+    upgraded.start()
+    #expect(upgraded.available == nil)
+    #expect(defaults.data(forKey: "CAMAvailableUpdate") == nil)
+    upgraded.stop()
+}
+
+@Test @MainActor func explicitlySkippedVersionDoesNotRestoreButManualCheckCanFindItAgain() throws {
+    let domain = "com.liuhanzhang.codexactivitymonitor.test." + UUID().uuidString
+    let defaults = try #require(UserDefaults(suiteName: domain))
+    defer { defaults.removePersistentDomain(forName: domain) }
+    let feed = "fixture-prerelease-feed"
+    let service = UpdateFixture()
+    let store = UpdateStore(enabled: true, service: service, defaults: defaults, currentBuild: "2", feedURL: feed)
+    store.start(); service.complete(.available(try sampleRelease()))
+    service.complete(.skipped("1"))
+    #expect(store.available != nil)
+    service.complete(.skipped("3")); service.complete(.sessionEnded)
+    #expect(store.available == nil)
+    store.stop()
+    let restored = UpdateStore(enabled: true, service: UpdateFixture(), defaults: defaults, currentBuild: "2", feedURL: feed)
+    restored.start()
+    #expect(restored.available == nil)
+    restored.stop()
+    store.start(); store.check(); service.complete(.available(try sampleRelease()))
+    #expect(store.available?.build == "3")
+    store.stop()
+}
+
+@Test @MainActor func cachedUpdateCannotCrossFeedsOrBypassLinkValidation() throws {
+    let domain = "com.liuhanzhang.codexactivitymonitor.test." + UUID().uuidString
+    let defaults = try #require(UserDefaults(suiteName: domain))
+    defer { defaults.removePersistentDomain(forName: domain) }
+    let service = UpdateFixture()
+    let store = UpdateStore(enabled: true, service: service, defaults: defaults, currentBuild: "2", feedURL: "prerelease")
+    store.start(); service.complete(.available(try sampleRelease())); store.stop()
+    let changed = UpdateStore(enabled: true, service: UpdateFixture(), defaults: defaults, currentBuild: "2", feedURL: "stable")
+    changed.start()
+    #expect(changed.available == nil && defaults.data(forKey: "CAMAvailableUpdate") == nil)
+    changed.stop()
+    for payload in [Data("broken".utf8), try JSONSerialization.data(withJSONObject: [
+        "version": "99", "build": "99", "feedURL": "stable", "pageURL": "https://evil.example/update"
+    ])] {
+        defaults.set(payload, forKey: "CAMAvailableUpdate")
+        let invalid = UpdateStore(enabled: true, service: UpdateFixture(), defaults: defaults, currentBuild: "2", feedURL: "stable")
+        invalid.start()
+        #expect(invalid.available == nil && defaults.data(forKey: "CAMAvailableUpdate") == nil)
+        invalid.stop()
+    }
+}
+
+@Test @MainActor func manualFailureRemainsVisibleWhenSDKSignalsIdleBeforeReportingError() {
+    let service = UpdateFixture(), store = UpdateStore(enabled: true, service: service)
+    store.start(); store.check()
+    service.checking = false; service.canCheck = true; service.onChange?()
+    service.complete(.failed)
+    #expect(store.statusKey == "暂时无法检查更新，请检查网络后重试。")
+}
+
+@Test @MainActor func updateEntrySelectsAboutAndIssuesAFreshScrollRequestEveryTime() throws {
+    let navigation = SettingsNavigation()
+    navigation.page = .logs
+    navigation.showSoftwareUpdates()
+    #expect(navigation.page == .about)
+    let first = try #require(navigation.updateFocusRequest)
+    navigation.showSoftwareUpdates()
+    #expect(navigation.updateFocusRequest != first)
 }

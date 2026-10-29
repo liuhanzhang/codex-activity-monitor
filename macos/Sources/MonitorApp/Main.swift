@@ -84,6 +84,9 @@ enum MonitorApplication {
             store.onSettingsRequested = { [weak self] in
                 self?.showSettings(nil)
             }
+            store.onUpdatesRequested = { [weak self] in
+                self?.showSoftwareUpdates()
+            }
             installApplicationMenu()
             if isPreview {
                 store.showRecent = arguments.contains("--preview-recent")
@@ -221,6 +224,13 @@ enum MonitorApplication {
         panel?.close(reason: "settings")
         if settingsWindow == nil { settingsWindow = SettingsWindowController(store: store) }
         settingsWindow?.show()
+    }
+
+    private func showSoftwareUpdates() {
+        guard let store else { return }
+        panel?.close(reason: "settings-updates")
+        if settingsWindow == nil { settingsWindow = SettingsWindowController(store: store) }
+        settingsWindow?.showSoftwareUpdates()
     }
 
     private func installApplicationMenu() {

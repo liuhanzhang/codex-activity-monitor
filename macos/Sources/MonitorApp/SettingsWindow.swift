@@ -2,6 +2,7 @@ import AppKit
 import SwiftUI
 import MonitorModel
 import ServiceManagement
+import Observation
 
 enum SettingsPage: String, CaseIterable, Identifiable {
     case general, health, logs, about
@@ -10,8 +11,19 @@ enum SettingsPage: String, CaseIterable, Identifiable {
     var symbol: String { switch self { case .general: "gearshape"; case .health: "waveform.path.ecg"; case .logs: "list.bullet.rectangle"; case .about: "info.circle" } }
 }
 
+@MainActor @Observable final class SettingsNavigation {
+    var page: SettingsPage? = .general
+    private(set) var updateFocusRequest: UUID?
+
+    func showSoftwareUpdates() {
+        page = .about
+        updateFocusRequest = UUID()
+    }
+}
+
 @MainActor final class SettingsWindowController: NSWindowController {
     private let store: DashboardStore
+    private let navigation = SettingsNavigation()
     init(store: DashboardStore) {
         self.store = store
         let window = ActivityWindow(contentRect: NSRect(x: 0, y: 0, width: 760, height: 560),
@@ -20,7 +32,7 @@ enum SettingsPage: String, CaseIterable, Identifiable {
         window.contentMinSize = NSSize(width: 680, height: 460)
         window.isReleasedWhenClosed = false
         super.init(window: window)
-        let host = NSHostingController(rootView: SettingsView(store: store))
+        let host = NSHostingController(rootView: SettingsView(store: store, navigation: navigation))
         host.sizingOptions = []
         window.contentViewController = host
         if !window.setFrameUsingName(store.readOnly ? "SettingsPreview" : "Settings") { window.center() }
@@ -30,29 +42,38 @@ enum SettingsPage: String, CaseIterable, Identifiable {
     required init?(coder: NSCoder) { nil }
     func updateLanguage() { window?.title = localizedText("设置", language: store.language) }
     func show() { window?.makeKeyAndOrderFront(nil); NSApplication.shared.activate(ignoringOtherApps: true) }
+    func showSoftwareUpdates() { navigation.showSoftwareUpdates(); show() }
 }
 
 struct SettingsView: LocalizedView {
     @Bindable var store: DashboardStore
+    @Bindable var navigation: SettingsNavigation
     var language: MonitorLanguage { store.language }
-    @State private var page: SettingsPage? = .general
     @State private var diagnostics = DiagnosticsStore()
     @State private var uninstall = false
 
     var body: some View {
         NavigationSplitView {
-            List(SettingsPage.allCases, selection: $page) { item in
-                Label(L(item.title), systemImage: item.symbol).tag(item)
+            List(SettingsPage.allCases, selection: $navigation.page) { item in
+                HStack {
+                    Label(L(item.title), systemImage: item.symbol)
+                    Spacer(minLength: 8)
+                    if item == .about, let release = store.updates.available {
+                        UpdateIndicator().help(String(format: L("有新版本 %@"), release.version))
+                    }
+                }.tag(item)
+                    .accessibilityValue(item == .about ? store.updates.available.map { String(format: L("有新版本 %@"), $0.version) } ?? "" : "")
                     .accessibilityIdentifier("monitor.settings.page." + item.rawValue)
             }.navigationSplitViewColumnWidth(min: 150, ideal: 170, max: 210)
                 .toolbar(removing: .sidebarToggle)
         } detail: {
             Group {
-                switch page ?? .general {
+                switch navigation.page ?? .general {
                 case .general: general
                 case .health: health
                 case .logs: DiagnosticLogView(store: store, diagnostics: diagnostics)
-                case .about: AboutSettingsView(language: language, updates: store.updates)
+                case .about: AboutSettingsView(language: language, updates: store.updates,
+                                              updateFocusRequest: navigation.updateFocusRequest)
                 }
             }
             .navigationTitle(L("设置"))
@@ -124,7 +145,7 @@ struct SettingsView: LocalizedView {
                         }
                         Text(component.summary(language)).foregroundStyle(.secondary)
                         if ["degraded", "unavailable"].contains(component.state) {
-                            Button(L("查看相关日志")) { diagnostics.source = component.component; page = .logs }
+                            Button(L("查看相关日志")) { diagnostics.source = component.component; navigation.page = .logs }
                                 .buttonStyle(.link)
                         }
                     }.padding(.vertical, 3)

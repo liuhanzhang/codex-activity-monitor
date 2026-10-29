@@ -342,6 +342,7 @@
 "构建号" = "Build";
 "这是只读预览构建。" = "This is a read-only preview build.";
 "这是本地源码构建。" = "This app was built from local source.";
+"这是模拟更新演示。" = "This is a simulated update demo.";
 "项目" = "Project";
 "项目主页" = "Project Homepage";
 "发行说明" = "Release Notes";

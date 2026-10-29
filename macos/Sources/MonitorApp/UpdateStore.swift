@@ -3,20 +3,23 @@ import Observation
 
 struct UpdateRelease: Equatable, Sendable {
     let version: String
+    let build: String
     let pageURL: URL
     static let projectURL = URL(string: "https://github.com/LiuHanzhang/codex-activity-monitor")!
 
-    init?(version: String, pageURL: URL) {
-        guard pageURL.scheme == "https", pageURL.host?.lowercased() == "github.com",
+    init?(version: String, build: String, pageURL: URL) {
+        guard !version.isEmpty, UInt64(build).map({ $0 > 0 }) == true,
+              pageURL.scheme == "https", pageURL.host?.lowercased() == "github.com",
               pageURL.user == nil, pageURL.password == nil, pageURL.port == nil,
               pageURL.path.hasPrefix(Self.projectURL.path + "/releases/tag/") else { return nil }
         self.version = version
+        self.build = build
         self.pageURL = pageURL
     }
 }
 
 enum UpdateResult {
-    case available(UpdateRelease), noUpdate, incompatible, failed, dismissed
+    case available(UpdateRelease), noUpdate, incompatible, failed, skipped(String), sessionEnded
 }
 
 /// A narrow boundary for synthetic tests; Sparkle owns scheduling, comparison and preferences.
@@ -45,13 +48,26 @@ enum UpdateResult {
     @ObservationIgnored private var service: (any UpdateServicing)?
     private var started = false
     private var manual = false
+    private let currentBuild: String?
+    private let feedURL: String?
+    private static let availableKey = "CAMAvailableUpdate"
+    private struct SavedRelease: Codable {
+        let version: String
+        let build: String
+        let pageURL: URL
+        let feedURL: String
+    }
 
     init(root: URL? = nil, enabled: Bool = false, service: (any UpdateServicing)? = nil,
-         defaults: UserDefaults? = nil) {
+         defaults: UserDefaults? = nil,
+         currentBuild: String? = Bundle.main.object(forInfoDictionaryKey: "CFBundleVersion") as? String,
+         feedURL: String? = Bundle.main.object(forInfoDictionaryKey: "SUFeedURL") as? String) {
         self.enabled = enabled
         self.root = root
         self.service = enabled ? service : nil
         self.defaults = enabled ? defaults ?? Self.preferenceDomain.flatMap(UserDefaults.init(suiteName:)) : nil
+        self.currentBuild = currentBuild
+        self.feedURL = feedURL
     }
 
     static var preferenceDomain: String? { Bundle.main.object(forInfoDictionaryKey: "SUDefaultsDomain") as? String }
@@ -64,6 +80,7 @@ enum UpdateResult {
 
     func start() {
         guard enabled, !started else { return }
+        restoreAvailableUpdate()
         let service = service ?? SparkleUpdateService()
         self.service = service
         service.onChange = { [weak self] in self?.synchronize() }
@@ -114,17 +131,47 @@ enum UpdateResult {
         canCheck = service.canCheck
         checking = service.checking
         lastChecked = service.lastChecked
-        if !checking { manual = false }
+    }
+
+    private func saveAvailableUpdate() {
+        guard let release = available, let feedURL,
+              let data = try? JSONEncoder().encode(SavedRelease(version: release.version, build: release.build,
+                                                              pageURL: release.pageURL, feedURL: feedURL)) else {
+            defaults?.removeObject(forKey: Self.availableKey)
+            return
+        }
+        defaults?.set(data, forKey: Self.availableKey)
+    }
+
+    private func restoreAvailableUpdate() {
+        guard let data = defaults?.data(forKey: Self.availableKey) else { return }
+        guard let saved = try? JSONDecoder().decode(SavedRelease.self, from: data), saved.feedURL == feedURL,
+              let current = currentBuild.flatMap(UInt64.init), let candidate = UInt64(saved.build), candidate > current,
+              let release = UpdateRelease(version: saved.version, build: saved.build, pageURL: saved.pageURL) else {
+            defaults?.removeObject(forKey: Self.availableKey)
+            available = nil
+            return
+        }
+        available = release
     }
 
     private func receive(_ result: UpdateResult) {
         switch result {
-        case .available(let release): available = release; statusKey = nil
-        case .noUpdate: available = nil; statusKey = "当前已是最新版本。"
-        case .incompatible: available = nil; statusKey = "当前没有适用于这台 Mac 的更新。"
-        case .dismissed: available = nil
+        case .available(let release):
+            available = release; statusKey = nil; saveAvailableUpdate()
+        case .noUpdate:
+            available = nil; saveAvailableUpdate(); statusKey = "当前已是最新版本。"; manual = false
+        case .incompatible:
+            available = nil; saveAvailableUpdate(); statusKey = "当前没有适用于这台 Mac 的更新。"; manual = false
+        case .skipped(let build):
+            if available?.build == build { available = nil; saveAvailableUpdate() }
+        case .sessionEnded:
+            // Closing the SDK window or opening its web link does not install
+            // the update. Keep the indicator until upgraded or explicitly skipped.
+            manual = false
         case .failed:
             if manual { statusKey = "暂时无法检查更新，请检查网络后重试。" }
+            manual = false
         }
         synchronize()
     }
