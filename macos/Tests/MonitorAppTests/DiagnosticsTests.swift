@@ -48,11 +48,21 @@ private func management(_ configuration: String, runtime: String = "awaiting_han
     store.management = try management("enabled", restart: "required")
     store.fresh = true
     let object: [String: Any] = ["schema_version": 1, "threads": [], "backends": ["b": ["connected": true,
-            "configuration_revision": "revision-example", "configuration_matches": true]]]
+            "configuration_revision": "revision-example", "configuration_matches": true,
+            "implementation": ["modules": ["observer_permit": "current"]]]]]
     store.snapshot = try Snapshot.decode(JSONSerialization.data(withJSONObject: object))
     #expect(store.integrationStatusText.contains("部分接入已生效"))
     #expect(store.integrationStatusText.contains("重开 Codex"))
+    #expect(store.connectionDetail == store.integrationStatusText)
     #expect(store.diagnosticComponents.contains { $0.component == "integration" && $0.state == "pending" })
+}
+
+@Test @MainActor func pendingUpgradeRestartIsVisibleBeforeAnyBridgeConnects() throws {
+    let store = dashboard()
+    store.management = try management("enabled", runtime: "waiting_for_codex", restart: "required")
+    #expect(!store.bridgeNeedsRestart)
+    #expect(store.connectionDetail == store.integrationStatusText)
+    #expect(store.connectionDetail?.contains("完全退出并重新打开 Codex") == true)
 }
 
 @Test @MainActor func restoredConfigurationAndPendingRestartRemainSeparate() throws {

@@ -476,6 +476,7 @@ final class DashboardStore {
 
     var connectionDetail: String? {
         if bridgeNeedsRestart { return L("旧接入仍在运行；任务结束后重开 Codex，以启用退出暂停采集。") }
+        if management?.configured == true, management?.integration_status?.restart == "required" { return integrationStatusText }
         if !readOnly, let management, !management.configured { return management.localizedLabel(language) }
         if !fresh { return connectionLabel }
         if let notice = snapshot?.observationNotice { return L(notice.rawValue) }

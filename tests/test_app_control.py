@@ -6,6 +6,7 @@ import shutil
 import subprocess
 import sys
 import tempfile
+from types import SimpleNamespace
 import unittest
 from unittest.mock import patch
 
@@ -79,6 +80,17 @@ class AppControlTests(unittest.TestCase):
     def test_status_does_not_create_data(self):
         self.assertEqual(self.control.status()['state'], 'new')
         self.assertFalse(self.control.root.exists())
+
+    def test_read_only_bundle_cannot_install_temporary_integration_paths(self):
+        self.environment.values[KEYS[0]] = '/original-cli'
+        with patch('codex_activity_monitor.app_control.is_frozen', return_value=True), \
+             patch('codex_activity_monitor.app_control.os.statvfs',
+                   return_value=SimpleNamespace(f_flag=os.ST_RDONLY)):
+            with self.assertRaises(ControlError) as failure:
+                self.configure()
+        self.assertEqual(failure.exception.code, 'app_install_required')
+        self.assertFalse(self.control.root.exists())
+        self.assertEqual(self.environment.values, {KEYS[0]: '/original-cli'})
 
     def test_fresh_gui_installation_and_terminal_reader_share_default_runtime(self):
         from codex_activity_monitor.runtime import default_runtime, runtime_dir

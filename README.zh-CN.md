@@ -85,6 +85,14 @@ Monitor 自己的设置、接入配置备份和时间线数据保存在 `~/Libra
 
 详细说明见 [Apple 官方指引](https://support.apple.com/zh-cn/102445)。
 
+### 升级已有安装
+
+1. 等待当前 Codex 任务结束，完全退出 Codex Desktop 和 Monitor。
+2. 解压新版本，将 `/Applications` 中的 App 替换为新版本。
+3. 先打开 Monitor，等待接入配置完成，再打开 Codex Desktop。
+
+Monitor 的界面、采集器和由 Codex Desktop 启动的桥接进程分别运行。仅退出 Monitor 不会结束已有 Codex 连接中的桥接；替换 App 也不会让该进程自动加载新版代码。新版 Monitor 可以已启动而旧桥接仍在使用，协议兼容时也可能继续显示数据。桥接实现或 App 路径改变后，需要完全退出并重开 Codex 才能完成切换；原样退出再打开同一构建的 Monitor 无需重启 Codex。详情见[升级与移动应用](docs/user-guide.md#updates-or-moving-the-app-have-not-taken-effect)。
+
 ## 首次使用
 
 1. 等待正在执行的 Codex 任务结束。

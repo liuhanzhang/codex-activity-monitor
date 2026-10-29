@@ -16,7 +16,7 @@ import time
 import uuid
 
 from .events import decode_log, filter_event, BLOCKING_REQUESTS
-from .runtime import REAL_CLI
+from .runtime import REAL_CLI, bridge_identity
 from .observer_permit import PermitExchange
 
 TRACE_FILTER='warn,codex_api::sse=trace,tungstenite::protocol=trace,tungstenite::protocol::frame=off'
@@ -57,9 +57,8 @@ def observes_stdio(args):
 class Observer:
     def __init__(self,runtime,backend,home,cli,queue_size=128):
         self.runtime,self.backend=runtime,backend
-        from .runtime import source_identity
         self.info={'type':'bridge/started','home':home,'cli':str(cli),'bridge_pid':os.getpid(),
-                   'implementation':source_identity('bridge','observer_permit','events','usage','tool_labels','runtime','i18n','messages_zh_cn')}
+                   'implementation':bridge_identity()}
         from .integration_status import startup_evidence
         self.info.update(startup_evidence())
         self.packets=queue.Queue(maxsize=queue_size)

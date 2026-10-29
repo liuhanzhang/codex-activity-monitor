@@ -123,7 +123,11 @@ Only source content that Codex exposes and the monitor can read is available. So
 
 ### Updates or moving the app have not taken effect
 
-To move an already configured app, finish tasks and quit both Codex and Monitor. Move the app, open Monitor from its new location, then reopen Codex Desktop. For the same macOS user, app locations and the daily source-built GUI share settings and data under `~/Library/Application Support/CodexActivityMonitor/`; no data migration is needed. A source build still depends on its original checkout and virtual environment.
+For an upgrade, finish tasks and fully quit both Codex Desktop and Monitor before replacing the app in `/Applications`. Open Monitor first, let configuration finish, then reopen Codex Desktop. Use the same order when moving an already configured app. For the same macOS user, app locations and the daily source-built GUI share settings and data under `~/Library/Application Support/CodexActivityMonitor/`; no data migration is needed. A source build still depends on its original checkout and virtual environment.
+
+The UI, collector, and bridge update separately. The bridge forwards a live Codex connection and is owned by Codex Desktop, so quitting Monitor stops observation without ending that connection. A compatible old bridge can reconnect to the new collector, but it keeps its previously loaded code and startup configuration until Codex exits. The new app starting, or displaying data, does not establish that its bridge is in use. A changed bridge implementation or app location therefore requires a Codex restart to complete the switch; reopening an unchanged Monitor does not.
+
+Install the app before enabling integration. Bundled apps on read-only volumes, including App Translocation mounts and disk images, cannot install integration. A bridge launched from a temporary mount can keep it busy after Monitor quits, causing a later launch to fail with `-47` / `Resource busy`. If an older installation has reached this state, finish tasks, fully quit Codex Desktop and Monitor, then open the installed app in `/Applications` before reopening Codex. The monitor does not terminate active Codex connections to release a mount.
 
 If an update or move has not taken effect, check **Settings → General → Codex** from the app's current location and use **Reconfigure Integration** if offered. Finish tasks and fully restart Codex Desktop when prompted so its new wrappers use the updated integration. **Runtime Status** and **Logs** provide additional evidence if reconnection fails.
 

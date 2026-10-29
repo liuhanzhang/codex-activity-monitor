@@ -47,6 +47,8 @@ macOS 不允许嵌套调用 sandbox-exec，所以在 Codex 工具沙箱中运行
 
 目前是 ad-hoc 签名的 Alpha 预发布版。代码签名验证通过不代表已通过 Gatekeeper 的下载安装流程，也不代表已公证。朋友仍需安装 Codex Desktop；默认原版 CLI 路径与开发构建一致，非默认安装路径尚需单独处理。安装、首次手动允许、真实 Desktop 接入、macOS 14 实机与自然长期使用不能由上述合成验证代替。macOS 14 兼容性目前以编译目标、包声明和逐个 Mach-O 检查为证据，旧系统实际运行仍待验收。
 
+升级前须等待任务结束，并完全退出 Codex Desktop 和 Monitor，再替换 `/Applications` 中的 App；先打开 Monitor 完成配置，再打开 Codex。GUI 退出只停止其观测会话与采集器，不结束 Desktop 持有的 bridge。只读卷上的独立 App（含 App Translocation 和磁盘映像）在写入接入配置前即被拒绝，以免将临时挂载路径写入长期 launcher。桥接代码或 App 路径变化后，接入状态会保留重启要求；旧版缺少配置修订证据的存活 bridge 也不能算作当前接入已生效。
+
 后续构建会将项目 [MIT 许可证](../LICENSE) 放入 App 的 `Contents/Resources/LICENSE`；CPython、Python 发行版的上游汇总说明与已安装依赖的许可文本另存于 `ThirdPartyLicenses`。项目授权不替代这些第三方许可；素材来源与完整分发复核仍见发行准备清单。
 
 本地与独立 App 的版本元数据统一从 `pyproject.toml` 生成：`project.version` 为三段数字版本，`version-suffix` 为可选显示后缀，`release-prerelease` 为独立的 GitHub 发布分类，`build-number` 为发行时需要递增的构建号。关于页使用保留预发布标识的 `CAMReleaseVersion`；`CFBundleShortVersionString` 保持 Apple 数字格式。发布流程应使这些值与 Release tag 一致。

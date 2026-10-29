@@ -298,6 +298,11 @@ class AppController:
         app, actual, python, source = (Path(p).expanduser().resolve() for p in (app, real_cli, python, source_root))
         if not app.is_dir() or not (app / 'Contents/MacOS/MonitorApp').is_file():
             raise ControlError('app_missing', 'control.app_missing')
+        # App Translocation and disk images are read-only mounts. Never persist
+        # a backend path there: a Desktop-owned bridge can outlive this GUI and
+        # keep that temporary mount busy during the next launch or upgrade.
+        if is_frozen() and os.statvfs(app).f_flag & os.ST_RDONLY:
+            raise ControlError('app_install_required', 'control.app_install_required')
         if not os.access(actual, os.X_OK) or not os.access(python, os.X_OK):
             raise ControlError('entry_missing', 'control.entry_missing')
         if not is_frozen() and not (source / 'src/codex_activity_monitor/cli.py').is_file():
@@ -355,7 +360,10 @@ class AppController:
                        'restored_keys': [], 'purge': False}
             receipt['configuration_revision'] = revision
             receipt['restart_processes'] = old.get('restart_processes', [])
-            if current != installed and old.get('configuration_revision') != revision:
+            if old.get('configuration_revision') != revision:
+                # The launcher path in launchctl may stay unchanged across an
+                # app move or bridge upgrade. Existing Desktop processes still
+                # need to release their old bridges before the switch is complete.
                 from .integration_status import restart_candidates
                 receipt['restart_processes'] = restart_candidates(self, receipt)
             if legacy_backup:

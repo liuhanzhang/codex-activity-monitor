@@ -1567,6 +1567,14 @@
     }
   },
   {
+    "expected": "请先退出 Codex Activity Monitor，将 App 移到“应用程序”文件夹后重新打开，再启用接入。",
+    "language": "zh-CN",
+    "message": {
+      "key": "control.app_install_required",
+      "params": {}
+    }
+  },
+  {
     "expected": "找不到可执行的原版 CLI 或本机 Python。",
     "language": "zh-CN",
     "message": {
@@ -3482,6 +3490,14 @@
     "language": "en",
     "message": {
       "key": "control.app_missing",
+      "params": {}
+    }
+  },
+  {
+    "expected": "Quit Codex Activity Monitor, move the app to Applications, then reopen it before enabling integration.",
+    "language": "en",
+    "message": {
+      "key": "control.app_install_required",
       "params": {}
     }
   },

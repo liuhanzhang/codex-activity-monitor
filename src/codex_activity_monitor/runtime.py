@@ -15,6 +15,15 @@ from .execution import is_frozen, bundle_resources
 ROOT = Path(__file__).resolve().parents[2]
 REAL_CLI = Path('/Applications/ChatGPT.app/Contents/Resources/codex-cli/CodexCLI.app/Contents/MacOS/codex')
 
+# Keep startup evidence and integration revisions tied to the same bridge code,
+# including its parser, transport and diagnostic dependencies. GUI-only changes
+# do not change this identity.
+BRIDGE_MODULES = ('bridge', 'observer_permit', 'events', 'usage', 'tool_labels',
+                  'runtime', 'execution', 'publication', 'app_session', 'observation_lease',
+                  'integration_status', 'integration', 'diagnostic_log', 'i18n',
+                  'messages_zh_cn', 'messages_en', 'messages_control',
+                  'messages_diagnostics', 'messages_detail')
+
 
 def source_identity(*modules):
     """Fingerprint code at process startup, for rollout diagnostics only."""
@@ -26,6 +35,10 @@ def source_identity(*modules):
         hashes={name:hashlib.sha256((directory/(name+'.py')).read_bytes()).hexdigest() for name in modules}
     return {'source_sha256':hashlib.sha256(json.dumps(hashes,sort_keys=True).encode()).hexdigest(),
             'modules':hashes}
+
+
+def bridge_identity():
+    return source_identity(*BRIDGE_MODULES)
 
 
 def default_runtime():

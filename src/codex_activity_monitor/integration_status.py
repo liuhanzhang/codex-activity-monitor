@@ -7,7 +7,7 @@ from pathlib import Path
 import time
 
 from .integration import KEYS
-from .runtime import source_identity
+from .runtime import bridge_identity
 
 
 REVISION_ENV = 'CODEX_ACTIVITY_MONITOR_CONFIG_REVISION'
@@ -21,7 +21,7 @@ def fingerprint(values):
 
 def configuration_revision(installed, app, actual):
     value = {'environment': fingerprint(installed), 'app': str(app), 'cli': str(actual),
-             'bridge': source_identity('bridge', 'observer_permit', 'integration_status')['source_sha256']}
+             'bridge': bridge_identity()['source_sha256']}
     return hashlib.sha256(json.dumps(value, sort_keys=True).encode()).hexdigest()
 
 
@@ -105,10 +105,11 @@ def inspect_integration(control, receipt, state):
             elif (revision and info.get('configuration_revision') == revision and
                   info.get('configuration_matches') is True and info.get('observation_protocol') == 1):
                 result['matching_bridges'] += 1
-            elif info.get('configuration_revision') or info.get('observation_protocol') != 1:
-                result['old_bridges'] += 1
             else:
-                result['unknown_bridges'] += 1
+                # A verified resident bridge without startup revision evidence
+                # predates that evidence. A restart is needed to establish the
+                # current integration, even if its observation protocol works.
+                result['old_bridges'] += 1
         probe = getattr(control.services, 'inspect_dependents', control.services.dependents)
         dependencies = probe(receipt)
         visible = not any(p.get('reason') == 'process_visibility_unknown' for p in dependencies)

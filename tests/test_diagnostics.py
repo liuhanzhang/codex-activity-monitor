@@ -218,6 +218,65 @@ class IntegrationEvidenceTests(unittest.TestCase):
             result = self.configure()['integration_status']
         self.assertNotEqual(result['restart'], 'required')
 
+    def test_moving_app_requires_restart_even_when_launcher_environment_is_unchanged(self):
+        self.configure()
+        installed = self.environment.values.copy()
+        moved = self.base / 'Updated App.app'
+        self.app.rename(moved)
+        self.services.dependencies = [{'pid': os.getpid(), 'reason': 'codex_running'}]
+        with patch('codex_activity_monitor.app_session.process_identity', return_value='existing-host'):
+            status = self.control.configure(moved, self.cli)['integration_status']
+        self.assertEqual(self.environment.values, installed)
+        self.assertEqual(status['restart'], 'required')
+
+    def test_bridge_dependency_upgrade_at_same_path_requires_restart(self):
+        from codex_activity_monitor import runtime
+        original = runtime.source_identity
+        def upgraded(*modules):
+            identity = original(*modules)
+            if 'events' in modules:
+                return {**identity, 'source_sha256': 'updated-event-parser'}
+            return identity
+        first = self.configure()['integration_status']['configuration_revision']
+        self.services.dependencies = [{'pid': os.getpid(), 'reason': 'codex_running'}]
+        with patch('codex_activity_monitor.runtime.source_identity', side_effect=upgraded), \
+             patch('codex_activity_monitor.app_session.process_identity', return_value='existing-host'):
+            status = self.configure()['integration_status']
+        self.assertNotEqual(status['configuration_revision'], first)
+        self.assertEqual(status['restart'], 'required')
+
+    def test_live_legacy_bridge_without_revision_requires_restart(self):
+        self.configure()
+        bridges = Path(self.control.status()['runtime']) / 'bridges'
+        bridges.mkdir()
+        (bridges / 'legacy.json').write_text(json.dumps({
+            'pid': os.getpid(), 'identity': 'legacy-start', 'observation_protocol': 1}))
+        with patch('codex_activity_monitor.app_session.process_identity', return_value='legacy-start'):
+            status = self.control.status()['integration_status']
+        self.assertEqual(status['old_bridges'], 1)
+        self.assertEqual(status['restart'], 'required')
+        with patch('codex_activity_monitor.app_session.process_identity', return_value='reused-pid'):
+            status = self.control.status()['integration_status']
+        self.assertEqual(status['old_bridges'], 0)
+        self.assertNotEqual(status['restart'], 'required')
+        with patch('codex_activity_monitor.app_session.process_identity', return_value=None):
+            status = self.control.status()['integration_status']
+        self.assertEqual(status['old_bridges'], 0)
+        self.assertEqual(status['unknown_bridges'], 1)
+
+    def test_reopening_unchanged_monitor_keeps_matching_bridge_without_restart(self):
+        revision = self.configure()['integration_status']['configuration_revision']
+        bridges = Path(self.control.status()['runtime']) / 'bridges'
+        bridges.mkdir()
+        (bridges / 'current.json').write_text(json.dumps({
+            'pid': os.getpid(), 'identity': 'managed-start', 'observation_protocol': 1,
+            'configuration_revision': revision, 'configuration_matches': True}))
+        self.services.dependencies = [{'pid': os.getpid(), 'reason': 'codex_running'}]
+        with patch('codex_activity_monitor.app_session.process_identity', return_value='managed-start'):
+            status = self.configure()['integration_status']
+        self.assertEqual(status['matching_bridges'], 1)
+        self.assertEqual(status['restart'], 'not_required')
+
     def test_status_never_deletes_a_stale_bridge_registration(self):
         self.configure()
         bridges = Path(self.control.status()['runtime']) / 'bridges'; bridges.mkdir()

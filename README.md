@@ -85,6 +85,14 @@ After confirming that the app came from this project, try opening it. If macOS b
 
 See [Apple's instructions](https://support.apple.com/en-us/102445) for details.
 
+### Upgrade an existing installation
+
+1. Finish active Codex tasks, then fully quit both Codex Desktop and Monitor.
+2. Extract the new release and replace the app in `/Applications`.
+3. Open Monitor and let integration configuration finish, then open Codex Desktop.
+
+The Monitor UI, collector, and Desktop-owned bridge are separate processes. Quitting Monitor leaves the existing Codex connection's bridge running; replacing the app does not reload that process. The new Monitor can be running while an older, protocol-compatible bridge continues to provide data. Changes to the bridge implementation or app location require a full Codex restart to complete the switch. Reopening the same Monitor build does not require restarting Codex. See [updates and moving the app](docs/user-guide.md#updates-or-moving-the-app-have-not-taken-effect).
+
 ## First launch
 
 1. Let active Codex tasks finish.

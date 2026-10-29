@@ -10,7 +10,7 @@ from unittest.mock import patch
 
 from codex_activity_monitor import execution
 from codex_activity_monitor.app_control import AppController
-from codex_activity_monitor.runtime import default_runtime, source_identity
+from codex_activity_monitor.runtime import BRIDGE_MODULES, default_runtime, source_identity
 from test_app_control import FakeServices, MemoryEnvironment
 
 
@@ -60,7 +60,7 @@ class BundledExecutionTests(unittest.TestCase):
             resources = base / 'resources'
             resources.mkdir()
             (resources / 'build-manifest.json').write_text(json.dumps({'modules': {
-                name: 'synthetic-module-hash' for name in ('bridge', 'observer_permit', 'integration_status')}}))
+                name: 'synthetic-module-hash' for name in BRIDGE_MODULES}}))
             with patch.object(sys, 'frozen', True, create=True), patch.object(sys, '_MEIPASS', str(resources), create=True):
                 control.configure(app, actual, python=backend, source_root=base/'absent-source')
             launcher = control.root/'codex-observed'
