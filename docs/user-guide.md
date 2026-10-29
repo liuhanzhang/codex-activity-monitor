@@ -36,7 +36,7 @@ Click the gear button at the top of the overview, or press **Command-,**, to ope
 
 | Setting | Effect |
 | --- | --- |
-| **General → Language** | Switch between English and 简体中文 immediately; original conversation content is unchanged |
+| **General → Language** | Initially use Simplified Chinese for a primary Chinese system language and English otherwise; switching manually saves that choice and leaves conversation content unchanged |
 | **General → Codex** | Turn on to apply integration; turn off to restore configuration and stop observation, keeping preferences and diagnostic logs |
 | **General → Launch at login** | Register or unregister the monitor's macOS login item; initially enabled |
 | **General → Maintenance** | Separate uninstall confirmation and quit actions |

@@ -17,6 +17,8 @@ def bundle_info(metadata, *, distribution):
         'CFBundleIdentifier': 'com.liuhanzhang.codexactivitymonitor',
         'CFBundleName': 'Codex Activity Monitor',
         'CFBundleDisplayName': 'Codex Activity Monitor',
+        'CFBundleDevelopmentRegion': 'en',
+        'CFBundleLocalizations': ['en', 'zh-Hans'],
         'CFBundlePackageType': 'APPL',
         'CFBundleShortVersionString': metadata['project']['version'],
         'CFBundleVersion': str(settings['build-number']),

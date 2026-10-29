@@ -30,7 +30,7 @@ final class DashboardStore {
     var diagnosticPulse = 0
     @ObservationIgnored private(set) var recorder: DiagnosticRecorder!
     var onSettingsRequested: (() -> Void)?
-    private(set) var language: MonitorLanguage = .chinese
+    private(set) var language: MonitorLanguage = .english
     private var operationFailure: PresentationFailure?
     var operationError: String? {
         get { operationFailure?.rendered(language) }
@@ -162,7 +162,7 @@ final class DashboardStore {
     private var usesLiveState: Bool { stateSubscriber != nil || !readOnly }
 
     init(configuration: BackendConfiguration, arguments: [String], client: (any BackendManaging)? = nil,
-         stateSubscriber: (any StateSubscribing)? = nil) {
+         stateSubscriber: (any StateSubscribing)? = nil, preferredLanguages: [String] = Locale.preferredLanguages) {
         self.configuration = configuration
         injectedClient = client
         self.stateSubscriber = stateSubscriber
@@ -186,10 +186,13 @@ final class DashboardStore {
         updates = UpdateStore(root: URL(fileURLWithPath: dataRoot),
                               enabled: (!readOnly && profile == nil && client == nil) || updateFixture)
         acceptanceManualUpdateCheck = updateFixture && arguments.contains("--update-manual-check")
+        let systemLanguage = MonitorLanguage.systemDefault(preferredLanguages: preferredLanguages)
         if readOnly, let index = arguments.firstIndex(of: "--lang"), index + 1 < arguments.count {
-            language = MonitorLanguage(rawValue: arguments[index + 1]) ?? .chinese
+            language = MonitorLanguage(rawValue: arguments[index + 1]) ?? systemLanguage
         } else if !readOnly {
-            language = Self.savedLanguage(at: dataRoot)
+            language = Self.savedLanguage(at: dataRoot, preferredLanguages: preferredLanguages)
+        } else {
+            language = systemLanguage
         }
         runtimePath = configuration.runtime
         legacyUnset = arguments.contains("--legacy-unset")
@@ -204,11 +207,11 @@ final class DashboardStore {
         }
     }
 
-    static func savedLanguage(at root: String) -> MonitorLanguage {
+    static func savedLanguage(at root: String, preferredLanguages: [String] = Locale.preferredLanguages) -> MonitorLanguage {
         struct Preferences: Decodable { let version: Int; let language: MonitorLanguage }
         guard let data = try? Data(contentsOf: URL(fileURLWithPath: root + "/app-state.json")),
               let value = try? JSONDecoder().decode(Preferences.self, from: data),
-              value.version == 1 else { return .chinese }
+              value.version == 1 else { return .systemDefault(preferredLanguages: preferredLanguages) }
         return value.language
     }
 

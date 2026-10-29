@@ -118,6 +118,17 @@ class AppControlTests(unittest.TestCase):
         self.configure()
         self.assertEqual(self.receipt()['previous'], first)
 
+    def test_configuration_and_restore_do_not_pin_the_default_gui_language(self):
+        self.configure()
+        self.assertNotIn('language', json.loads(self.control.preferences.read_text()))
+        self.control.set_preferences(launch_at_login=False)
+        self.control.restore()
+        self.assertNotIn('language', json.loads(self.control.preferences.read_text()))
+        self.control.set_preferences(language='en')
+        self.configure()
+        self.control.restore()
+        self.assertEqual(json.loads(self.control.preferences.read_text())['language'], 'en')
+
     def test_user_later_change_is_not_overwritten(self):
         self.configure()
         self.environment.values[KEYS[0]] = '/user-choice'

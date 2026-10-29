@@ -20,6 +20,8 @@ class AppMetadataTests(unittest.TestCase):
                 self.assertEqual(info['CAMReleaseVersion'], '1.2.3-alpha.10')
                 self.assertEqual(info['CFBundleShortVersionString'], '1.2.3')
                 self.assertEqual(info['CFBundleVersion'], '42')
+                self.assertEqual(info['CFBundleDevelopmentRegion'], 'en')
+                self.assertEqual(info['CFBundleLocalizations'], ['en', 'zh-Hans'])
                 self.assertEqual(info['CFBundleIdentifier'].endswith('.preview'), distribution == 'preview')
                 self.assertTrue(info['SUFeedURL'].endswith('/appcast-prerelease.xml'))
                 self.assertTrue(info['CAMReleasePrerelease'])

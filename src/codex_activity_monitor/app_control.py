@@ -285,12 +285,13 @@ class AppController:
                 prefs['language'] = language
             atomic_json(self.preferences, prefs)
         # Saving UI preferences must not require a readable integration record.
-        return {'version': 1, 'ok': True, 'language': prefs.get('language', 'zh-CN')}
+        return {'version': 1, 'ok': True, 'language': prefs.get('language')}
 
     def _save_restored(self, value):
         prefs = read_json(self.preferences)
-        prefs.update(version=1, restored=value, language=prefs.get('language', 'zh-CN'),
-                     launch_at_login=prefs.get('launch_at_login', True))
+        # Only an explicit language choice is persisted. Configuration and
+        # restoration must not replace the GUI's system-language fallback.
+        prefs.update(version=1, restored=value, launch_at_login=prefs.get('launch_at_login', True))
         atomic_json(self.preferences, prefs)
 
     def configure(self, app, real_cli=REAL_CLI, python=sys.executable, source_root=ROOT,

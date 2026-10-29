@@ -3,7 +3,7 @@ import PackageDescription
 
 let package = Package(
     name: "CodexActivityMonitor",
-    defaultLocalization: "zh-Hans",
+    defaultLocalization: "en",
     platforms: [.macOS("14.0")],
     products: [.executable(name: "MonitorApp", targets: ["MonitorApp"])],
     dependencies: [.package(url: "https://github.com/sparkle-project/Sparkle", exact: "2.10.1")],

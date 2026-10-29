@@ -2,6 +2,13 @@ import Foundation
 
 public enum MonitorLanguage: String, CaseIterable, Codable, Sendable {
     case chinese = "zh-CN", english = "en"
+    public static func systemDefault(preferredLanguages: [String] = Locale.preferredLanguages) -> Self {
+        // Use the primary system language, rather than matching a secondary
+        // supported language (for example Japanese followed by Chinese).
+        let primary = preferredLanguages.first?.lowercased().replacingOccurrences(of: "_", with: "-")
+            .split(separator: "-").first
+        return primary == "zh" ? .chinese : .english
+    }
     public var resourceName: String { self == .chinese ? "zh-Hans" : "en" }
     public var name: String { self == .chinese ? "简体中文" : "English" }
     public var locale: Locale { Locale(identifier: rawValue) }

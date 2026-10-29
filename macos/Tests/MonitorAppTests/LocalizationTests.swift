@@ -23,9 +23,23 @@ private actor LanguageBackend: BackendManaging {
     func recorded() -> [[String]] { calls }
 }
 
-@MainActor private func languageStore(_ backend: (any BackendManaging)? = nil, readOnly: Bool = true, root: String = "/unused") -> DashboardStore {
+@MainActor private func languageStore(_ backend: (any BackendManaging)? = nil, readOnly: Bool = true,
+                                     root: String = "/unused", preferredLanguages: [String] = ["zh-Hans"]) -> DashboardStore {
     DashboardStore(configuration: BackendConfiguration(python: "/unused", source_root: "/unused", runtime: "/unused", data_root: root, build_id: "test"),
-                   arguments: readOnly ? ["--read-only"] : [], client: backend)
+                   arguments: readOnly ? ["--read-only"] : [], client: backend, preferredLanguages: preferredLanguages)
+}
+
+@Test @MainActor func firstLaunchFollowsSystemLanguageWithoutCreatingAPreference() throws {
+    let root = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
+    defer { try? FileManager.default.removeItem(at: root) }
+    #expect(languageStore(readOnly: false, root: root.path, preferredLanguages: ["zh-Hant-TW"]).language == .chinese)
+    #expect(languageStore(readOnly: false, root: root.path, preferredLanguages: ["ja-JP", "zh-Hans"]).language == .english)
+    #expect(languageStore(readOnly: false, root: root.path, preferredLanguages: ["en-US"]).language == .english)
+    #expect(!FileManager.default.fileExists(atPath: root.appendingPathComponent("app-state.json").path))
+    try FileManager.default.createDirectory(at: root, withIntermediateDirectories: true)
+    try Data("{\"version\":1,\"restored\":false,\"launch_at_login\":true}".utf8)
+        .write(to: root.appendingPathComponent("app-state.json"))
+    #expect(languageStore(readOnly: false, root: root.path, preferredLanguages: ["fr-FR"]).language == .english)
 }
 
 @Test @MainActor func localizationSwitchKeepsIdentityAndReadingStateWithoutCommandsInPreview() async throws {
@@ -75,10 +89,14 @@ private actor LanguageBackend: BackendManaging {
     for json in ["[]", "broken", "{\"version\":true,\"language\":\"en\"}", "{\"version\":1,\"language\":{}}", "{\"version\":2,\"language\":\"en\"}", "{\"version\":1,\"language\":\"fr\"}"] {
         try Data(json.utf8).write(to: path)
         #expect(languageStore(readOnly: false, root: root.path).language == .chinese)
+        #expect(languageStore(readOnly: false, root: root.path, preferredLanguages: ["en-US"]).language == .english)
     }
     try Data("{\"version\":1,\"language\":\"en\",\"launch_at_login\":false}".utf8).write(to: path)
     #expect(languageStore(readOnly: false, root: root.path).language == .english)
     #expect(languageStore(root: root.path).language == .chinese) // read-only preview never reads daily preference
+    try Data("{\"version\":1,\"language\":\"zh-CN\"}".utf8).write(to: path)
+    #expect(languageStore(readOnly: false, root: root.path, preferredLanguages: ["en-US"]).language == .chinese)
+    #expect(languageStore(root: root.path, preferredLanguages: ["fr-FR"]).language == .english)
     #expect(L("Configure", language: .english) == "Configure")
     #expect(L("Configure", language: .chinese) == "配置")
 }

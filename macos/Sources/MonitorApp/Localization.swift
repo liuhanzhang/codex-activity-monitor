@@ -2,7 +2,7 @@ import Foundation
 import SwiftUI
 import MonitorModel
 
-private struct MonitorLanguageKey: EnvironmentKey { static let defaultValue = MonitorLanguage.chinese }
+private struct MonitorLanguageKey: EnvironmentKey { static let defaultValue = MonitorLanguage.systemDefault() }
 extension EnvironmentValues {
     var monitorLanguage: MonitorLanguage {
         get { self[MonitorLanguageKey.self] }
@@ -10,7 +10,7 @@ extension EnvironmentValues {
     }
 }
 
-func L(_ key: String, language: MonitorLanguage = .chinese) -> String {
+func L(_ key: String, language: MonitorLanguage = .systemDefault()) -> String {
     guard let path = Bundle.module.path(forResource: "Localizable", ofType: "strings",
                                         inDirectory: nil, forLocalization: language.resourceName),
           let bundle = Bundle(path: URL(fileURLWithPath: path).deletingLastPathComponent().path) else { return key }

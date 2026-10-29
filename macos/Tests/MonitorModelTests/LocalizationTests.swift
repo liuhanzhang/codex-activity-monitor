@@ -2,6 +2,15 @@ import Foundation
 import Testing
 @testable import MonitorModel
 
+@Test func initialLanguageUsesOnlyThePrimarySystemLanguage() {
+    for identifier in ["zh", "zh-CN", "zh-Hans-CN", "zh-Hant-TW", "zh-HK", "ZH_cn"] {
+        #expect(MonitorLanguage.systemDefault(preferredLanguages: [identifier, "en"]) == .chinese)
+    }
+    for languages in [["en-US", "zh-Hans"], ["ja-JP", "zh-Hans"], ["fr-FR"], ["de-DE"], ["zho"], [], [""]] {
+        #expect(MonitorLanguage.systemDefault(preferredLanguages: languages) == .english)
+    }
+}
+
 @Test func localizationMatchesEveryExportedPythonTemplate() throws {
     struct Example: Decodable { let language: MonitorLanguage; let message: DisplayMessage; let expected: String }
     let url = try #require(Bundle.module.url(forResource: "LocalizationExamples", withExtension: "json"))

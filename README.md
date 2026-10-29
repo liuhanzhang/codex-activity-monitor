@@ -100,7 +100,7 @@ The Monitor UI, collector, and Desktop-owned bridge are separate processes. Quit
 3. Fully quit and reopen Codex Desktop so new processes inherit the integration configuration.
 4. Start a local Codex task, then click the monitor's menu bar item. Select a chat to see its current turn, timeline, and usage.
 
-Keep Monitor running while observing. The gear button opens a separate Settings window (also **Command-,**). In **General**, change **Launch at login** or switch between **English / 简体中文**. Initial configuration enables launch at login; macOS may ask you to allow the login item. Original conversation and tool content keep their own language.
+Keep Monitor running while observing. The gear button opens a separate Settings window (also **Command-,**). Without a saved language choice, the app uses Simplified Chinese when the primary system language is Chinese, including Traditional Chinese variants, and English for every other language. In **General**, switch between **English / 简体中文**; a manual choice is saved and takes precedence. You can also change **Launch at login**. Initial configuration enables launch at login; macOS may ask you to allow the login item. Original conversation and tool content keep their own language.
 
 **Runtime Status** shows detected component problems and recovery; **Logs** provides local diagnostic records with search, filters, details, and copy. Closing Settings keeps observation running. These checks cannot rule out every software error.
 
