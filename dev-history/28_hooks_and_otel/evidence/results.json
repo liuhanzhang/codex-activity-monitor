@@ -1,0 +1,2746 @@
+{
+  "date": "2026-10-30",
+  "timezone": "Asia/Shanghai",
+  "monitor_commit": "f1be3adb108f10cc3fe224346beefa0a77347479",
+  "source_checkout_commit": "970111f6cb62cc02fe36a82ea7d71b37a2889c97",
+  "binary_version": "0.166.0-alpha.5.1",
+  "runs": {
+    "websocket_default": {
+      "scope": "isolated app-server; real provider",
+      "args": {
+        "real": true,
+        "no_trust": false,
+        "delay_ms": null,
+        "reload": false
+      },
+      "version": "codex-cli 0.166.0-alpha.5.1",
+      "same_process_alive": true,
+      "source_config_unchanged": true,
+      "backend_exit_code": 0,
+      "hook_events": {
+        "SessionStart:v1": 1,
+        "UserPromptSubmit:v1": 3,
+        "Stop:v1": 3,
+        "PreToolUse:v1": 1,
+        "PostToolUse:v1": 1,
+        "SessionEnd:v1": 1
+      },
+      "hook_fields": {
+        "SessionStart": [
+          "cwd",
+          "hook_event_name",
+          "model",
+          "permission_mode",
+          "probe_received_at",
+          "probe_revision",
+          "session_id",
+          "source",
+          "transcript_path"
+        ],
+        "SessionEnd": [
+          "cwd",
+          "hook_event_name",
+          "probe_received_at",
+          "probe_revision",
+          "reason",
+          "session_id",
+          "transcript_path"
+        ],
+        "UserPromptSubmit": [
+          "cwd",
+          "hook_event_name",
+          "model",
+          "permission_mode",
+          "probe_received_at",
+          "probe_revision",
+          "prompt",
+          "session_id",
+          "transcript_path",
+          "turn_id"
+        ],
+        "PreToolUse": [
+          "cwd",
+          "hook_event_name",
+          "model",
+          "permission_mode",
+          "probe_received_at",
+          "probe_revision",
+          "session_id",
+          "tool_input",
+          "tool_name",
+          "tool_use_id",
+          "transcript_path",
+          "turn_id"
+        ],
+        "PostToolUse": [
+          "cwd",
+          "hook_event_name",
+          "model",
+          "permission_mode",
+          "probe_received_at",
+          "probe_revision",
+          "session_id",
+          "tool_input",
+          "tool_name",
+          "tool_response",
+          "tool_use_id",
+          "transcript_path",
+          "turn_id"
+        ],
+        "PermissionRequest": [],
+        "Stop": [
+          "cwd",
+          "hook_event_name",
+          "last_assistant_message",
+          "model",
+          "permission_mode",
+          "probe_received_at",
+          "probe_revision",
+          "session_id",
+          "stop_hook_active",
+          "transcript_path",
+          "turn_id"
+        ],
+        "Interrupt": []
+      },
+      "batch_count": 14,
+      "turns": [
+        {
+          "status": "completed",
+          "duration_s": 19.135,
+          "raw_kinds": {
+            "codex.rate_limits": 2,
+            "codex.response.metadata": 2,
+            "response.created": 2,
+            "response.in_progress": 2,
+            "responsesapi.websocket_timing": 2,
+            "response.completed": 2,
+            "response.output_item.added": 1,
+            "response.content_part.added": 1,
+            "response.output_text.delta": 248,
+            "response.metadata": 1,
+            "response.output_text.done": 1,
+            "response.content_part.done": 1,
+            "response.output_item.done": 1
+          },
+          "otel_names": {
+            "codex.startup_phase": 8,
+            "codex.websocket_connect": 1,
+            "codex.websocket_request": 2,
+            "codex.sse_event": 2,
+            "codex.user_prompt": 1,
+            "codex.turn_ttft": 1
+          },
+          "otel_kinds": {
+            "response.completed": 2
+          },
+          "otel_fields": [
+            "app.version",
+            "auth.connection_reused",
+            "auth.env_codex_api_key_enabled",
+            "auth.env_codex_api_key_present",
+            "auth.env_openai_api_key_present",
+            "auth.env_refresh_token_url_override_present",
+            "auth.header_attached",
+            "auth.header_name",
+            "auth.retry_after_unauthorized",
+            "auth_mode",
+            "cache_write_token_count",
+            "cached_token_count",
+            "conversation.id",
+            "duration_ms",
+            "endpoint",
+            "event.kind",
+            "event.name",
+            "event.timestamp",
+            "input_token_count",
+            "model",
+            "model_reasoning_effort",
+            "originator",
+            "output_token_count",
+            "prompt",
+            "prompt_length",
+            "reasoning_token_count",
+            "slug",
+            "startup.phase",
+            "startup.status",
+            "success",
+            "terminal.type",
+            "tool_token_count",
+            "ttft_ms",
+            "user.account_id",
+            "user.email"
+          ],
+          "lag_ms": {
+            "p50": 583.34,
+            "p95": 908.82,
+            "max": 941.18
+          },
+          "protocol_methods": {
+            "thread/settings/updated": 1,
+            "thread/status/changed": 2,
+            "turn/started": 1,
+            "mcpServer/startupStatus/updated": 6,
+            "hook/started": 3,
+            "hook/completed": 3,
+            "item/started": 2,
+            "item/completed": 2,
+            "item/agentMessage/delta": 248,
+            "turn/moderationMetadata": 1,
+            "thread/tokenUsage/updated": 1,
+            "account/rateLimits/updated": 1,
+            "thread/readState/changed": 1,
+            "turn/completed": 1
+          },
+          "usage": [
+            {
+              "input_tokens": 2,
+              "output_tokens": 0,
+              "output_tokens_details": {
+                "reasoning_tokens": 0
+              },
+              "total_tokens": 2
+            },
+            {
+              "input_tokens": 12493,
+              "output_tokens": 252,
+              "output_tokens_details": {
+                "reasoning_tokens": 0
+              },
+              "total_tokens": 12745
+            }
+          ]
+        },
+        {
+          "status": "completed",
+          "duration_s": 11.819,
+          "raw_kinds": {
+            "codex.rate_limits": 1,
+            "codex.response.metadata": 1,
+            "response.created": 1,
+            "response.in_progress": 1,
+            "response.output_item.added": 1,
+            "response.content_part.added": 1,
+            "response.output_text.delta": 223,
+            "response.metadata": 1,
+            "response.output_text.done": 1,
+            "response.content_part.done": 1,
+            "response.output_item.done": 1,
+            "responsesapi.websocket_timing": 1,
+            "response.completed": 1
+          },
+          "otel_names": {
+            "codex.user_prompt": 1,
+            "codex.websocket_request": 1,
+            "codex.turn_ttft": 1,
+            "codex.sse_event": 1
+          },
+          "otel_kinds": {
+            "response.completed": 1
+          },
+          "otel_fields": [
+            "app.version",
+            "auth.connection_reused",
+            "auth.env_codex_api_key_enabled",
+            "auth.env_codex_api_key_present",
+            "auth.env_openai_api_key_present",
+            "auth.env_refresh_token_url_override_present",
+            "auth_mode",
+            "cache_write_token_count",
+            "cached_token_count",
+            "conversation.id",
+            "duration_ms",
+            "event.kind",
+            "event.name",
+            "event.timestamp",
+            "input_token_count",
+            "model",
+            "model_reasoning_effort",
+            "originator",
+            "output_token_count",
+            "prompt",
+            "prompt_length",
+            "reasoning_token_count",
+            "slug",
+            "success",
+            "terminal.type",
+            "tool_token_count",
+            "ttft_ms",
+            "user.account_id",
+            "user.email"
+          ],
+          "lag_ms": {
+            "p50": 366.22,
+            "p95": 372.19,
+            "max": 375.22
+          },
+          "protocol_methods": {
+            "thread/status/changed": 2,
+            "turn/started": 1,
+            "hook/started": 2,
+            "hook/completed": 2,
+            "item/started": 2,
+            "item/completed": 2,
+            "item/agentMessage/delta": 223,
+            "turn/moderationMetadata": 1,
+            "thread/tokenUsage/updated": 1,
+            "account/rateLimits/updated": 1,
+            "thread/readState/changed": 1,
+            "turn/completed": 1
+          },
+          "usage": [
+            {
+              "input_tokens": 17061,
+              "output_tokens": 229,
+              "output_tokens_details": {
+                "reasoning_tokens": 0
+              },
+              "total_tokens": 17290
+            }
+          ]
+        },
+        {
+          "status": "completed",
+          "duration_s": 5.425,
+          "raw_kinds": {
+            "codex.rate_limits": 2,
+            "codex.response.metadata": 2,
+            "response.created": 2,
+            "response.in_progress": 2,
+            "response.output_item.added": 2,
+            "response.custom_tool_call_input.delta": 18,
+            "response.custom_tool_call_input.done": 1,
+            "response.output_item.done": 2,
+            "response.metadata": 2,
+            "responsesapi.websocket_timing": 2,
+            "response.completed": 2,
+            "response.content_part.added": 1,
+            "response.output_text.delta": 1,
+            "response.output_text.done": 1,
+            "response.content_part.done": 1
+          },
+          "otel_names": {
+            "codex.user_prompt": 1,
+            "codex.websocket_request": 2,
+            "codex.turn_ttft": 1,
+            "codex.sse_event": 2,
+            "codex.tool_decision": 1,
+            "codex.sandbox_outcome": 1,
+            "codex.tool_result": 2
+          },
+          "otel_kinds": {
+            "response.completed": 2
+          },
+          "otel_fields": [
+            "agent_name",
+            "app.version",
+            "arguments",
+            "auth.connection_reused",
+            "auth.env_codex_api_key_enabled",
+            "auth.env_codex_api_key_present",
+            "auth.env_openai_api_key_present",
+            "auth.env_refresh_token_url_override_present",
+            "auth_mode",
+            "cache_write_token_count",
+            "cached_token_count",
+            "call_id",
+            "conversation.id",
+            "decision",
+            "duration_ms",
+            "event.kind",
+            "event.name",
+            "event.timestamp",
+            "initial_duration_ms",
+            "input_token_count",
+            "mcp_server",
+            "mcp_server_origin",
+            "model",
+            "model_reasoning_effort",
+            "originator",
+            "outcome",
+            "output",
+            "output_token_count",
+            "output_truncated",
+            "prompt",
+            "prompt_length",
+            "reasoning_token_count",
+            "slug",
+            "source",
+            "success",
+            "terminal.type",
+            "tool_name",
+            "tool_namespace",
+            "tool_result_seq",
+            "tool_token_count",
+            "ttft_ms",
+            "user.account_id",
+            "user.email"
+          ],
+          "lag_ms": {
+            "p50": 717.91,
+            "p95": 794.91,
+            "max": 881.91
+          },
+          "protocol_methods": {
+            "thread/status/changed": 2,
+            "turn/started": 1,
+            "hook/started": 4,
+            "hook/completed": 4,
+            "item/started": 2,
+            "item/completed": 2,
+            "turn/moderationMetadata": 2,
+            "thread/tokenUsage/updated": 2,
+            "account/rateLimits/updated": 2,
+            "item/agentMessage/delta": 1,
+            "thread/readState/changed": 1,
+            "turn/completed": 1
+          },
+          "usage": [
+            {
+              "input_tokens": 17330,
+              "output_tokens": 28,
+              "output_tokens_details": {
+                "reasoning_tokens": 0
+              },
+              "total_tokens": 17358
+            },
+            {
+              "input_tokens": 17381,
+              "output_tokens": 5,
+              "output_tokens_details": {
+                "reasoning_tokens": 0
+              },
+              "total_tokens": 17386
+            }
+          ]
+        }
+      ],
+      "all_log_records": 32,
+      "all_log_lag_ms_nearest_rank": {
+        "0.5": 550.989,
+        "0.95": 941.177,
+        "1": 985.24
+      },
+      "otel_timeUnixNano_all_zero": true,
+      "successful_tool_outputs": 0,
+      "nested_sandbox_denied_results": 1,
+      "payload_bytes": {
+        "/v1/logs": 128686
+      }
+    },
+    "websocket_100ms": {
+      "scope": "isolated app-server; real provider",
+      "args": {
+        "real": true,
+        "no_trust": false,
+        "delay_ms": 100,
+        "reload": false
+      },
+      "version": "codex-cli 0.166.0-alpha.5.1",
+      "same_process_alive": true,
+      "source_config_unchanged": true,
+      "backend_exit_code": 0,
+      "hook_events": {
+        "SessionStart:v1": 1,
+        "UserPromptSubmit:v1": 3,
+        "Stop:v1": 3,
+        "PreToolUse:v1": 1,
+        "PostToolUse:v1": 1,
+        "SessionEnd:v1": 1
+      },
+      "hook_fields": {
+        "SessionStart": [
+          "cwd",
+          "hook_event_name",
+          "model",
+          "permission_mode",
+          "probe_received_at",
+          "probe_revision",
+          "session_id",
+          "source",
+          "transcript_path"
+        ],
+        "SessionEnd": [
+          "cwd",
+          "hook_event_name",
+          "probe_received_at",
+          "probe_revision",
+          "reason",
+          "session_id",
+          "transcript_path"
+        ],
+        "UserPromptSubmit": [
+          "cwd",
+          "hook_event_name",
+          "model",
+          "permission_mode",
+          "probe_received_at",
+          "probe_revision",
+          "prompt",
+          "session_id",
+          "transcript_path",
+          "turn_id"
+        ],
+        "PreToolUse": [
+          "cwd",
+          "hook_event_name",
+          "model",
+          "permission_mode",
+          "probe_received_at",
+          "probe_revision",
+          "session_id",
+          "tool_input",
+          "tool_name",
+          "tool_use_id",
+          "transcript_path",
+          "turn_id"
+        ],
+        "PostToolUse": [
+          "cwd",
+          "hook_event_name",
+          "model",
+          "permission_mode",
+          "probe_received_at",
+          "probe_revision",
+          "session_id",
+          "tool_input",
+          "tool_name",
+          "tool_response",
+          "tool_use_id",
+          "transcript_path",
+          "turn_id"
+        ],
+        "PermissionRequest": [],
+        "Stop": [
+          "cwd",
+          "hook_event_name",
+          "last_assistant_message",
+          "model",
+          "permission_mode",
+          "probe_received_at",
+          "probe_revision",
+          "session_id",
+          "stop_hook_active",
+          "transcript_path",
+          "turn_id"
+        ],
+        "Interrupt": []
+      },
+      "batch_count": 18,
+      "turns": [
+        {
+          "status": "completed",
+          "duration_s": 21.07,
+          "raw_kinds": {
+            "codex.rate_limits": 2,
+            "codex.response.metadata": 2,
+            "response.created": 2,
+            "response.in_progress": 2,
+            "responsesapi.websocket_timing": 2,
+            "response.completed": 2,
+            "response.output_item.added": 1,
+            "response.content_part.added": 1,
+            "response.output_text.delta": 234,
+            "response.metadata": 1,
+            "response.output_text.done": 1,
+            "response.content_part.done": 1,
+            "response.output_item.done": 1
+          },
+          "otel_names": {
+            "codex.startup_phase": 8,
+            "codex.websocket_connect": 1,
+            "codex.websocket_request": 2,
+            "codex.sse_event": 2,
+            "codex.user_prompt": 1,
+            "codex.turn_ttft": 1
+          },
+          "otel_kinds": {
+            "response.completed": 2
+          },
+          "otel_fields": [
+            "app.version",
+            "auth.connection_reused",
+            "auth.env_codex_api_key_enabled",
+            "auth.env_codex_api_key_present",
+            "auth.env_openai_api_key_present",
+            "auth.env_refresh_token_url_override_present",
+            "auth.header_attached",
+            "auth.header_name",
+            "auth.retry_after_unauthorized",
+            "auth_mode",
+            "cache_write_token_count",
+            "cached_token_count",
+            "conversation.id",
+            "duration_ms",
+            "endpoint",
+            "event.kind",
+            "event.name",
+            "event.timestamp",
+            "input_token_count",
+            "model",
+            "model_reasoning_effort",
+            "originator",
+            "output_token_count",
+            "prompt",
+            "prompt_length",
+            "reasoning_token_count",
+            "slug",
+            "startup.phase",
+            "startup.status",
+            "success",
+            "terminal.type",
+            "tool_token_count",
+            "ttft_ms",
+            "user.account_id",
+            "user.email"
+          ],
+          "lag_ms": {
+            "p50": 42.69,
+            "p95": 87.1,
+            "max": 95.1
+          },
+          "protocol_methods": {
+            "thread/settings/updated": 1,
+            "thread/status/changed": 2,
+            "turn/started": 1,
+            "mcpServer/startupStatus/updated": 6,
+            "hook/started": 3,
+            "hook/completed": 3,
+            "item/started": 2,
+            "item/completed": 2,
+            "item/agentMessage/delta": 234,
+            "turn/moderationMetadata": 1,
+            "thread/tokenUsage/updated": 1,
+            "account/rateLimits/updated": 1,
+            "thread/readState/changed": 1,
+            "turn/completed": 1
+          },
+          "usage": [
+            {
+              "input_tokens": 2,
+              "output_tokens": 0,
+              "output_tokens_details": {
+                "reasoning_tokens": 0
+              },
+              "total_tokens": 2
+            },
+            {
+              "input_tokens": 12493,
+              "output_tokens": 238,
+              "output_tokens_details": {
+                "reasoning_tokens": 0
+              },
+              "total_tokens": 12731
+            }
+          ]
+        },
+        {
+          "status": "completed",
+          "duration_s": 13.311,
+          "raw_kinds": {
+            "codex.rate_limits": 1,
+            "codex.response.metadata": 1,
+            "response.created": 1,
+            "response.in_progress": 1,
+            "response.output_item.added": 1,
+            "response.content_part.added": 1,
+            "response.output_text.delta": 228,
+            "response.metadata": 1,
+            "response.output_text.done": 1,
+            "response.content_part.done": 1,
+            "response.output_item.done": 1,
+            "responsesapi.websocket_timing": 1,
+            "response.completed": 1
+          },
+          "otel_names": {
+            "codex.user_prompt": 1,
+            "codex.websocket_request": 1,
+            "codex.turn_ttft": 1,
+            "codex.sse_event": 1
+          },
+          "otel_kinds": {
+            "response.completed": 1
+          },
+          "otel_fields": [
+            "app.version",
+            "auth.connection_reused",
+            "auth.env_codex_api_key_enabled",
+            "auth.env_codex_api_key_present",
+            "auth.env_openai_api_key_present",
+            "auth.env_refresh_token_url_override_present",
+            "auth_mode",
+            "cache_write_token_count",
+            "cached_token_count",
+            "conversation.id",
+            "duration_ms",
+            "event.kind",
+            "event.name",
+            "event.timestamp",
+            "input_token_count",
+            "model",
+            "model_reasoning_effort",
+            "originator",
+            "output_token_count",
+            "prompt",
+            "prompt_length",
+            "reasoning_token_count",
+            "slug",
+            "success",
+            "terminal.type",
+            "tool_token_count",
+            "ttft_ms",
+            "user.account_id",
+            "user.email"
+          ],
+          "lag_ms": {
+            "p50": 60.51,
+            "p95": 74.77,
+            "max": 80.77
+          },
+          "protocol_methods": {
+            "thread/status/changed": 2,
+            "turn/started": 1,
+            "hook/started": 2,
+            "hook/completed": 2,
+            "item/started": 2,
+            "item/completed": 2,
+            "item/agentMessage/delta": 228,
+            "turn/moderationMetadata": 1,
+            "thread/tokenUsage/updated": 1,
+            "account/rateLimits/updated": 1,
+            "thread/readState/changed": 1,
+            "turn/completed": 1
+          },
+          "usage": [
+            {
+              "input_tokens": 17047,
+              "output_tokens": 232,
+              "output_tokens_details": {
+                "reasoning_tokens": 0
+              },
+              "total_tokens": 17279
+            }
+          ]
+        },
+        {
+          "status": "completed",
+          "duration_s": 7.377,
+          "raw_kinds": {
+            "codex.rate_limits": 2,
+            "codex.response.metadata": 2,
+            "response.created": 2,
+            "response.in_progress": 2,
+            "response.output_item.added": 2,
+            "response.custom_tool_call_input.delta": 18,
+            "response.custom_tool_call_input.done": 1,
+            "response.output_item.done": 2,
+            "response.metadata": 2,
+            "responsesapi.websocket_timing": 2,
+            "response.completed": 2,
+            "response.content_part.added": 1,
+            "response.output_text.delta": 1,
+            "response.output_text.done": 1,
+            "response.content_part.done": 1
+          },
+          "otel_names": {
+            "codex.user_prompt": 1,
+            "codex.websocket_request": 2,
+            "codex.turn_ttft": 1,
+            "codex.tool_decision": 1,
+            "codex.sse_event": 2,
+            "codex.tool_result": 2
+          },
+          "otel_kinds": {
+            "response.completed": 2
+          },
+          "otel_fields": [
+            "agent_name",
+            "app.version",
+            "arguments",
+            "auth.connection_reused",
+            "auth.env_codex_api_key_enabled",
+            "auth.env_codex_api_key_present",
+            "auth.env_openai_api_key_present",
+            "auth.env_refresh_token_url_override_present",
+            "auth_mode",
+            "cache_write_token_count",
+            "cached_token_count",
+            "call_id",
+            "conversation.id",
+            "decision",
+            "duration_ms",
+            "event.kind",
+            "event.name",
+            "event.timestamp",
+            "input_token_count",
+            "mcp_server",
+            "mcp_server_origin",
+            "model",
+            "model_reasoning_effort",
+            "originator",
+            "output",
+            "output_token_count",
+            "output_truncated",
+            "prompt",
+            "prompt_length",
+            "reasoning_token_count",
+            "slug",
+            "source",
+            "success",
+            "terminal.type",
+            "tool_name",
+            "tool_namespace",
+            "tool_result_seq",
+            "tool_token_count",
+            "ttft_ms",
+            "user.account_id",
+            "user.email"
+          ],
+          "lag_ms": {
+            "p50": 80.78,
+            "p95": 98.07,
+            "max": 104.07
+          },
+          "protocol_methods": {
+            "thread/status/changed": 2,
+            "turn/started": 1,
+            "hook/started": 4,
+            "hook/completed": 4,
+            "item/started": 3,
+            "item/completed": 3,
+            "turn/moderationMetadata": 2,
+            "thread/tokenUsage/updated": 2,
+            "account/rateLimits/updated": 2,
+            "item/agentMessage/delta": 1,
+            "thread/readState/changed": 1,
+            "turn/completed": 1
+          },
+          "usage": [
+            {
+              "input_tokens": 17319,
+              "output_tokens": 28,
+              "output_tokens_details": {
+                "reasoning_tokens": 0
+              },
+              "total_tokens": 17347
+            },
+            {
+              "input_tokens": 17370,
+              "output_tokens": 5,
+              "output_tokens_details": {
+                "reasoning_tokens": 0
+              },
+              "total_tokens": 17375
+            }
+          ]
+        }
+      ],
+      "all_log_records": 31,
+      "all_log_lag_ms_nearest_rank": {
+        "0.5": 43.692,
+        "0.95": 98.071,
+        "1": 104.071
+      },
+      "otel_timeUnixNano_all_zero": true,
+      "successful_tool_outputs": 1,
+      "nested_sandbox_denied_results": 0,
+      "payload_bytes": {
+        "/v1/logs": 131332
+      }
+    },
+    "sse_100ms": {
+      "scope": "isolated app-server; real provider",
+      "args": {
+        "real": true,
+        "no_trust": false,
+        "delay_ms": 100,
+        "reload": false,
+        "traces": false,
+        "metrics": false,
+        "sse": true,
+        "single": true
+      },
+      "version": "codex-cli 0.166.0-alpha.5.1",
+      "same_process_alive": true,
+      "source_config_unchanged": true,
+      "backend_exit_code": 0,
+      "hook_events": {
+        "SessionStart:v1": 1,
+        "UserPromptSubmit:v1": 1,
+        "Stop:v1": 1,
+        "SessionEnd:v1": 1
+      },
+      "hook_fields": {
+        "SessionStart": [
+          "cwd",
+          "hook_event_name",
+          "model",
+          "permission_mode",
+          "probe_received_at",
+          "probe_revision",
+          "session_id",
+          "source",
+          "transcript_path"
+        ],
+        "SessionEnd": [
+          "cwd",
+          "hook_event_name",
+          "probe_received_at",
+          "probe_revision",
+          "reason",
+          "session_id",
+          "transcript_path"
+        ],
+        "UserPromptSubmit": [
+          "cwd",
+          "hook_event_name",
+          "model",
+          "permission_mode",
+          "probe_received_at",
+          "probe_revision",
+          "prompt",
+          "session_id",
+          "transcript_path",
+          "turn_id"
+        ],
+        "PreToolUse": [],
+        "PostToolUse": [],
+        "PermissionRequest": [],
+        "Stop": [
+          "cwd",
+          "hook_event_name",
+          "last_assistant_message",
+          "model",
+          "permission_mode",
+          "probe_received_at",
+          "probe_revision",
+          "session_id",
+          "stop_hook_active",
+          "transcript_path",
+          "turn_id"
+        ],
+        "Interrupt": []
+      },
+      "batch_count": 87,
+      "turns": [
+        {
+          "status": "completed",
+          "duration_s": 24.008,
+          "raw_kinds": {
+            "response.created": 1,
+            "response.in_progress": 1,
+            "response.output_item.added": 1,
+            "response.content_part.added": 1,
+            "response.output_text.delta": 248,
+            "response.metadata": 1,
+            "response.output_text.done": 1,
+            "response.content_part.done": 1,
+            "response.output_item.done": 1,
+            "response.completed": 1
+          },
+          "otel_names": {
+            "codex.startup_phase": 2,
+            "codex.user_prompt": 1,
+            "codex.api_request": 1,
+            "codex.sse_event": 258,
+            "codex.turn_ttft": 1
+          },
+          "otel_kinds": {
+            "response.created": 1,
+            "response.in_progress": 1,
+            "response.output_item.added": 1,
+            "response.content_part.added": 1,
+            "response.output_text.delta": 248,
+            "response.metadata": 1,
+            "response.output_text.done": 1,
+            "response.content_part.done": 1,
+            "response.output_item.done": 1,
+            "response.completed": 2
+          },
+          "otel_fields": [
+            "app.version",
+            "attempt",
+            "auth.env_codex_api_key_enabled",
+            "auth.env_codex_api_key_present",
+            "auth.env_openai_api_key_present",
+            "auth.env_refresh_token_url_override_present",
+            "auth.header_attached",
+            "auth.header_name",
+            "auth.retry_after_unauthorized",
+            "auth_mode",
+            "cache_write_token_count",
+            "cached_token_count",
+            "conversation.id",
+            "duration_ms",
+            "endpoint",
+            "event.kind",
+            "event.name",
+            "event.timestamp",
+            "http.response.status_code",
+            "input_token_count",
+            "model",
+            "model_reasoning_effort",
+            "originator",
+            "output_token_count",
+            "prompt",
+            "prompt_length",
+            "reasoning_token_count",
+            "slug",
+            "startup.phase",
+            "startup.status",
+            "terminal.type",
+            "tool_token_count",
+            "ttft_ms",
+            "user.account_id",
+            "user.email"
+          ],
+          "lag_ms": {
+            "p50": 54.32,
+            "p95": 100.92,
+            "max": 105.29
+          },
+          "protocol_methods": {
+            "thread/settings/updated": 1,
+            "thread/status/changed": 2,
+            "turn/started": 1,
+            "mcpServer/startupStatus/updated": 6,
+            "hook/started": 3,
+            "hook/completed": 3,
+            "item/started": 2,
+            "item/completed": 2,
+            "item/agentMessage/delta": 248,
+            "turn/moderationMetadata": 1,
+            "thread/tokenUsage/updated": 1,
+            "account/rateLimits/updated": 1,
+            "thread/readState/changed": 1,
+            "turn/completed": 1
+          },
+          "usage": [
+            {
+              "input_tokens": 12493,
+              "output_tokens": 252,
+              "output_tokens_details": {
+                "reasoning_tokens": 0
+              },
+              "total_tokens": 12745
+            }
+          ]
+        }
+      ],
+      "all_log_records": 266,
+      "all_log_lag_ms_nearest_rank": {
+        "0.5": 54.316,
+        "0.95": 100.924,
+        "1": 105.295
+      },
+      "otel_timeUnixNano_all_zero": true,
+      "successful_tool_outputs": 0,
+      "nested_sandbox_denied_results": 0,
+      "payload_bytes": {
+        "/v1/logs": 883797
+      }
+    },
+    "synthetic_sse_100ms": {
+      "scope": "isolated app-server; synthetic local SSE",
+      "args": {
+        "real": false,
+        "no_trust": false,
+        "delay_ms": 100,
+        "reload": false
+      },
+      "version": "codex-cli 0.166.0-alpha.5.1",
+      "same_process_alive": true,
+      "source_config_unchanged": true,
+      "backend_exit_code": 0,
+      "hook_events": {
+        "SessionStart:v1": 1,
+        "UserPromptSubmit:v1": 3,
+        "Stop:v1": 3,
+        "PreToolUse:v1": 1,
+        "PostToolUse:v1": 1,
+        "SessionEnd:v1": 1
+      },
+      "hook_fields": {
+        "SessionStart": [
+          "cwd",
+          "hook_event_name",
+          "model",
+          "permission_mode",
+          "probe_received_at",
+          "probe_revision",
+          "session_id",
+          "source",
+          "transcript_path"
+        ],
+        "SessionEnd": [
+          "cwd",
+          "hook_event_name",
+          "probe_received_at",
+          "probe_revision",
+          "reason",
+          "session_id",
+          "transcript_path"
+        ],
+        "UserPromptSubmit": [
+          "cwd",
+          "hook_event_name",
+          "model",
+          "permission_mode",
+          "probe_received_at",
+          "probe_revision",
+          "prompt",
+          "session_id",
+          "transcript_path",
+          "turn_id"
+        ],
+        "PreToolUse": [
+          "cwd",
+          "hook_event_name",
+          "model",
+          "permission_mode",
+          "probe_received_at",
+          "probe_revision",
+          "session_id",
+          "tool_input",
+          "tool_name",
+          "tool_use_id",
+          "transcript_path",
+          "turn_id"
+        ],
+        "PostToolUse": [
+          "cwd",
+          "hook_event_name",
+          "model",
+          "permission_mode",
+          "probe_received_at",
+          "probe_revision",
+          "session_id",
+          "tool_input",
+          "tool_name",
+          "tool_response",
+          "tool_use_id",
+          "transcript_path",
+          "turn_id"
+        ],
+        "PermissionRequest": [],
+        "Stop": [
+          "cwd",
+          "hook_event_name",
+          "last_assistant_message",
+          "model",
+          "permission_mode",
+          "probe_received_at",
+          "probe_revision",
+          "session_id",
+          "stop_hook_active",
+          "transcript_path",
+          "turn_id"
+        ],
+        "Interrupt": []
+      },
+      "batch_count": 28,
+      "turns": [
+        {
+          "status": "completed",
+          "duration_s": 0.893,
+          "raw_kinds": {
+            "response.created": 1,
+            "response.output_item.added": 1,
+            "response.output_text.delta": 3,
+            "response.output_item.done": 1,
+            "response.completed": 1
+          },
+          "otel_names": {
+            "codex.startup_phase": 2,
+            "codex.user_prompt": 1,
+            "codex.api_request": 1,
+            "codex.sse_event": 8,
+            "codex.turn_ttft": 1
+          },
+          "otel_kinds": {
+            "response.created": 1,
+            "response.output_item.added": 1,
+            "response.output_text.delta": 3,
+            "response.output_item.done": 1,
+            "response.completed": 2
+          },
+          "otel_fields": [
+            "app.version",
+            "attempt",
+            "auth.env_codex_api_key_enabled",
+            "auth.env_codex_api_key_present",
+            "auth.env_openai_api_key_present",
+            "auth.env_refresh_token_url_override_present",
+            "auth.header_attached",
+            "auth.retry_after_unauthorized",
+            "cache_write_token_count",
+            "cached_token_count",
+            "conversation.id",
+            "duration_ms",
+            "endpoint",
+            "event.kind",
+            "event.name",
+            "event.timestamp",
+            "http.response.status_code",
+            "input_token_count",
+            "model",
+            "model_reasoning_effort",
+            "originator",
+            "output_token_count",
+            "prompt",
+            "prompt_length",
+            "reasoning_token_count",
+            "slug",
+            "startup.phase",
+            "startup.status",
+            "terminal.type",
+            "tool_token_count",
+            "ttft_ms"
+          ],
+          "lag_ms": {
+            "p50": 40.53,
+            "p95": 95.43,
+            "max": 95.43
+          },
+          "protocol_methods": {
+            "thread/settings/updated": 1,
+            "thread/status/changed": 2,
+            "turn/started": 1,
+            "hook/started": 3,
+            "hook/completed": 3,
+            "item/started": 2,
+            "item/completed": 2,
+            "item/agentMessage/delta": 3,
+            "thread/tokenUsage/updated": 1,
+            "account/rateLimits/updated": 1,
+            "thread/readState/changed": 1,
+            "turn/completed": 1
+          },
+          "usage": [
+            {
+              "input_tokens": 100,
+              "output_tokens": 20,
+              "output_tokens_details": {
+                "reasoning_tokens": 0
+              },
+              "total_tokens": 120
+            }
+          ]
+        },
+        {
+          "status": "completed",
+          "duration_s": 1.508,
+          "raw_kinds": {
+            "response.created": 2,
+            "response.output_item.added": 2,
+            "response.function_call_arguments.delta": 2,
+            "response.output_item.done": 2,
+            "response.completed": 2,
+            "response.output_text.delta": 3
+          },
+          "otel_names": {
+            "codex.user_prompt": 1,
+            "codex.api_request": 2,
+            "codex.sse_event": 15,
+            "codex.turn_ttft": 1,
+            "codex.tool_decision": 1,
+            "codex.sandbox_outcome": 1,
+            "codex.tool_result": 1
+          },
+          "otel_kinds": {
+            "response.created": 2,
+            "response.output_item.added": 2,
+            "response.function_call_arguments.delta": 2,
+            "response.output_item.done": 2,
+            "response.completed": 4,
+            "response.output_text.delta": 3
+          },
+          "otel_fields": [
+            "agent_name",
+            "app.version",
+            "arguments",
+            "attempt",
+            "auth.env_codex_api_key_enabled",
+            "auth.env_codex_api_key_present",
+            "auth.env_openai_api_key_present",
+            "auth.env_refresh_token_url_override_present",
+            "auth.header_attached",
+            "auth.retry_after_unauthorized",
+            "cache_write_token_count",
+            "cached_token_count",
+            "call_id",
+            "conversation.id",
+            "decision",
+            "duration_ms",
+            "endpoint",
+            "event.kind",
+            "event.name",
+            "event.timestamp",
+            "http.response.status_code",
+            "initial_duration_ms",
+            "input_token_count",
+            "mcp_server",
+            "mcp_server_origin",
+            "model",
+            "model_reasoning_effort",
+            "originator",
+            "outcome",
+            "output",
+            "output_token_count",
+            "output_truncated",
+            "prompt",
+            "prompt_length",
+            "reasoning_token_count",
+            "slug",
+            "source",
+            "success",
+            "terminal.type",
+            "tool_name",
+            "tool_namespace",
+            "tool_result_seq",
+            "tool_token_count",
+            "ttft_ms"
+          ],
+          "lag_ms": {
+            "p50": 53.84,
+            "p95": 84.84,
+            "max": 102.77
+          },
+          "protocol_methods": {
+            "thread/status/changed": 2,
+            "turn/started": 1,
+            "hook/started": 4,
+            "hook/completed": 4,
+            "item/started": 2,
+            "item/completed": 2,
+            "thread/tokenUsage/updated": 2,
+            "account/rateLimits/updated": 2,
+            "item/agentMessage/delta": 3,
+            "thread/readState/changed": 1,
+            "turn/completed": 1
+          },
+          "usage": [
+            {
+              "input_tokens": 100,
+              "output_tokens": 50,
+              "output_tokens_details": {
+                "reasoning_tokens": 0
+              },
+              "total_tokens": 150
+            },
+            {
+              "input_tokens": 100,
+              "output_tokens": 20,
+              "output_tokens_details": {
+                "reasoning_tokens": 0
+              },
+              "total_tokens": 120
+            }
+          ]
+        },
+        {
+          "status": "completed",
+          "duration_s": 0.85,
+          "raw_kinds": {
+            "response.created": 1,
+            "response.output_item.added": 1,
+            "response.output_text.delta": 3,
+            "response.output_item.done": 1,
+            "response.completed": 1
+          },
+          "otel_names": {
+            "codex.user_prompt": 1,
+            "codex.api_request": 1,
+            "codex.sse_event": 8,
+            "codex.turn_ttft": 1
+          },
+          "otel_kinds": {
+            "response.created": 1,
+            "response.output_item.added": 1,
+            "response.output_text.delta": 3,
+            "response.output_item.done": 1,
+            "response.completed": 2
+          },
+          "otel_fields": [
+            "app.version",
+            "attempt",
+            "auth.env_codex_api_key_enabled",
+            "auth.env_codex_api_key_present",
+            "auth.env_openai_api_key_present",
+            "auth.env_refresh_token_url_override_present",
+            "auth.header_attached",
+            "auth.retry_after_unauthorized",
+            "cache_write_token_count",
+            "cached_token_count",
+            "conversation.id",
+            "duration_ms",
+            "endpoint",
+            "event.kind",
+            "event.name",
+            "event.timestamp",
+            "http.response.status_code",
+            "input_token_count",
+            "model",
+            "model_reasoning_effort",
+            "originator",
+            "output_token_count",
+            "prompt",
+            "prompt_length",
+            "reasoning_token_count",
+            "slug",
+            "terminal.type",
+            "tool_token_count",
+            "ttft_ms"
+          ],
+          "lag_ms": {
+            "p50": 57.26,
+            "p95": 106.02,
+            "max": 106.02
+          },
+          "protocol_methods": {
+            "thread/status/changed": 2,
+            "turn/started": 1,
+            "hook/started": 2,
+            "hook/completed": 2,
+            "item/started": 2,
+            "item/completed": 2,
+            "item/agentMessage/delta": 3,
+            "thread/tokenUsage/updated": 1,
+            "account/rateLimits/updated": 1,
+            "thread/readState/changed": 1,
+            "turn/completed": 1
+          },
+          "usage": [
+            {
+              "input_tokens": 100,
+              "output_tokens": 20,
+              "output_tokens_details": {
+                "reasoning_tokens": 0
+              },
+              "total_tokens": 120
+            }
+          ]
+        }
+      ],
+      "all_log_records": 47,
+      "all_log_lag_ms_nearest_rank": {
+        "0.5": 44.525,
+        "0.95": 102.773,
+        "1": 106.016
+      },
+      "otel_timeUnixNano_all_zero": true,
+      "successful_tool_outputs": 0,
+      "nested_sandbox_denied_results": 1,
+      "payload_bytes": {
+        "/v1/logs": 162054
+      }
+    },
+    "config_reload": {
+      "scope": "isolated app-server; synthetic local SSE",
+      "args": {
+        "real": false,
+        "no_trust": false,
+        "delay_ms": 100,
+        "reload": true
+      },
+      "version": "codex-cli 0.166.0-alpha.5.1",
+      "same_process_alive": true,
+      "source_config_unchanged": true,
+      "backend_exit_code": 0,
+      "hook_events": {
+        "SessionStart:v1": 1,
+        "UserPromptSubmit:v1": 1,
+        "Stop:v1": 1,
+        "UserPromptSubmit:v2": 2,
+        "PreToolUse:v2": 1,
+        "PostToolUse:v2": 1,
+        "Stop:v2": 2,
+        "SessionStart:v3": 2,
+        "UserPromptSubmit:v3": 2,
+        "Stop:v3": 2,
+        "SessionEnd:v2": 1,
+        "SessionEnd:v3": 2
+      },
+      "hook_fields": {
+        "SessionStart": [
+          "cwd",
+          "hook_event_name",
+          "model",
+          "permission_mode",
+          "probe_received_at",
+          "probe_revision",
+          "session_id",
+          "source",
+          "transcript_path"
+        ],
+        "SessionEnd": [
+          "cwd",
+          "hook_event_name",
+          "probe_received_at",
+          "probe_revision",
+          "reason",
+          "session_id",
+          "transcript_path"
+        ],
+        "UserPromptSubmit": [
+          "cwd",
+          "hook_event_name",
+          "model",
+          "permission_mode",
+          "probe_received_at",
+          "probe_revision",
+          "prompt",
+          "session_id",
+          "transcript_path",
+          "turn_id"
+        ],
+        "PreToolUse": [
+          "cwd",
+          "hook_event_name",
+          "model",
+          "permission_mode",
+          "probe_received_at",
+          "probe_revision",
+          "session_id",
+          "tool_input",
+          "tool_name",
+          "tool_use_id",
+          "transcript_path",
+          "turn_id"
+        ],
+        "PostToolUse": [
+          "cwd",
+          "hook_event_name",
+          "model",
+          "permission_mode",
+          "probe_received_at",
+          "probe_revision",
+          "session_id",
+          "tool_input",
+          "tool_name",
+          "tool_response",
+          "tool_use_id",
+          "transcript_path",
+          "turn_id"
+        ],
+        "PermissionRequest": [],
+        "Stop": [
+          "cwd",
+          "hook_event_name",
+          "last_assistant_message",
+          "model",
+          "permission_mode",
+          "probe_received_at",
+          "probe_revision",
+          "session_id",
+          "stop_hook_active",
+          "transcript_path",
+          "turn_id"
+        ],
+        "Interrupt": []
+      },
+      "batch_count": 9,
+      "turns": [
+        {
+          "status": "completed",
+          "duration_s": 0.895,
+          "raw_kinds": {
+            "response.created": 1,
+            "response.output_item.added": 1,
+            "response.output_text.delta": 3,
+            "response.output_item.done": 1,
+            "response.completed": 1
+          },
+          "otel_names": {},
+          "otel_kinds": {},
+          "otel_fields": [],
+          "lag_ms": {
+            "p50": null,
+            "p95": null,
+            "max": null
+          },
+          "protocol_methods": {
+            "thread/settings/updated": 1,
+            "thread/status/changed": 2,
+            "turn/started": 1,
+            "hook/started": 3,
+            "hook/completed": 3,
+            "item/started": 2,
+            "item/completed": 2,
+            "item/agentMessage/delta": 3,
+            "thread/tokenUsage/updated": 1,
+            "account/rateLimits/updated": 1,
+            "thread/readState/changed": 1,
+            "turn/completed": 1
+          },
+          "usage": [
+            {
+              "input_tokens": 100,
+              "output_tokens": 20,
+              "output_tokens_details": {
+                "reasoning_tokens": 0
+              },
+              "total_tokens": 120
+            }
+          ]
+        },
+        {
+          "status": "completed",
+          "duration_s": 1.629,
+          "raw_kinds": {
+            "response.created": 2,
+            "response.output_item.added": 2,
+            "response.function_call_arguments.delta": 2,
+            "response.output_item.done": 2,
+            "response.completed": 2,
+            "response.output_text.delta": 3
+          },
+          "otel_names": {},
+          "otel_kinds": {},
+          "otel_fields": [],
+          "lag_ms": {
+            "p50": null,
+            "p95": null,
+            "max": null
+          },
+          "protocol_methods": {
+            "thread/status/changed": 2,
+            "turn/started": 1,
+            "hook/started": 4,
+            "hook/completed": 4,
+            "item/started": 2,
+            "item/completed": 2,
+            "thread/tokenUsage/updated": 2,
+            "account/rateLimits/updated": 2,
+            "item/agentMessage/delta": 3,
+            "thread/readState/changed": 1,
+            "turn/completed": 1
+          },
+          "usage": [
+            {
+              "input_tokens": 100,
+              "output_tokens": 50,
+              "output_tokens_details": {
+                "reasoning_tokens": 0
+              },
+              "total_tokens": 150
+            },
+            {
+              "input_tokens": 100,
+              "output_tokens": 20,
+              "output_tokens_details": {
+                "reasoning_tokens": 0
+              },
+              "total_tokens": 120
+            }
+          ]
+        },
+        {
+          "status": "completed",
+          "duration_s": 0.852,
+          "raw_kinds": {
+            "response.created": 1,
+            "response.output_item.added": 1,
+            "response.output_text.delta": 3,
+            "response.output_item.done": 1,
+            "response.completed": 1
+          },
+          "otel_names": {},
+          "otel_kinds": {},
+          "otel_fields": [],
+          "lag_ms": {
+            "p50": null,
+            "p95": null,
+            "max": null
+          },
+          "protocol_methods": {
+            "thread/status/changed": 2,
+            "turn/started": 1,
+            "hook/started": 2,
+            "hook/completed": 2,
+            "item/started": 2,
+            "item/completed": 2,
+            "item/agentMessage/delta": 3,
+            "thread/tokenUsage/updated": 1,
+            "account/rateLimits/updated": 1,
+            "thread/readState/changed": 1,
+            "turn/completed": 1
+          },
+          "usage": [
+            {
+              "input_tokens": 100,
+              "output_tokens": 20,
+              "output_tokens_details": {
+                "reasoning_tokens": 0
+              },
+              "total_tokens": 120
+            }
+          ]
+        }
+      ],
+      "new_thread_same_process": {
+        "status": "completed",
+        "duration_s": 0.89,
+        "raw_kinds": {
+          "response.created": 1,
+          "response.output_item.added": 1,
+          "response.output_text.delta": 3,
+          "response.output_item.done": 1,
+          "response.completed": 1
+        },
+        "otel_names": {},
+        "otel_kinds": {},
+        "otel_fields": [],
+        "lag_ms": {
+          "p50": null,
+          "p95": null,
+          "max": null
+        },
+        "protocol_methods": {
+          "warning": 1,
+          "thread/settings/updated": 1,
+          "thread/status/changed": 2,
+          "turn/started": 1,
+          "hook/started": 3,
+          "hook/completed": 3,
+          "item/started": 2,
+          "item/completed": 2,
+          "item/agentMessage/delta": 3,
+          "thread/tokenUsage/updated": 1,
+          "account/rateLimits/updated": 1,
+          "thread/readState/changed": 1,
+          "turn/completed": 1
+        },
+        "usage": [
+          {
+            "input_tokens": 100,
+            "output_tokens": 20,
+            "output_tokens_details": {
+              "reasoning_tokens": 0
+            },
+            "total_tokens": 120
+          }
+        ]
+      },
+      "after_backend_restart": {
+        "status": "completed",
+        "duration_s": 0.874,
+        "raw_kinds": {
+          "response.created": 1,
+          "response.output_item.added": 1,
+          "response.output_text.delta": 3,
+          "response.output_item.done": 1,
+          "response.completed": 1
+        },
+        "otel_names": {
+          "codex.startup_phase": 2,
+          "codex.user_prompt": 1,
+          "codex.api_request": 1,
+          "codex.sse_event": 8,
+          "codex.turn_ttft": 1
+        },
+        "otel_kinds": {
+          "response.created": 1,
+          "response.output_item.added": 1,
+          "response.output_text.delta": 3,
+          "response.output_item.done": 1,
+          "response.completed": 2
+        },
+        "otel_fields": [
+          "app.version",
+          "attempt",
+          "auth.env_codex_api_key_enabled",
+          "auth.env_codex_api_key_present",
+          "auth.env_openai_api_key_present",
+          "auth.env_refresh_token_url_override_present",
+          "auth.header_attached",
+          "auth.retry_after_unauthorized",
+          "cache_write_token_count",
+          "cached_token_count",
+          "conversation.id",
+          "duration_ms",
+          "endpoint",
+          "event.kind",
+          "event.name",
+          "event.timestamp",
+          "http.response.status_code",
+          "input_token_count",
+          "model",
+          "model_reasoning_effort",
+          "originator",
+          "output_token_count",
+          "prompt",
+          "prompt_length",
+          "reasoning_token_count",
+          "slug",
+          "startup.phase",
+          "startup.status",
+          "terminal.type",
+          "tool_token_count",
+          "ttft_ms"
+        ],
+        "lag_ms": {
+          "p50": 24.69,
+          "p95": 87.73,
+          "max": 87.73
+        },
+        "protocol_methods": {
+          "warning": 1,
+          "thread/settings/updated": 1,
+          "thread/status/changed": 2,
+          "turn/started": 1,
+          "hook/started": 3,
+          "hook/completed": 3,
+          "item/started": 2,
+          "item/completed": 2,
+          "item/agentMessage/delta": 3,
+          "thread/tokenUsage/updated": 1,
+          "account/rateLimits/updated": 1,
+          "thread/readState/changed": 1,
+          "turn/completed": 1
+        },
+        "usage": [
+          {
+            "input_tokens": 100,
+            "output_tokens": 20,
+            "output_tokens_details": {
+              "reasoning_tokens": 0
+            },
+            "total_tokens": 120
+          }
+        ]
+      },
+      "config_batch_write_status": "ok",
+      "all_log_records": 14,
+      "all_log_lag_ms_nearest_rank": {
+        "0.5": 24.689,
+        "0.95": 87.732,
+        "1": 87.732
+      },
+      "otel_timeUnixNano_all_zero": true,
+      "successful_tool_outputs": 0,
+      "nested_sandbox_denied_results": 0,
+      "payload_bytes": {
+        "/v1/logs": 49036
+      }
+    },
+    "untrusted_hooks": {
+      "scope": "isolated app-server; synthetic local SSE",
+      "args": {
+        "real": false,
+        "no_trust": true,
+        "delay_ms": 100,
+        "reload": false
+      },
+      "version": "codex-cli 0.166.0-alpha.5.1",
+      "same_process_alive": true,
+      "source_config_unchanged": true,
+      "backend_exit_code": 0,
+      "batch_count": 27,
+      "turns": [
+        {
+          "status": "completed",
+          "duration_s": 0.775,
+          "raw_kinds": {
+            "response.created": 1,
+            "response.output_item.added": 1,
+            "response.output_text.delta": 3,
+            "response.output_item.done": 1,
+            "response.completed": 1
+          },
+          "otel_names": {
+            "codex.startup_phase": 2,
+            "codex.user_prompt": 1,
+            "codex.api_request": 1,
+            "codex.sse_event": 8,
+            "codex.turn_ttft": 1
+          },
+          "otel_kinds": {
+            "response.created": 1,
+            "response.output_item.added": 1,
+            "response.output_text.delta": 3,
+            "response.output_item.done": 1,
+            "response.completed": 2
+          },
+          "otel_fields": [
+            "app.version",
+            "attempt",
+            "auth.env_codex_api_key_enabled",
+            "auth.env_codex_api_key_present",
+            "auth.env_openai_api_key_present",
+            "auth.env_refresh_token_url_override_present",
+            "auth.header_attached",
+            "auth.retry_after_unauthorized",
+            "cache_write_token_count",
+            "cached_token_count",
+            "conversation.id",
+            "duration_ms",
+            "endpoint",
+            "event.kind",
+            "event.name",
+            "event.timestamp",
+            "http.response.status_code",
+            "input_token_count",
+            "model",
+            "model_reasoning_effort",
+            "originator",
+            "output_token_count",
+            "prompt",
+            "prompt_length",
+            "reasoning_token_count",
+            "slug",
+            "startup.phase",
+            "startup.status",
+            "terminal.type",
+            "tool_token_count",
+            "ttft_ms"
+          ],
+          "lag_ms": {
+            "p50": 40.53,
+            "p95": 99.78,
+            "max": 99.78
+          },
+          "protocol_methods": {
+            "thread/settings/updated": 1,
+            "thread/status/changed": 2,
+            "turn/started": 1,
+            "item/started": 2,
+            "item/completed": 2,
+            "item/agentMessage/delta": 3,
+            "thread/tokenUsage/updated": 1,
+            "account/rateLimits/updated": 1,
+            "thread/readState/changed": 1,
+            "turn/completed": 1
+          },
+          "usage": [
+            {
+              "input_tokens": 100,
+              "output_tokens": 20,
+              "output_tokens_details": {
+                "reasoning_tokens": 0
+              },
+              "total_tokens": 120
+            }
+          ]
+        },
+        {
+          "status": "completed",
+          "duration_s": 1.396,
+          "raw_kinds": {
+            "response.created": 2,
+            "response.output_item.added": 2,
+            "response.function_call_arguments.delta": 2,
+            "response.output_item.done": 2,
+            "response.completed": 2,
+            "response.output_text.delta": 3
+          },
+          "otel_names": {
+            "codex.user_prompt": 1,
+            "codex.api_request": 2,
+            "codex.sse_event": 15,
+            "codex.turn_ttft": 1,
+            "codex.tool_decision": 1,
+            "codex.sandbox_outcome": 1,
+            "codex.tool_result": 1
+          },
+          "otel_kinds": {
+            "response.created": 2,
+            "response.output_item.added": 2,
+            "response.function_call_arguments.delta": 2,
+            "response.output_item.done": 2,
+            "response.completed": 4,
+            "response.output_text.delta": 3
+          },
+          "otel_fields": [
+            "agent_name",
+            "app.version",
+            "arguments",
+            "attempt",
+            "auth.env_codex_api_key_enabled",
+            "auth.env_codex_api_key_present",
+            "auth.env_openai_api_key_present",
+            "auth.env_refresh_token_url_override_present",
+            "auth.header_attached",
+            "auth.retry_after_unauthorized",
+            "cache_write_token_count",
+            "cached_token_count",
+            "call_id",
+            "conversation.id",
+            "decision",
+            "duration_ms",
+            "endpoint",
+            "event.kind",
+            "event.name",
+            "event.timestamp",
+            "http.response.status_code",
+            "initial_duration_ms",
+            "input_token_count",
+            "mcp_server",
+            "mcp_server_origin",
+            "model",
+            "model_reasoning_effort",
+            "originator",
+            "outcome",
+            "output",
+            "output_token_count",
+            "output_truncated",
+            "prompt",
+            "prompt_length",
+            "reasoning_token_count",
+            "slug",
+            "source",
+            "success",
+            "terminal.type",
+            "tool_name",
+            "tool_namespace",
+            "tool_result_seq",
+            "tool_token_count",
+            "ttft_ms"
+          ],
+          "lag_ms": {
+            "p50": 47.31,
+            "p95": 72.81,
+            "max": 94.35
+          },
+          "protocol_methods": {
+            "thread/status/changed": 2,
+            "turn/started": 1,
+            "item/started": 2,
+            "item/completed": 2,
+            "thread/tokenUsage/updated": 2,
+            "account/rateLimits/updated": 2,
+            "item/agentMessage/delta": 3,
+            "thread/readState/changed": 1,
+            "turn/completed": 1
+          },
+          "usage": [
+            {
+              "input_tokens": 100,
+              "output_tokens": 50,
+              "output_tokens_details": {
+                "reasoning_tokens": 0
+              },
+              "total_tokens": 150
+            },
+            {
+              "input_tokens": 100,
+              "output_tokens": 20,
+              "output_tokens_details": {
+                "reasoning_tokens": 0
+              },
+              "total_tokens": 120
+            }
+          ]
+        },
+        {
+          "status": "completed",
+          "duration_s": 0.759,
+          "raw_kinds": {
+            "response.created": 1,
+            "response.output_item.added": 1,
+            "response.output_text.delta": 3,
+            "response.output_item.done": 1,
+            "response.completed": 1
+          },
+          "otel_names": {
+            "codex.user_prompt": 1,
+            "codex.api_request": 1,
+            "codex.sse_event": 8,
+            "codex.turn_ttft": 1
+          },
+          "otel_kinds": {
+            "response.created": 1,
+            "response.output_item.added": 1,
+            "response.output_text.delta": 3,
+            "response.output_item.done": 1,
+            "response.completed": 2
+          },
+          "otel_fields": [
+            "app.version",
+            "attempt",
+            "auth.env_codex_api_key_enabled",
+            "auth.env_codex_api_key_present",
+            "auth.env_openai_api_key_present",
+            "auth.env_refresh_token_url_override_present",
+            "auth.header_attached",
+            "auth.retry_after_unauthorized",
+            "cache_write_token_count",
+            "cached_token_count",
+            "conversation.id",
+            "duration_ms",
+            "endpoint",
+            "event.kind",
+            "event.name",
+            "event.timestamp",
+            "http.response.status_code",
+            "input_token_count",
+            "model",
+            "model_reasoning_effort",
+            "originator",
+            "output_token_count",
+            "prompt",
+            "prompt_length",
+            "reasoning_token_count",
+            "slug",
+            "terminal.type",
+            "tool_token_count",
+            "ttft_ms"
+          ],
+          "lag_ms": {
+            "p50": 63.38,
+            "p95": 83.23,
+            "max": 103.96
+          },
+          "protocol_methods": {
+            "thread/status/changed": 2,
+            "turn/started": 1,
+            "item/started": 2,
+            "item/completed": 2,
+            "item/agentMessage/delta": 3,
+            "thread/tokenUsage/updated": 1,
+            "account/rateLimits/updated": 1,
+            "thread/readState/changed": 1,
+            "turn/completed": 1
+          },
+          "usage": [
+            {
+              "input_tokens": 100,
+              "output_tokens": 20,
+              "output_tokens_details": {
+                "reasoning_tokens": 0
+              },
+              "total_tokens": 120
+            }
+          ]
+        }
+      ],
+      "all_log_records": 47,
+      "all_log_lag_ms_nearest_rank": {
+        "0.5": 47.314,
+        "0.95": 99.775,
+        "1": 103.959
+      },
+      "otel_timeUnixNano_all_zero": true,
+      "successful_tool_outputs": 0,
+      "nested_sandbox_denied_results": 1,
+      "payload_bytes": {
+        "/v1/logs": 160585
+      }
+    },
+    "receiver_failure_interrupt": {
+      "scope": "isolated app-server; synthetic local SSE",
+      "args": {
+        "real": false,
+        "no_trust": false,
+        "delay_ms": 100,
+        "reload": false,
+        "traces": false,
+        "metrics": false,
+        "sse": false,
+        "single": false,
+        "fault": true,
+        "interrupt": true
+      },
+      "version": "codex-cli 0.166.0-alpha.5.1",
+      "same_process_alive": true,
+      "source_config_unchanged": true,
+      "backend_exit_code": 0,
+      "hook_events": {
+        "SessionStart:v1": 1,
+        "UserPromptSubmit:v1": 4,
+        "Stop:v1": 3,
+        "PreToolUse:v1": 1,
+        "PostToolUse:v1": 1,
+        "Interrupt:v1": 1,
+        "SessionEnd:v1": 1
+      },
+      "hook_fields": {
+        "SessionStart": [
+          "cwd",
+          "hook_event_name",
+          "model",
+          "permission_mode",
+          "probe_received_at",
+          "probe_revision",
+          "session_id",
+          "source",
+          "transcript_path"
+        ],
+        "SessionEnd": [
+          "cwd",
+          "hook_event_name",
+          "probe_received_at",
+          "probe_revision",
+          "reason",
+          "session_id",
+          "transcript_path"
+        ],
+        "UserPromptSubmit": [
+          "cwd",
+          "hook_event_name",
+          "model",
+          "permission_mode",
+          "probe_received_at",
+          "probe_revision",
+          "prompt",
+          "session_id",
+          "transcript_path",
+          "turn_id"
+        ],
+        "PreToolUse": [
+          "cwd",
+          "hook_event_name",
+          "model",
+          "permission_mode",
+          "probe_received_at",
+          "probe_revision",
+          "session_id",
+          "tool_input",
+          "tool_name",
+          "tool_use_id",
+          "transcript_path",
+          "turn_id"
+        ],
+        "PostToolUse": [
+          "cwd",
+          "hook_event_name",
+          "model",
+          "permission_mode",
+          "probe_received_at",
+          "probe_revision",
+          "session_id",
+          "tool_input",
+          "tool_name",
+          "tool_response",
+          "tool_use_id",
+          "transcript_path",
+          "turn_id"
+        ],
+        "PermissionRequest": [],
+        "Stop": [
+          "cwd",
+          "hook_event_name",
+          "last_assistant_message",
+          "model",
+          "permission_mode",
+          "probe_received_at",
+          "probe_revision",
+          "session_id",
+          "stop_hook_active",
+          "transcript_path",
+          "turn_id"
+        ],
+        "Interrupt": [
+          "cwd",
+          "hook_event_name",
+          "model",
+          "permission_mode",
+          "probe_received_at",
+          "probe_revision",
+          "session_id",
+          "transcript_path",
+          "turn_id"
+        ]
+      },
+      "interrupt_observed": true,
+      "export_failure_task_status": "completed",
+      "export_failure_backend_alive": true,
+      "batch_count": 33,
+      "batch_statuses": {
+        "200": 18,
+        "503": 15
+      },
+      "turns": [
+        {
+          "status": "completed",
+          "duration_s": 0.878,
+          "raw_kinds": {
+            "response.created": 1,
+            "response.output_item.added": 1,
+            "response.output_text.delta": 3,
+            "response.output_item.done": 1,
+            "response.completed": 1
+          },
+          "otel_names": {
+            "codex.startup_phase": 2,
+            "codex.user_prompt": 1,
+            "codex.api_request": 1,
+            "codex.sse_event": 8,
+            "codex.turn_ttft": 1
+          },
+          "otel_kinds": {
+            "response.created": 1,
+            "response.output_item.added": 1,
+            "response.output_text.delta": 3,
+            "response.output_item.done": 1,
+            "response.completed": 2
+          },
+          "otel_fields": [
+            "app.version",
+            "attempt",
+            "auth.env_codex_api_key_enabled",
+            "auth.env_codex_api_key_present",
+            "auth.env_openai_api_key_present",
+            "auth.env_refresh_token_url_override_present",
+            "auth.header_attached",
+            "auth.retry_after_unauthorized",
+            "cache_write_token_count",
+            "cached_token_count",
+            "conversation.id",
+            "duration_ms",
+            "endpoint",
+            "event.kind",
+            "event.name",
+            "event.timestamp",
+            "http.response.status_code",
+            "input_token_count",
+            "model",
+            "model_reasoning_effort",
+            "originator",
+            "output_token_count",
+            "prompt",
+            "prompt_length",
+            "reasoning_token_count",
+            "slug",
+            "startup.phase",
+            "startup.status",
+            "terminal.type",
+            "tool_token_count",
+            "ttft_ms"
+          ],
+          "lag_ms": {
+            "p50": 28.59,
+            "p95": 98.51,
+            "max": 98.51
+          },
+          "protocol_methods": {
+            "thread/settings/updated": 1,
+            "thread/status/changed": 2,
+            "turn/started": 1,
+            "hook/started": 3,
+            "hook/completed": 3,
+            "item/started": 2,
+            "item/completed": 2,
+            "item/agentMessage/delta": 3,
+            "thread/tokenUsage/updated": 1,
+            "account/rateLimits/updated": 1,
+            "thread/readState/changed": 1,
+            "turn/completed": 1
+          },
+          "usage": [
+            {
+              "input_tokens": 100,
+              "output_tokens": 20,
+              "output_tokens_details": {
+                "reasoning_tokens": 0
+              },
+              "total_tokens": 120
+            }
+          ]
+        },
+        {
+          "status": "completed",
+          "duration_s": 2.004,
+          "raw_kinds": {
+            "response.created": 2,
+            "response.output_item.added": 2,
+            "response.function_call_arguments.delta": 2,
+            "response.output_item.done": 2,
+            "response.completed": 2,
+            "response.output_text.delta": 3
+          },
+          "otel_names": {},
+          "otel_kinds": {},
+          "otel_fields": [],
+          "lag_ms": {
+            "p50": null,
+            "p95": null,
+            "max": null
+          },
+          "protocol_methods": {
+            "thread/status/changed": 2,
+            "turn/started": 1,
+            "hook/started": 4,
+            "hook/completed": 4,
+            "item/started": 3,
+            "item/completed": 3,
+            "item/commandExecution/outputDelta": 1,
+            "thread/tokenUsage/updated": 2,
+            "account/rateLimits/updated": 2,
+            "item/agentMessage/delta": 3,
+            "thread/readState/changed": 1,
+            "turn/completed": 1
+          },
+          "usage": [
+            {
+              "input_tokens": 100,
+              "output_tokens": 50,
+              "output_tokens_details": {
+                "reasoning_tokens": 0
+              },
+              "total_tokens": 150
+            },
+            {
+              "input_tokens": 100,
+              "output_tokens": 20,
+              "output_tokens_details": {
+                "reasoning_tokens": 0
+              },
+              "total_tokens": 120
+            }
+          ]
+        },
+        {
+          "status": "completed",
+          "duration_s": 0.905,
+          "raw_kinds": {
+            "response.created": 1,
+            "response.output_item.added": 1,
+            "response.output_text.delta": 3,
+            "response.output_item.done": 1,
+            "response.completed": 1
+          },
+          "otel_names": {
+            "codex.user_prompt": 1,
+            "codex.api_request": 1,
+            "codex.sse_event": 8,
+            "codex.turn_ttft": 1
+          },
+          "otel_kinds": {
+            "response.created": 1,
+            "response.output_item.added": 1,
+            "response.output_text.delta": 3,
+            "response.output_item.done": 1,
+            "response.completed": 2
+          },
+          "otel_fields": [
+            "app.version",
+            "attempt",
+            "auth.env_codex_api_key_enabled",
+            "auth.env_codex_api_key_present",
+            "auth.env_openai_api_key_present",
+            "auth.env_refresh_token_url_override_present",
+            "auth.header_attached",
+            "auth.retry_after_unauthorized",
+            "cache_write_token_count",
+            "cached_token_count",
+            "conversation.id",
+            "duration_ms",
+            "endpoint",
+            "event.kind",
+            "event.name",
+            "event.timestamp",
+            "http.response.status_code",
+            "input_token_count",
+            "model",
+            "model_reasoning_effort",
+            "originator",
+            "output_token_count",
+            "prompt",
+            "prompt_length",
+            "reasoning_token_count",
+            "slug",
+            "terminal.type",
+            "tool_token_count",
+            "ttft_ms"
+          ],
+          "lag_ms": {
+            "p50": 67.52,
+            "p95": 93.81,
+            "max": 95.21
+          },
+          "protocol_methods": {
+            "thread/status/changed": 2,
+            "turn/started": 1,
+            "hook/started": 2,
+            "hook/completed": 2,
+            "item/started": 2,
+            "item/completed": 2,
+            "item/agentMessage/delta": 3,
+            "thread/tokenUsage/updated": 1,
+            "account/rateLimits/updated": 1,
+            "thread/readState/changed": 1,
+            "turn/completed": 1
+          },
+          "usage": [
+            {
+              "input_tokens": 100,
+              "output_tokens": 20,
+              "output_tokens_details": {
+                "reasoning_tokens": 0
+              },
+              "total_tokens": 120
+            }
+          ]
+        }
+      ],
+      "all_log_records": 29,
+      "all_log_lag_ms_nearest_rank": {
+        "0.5": 47.448,
+        "0.95": 98.511,
+        "1": 98.511
+      },
+      "otel_timeUnixNano_all_zero": true,
+      "successful_tool_outputs": 0,
+      "nested_sandbox_denied_results": 0,
+      "payload_bytes": {
+        "/v1/logs": 177239
+      }
+    },
+    "websocket_traces_metrics": {
+      "scope": "isolated app-server; real provider",
+      "args": {
+        "real": true,
+        "no_trust": false,
+        "delay_ms": 100,
+        "reload": false,
+        "traces": true,
+        "metrics": true,
+        "sse": false,
+        "single": true
+      },
+      "version": "codex-cli 0.166.0-alpha.5.1",
+      "same_process_alive": true,
+      "source_config_unchanged": true,
+      "backend_exit_code": 0,
+      "hook_events": {
+        "SessionStart:v1": 1,
+        "UserPromptSubmit:v1": 1,
+        "Stop:v1": 1,
+        "SessionEnd:v1": 1
+      },
+      "hook_fields": {
+        "SessionStart": [
+          "cwd",
+          "hook_event_name",
+          "model",
+          "permission_mode",
+          "probe_received_at",
+          "probe_revision",
+          "session_id",
+          "source",
+          "transcript_path"
+        ],
+        "SessionEnd": [
+          "cwd",
+          "hook_event_name",
+          "probe_received_at",
+          "probe_revision",
+          "reason",
+          "session_id",
+          "transcript_path"
+        ],
+        "UserPromptSubmit": [
+          "cwd",
+          "hook_event_name",
+          "model",
+          "permission_mode",
+          "probe_received_at",
+          "probe_revision",
+          "prompt",
+          "session_id",
+          "transcript_path",
+          "turn_id"
+        ],
+        "PreToolUse": [],
+        "PostToolUse": [],
+        "PermissionRequest": [],
+        "Stop": [
+          "cwd",
+          "hook_event_name",
+          "last_assistant_message",
+          "model",
+          "permission_mode",
+          "probe_received_at",
+          "probe_revision",
+          "session_id",
+          "stop_hook_active",
+          "transcript_path",
+          "turn_id"
+        ],
+        "Interrupt": []
+      },
+      "batch_count": 199,
+      "turns": [
+        {
+          "status": "completed",
+          "duration_s": 25.096,
+          "raw_kinds": {
+            "codex.rate_limits": 2,
+            "codex.response.metadata": 2,
+            "response.created": 2,
+            "response.in_progress": 2,
+            "responsesapi.websocket_timing": 2,
+            "response.completed": 2,
+            "response.output_item.added": 1,
+            "response.content_part.added": 1,
+            "response.output_text.delta": 247,
+            "response.metadata": 1,
+            "response.output_text.done": 1,
+            "response.content_part.done": 1,
+            "response.output_item.done": 1
+          },
+          "otel_names": {
+            "codex.startup_phase": 8,
+            "codex.websocket_connect": 1,
+            "codex.websocket_request": 2,
+            "codex.sse_event": 2,
+            "codex.user_prompt": 1,
+            "codex.turn_ttft": 1
+          },
+          "otel_kinds": {
+            "response.completed": 2
+          },
+          "otel_fields": [
+            "app.version",
+            "auth.connection_reused",
+            "auth.env_codex_api_key_enabled",
+            "auth.env_codex_api_key_present",
+            "auth.env_openai_api_key_present",
+            "auth.env_refresh_token_url_override_present",
+            "auth.header_attached",
+            "auth.header_name",
+            "auth.retry_after_unauthorized",
+            "auth_mode",
+            "cache_write_token_count",
+            "cached_token_count",
+            "conversation.id",
+            "duration_ms",
+            "endpoint",
+            "event.kind",
+            "event.name",
+            "event.timestamp",
+            "input_token_count",
+            "model",
+            "model_reasoning_effort",
+            "originator",
+            "output_token_count",
+            "prompt",
+            "prompt_length",
+            "reasoning_token_count",
+            "slug",
+            "startup.phase",
+            "startup.status",
+            "success",
+            "terminal.type",
+            "tool_token_count",
+            "ttft_ms",
+            "user.account_id",
+            "user.email"
+          ],
+          "lag_ms": {
+            "p50": 40.94,
+            "p95": 61.24,
+            "max": 61.24
+          },
+          "protocol_methods": {
+            "thread/settings/updated": 1,
+            "thread/status/changed": 2,
+            "turn/started": 1,
+            "mcpServer/startupStatus/updated": 6,
+            "hook/started": 3,
+            "hook/completed": 3,
+            "item/started": 2,
+            "item/completed": 2,
+            "item/agentMessage/delta": 247,
+            "turn/moderationMetadata": 1,
+            "thread/tokenUsage/updated": 1,
+            "account/rateLimits/updated": 1,
+            "thread/readState/changed": 1,
+            "turn/completed": 1
+          },
+          "usage": [
+            {
+              "input_tokens": 2,
+              "output_tokens": 0,
+              "output_tokens_details": {
+                "reasoning_tokens": 0
+              },
+              "total_tokens": 2
+            },
+            {
+              "input_tokens": 12496,
+              "output_tokens": 251,
+              "output_tokens_details": {
+                "reasoning_tokens": 0
+              },
+              "total_tokens": 12747
+            }
+          ]
+        }
+      ],
+      "all_log_records": 19,
+      "all_log_lag_ms_nearest_rank": {
+        "0.5": 40.936,
+        "0.95": 102.167,
+        "1": 102.167
+      },
+      "otel_timeUnixNano_all_zero": true,
+      "successful_tool_outputs": 0,
+      "nested_sandbox_denied_results": 0,
+      "traces": {
+        "span_count": 2330,
+        "receive_loop_span_count": 254,
+        "receive_loop_span_names": [
+          "handle_responses"
+        ],
+        "receive_loop_attribute_keys": [
+          "busy_ns",
+          "code.file.path",
+          "code.line.number",
+          "code.module.name",
+          "codex.request.reasoning_effort",
+          "codex.response.receive_wait_ms",
+          "codex.usage.reasoning_output_tokens",
+          "codex.usage.total_tokens",
+          "from",
+          "gen_ai.usage.cache_read.input_tokens",
+          "gen_ai.usage.cache_write.input_tokens",
+          "gen_ai.usage.input_tokens",
+          "gen_ai.usage.output_tokens",
+          "idle_ns",
+          "target",
+          "thread.id",
+          "thread.name"
+        ],
+        "receive_loop_with_explicit_chat_or_turn_id": 0
+      },
+      "metrics": {
+        "unique_metric_count": 68,
+        "text_delta_points": 74,
+        "text_delta_count_sum": 247,
+        "text_delta_tag_keys": [
+          "app.version",
+          "auth_mode",
+          "kind",
+          "model",
+          "originator",
+          "session_source",
+          "success"
+        ]
+      },
+      "payload_bytes": {
+        "/v1/logs": 74047,
+        "/v1/metrics": 1519529,
+        "/v1/traces": 5583544
+      }
+    }
+  },
+  "final_probe_smoke": {
+    "version": "codex-cli 0.166.0-alpha.5.1",
+    "same_process_alive": true,
+    "source_config_unchanged": true,
+    "backend_exit_code": 0,
+    "hook_events": {
+      "SessionStart:v1": 1,
+      "UserPromptSubmit:v1": 1,
+      "Stop:v1": 1,
+      "SessionEnd:v1": 1
+    },
+    "span_count": 478,
+    "turn_statuses": [
+      "completed"
+    ],
+    "metric_count": 50
+  }
+}

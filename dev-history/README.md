@@ -6,6 +6,7 @@
 
 | 阅读目的 | 入口 | 状态与边界 |
 | --- | --- | --- |
+| 评估无需 wrapper 的接入架构 | [28：Hooks + OTel 功能缺口](28_hooks_and_otel/capability-gaps.md) · [调研与实验记录](28_hooks_and_otel/research-and-experiments.md) | 总速度可近实时估算；并发流归属、现有分词口径、流式内容与部分实时阶段/进度无法保持，未切换产品架构 |
 | 修复回退／分叉后的近期历史读取 | [27：Codex 历史路径切换与继承读取](27_rollout_history_compatibility/README.md) | 当前来源定位、缓存切换及有效继承读取已随 alpha.5 发布；发行 CI、最终 DMG／原生客户端及公网更新验收通过，其余兼容项暂缓 |
 | 关于与自动更新检查 | [26：关于页与 Sparkle 更新检查](26_about_and_updates/README.md) | 关于页、持久更新提示与 Sparkle 已实现；静态 HTTPS 清单已上线，下载与安装仍手动 |
 | 并行功能的集成与联合验证 | [25：设置、诊断与平均速度集成](25_settings_speed_integration/README.md) | 临时集成分支完成合并；回归、隔离跨进程联调及只读原生 Preview 通过，尚未合入 main 或更新日常版本 |
