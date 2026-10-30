@@ -21,6 +21,7 @@ import threading
 import time
 
 from build_dmg import APP_NAME, mounted_dmg
+from verify_rollout_history import verify as verify_rollout_history
 
 ROOT = Path(__file__).resolve().parents[1]
 
@@ -197,6 +198,12 @@ def main():
             assert rate['tokens_per_second'] == 100 and rate['timed_output_tokens'] == 100, rate
             assert rate['timed_duration_ms'] == 1000 and rate['pending_response_count'] == 0, rate
             result['checks']['bundled_selected_turn_average_speed'] = True
+            def inject(rows):
+                packet = b''.join(json.dumps(row, ensure_ascii=False).encode()+b'\n' for row in rows)
+                value = execute([test/'data/codex-observed', 'app-server'], input=packet, check=False)
+                assert value.returncode == 17 and value.stdout == packet, value.returncode
+            result['checks']['rollout_history_compatibility'] = verify_rollout_history(
+                cli, inject, environment['CODEX_HOME'], runtime)
             management('stop', '--owner-pid', str(os.getpid()))
             assert not json.loads(cli('--runtime', runtime, 'status').stdout)['running']
             result['checks']['managed_stop'] = True

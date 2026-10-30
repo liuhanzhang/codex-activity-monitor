@@ -1,0 +1,149 @@
+{
+  "version": 1,
+  "date": "2026-10-29",
+  "timezone": "Asia/Shanghai",
+  "status": "implemented and isolated acceptance passed; daily installation not changed",
+  "monitor_baseline": "61f751d25ae57e8cfe798bba73402235b96d1fca",
+  "codex_reference": "9def09afa71e1443a1028866ac22dc82aedea00e",
+  "code_state": "uncommitted worktree",
+  "build_id": "5f8572edb9bae1359a2c021a6fb096238f07ec735d9ff2385962ef86617beea4",
+  "tests": {
+    "python_full": {
+      "tests": 578,
+      "passed": true
+    },
+    "rollout_regressions": {
+      "tests": 32,
+      "passed": true
+    },
+    "native_client": {
+      "test": "isolatedRolloutHistoryBackendClient",
+      "source_backend_passed": true,
+      "bundled_backend_passed": true
+    },
+    "localization_export_check": true
+  },
+  "source_integration": {
+    "current_selection_and_warm_cache": true,
+    "retained_prefix": true,
+    "discarded_paging_blocked": true,
+    "effective_turn_averages": true,
+    "incremental_next_turn": true,
+    "user_fork_source_ownership": true,
+    "source_files_and_sqlite_unchanged_by_reads": true,
+    "collector_remained_healthy": true,
+    "native_system_client_timeline_and_activity_viewer": true
+  },
+  "bundled_integration": {
+    "current_selection_and_warm_cache": true,
+    "retained_prefix": true,
+    "discarded_paging_blocked": true,
+    "effective_turn_averages": true,
+    "incremental_next_turn": true,
+    "user_fork_source_ownership": true,
+    "source_files_and_sqlite_unchanged_by_reads": true,
+    "collector_remained_healthy": true,
+    "native_system_client_timeline_and_activity_viewer": true
+  },
+  "isolated_package": {
+    "ok": true,
+    "rollout": {
+      "current_selection_and_warm_cache": true,
+      "retained_prefix": true,
+      "discarded_paging_blocked": true,
+      "effective_turn_averages": true,
+      "incremental_next_turn": true,
+      "user_fork_source_ownership": true,
+      "source_files_and_sqlite_unchanged_by_reads": true
+    },
+    "gui": {
+      "build_id": "5f8572edb9bae1359a2c021a6fb096238f07ec735d9ff2385962ef86617beea4",
+      "management_state": "configured",
+      "transport_fresh": true,
+      "mode": "unavailable"
+    },
+    "copy_out_and_eject": true,
+    "source_and_network_denial": true,
+    "managed_stop": true,
+    "restore_and_launcher_removal": true
+  },
+  "installer": {
+    "name": "Codex-Activity-Monitor-0.1.0-alpha.3-macos-arm64.dmg",
+    "sha256": "32e9889be666b47abf869bc6045c54e397474928167bf1e1188186f200b21c3f",
+    "bytes": 27925302,
+    "checks": {
+      "read_only": true,
+      "applications_shortcut": true,
+      "finder_layout": true,
+      "bundle_sha256": "82bcd779929c45f220674107c980c578b28b5e8febaf496844ddbfb064adaee5",
+      "mounted_signature": true,
+      "copied_signature": true
+    }
+  },
+  "runtime_source_modules": {
+    "__init__": "8ff8ff094da5ef9ea9df535021923735983e5d74a03272beb1e6defa71ec1b99",
+    "agent_identity": "0cd6f8b0d3bc30aafb878f7d65b7d161f6b0887538324f26aaff093a967139ca",
+    "agent_presentation": "7bbef11aa4052295ebabc096cc73f6daf438f9d69a0ccd922cee53e6c2eca0aa",
+    "agent_relations": "07e7972b9cc7a56e879a00da001fb2ee7afcc7e52b5a966d8aacbaa0fa5ee5af",
+    "app_control": "6eb963b2326a858dfd620834bddad573211254a1a87cf853e7160cc944c1122a",
+    "app_session": "32f05e8fe16954b06af2a517841b6df900c05a1c69dc1097b0e479bb87a4d2e3",
+    "bridge": "a1b74fa1b688b4467965e1137c798dfa2ea57243a17810f16bcf359143645436",
+    "cli": "cfa98158522b1a99364604290df06a948add9b99272cc7a29f49f0f05bbb50d0",
+    "collector": "3bc84e310e5c40ef683732f93fa338ae5db0eee3ba960d9064163b6112b1695b",
+    "content_version": "bfa524ae16617a855555fdfbcf0a00892aaa2e139e67b0da72ba28cabf536ca3",
+    "diagnostic_health": "6137943fb92d2f8110f204fdfab5664c955bf6a72ac1d86121efcb93558aaa62",
+    "diagnostic_log": "278e89ef105f8e89c4e90c08bb473637097007f1247b3ff3a2b9be038ee56173",
+    "display": "a3577217d54e8a64a0da65fe88edaf62e3be2e29c7e69ea8ebd45728684502a6",
+    "engine": "2353ea386f6849a25994de91deb9481fc68df553482ef0ff23aa3763fb625069",
+    "events": "2ce79c1fd33e8385382be1af1502830f0b30f578bf5cbceb4a4aa5b6da3cf5e2",
+    "execution": "a96cc546eb896fec2c1e3d2e62de8da1cabf37d4b06785de34eeec1beea17b95",
+    "history": "6bc5aefcdff3725eb451de8cac985140bbb6c18063500a98445735be0a627869",
+    "history_content": "a62bc3d025843a6d4e3d4b63beaa09248ee0d1e4e7754fb7acfa9a32503f7ba9",
+    "history_contract": "a5afcfdec0e6fa47ec768ec42240a2ae4f6c853b5899d14f3a59be817800edc5",
+    "history_index": "72a7c1ddf78bc517da4dae5af329a64f1b3e110688de240c03681a90006953b7",
+    "history_read": "a664ffe2c77f3006da01cd3c0127ff4864cbf406fab6156765ee8dad3e7f64fb",
+    "history_refresh": "27ad6daede726b537b1e9f8e2e6c754f53c73aaac41df4e163193459ddc9b5dd",
+    "history_source": "475e35d0fb31cca10041d21106136bfbeb530a5c708413753e1df7b5d4317342",
+    "history_stream": "b84dd2667b24779fa7fba5c82df33aebdeb9f43338054f7770fe0054dffd166b",
+    "i18n": "48f65aaf3fe6e2a3af21d671de249cf2db9f88392170ec64643b219e0f036316",
+    "identity_budget": "46622614d4feb97fa126cc7cad33c3ffd1fd8664f13ac457572dc90e7ac1f668",
+    "integration": "59224bc8df95cf4477a3a447919a11ddb32ff44a7d4dc73b7a1a4516389649c1",
+    "integration_status": "56a562070f2e17941c2effe1ea78fdb284a3e762b04e93eb9d01d3fb1fbaf793",
+    "json_encoding": "25ac1c2cb3490659ff18a75b022a4ae27ba331605c43003b9df2b89af4f71fdb",
+    "menu_presentation": "f49591d14675034ed262b87bcc3975ca272caa8910ecf284d25a5e8007be4b73",
+    "messages_control": "b270bbd69e1370fb1d50da280eec4e0eb2d4d1dd5dc3451161f4f74c7d308ae5",
+    "messages_detail": "81ef193811adee7c37de8f227d98983f354a0dd033b242aa4ab50955dc71e9c3",
+    "messages_diagnostics": "a051e0d04d704b8ec9e90d28e516e5fa8fcebd77e87fe311c9461096d7162972",
+    "messages_en": "a49fc152b9cefbb09b67f75563c8fddedb04d7706f7e8a1947f934e6d077d6d4",
+    "messages_zh_cn": "6ccbdff9f360bbaa44fefb70781380aeb8fcc21de2c3b8d038a9468964eef61b",
+    "metrics": "ffa66cddeb8b727fcaa477a7d8e0feaf80fadfaa6d43c2db8b910ff1da9215ac",
+    "observation_lease": "50a6bd0d3ed7e18e494e69f1e20fad31927226cd1533823e580cc6333dccf345",
+    "observer_permit": "eaaab5298d5234bd512cc5a438b9cfeb9ff0493b51b7ee0e62496914694ede88",
+    "overview": "5b73970c80e0d7ff62cd22dbc8e1a9c8904cadb747576146481e40e7e2af9fcf",
+    "progress_state": "5ca7d65abad40e7bc3de43b8c3d86effdfa9195974b511f15366086e0d71da2b",
+    "publication": "f7fe693ad753bd14d5d707f2d394be1d21f3e1b959b4f7f32f8df0c22da8b3cd",
+    "query_request": "79c2a7d27d7d3cfb5eca855b2fa9f47210729701c50466c1a97854880ed259ff",
+    "query_response": "8a9b55fee50b8cd2b88ce7f440ab6ed41c398d145b315135966f30b5e0b178da",
+    "reconciliation": "e139cc4ce140d4814ded89a71fe300398efb8c3cdb45ddd7a4e627205125cb03",
+    "request_rate": "f735758e62775ab87d62e5211f0a07a0cc1573ecf26a9bd03873d95f75741286",
+    "resource_budget": "f7d4be7d377bf5c66193eba2ba3755075367f3be4c79327865cb0c79eea3a046",
+    "runtime": "eaea70871146974e818b3afc86082bcb73769182c6bdf94cc30f5178330f3730",
+    "state": "f05989cd6cc725da3c021afdae9e38996115bdcb9a87f8536b32970302de95e7",
+    "state_client": "47b08bd70e20dafb17143377f5510eb1be6d93993daf605abdfb4bd2ce3b7729",
+    "state_transport": "d9217138c2c1c98b67c7df67c65e2433cfa87be8aefcc2d59a172afd53b05e5f",
+    "test_profile": "628d31e602ed4fb6e0d8e272bd72baee17c267db85e4b45ce612965de3c0312c",
+    "timeline": "e0ca5475de5e1200276a1cadb72946e282e8cc747fc484f43e9c6dab5d93d479",
+    "timeline_query": "480c1512da6295fcc56ebdfc3990ac55fa3288298e446b2b33e35a4269868fa1",
+    "timeline_storage": "3598f72a5f129f234e7cd365b9f2cd6da3553f9e41e45f0cb47116c35ecdf66c",
+    "tokenizer_process": "052881f8c8af3b85e1b2de1f98995efe72c629edf76378b93bf335bc6594f4cb",
+    "tool_labels": "96cb6aa7037fdf2c2066b85149aa0ef3835baab408370b8d9ef92ab082270a14",
+    "usage": "6fc697d36c0cd86a5b46ff724aa38a846275a8c6731f63eb823e819360c2bd9d"
+  },
+  "verification_code_sha256": {
+    "tests/test_rollout_history.py": "61a1fd2cd0d958be8cc3083763de68d144731792ff57fb22b9e76c73c34a9f6d",
+    "tests/acceptance/verify_rollout_history.py": "e048c754250dab39c5baa974af48a90720982874a5b82a6fadfc00d2486d6ab7",
+    "packaging/verify_rollout_history.py": "b0185e7d99cc571a3e68b4aa1e37f4d87497eb16953233b1bbf76209afe4484c",
+    "packaging/verify_app.py": "f86e39c1e1d91a54bf039f1afe1db538dfea87734efcfa07d79252e47047f30a",
+    "macos/Tests/MonitorAppTests/RolloutBackendAcceptanceTests.swift": "14c48d6fd001e05d1b30e814d8bf9eafa6ecc4738140cb899c249bb2928ba246"
+  }
+}

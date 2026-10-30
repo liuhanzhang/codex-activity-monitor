@@ -7,12 +7,11 @@ from datetime import datetime
 from enum import IntFlag
 import hashlib
 import json
-import os
 import uuid
 
 from .agent_presentation import agent_metadata
 from .history_content import ABSENT, CANONICAL_TYPES, item_content, raw_section, source_truncated
-from .history_read import HistoryChanged, HistoryRead, HistoryReference, explicit_turn, file_stamp
+from .history_read import HistoryChanged, HistoryRead, HistoryReference, explicit_turn, open_history
 from .request_rate import RequestRateBook
 from .timeline import HISTORY_SEED_LIMIT, HISTORY_SEED_TYPES, identity, item_namespace, item_phase, phase_id, merge_history_phase, merge_phase, status, valid_ms
 
@@ -61,13 +60,15 @@ class _HistoryProjection:
         self.generation = None
         self.read_complete = False
         self.agent_metadata = {}
+        self.source = None
+        self.source_epoch = 0
 
     def refresh(self):
         self.read_complete = False
         previous_metadata, self.agent_metadata = self.agent_metadata, {}
-        with self.path.open('rb') as stream:
-            stat = os.fstat(stream.fileno())
-            signature = (stat.st_dev, stat.st_ino)
+        with open_history(self.path, self.thread, self.source) as stream:
+            stamp = stream.stamp()
+            signature = stamp[:2]
             first = stream.readline()
             header_digest = hashlib.sha256(first).hexdigest()
             try:
@@ -82,9 +83,9 @@ class _HistoryProjection:
                 self.revision += 1
             stream.seek(max(0, self.offset - 256))
             anchor = hashlib.sha256(stream.read(min(self.offset, 256))).digest()
-            same_size_rewrite = (self.file_stamp is not None and stat.st_size == self.file_stamp[2] and
-                                 file_stamp(stat) != self.file_stamp)
-            if (self.fingerprint != signature or stat.st_size < self.offset or same_size_rewrite or
+            same_size_rewrite = (self.file_stamp is not None and stamp[2] == self.file_stamp[2] and
+                                 stamp != self.file_stamp)
+            if (self.fingerprint != signature or stamp[2] < self.offset or same_size_rewrite or
                     self.header_digest != header_digest or (self.anchor is not None and self.anchor != anchor)):
                 self.generation = uuid.uuid4().hex
                 self.offset = 0
@@ -104,18 +105,26 @@ class _HistoryProjection:
                 self.offset = stream.tell()
                 try:
                     row = json.loads(line)
-                    self._row(row, start, len(line), hashlib.sha256(line).hexdigest())
+                    row = stream.project(row, start)
+                    if row is not None:
+                        self._row(row, start, len(line), hashlib.sha256(line).hexdigest())
+                except HistoryChanged:
+                    raise
                 except (ValueError, TypeError, KeyError, AttributeError):
                     self.quality.add('malformed_history_record')
                 self.revision += 1
             self.read_complete = not line
             stream.seek(max(0, self.offset - 256))
             self.anchor = hashlib.sha256(stream.read(min(self.offset, 256))).digest()
-            current = os.fstat(stream.fileno())
-            if (current.st_dev, current.st_ino) != signature or file_stamp(self.path.stat()) != file_stamp(current):
+            stream.verify()
+            current = stream.stamp()
+            if current[:2] != signature:
                 raise HistoryChanged()
-            self.file_stamp = file_stamp(current)
-            self.read_complete = self.read_complete and self.offset == current.st_size
+            self.file_stamp = current
+            self.read_complete = self.read_complete and self.offset == current[2]
+            if self.source is not None:
+                self.quality.update(self.source.quality)
+                self.read_complete = self.read_complete and not self.source.quality
 
     def _reset_projection(self):
         pass
@@ -235,11 +244,11 @@ class RolloutIndex(_HistoryProjection):
     def read_ref(self, ref, reader=None):
         if reader is not None:
             return reader.read_ref(ref)
-        with HistoryRead(self.path, self.thread, self.fingerprint, self.header_digest) as reader:
+        with HistoryRead(self.path, self.thread, self.fingerprint, self.header_digest, self.source) as reader:
             return reader.read_ref(ref)
 
     def detail(self, phase):
-        with HistoryRead(self.path, self.thread, self.fingerprint, self.header_digest) as reader:
+        with HistoryRead(self.path, self.thread, self.fingerprint, self.header_digest, self.source) as reader:
             return self._detail(phase, reader)
 
     def _detail(self, phase, reader):
@@ -469,9 +478,11 @@ class HistoryDirectory(_HistoryProjection):
     def _read_turn(self, turn, index):
         index.fingerprint, index.header_digest, index.mode = self.fingerprint, self.header_digest, self.mode
         index.generation, index.revision = self.generation, self.revision
+        index.source = self.source
+        index.source_epoch = self.source_epoch
         index.quality = set(self.quality)
         index.agent_metadata = deepcopy(self.agent_metadata)
-        with HistoryRead(self.path, self.thread, self.fingerprint, self.header_digest) as reader:
+        with HistoryRead(self.path, self.thread, self.fingerprint, self.header_digest, self.source) as reader:
             if reader.before != self.file_stamp:
                 raise HistoryChanged()
             for span in self.ranges.get(turn, []):
@@ -489,7 +500,11 @@ class HistoryDirectory(_HistoryProjection):
                     digest = hashlib.sha256(line).hexdigest()
                     actual = hashlib.sha256(actual+bytes.fromhex(digest)).digest()
                     try:
-                        index._row(json.loads(line), start, len(line), digest)
+                        row = reader.stream.project(json.loads(line), start)
+                        if row is not None:
+                            index._row(row, start, len(line), digest)
+                    except HistoryChanged:
+                        raise
                     except (ValueError, TypeError, KeyError, AttributeError):
                         index.quality.add('malformed_history_record')
                 if actual != span.digest:

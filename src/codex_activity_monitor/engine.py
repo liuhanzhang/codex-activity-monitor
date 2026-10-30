@@ -48,6 +48,9 @@ class Engine:
         self.resolved_requests = OrderedDict()
         self.usage = UsageBook()
         self.history_versions = {}
+        self.history_source_epochs = {}
+        self.history_inputs = OrderedDict()
+        self.history_input_sequence = 0
         self.identity_budget = IdentityBudget()
         self.identity_gap = False
 
@@ -69,10 +72,37 @@ class Engine:
                 turns.add(thread.turn_id)
             items = {(a.turn_id, a.id) for a in thread.activities.values() if a.turn_id}
             items.update(pair for pair in retained[(scope, thread.id)] if pair[0] in turns)
+            source_epoch, hint = self.history_inputs.get((scope, thread.id), (0, ()))
+            hint = dict(hint)
+            if self.backends.get(thread.backend, {}).get('sqlite_home'):
+                hint['sqlite_home'] = self.backends[thread.backend]['sqlite_home']
             requests.append(HistorySelection(scope, thread.id, frozenset(turns),
                 thread.status in ('inProgress', 'unknown') or
-                any(a.active or a.unresolved for a in thread.activities.values()), frozenset(items)))
+                any(a.active or a.unresolved for a in thread.activities.values()), frozenset(items),
+                source_epoch, tuple(sorted(hint.items()))))
         return requests
+
+    def history_hint(self, backend, thread, metadata=None):
+        scope = self.backends.get(backend, {}).get('home')
+        if not isinstance(scope, str):
+            return
+        key = scope, thread
+        _, previous = self.history_inputs.get(key, (0, ()))
+        value = dict(previous)
+        if metadata is None:
+            value.pop('path', None)
+        else:
+            for field, name in (('path', 'path'), ('historyMode', 'history_mode')):
+                candidate = metadata.get(field)
+                if isinstance(candidate, str) and 0 < len(candidate) <= 4096:
+                    value[name] = candidate
+            if value == dict(previous):
+                return
+        self.history_input_sequence += 1
+        self.history_inputs[key] = self.history_input_sequence, tuple(sorted(value.items()))
+        self.history_inputs.move_to_end(key)
+        while len(self.history_inputs) > 1024:
+            self.history_inputs.popitem(last=False)
 
     def restore_unresolved(self, rows, updated_at):
         """Restore identities, never old live speed or a fabricated observation."""
@@ -135,6 +165,7 @@ class Engine:
             thread.ephemeral=metadata['ephemeral']
         if metadata.get('threadSource'):
             thread.thread_source=metadata['threadSource']
+        self.history_hint(backend, thread.id, metadata)
         return thread
 
     def _map_turn(self, backend, turn_id, thread_id):
@@ -300,6 +331,8 @@ class Engine:
         if kind=='bridge/started':
             backend.update(connected=True,home=event.data.get('home'),cli=event.data.get('cli'),
                            bridge_pid=event.data.get('bridge_pid'),implementation=event.data.get('implementation'))
+            if isinstance(event.data.get('sqlite_home'), str) and len(event.data['sqlite_home']) <= 4096:
+                backend['sqlite_home'] = event.data['sqlite_home']
             for field in ('configuration_revision', 'configuration_matches'):
                 if field in event.data:
                     backend[field] = event.data[field]
@@ -942,6 +975,8 @@ class Engine:
                 self.backends.pop(backend,None)
         history_keys = {(self.backends.get(t.backend, {}).get('home'), t.id) for t in self.threads.values()}
         self.history_versions = {k: v for k, v in self.history_versions.items() if k in history_keys}
+        self.history_source_epochs = {k: v for k, v in self.history_source_epochs.items() if k in history_keys}
+        self.history_inputs = OrderedDict((k, v) for k, v in self.history_inputs.items() if k in history_keys)
         text_sizes = [(len(s.text.encode('utf-8')), s) for s in self.streams.values()]
         retained = sum(size for size, _ in text_sizes)
         if retained > 32*1024*1024:

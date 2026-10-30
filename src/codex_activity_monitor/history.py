@@ -7,7 +7,6 @@ owns their mutable caches; callers receive detached views under its reader lock.
 from collections import OrderedDict
 from copy import copy, deepcopy
 from dataclasses import asdict, dataclass
-import json
 from pathlib import Path
 import threading
 import time
@@ -18,6 +17,7 @@ from .history_content import (ABSENT, CANONICAL_TYPES, fields, item_content, raw
                               section, source_truncated, text_content, tool_content)
 from .history_index import HistoryDirectory, HistoryDetails, HistoryFacts, HistoryMetadata, RolloutIndex, canonical_item, timestamp
 from .history_read import HistoryChanged, HistoryRead
+from .history_source import RolloutResolver
 from .resource_budget import retained_bytes
 from .timeline import phase_id
 
@@ -43,6 +43,11 @@ class HistoryProvider:
     def __init__(self, capacity=12, max_cache_bytes=64*1024*1024, max_turn_indices=1024):
         if capacity < 0 or max_cache_bytes < 0 or max_turn_indices < 0:
             raise ValueError('invalid_history_budget')
+        self.resolver = RolloutResolver()
+        self.sources = OrderedDict()
+        self.source_epochs = {}
+        self.source_sequence = 0
+        self.input_versions = OrderedDict()
         self.indices = OrderedDict()
         self.lock = threading.RLock()
         self.missing = OrderedDict()
@@ -64,6 +69,7 @@ class HistoryProvider:
     def selected_view(self, scope, thread, turn):
         """Read and cache one turn; source size cannot force a full phase rebuild."""
         with self.lock:
+            self._source(scope, thread)
             cached = self._cached_selection(scope, thread, {turn})
             if cached is not None:
                 return cached
@@ -85,10 +91,11 @@ class HistoryProvider:
         """One phase and explicit call dependencies, independent of turn width."""
         key = HistoryCacheKey(scope, thread, 'detail', turn, selected_id)
         with self.lock:
+            self._source(scope, thread)
             cached = self.indices.get(key)
             if cached is not None and cached.hint_signature == HistoryDetails.hint_key(observed_phase):
                 try:
-                    with HistoryRead(cached.path, thread, cached.fingerprint, cached.header_digest) as reader:
+                    with HistoryRead(cached.path, thread, cached.fingerprint, cached.header_digest, cached.source) as reader:
                         if reader.before == cached.file_stamp:
                             result = self._view(cached)
                             self.indices.move_to_end(key)
@@ -145,6 +152,7 @@ class HistoryProvider:
         selection. Any change falls back to incremental source discovery.
         Caller owns the reader lock, never an Engine/domain lock.
         """
+        self._source(scope, thread)
         if not turns:
             return None
         kind = 'turn' if required_ids is None else 'facts'
@@ -160,7 +168,7 @@ class HistoryProvider:
                (source.path, source.file_stamp, source.generation) for part in parts):
             return None
         try:
-            with HistoryRead(source.path, thread, source.fingerprint, source.header_digest) as reader:
+            with HistoryRead(source.path, thread, source.fingerprint, source.header_digest, source.source) as reader:
                 if reader.before != source.file_stamp:
                     return None
                 result = self._selection_view(source, parts, projection='facts' if required_ids is not None else 'turn')
@@ -184,7 +192,7 @@ class HistoryProvider:
         if facts:
             result.seed_phase_ids = frozenset(key for part in parts for key in part.seed_phase_ids)
         for name in ('offset', 'fingerprint', 'anchor', 'turn', 'turn_ref', 'file_stamp', 'header_digest',
-                     'mode', 'revision', 'generation', 'read_complete'):
+                     'mode', 'revision', 'generation', 'read_complete', 'source', 'source_epoch'):
             setattr(result, name, getattr(source, name))
         result.agent_metadata = source.agent_metadata
         result.quality = set(source.quality)
@@ -213,7 +221,16 @@ class HistoryProvider:
             for key in list(self.indices):
                 if (key.scope, key.thread) == (scope, thread):
                     self.indices.pop(key, None); self.weights.pop(key, None)
+            self._advance_source((scope, thread))
             self._publish_stats()
+
+    def _advance_source(self, key):
+        self.source_sequence += 1
+        values = {k: v for k, v in self.source_epochs.items() if k != key}
+        values[key] = self.source_sequence
+        if len(values) > 1024:
+            values.pop(next(iter(values)))
+        self.source_epochs = values
 
     def diagnostics(self):
         # The event loop must never wait for this provider's JSONL reader lock.
@@ -233,6 +250,7 @@ class HistoryProvider:
                                     getattr(index, 'phase_catalogue', {}), getattr(index, 'selected_ids', frozenset()),
                                     getattr(index, 'seed_phase_ids', frozenset()),
                                     getattr(index, 'request_rates', None),
+                                    getattr(index, 'source', None),
                                     getattr(index, 'selection', None), getattr(index, 'hint_signature', None))
             self.weights[key] = (version, weight)
         if self.weights[key][1] > self.max_cache_bytes:
@@ -316,51 +334,87 @@ class HistoryProvider:
                   (items is None or (p['turn_id'], p['item_id']) in items or p['id'] in index.seed_phase_ids)]
         result = {'scope_id': index.scope, 'thread_id': index.thread,
                 'revision': index.revision, 'generation': index.generation, 'fingerprint': index.fingerprint,
+                'source_epoch': index.source_epoch,
                 'read_complete': index.read_complete,
                 'requested_turns': sorted(selected),
                 'quality': sorted(index.quality | (set() if index.read_complete else {'history_incomplete'})),
                 'turns': deepcopy([t for t in index.turns.values() if t['turn_id'] in selected]),
                 'phases': deepcopy(phases)}
+        if index.source and index.source.branched and index.read_complete and not index.quality:
+            result['source_absent_turns'] = sorted(selected-set(index.turns))
         if items is not None:
             result['phase_selection'] = [list(pair) for pair in sorted(items) if pair[0] in selected]
         return result
 
+    def hint(self, scope, thread, value):
+        with self.lock:
+            self.resolver.hint(scope, thread, value)
+            self.invalidate(scope, thread)
+
+    def configure_source(self, scope, thread, epoch, hint):
+        with self.lock:
+            key = scope, thread
+            old = self.input_versions.get(key)
+            value = epoch, tuple(hint)
+            if old is not None and (old == value or old[0] > epoch):
+                return
+            self.input_versions[key] = value
+            self.input_versions.move_to_end(key)
+            while len(self.input_versions) > 1024:
+                self.input_versions.popitem(last=False)
+            self.hint(scope, thread, dict(hint))
+            self._advance_source(key)
+
+    def _source(self, scope, thread):
+        key = scope, thread
+        try:
+            source = self.resolver.resolve(scope, thread)
+        except (OSError, ValueError):
+            self.invalidate(scope, thread)
+            self.sources.pop(key, None)
+            raise
+        old = self.sources.get(key)
+        if old is not None and (source is None or old != source.generation):
+            directories = [(k, v) for k, v in self.indices.items() if
+                           (k.scope, k.thread) == key and k.kind in ('full', 'directory') and
+                           source is not None and v.path == source.path]
+            self.invalidate(scope, thread)
+            # Refresh existing directory objects in place; narrow views were invalidated.
+            for cache_key, index in directories:
+                self.indices[cache_key] = index
+        if old is None or source is None or old != source.generation:
+            self._advance_source(key)
+        if source is None:
+            self.sources.pop(key, None)
+        else:
+            self.sources[key] = source.generation
+            self.sources.move_to_end(key)
+            while len(self.sources) > 512:
+                self.sources.popitem(last=False)
+        return source
+
     def index(self, scope, thread, *, directory_only=False):
         if not isinstance(thread, str) or not thread or any(c in thread for c in ('/', '\\', '\x00')):
             raise ValueError('invalid_thread_identity')
-        home = Path(scope).expanduser()
-        if not home.is_absolute():
+        if not Path(scope).expanduser().is_absolute():
             return None
         key = HistoryCacheKey(scope, thread, 'directory' if directory_only else 'full')
         missing_key = (scope, thread)
         with self.lock:
+            source = self._source(scope, thread)
+            if source is None:
+                self.missing[missing_key] = time.monotonic()
+                self.missing.move_to_end(missing_key)
+                while len(self.missing) > 512:
+                    self.missing.popitem(last=False)
+                return None
+            self.missing.pop(missing_key, None)
             index = self.indices.get(key)
-            if index is None or not index.path.is_file():
-                if time.monotonic() - self.missing.get(missing_key, 0) < 2:
-                    return None
-                matches = []
-                for directory in ('sessions', 'archived_sessions'):
-                    base = home / directory
-                    if base.is_dir():
-                        matches.extend(base.rglob('*' + thread + '.jsonl'))
-                verified = []
-                for path in matches:
-                    try:
-                        with path.open('rb') as stream:
-                            meta = json.loads(stream.readline())
-                        if meta.get('type') == 'session_meta' and meta.get('payload', {}).get('id') == thread:
-                            verified.append(path)
-                    except (OSError, ValueError, TypeError, AttributeError):
-                        continue
-                if len(verified) != 1:
-                    self.missing[missing_key] = time.monotonic()
-                    self.missing.move_to_end(missing_key)
-                    while len(self.missing) > 512:
-                        self.missing.popitem(last=False)
-                    return None
-                self.missing.pop(missing_key, None)
-                index = (HistoryDirectory if directory_only else RolloutIndex)(verified[0], scope, thread)
+            if index is None:
+                index = (HistoryDirectory if directory_only else RolloutIndex)(source.path, scope, thread)
                 self.indices[key] = index
+            index.source = source
+            index.source_epoch = self.source_epochs[(scope, thread)]
             try:
                 index.refresh()
             except (OSError, ValueError, TypeError):

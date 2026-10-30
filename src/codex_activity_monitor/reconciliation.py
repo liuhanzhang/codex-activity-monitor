@@ -8,6 +8,14 @@ from .timeline import HISTORY_SEED_LIMIT, HISTORY_SEED_TYPES, merge_phase, retir
 def apply_history(engine, summary):
     """Apply persisted facts without replaying them through usage or delta intake."""
     scope, identity = summary['scope_id'], summary['thread_id']
+    key = scope, identity
+    if ('request_epoch' in summary and
+            summary['request_epoch'] != engine.history_inputs.get(key, (0, ()))[0]):
+        return
+    if 'source_epoch' in summary:
+        if summary['source_epoch'] < engine.history_source_epochs.get(key, 0):
+            return
+        engine.history_source_epochs[key] = summary['source_epoch']
     threads = [t for t in engine.threads.values() if t.id == identity and
                engine.backends.get(t.backend, {}).get('home') == scope]
     for thread in threads:
@@ -51,10 +59,13 @@ def apply_history(engine, summary):
             thread.history_progress_ms = None
             thread.history_quality.add('history_changed')
         settled = settled_model_items(source_turns.values(), phases,
-                                      read_complete=summary.get('read_complete', False), quality=summary.get('quality', []))
+                                      read_complete=summary.get('read_complete', False), quality=summary.get('quality', []),
+                                      absent_turns=[(scope, identity, turn) for turn in summary.get('source_absent_turns', [])])
         if settled is not None:
             for activity in thread.activities.values():
                 if not coverage.covers(activity.turn_id, activity.id):
+                    continue
+                if activity.active and activity.turn_id in summary.get('source_absent_turns', []):
                     continue
                 item_type = activity.item_type or engine.items.get((thread.backend, activity.id), {}).get('type')
                 activity.history_retired = retired_model_supplement(scope, identity, activity.turn_id,
@@ -85,6 +96,7 @@ def apply_history(engine, summary):
             live_type = {'message': 'agentMessage'}.get(live_type, live_type)
             if live_type != fact['item_type']:
                 continue
+            activity.history_retired = False
             if (activity.status in ('completed', 'failed', 'interrupted', 'declined') and
                     activity.status != fact['status']):
                 thread.history_quality.add('lifecycle_conflict')

@@ -194,7 +194,7 @@ class ContentPagingTests(unittest.TestCase):
                 value = self.stream.readline(*args); reads.append(len(value)); return value
         def measured(path, *args, **kwargs):
             stream = original(path, *args, **kwargs)
-            return Measured(stream) if path == self.path and args == ('rb',) else stream
+            return Measured(stream) if path.resolve() == self.path.resolve() and args == ('rb',) else stream
         with patch.object(Path, 'open', measured):
             page = self.more(query, phase, section)
         self.assertEqual(section['text']+page['sections'][0]['text'], self.body)

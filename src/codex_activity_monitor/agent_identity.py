@@ -2,7 +2,6 @@
 
 from collections import OrderedDict
 from copy import deepcopy
-import json
 from pathlib import Path
 from queue import Queue, Empty, Full
 import threading
@@ -11,34 +10,25 @@ import time
 from .agent_presentation import agent_metadata
 from .agent_relations import thread_identity
 from .overview import annotate_parents
+from .history_source import RolloutResolver
 
 
-def read_header(scope, thread, path=None):
+def read_header(scope, thread, path=None, resolver=None):
     if not Path(scope).is_absolute() or not thread_identity(thread):
         return None, {'quality': ['identity_unavailable']}
-    matches = [Path(path)] if path and Path(path).is_file() else [
-        p for directory in ('sessions', 'archived_sessions') if (Path(scope) / directory).is_dir()
-        for p in (Path(scope) / directory).rglob('*' + thread + '.jsonl')]
-    verified = []
-    for candidate in matches:
-        try:
-            with candidate.open('rb') as stream:
-                line = stream.readline(65537)
-            if len(line) > 65536:
-                continue
-            row = json.loads(line)
-            payload = row.get('payload', {})
-            if row.get('type') == 'session_meta' and isinstance(payload, dict) and payload.get('id') == thread:
-                verified.append((candidate, agent_metadata(payload)))
-        except (OSError, ValueError, TypeError, AttributeError):
-            continue
-    if len(verified) != 1:
-        return None, {'quality': ['identity_unavailable' if not verified else 'identity_conflict']}
-    return verified[0]
+    try:
+        source = (resolver or RolloutResolver()).resolve(scope, thread)
+        if source is not None:
+            logical_path = Path(scope)/source.path.relative_to(Path(scope).resolve())
+            return logical_path, source.parts[0].header.agent
+    except (OSError, ValueError):
+        pass
+    return None, {'quality': ['identity_unavailable']}
 
 
 class AgentIdentityCache:
     def __init__(self):
+        self.resolver = RolloutResolver()
         self.ready = OrderedDict()
         self.pending = set()
         self.paths = {}
@@ -68,7 +58,7 @@ class AgentIdentityCache:
             except Empty:
                 continue
             try:
-                path, metadata = read_header(*key, self.paths.get(key))
+                path, metadata = read_header(*key, self.paths.get(key), self.resolver)
             except (OSError, ValueError, TypeError):
                 path, metadata = None, {'quality': ['identity_unavailable']}
             with self.lock:

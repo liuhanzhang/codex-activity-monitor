@@ -151,6 +151,8 @@ def handle_protocol(engine, event):
     elif method in ('thread/archived','thread/deleted','thread/unarchived'):
         thread.visible = method == 'thread/unarchived'
     elif method in ('thread/closed','thread/reverted'):
+        if method == 'thread/reverted':
+            engine.history_hint(backend, thread_id)
         if thread.turn_id:
             engine.ended_turns[(backend, thread.turn_id)] = 'unknown'
         for activity in thread.activities.values():

@@ -83,6 +83,10 @@ If the monitor exits before cleanup completes, reopen the same app to continue. 
 
 Monitor reads Codex chat history from `~/.codex/` by default, where `~` is your user home directory. If the wrapped Codex backend process inherits a `CODEX_HOME` environment variable, Monitor uses that directory instead. It reads history files under `sessions/` and `archived_sessions/` without modifying them. The GUI has no option to select a different Codex data directory.
 
+For paginated history, Monitor uses Codex's read-only state index and available protocol path information to locate the current rollout. After a revert or ordinary user-chat fork, it follows the retained `history_base` ranges to read the current and earlier retained turns. An existing old file is not sufficient evidence that it is still the current history. Codex's state database and source histories remain unchanged by these reads.
+
+The current reader supports uncompressed history. A compressed ancestor, an unresolved database configuration, or a special subagent/attached-thread inheritance boundary can make coverage partial or unavailable; readable current content can still be shown. Top-level `sqlite_home` and the wrapped backend's explicit `CODEX_SQLITE_HOME` are recognized. Profile-specific database configuration is not inferred from the user config alone. Older running bridges lack the new path/configuration metadata; restart Codex after finishing tasks to load an updated bridge when that metadata is needed.
+
 ### Monitor settings and data
 
 The default directory for Monitor's own data is:

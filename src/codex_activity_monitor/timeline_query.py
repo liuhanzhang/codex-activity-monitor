@@ -33,6 +33,16 @@ class TimelineQuery:
         self.metadata = metadata
         self.history = history or HistoryProvider()
 
+    def _configure_source(self, scope, thread):
+        engine = getattr(self.book, 'engine', None)
+        if engine is not None:
+            epoch, hint = engine.history_inputs.get((scope, thread), (0, ()))
+            hint = dict(hint)
+            for backend in list(engine.backends.values()):
+                if backend.get('home') == scope and backend.get('sqlite_home'):
+                    hint['sqlite_home'] = backend['sqlite_home']
+            self.history.configure_source(scope, thread, epoch, tuple(sorted(hint.items())))
+
     def _observed(self, scope, thread):
         if self.book:
             return self.book.snapshot(scope, thread)
@@ -80,6 +90,7 @@ class TimelineQuery:
                 return loaded[owner]
             loaded[owner] = None
             try:
+                self._configure_source(scope, owner)
                 index = self.history.index(scope, owner, directory_only=True)
                 if not index:
                     return None
@@ -100,8 +111,10 @@ class TimelineQuery:
                 return index
             except HistoryChanged:
                 raise
-            except (OSError, ValueError, TypeError):
+            except (OSError, ValueError, TypeError) as error:
                 quality.add('history_unavailable')
+                if getattr(error, 'reason', None):
+                    quality.add(error.reason)
                 return None
 
         def hydrate(owner, wanted=()):
@@ -123,7 +136,11 @@ class TimelineQuery:
                 if p.get('call_operation') == 'spawn':
                     spawn_calls.add((owner, p['turn_id'], p.get('call_id')))
             settled = settled_model_items(index.turns.values(), index.phases.values(),
-                                          read_complete=index.read_complete, quality=index.quality)
+                                          read_complete=index.read_complete, quality=index.quality,
+                                          absent_turns={(scope, owner, p['turn_id']) for p in phases.values()
+                                              if index.source and index.source.branched and p['thread_id'] == owner and
+                                              p['turn_id'] in pending and p['turn_id'] not in index.turns and
+                                              p['status'] not in ('active', 'waiting')})
             for key, phase in list(phases.items()):
                 if phase['thread_id'] == owner and phase['turn_id'] in pending:
                     phases[key] = apply_model_membership(phase, settled)
@@ -268,8 +285,12 @@ class TimelineQuery:
         for t in root_turns[6:]:
             if t['turn_id'] in earlier or t['turn_id'] == selected:
                 recent.append(t)
+        average = root_index.request_rates.projection(selected) if root_index else None
+        if average and root_index.quality:
+            average = {**average, 'quality': sorted(set(average['quality']) | root_index.quality),
+                       'coverage': 'partial' if average['coverage'] == 'complete' else average['coverage']}
         return {'version': 1, 'scope_id': scope, 'thread_id': thread, 'selected_turn_id': selected,
-                'average_speed': root_index.request_rates.projection(selected) if root_index else None,
+                'average_speed': average,
                 'current_turn_id': current, 'turns': recent, 'agents': agents,
                 'phases': [p for p in visible if p['track'] != 'marker'],
                 'markers': [p for p in visible if p['track'] == 'marker'],
@@ -282,13 +303,16 @@ class TimelineQuery:
         phase = next((p for p in observed['phases'] if p['id'] == phase_id and p['thread_id'] == thread and p['turn_id'] == turn), None)
         index = None
         history_error = None
+        source_blocked = False
         try:
+            self._configure_source(scope, thread)
             previous_path = self.history.cached_path(scope, thread)
             index = self.history.detail_view(scope, thread, turn, phase_id, phase)
             if index is None and previous_path and not previous_path.exists():
                 history_error = 'missing'
-        except (OSError, ValueError, TypeError):
+        except (OSError, ValueError, TypeError) as error:
             history_error = 'unavailable'
+            source_blocked = isinstance(error, HistoryChanged) or getattr(error, 'reason', None) is not None
         historical = index.phases.get(phase_id) if index else None
         if historical and (historical['scope_id'], historical['thread_id'], historical['turn_id']) != (scope, thread, turn):
             historical = None
@@ -297,12 +321,17 @@ class TimelineQuery:
         if phase and index:
             phase = apply_model_membership(phase, settled_model_items(
                 index.turns.values(), index.phases.values(), read_complete=index.read_complete, quality=index.quality))
-        if phase and phase.get('history_retired'):
+        branched = bool(index and index.source and index.source.branched)
+        if (phase and phase.get('history_retired') or
+                index and index.read_complete and branched and historical is None and
+                (phase is None or phase['status'] not in ('active', 'waiting'))):
             return {'version': DETAIL_VERSION, 'state': 'not_retained', 'phase': phase,
                     'source': 'observed_metadata', 'sections': [], 'attachments': []}
         phase = display_phase(phase) if phase else None
         if not phase:
-            return {'version': DETAIL_VERSION, 'state': 'content_unavailable', 'sections': [], 'attachments': []}
+            return {'version': DETAIL_VERSION, 'state': history_error or
+                    ('history_unavailable' if index and not index.read_complete else 'content_unavailable'),
+                    'sections': [], 'attachments': []}
         relations = {r['id']: r for r in observed['relations']}
         if index:
             relations.update(index.relations)
@@ -323,16 +352,18 @@ class TimelineQuery:
             except HistoryChanged:
                 self.history.invalidate(scope, thread)
                 result = {'state': 'unavailable', 'sections': [], 'attachments': []}
+                source_blocked = True
             except FileNotFoundError:
                 result = {'state': 'missing', 'sections': [], 'attachments': []}
-            except (OSError, ValueError, TypeError):
+            except (OSError, ValueError, TypeError) as error:
                 result = {'state': 'unavailable', 'sections': [], 'attachments': []}
+                source_blocked = source_blocked or getattr(error, 'reason', None) is not None
         if phase.get('item_type') == 'contextCompaction' and not history_error:
             result = {'state': 'no_content', 'sections': [], 'attachments': [],
                       'source': 'codex_history' if historical else 'observed_metadata'}
         if self.book:
             self.book.pin(phase_id)
-            if not result or not result.get('sections'):
+            if (not result or not result.get('sections')) and (not source_blocked or phase['status'] in ('active', 'waiting')):
                 live = self.book.live_detail(phase)
                 if live and live['text']:
                     sections = ([raw_section('input', '参数', live['text']), raw_section('output', '结果')]

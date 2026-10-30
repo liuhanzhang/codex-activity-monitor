@@ -22,10 +22,14 @@ flowchart TB
     Collector --> Writer["TimelineStorage worker"]
     Writer --> SQLite[("SQLite phase metadata")]
     History[("Codex session JSONL")] --> Refresh["HistoryRefresh worker"]
+    CodexState[("Codex state index · read only")] --> Source["Current rollout + retained ranges"]
+    History --> Source
+    Source --> Refresh
     Refresh -->|"Reconciliation facts"| Collector
     GUI <-->|"Read-only tl.sock queries"| Query["TimelineQuery"]
     Query --> Collector
     Query -->|"Read persisted content"| History
+    Query --> Source
     Query -->|"Read derived metadata"| SQLite
 ```
 
@@ -39,6 +43,7 @@ The Python collector owns activity identity, lifecycle, local tokenization, and 
 | --- | --- | --- |
 | Live protocol and selected stderr TRACE events | Current activity, tool lifecycle, token generation speed | Version-dependent; not a public Codex compatibility contract |
 | Codex session JSONL | Persisted content and historical reconciliation | Read only; remains owned by Codex |
+| Codex state index and observed Thread path | Resolve the selected rollout before reusing history | Read only; an unavailable authoritative selection cannot be replaced with an abandoned branch |
 | Monitor SQLite sidecar | Derived phase metadata and timeline recovery | Disposable derived data; not a second full transcript |
 | Monitor checkpoint | Recover limited state after restart | Not a live health signal or proof that old activity is still running |
 | Local tokenizer | Count received text and tool input in a fixed one-second window | Does not include hidden reasoning |
@@ -46,6 +51,8 @@ The Python collector owns activity identity, lifecycle, local tokenization, and 
 The interface preserves unknown values and known zeros separately. Timeline placement follows source timing where available, with uncertainty retained. A displayed reasoning duration describes an observed activity lifecycle; it does not establish how long a server spent computing.
 
 The selected turn's average speed is a separate JSONL estimate: `HistoryDirectory` feeds its incremental scan into `RequestRateBook`, and `TimelineQuery` returns a versioned, optional `average_speed` projection. Each usage can publish a preview; later token counts confirm or retract the paired output and duration. The rate uses sums over the same valid response set, includes reasoning output and first-token waiting, and never advances with query-time wall clocks. Ledgers reset with the source version and participate in the existing weighted history cache. Parent and child threads have independent rates. See [chapter 24](../dev-history/24_average_token_speed/implementation.md) for timing and coverage boundaries.
+
+History lookup separates the stable chat ID from the selected rollout ID. `history_source.py` resolves the current path and bounded `history_base` references. `history_stream.py` provides a seekable view over verified source ranges without writing a merged transcript. Timeline, detail, reconciliation and the per-turn average share that view; cache epochs and request epochs reject stale results after a cutover. References retain their composition fingerprint and source-range mapping, with file identity, record digests and actual source ownership verified at read time. Partial ancestry cannot justify absence decisions. See [chapter 27](../dev-history/27_rollout_history_compatibility/README.md) for the supported shapes, deferred compatibility and validation.
 
 The app can read selected content from Codex history and use transient text for live details and tokenization. Derived state can include chat titles, paths, command previews, and metrics. These files can contain private information.
 

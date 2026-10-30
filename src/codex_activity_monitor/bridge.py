@@ -401,6 +401,8 @@ def forward(args,runtime,actual=None):
     env=dict(os.environ)
     env.update(CODEX_CLI_PATH=str(actual),LOG_FORMAT='json',RUST_LOG=TRACE_FILTER)
     observer=Observer(runtime,uuid.uuid4().hex,env.get('CODEX_HOME',str(Path.home()/'.codex')),actual)
+    if env.get('CODEX_SQLITE_HOME') and len(env['CODEX_SQLITE_HOME']) <= 4096:
+        observer.info['sqlite_home'] = env['CODEX_SQLITE_HOME']
     observer.start()
     try:
         child=subprocess.Popen([str(actual),*args],stdin=subprocess.PIPE,stdout=subprocess.PIPE,stderr=subprocess.PIPE,

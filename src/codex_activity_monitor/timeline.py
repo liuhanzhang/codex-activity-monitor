@@ -102,12 +102,13 @@ def item_phase(scope, thread, turn, item, start=None, end=None, source='producer
             'quality': [], 'mirrored': item.get('delivery') == 'async', **raw_coordination(item)}
 
 
-def settled_model_items(turns, phases, *, read_complete, quality=()):
+def settled_model_items(turns, phases, *, read_complete, quality=(), absent_turns=()):
     """Membership for reliable, ended JSONL turns; None means no new decision."""
     if not read_complete or quality:
         return None
     settled = {(t['scope_id'], t['thread_id'], t['turn_id']): set() for t in turns
                if t['status'] in ('completed', 'failed', 'interrupted') and t.get('end_ms') is not None}
+    settled.update((tuple(key), set()) for key in absent_turns)
     for phase in phases:
         key = (phase['scope_id'], phase['thread_id'], phase['turn_id'])
         if key in settled:
@@ -199,7 +200,12 @@ def merge_history_phase(observed, historical, *, read_complete=True):
                 basis[bound + '_ms'] = basis[bound + '_source'] = None
         if historical is None or historical.get('status') in ('active', 'waiting'):
             basis['quality'] = sorted(set(basis.get('quality', [])) | {'history_changed'})
-    return merge_phase(basis, historical) if historical is not None else basis
+    result = merge_phase(basis, historical) if historical is not None else basis
+    if historical is not None and result.get('history_retired'):
+        # Positive identity evidence survives a partial ancestor chain. Only
+        # absence decisions require complete history coverage.
+        result['history_retired'] = False
+    return result
 
 
 class TimelineBook:
@@ -242,11 +248,14 @@ class TimelineBook:
         with self.lock:
             coverage = HistoryCoverage.from_summary(summary)
             settled = settled_model_items(summary.get('turns', []), summary.get('phases', []),
-                                          read_complete=summary.get('read_complete', False), quality=summary.get('quality', []))
+                                          read_complete=summary.get('read_complete', False), quality=summary.get('quality', []),
+                                          absent_turns=[(summary['scope_id'], summary['thread_id'], turn)
+                                                        for turn in summary.get('source_absent_turns', [])])
             if settled is not None:
                 for phase in list(self.phases.values()):
                     if ((phase['scope_id'], phase['thread_id']) == (summary['scope_id'], summary['thread_id']) and
-                            coverage.covers(phase['turn_id'], phase['item_id'])):
+                            coverage.covers(phase['turn_id'], phase['item_id']) and
+                            not (phase['turn_id'] in summary.get('source_absent_turns', []) and phase['status'] in ('active', 'waiting'))):
                         updated = apply_model_membership(phase, settled)
                         if bool(phase.get('history_retired')) != updated['history_retired']:
                             self._put(updated)

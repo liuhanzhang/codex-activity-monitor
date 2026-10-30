@@ -70,7 +70,12 @@ def file_metadata(changes):
 
 
 def thread_metadata(value):
-    return {k: value[k] for k in ('id','name','cwd','model','modelProvider','status','ephemeral','threadSource') if k in value}
+    result = {k: value[k] for k in ('id','name','cwd','model','modelProvider','status','ephemeral','threadSource') if k in value}
+    if isinstance(value.get('path'), str) and 0 < len(value['path']) <= 4096:
+        result['path'] = value['path']
+    if value.get('historyMode') in ('legacy', 'paginated'):
+        result['historyMode'] = value['historyMode']
+    return result
 
 
 def item_metadata(value):

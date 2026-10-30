@@ -6,6 +6,7 @@ from dataclasses import dataclass
 import hashlib
 import json
 import os
+import sys
 from typing import Literal
 
 
@@ -23,12 +24,44 @@ def explicit_turn(payload):
     return payload.get('turn_id') or (metadata.get('turn_id') if isinstance(metadata, dict) else None)
 
 
+class PlainStream:
+    def __init__(self, path, thread):
+        self.path, self.thread = path, thread
+
+    def __enter__(self):
+        self.stream = self.path.open('rb')
+        return self
+
+    def __exit__(self, *_):
+        self.stream.close()
+
+    def __getattr__(self, name):
+        return getattr(self.stream, name)
+
+    def stamp(self):
+        return file_stamp(os.fstat(self.stream.fileno()))
+
+    def verify(self):
+        if self.stamp() != file_stamp(self.path.stat()):
+            raise HistoryChanged()
+
+    def owner_at(self, _):
+        return self.thread
+
+    def project(self, row, _):
+        return row
+
+
+def open_history(path, thread, source=None):
+    return source.open() if source is not None else PlainStream(path, thread)
+
+
 @dataclass(frozen=True, slots=True)
 class HistoryReference:
     offset: int
     length: int
     digest: str
-    fingerprint: tuple[int, int]
+    fingerprint: tuple
     source: Literal['raw', 'canonical', 'output', 'turn_context', 'task_started']
     turn_id: str | None
     context: HistoryReference | None = None
@@ -39,16 +72,18 @@ class HistoryReference:
 
 
 class HistoryRead:
-    def __init__(self, path, thread, fingerprint, header_digest):
+    def __init__(self, path, thread, fingerprint, header_digest, source=None):
         self.path, self.thread, self.fingerprint = path, thread, fingerprint
         self.stream = None
         self.header_digest = header_digest
         self.verified = {}
+        self.source = source
 
     def __enter__(self):
-        self.stream = self.path.open('rb')
+        self.context = open_history(self.path, self.thread, self.source)
+        self.stream = self.context.__enter__()
         try:
-            self.before = file_stamp(os.fstat(self.stream.fileno()))
+            self.before = self.stream.stamp()
             if self.before[:2] != self.fingerprint:
                 raise HistoryChanged()
             first = self.stream.readline()
@@ -60,16 +95,17 @@ class HistoryRead:
                 raise HistoryChanged()
             return self
         except BaseException:
-            self.stream.close()
+            self.context.__exit__(*sys.exc_info())
             raise
 
     def __exit__(self, kind, *_):
         try:
-            if kind is None and (file_stamp(os.fstat(self.stream.fileno())) != self.before or
-                                 file_stamp(self.path.stat()) != self.before):
-                raise HistoryChanged()
+            if kind is None:
+                self.stream.verify()
+                if self.stream.stamp() != self.before:
+                    raise HistoryChanged()
         finally:
-            self.stream.close()
+            self.context.__exit__(kind, None, None)
 
     def read_ref(self, ref: HistoryReference):
         if ref in self.verified:
@@ -87,7 +123,8 @@ class HistoryRead:
         payload, outer = row['payload'], row.get('type')
         if ref.source == 'canonical':
             if (outer != 'event_msg' or payload.get('type') != 'item_completed' or
-                    payload.get('turn_id') != ref.turn_id or payload.get('thread_id') not in (None, self.thread)):
+                    payload.get('turn_id') != ref.turn_id or
+                    payload.get('thread_id') not in (None, self.stream.owner_at(ref.offset))):
                 raise HistoryChanged()
         elif ref.source in ('turn_context', 'task_started'):
             attribution = payload.get('turn_attribution')

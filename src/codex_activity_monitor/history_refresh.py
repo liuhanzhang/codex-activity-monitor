@@ -48,6 +48,7 @@ class HistoryRefresh:
         self.read_errors = OrderedDict()
         self.active_since = None
         self.cursor = 0
+        self.request_epochs = {}
         self.lock = threading.Lock()
         self.wake = threading.Event()
         self.stopping = False
@@ -67,8 +68,9 @@ class HistoryRefresh:
                     'worker_alive': self.worker.is_alive(),
                     'reading_age_ms': (time.monotonic()-self.active_since)*1000 if self.active_since else 0}
 
-    def _unavailable(self, key, quality='history_budget', error=None):
+    def _unavailable(self, key, quality='history_budget', error=None, request_epoch=None):
         result = {'scope_id': key[0], 'thread_id': key[1], 'quality': ['history_unavailable', quality]}
+        result['request_epoch'] = self.request_epochs.get(key, 0) if request_epoch is None else request_epoch
         if error:
             result['error'] = error
         # No revision/read_complete: resource failure is never evidence that a
@@ -99,6 +101,8 @@ class HistoryRefresh:
             if self.stopping:
                 return
             keys = {r.key for r in requests}
+            previous_epochs = self.request_epochs
+            self.request_epochs = {r.key: r.source_epoch for r in requests}
             self.last_read = {k: v for k, v in self.last_read.items() if k in keys}
             self.pending = OrderedDict((k, v) for k, v in self.pending.items() if k in keys)
             self.pending_bytes = sum(v.utf8_bytes for v in self.pending.values())
@@ -109,7 +113,8 @@ class HistoryRefresh:
                 # Unresolved work is polled each second; settled work slows
                 # after 30 seconds. Admission rotates across both byte/count caps.
                 last, first = self.last_read.get(key, (0, now))
-                if now-last < (1 if request.urgent or now-first < 30 else 10):
+                if (previous_epochs.get(key, 0) == request.source_epoch and
+                        now-last < (1 if request.urgent or now-first < 30 else 10)):
                     continue
                 old = self.pending.get(key)
                 if old:
@@ -145,7 +150,17 @@ class HistoryRefresh:
                 self.ready_bytes -= len(packet.payload)
                 size += len(packet.payload)
                 packets.append(packet)
-        return [packet.decode() for packet in packets]
+        results = []
+        for packet in packets:
+            value = packet.decode()
+            key = value['scope_id'], value['thread_id']
+            if value.get('request_epoch', 0) != self.request_epochs.get(key, 0):
+                continue
+            current = getattr(self.provider, 'source_epochs', {}).get(key)
+            if current is not None and 'source_epoch' in value and value['source_epoch'] != current:
+                continue
+            results.append(value)
+        return results
 
     def _run(self):
         while True:
@@ -164,14 +179,18 @@ class HistoryRefresh:
                     self.active_since = now
                 try:
                     read_error = False
+                    if hasattr(self.provider, 'configure_source'):
+                        self.provider.configure_source(*key, request.source_epoch, request.source_hint)
                     result = self.provider.reconciliation(*key, request.turns, items=request.items)
+                    result['request_epoch'] = request.source_epoch
                     packet = HistoryPacket.capture(result, self.max_result_bytes)
                     oversized = packet is None
                     if oversized:
                         packet = self._unavailable(key)
                 except (OSError, ValueError, TypeError, KeyError) as error:
                     read_error = True
-                    packet = self._unavailable(key, 'history_read_error', type(error).__name__)
+                    packet = self._unavailable(key, getattr(error, 'reason', 'history_read_error'),
+                                               type(error).__name__, request.source_epoch)
                     oversized = False
                 with self.lock:
                     self.active_since = None
