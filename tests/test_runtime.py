@@ -379,22 +379,20 @@ serve(Path(RUNTIME))
             offer('item/agentMessage/delta',{'threadId':'t','turnId':'u','itemId':'i','delta':'private final'})
             offer('item/completed',{'threadId':'t','turnId':'u','item':{'id':'i','type':'agentMessage','text':'private final'}})
             offer('turn/completed',{'threadId':'t','turn':{'id':'u','status':'completed'}})
-            deadline=time.monotonic()+4
-            while time.monotonic()<deadline:
-                threads=current_state(self.runtime)['threads']
-                if threads and threads[0]['activities'][0]['streams'][0]['tokens'] is not None:
-                    break
-                time.sleep(.1)
-            before=current_state(self.runtime)['threads'][0]
+            def counted_terminal_state(snapshot):
+                thread=next((t for t in snapshot['threads'] if t['id']=='t'),None)
+                return thread is not None and thread['phase']=='completed' and any(
+                    a['id']=='i' and any(s['tokens'] is not None for s in a.get('streams',[]))
+                    for a in thread.get('activities',[]))
+            # Keep the observed snapshot: a separate probe can time out even
+            # after the desired state was received successfully.
+            snapshot=self.wait_snapshot(counted_terminal_state,timeout=4)
+            before=next(t for t in snapshot['threads'] if t['id']=='t')
             stop(self.runtime)
             start(self.runtime)
-            deadline=time.monotonic()+4
-            while time.monotonic()<deadline:
-                snapshot=current_state(self.runtime)
-                if snapshot.get('backends',{}).get('b',{}).get('connected'):
-                    break
-                time.sleep(.1)
-            after=current_state(self.runtime)['threads'][0]
+            snapshot=self.wait_snapshot(lambda s:s.get('backends',{}).get('b',{}).get('connected')
+                                        and counted_terminal_state(s),timeout=4)
+            after=next(t for t in snapshot['threads'] if t['id']=='t')
             self.assertEqual(after['phase'],'completed')
             self.assertEqual(after['activities'][0]['streams'][0]['tokens'],before['activities'][0]['streams'][0]['tokens'])
             self.assertNotIn('private final',(self.runtime/'snapshot.json').read_text())
