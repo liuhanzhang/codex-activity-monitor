@@ -5,7 +5,7 @@
   <h1>Codex Activity Monitor</h1>
   <p>一款用于 Codex Desktop 的 macOS 菜单栏监控工具，展示 Token 输出速率、会话统计和 Agent 执行轨迹，类似 DeepSeek Harness 的统计与轨迹视图。</p>
   <p>
-    <a href="https://github.com/LiuHanzhang/codex-activity-monitor/releases#release-v0.1.0-alpha.3"><img src="https://img.shields.io/badge/release-v0.1.0--alpha.3-B7791F?style=flat-square" alt="Release v0.1.0-alpha.3"></a>
+    <a href="https://github.com/LiuHanzhang/codex-activity-monitor/releases/tag/v0.1.0-alpha.4"><img src="https://img.shields.io/badge/release-v0.1.0--alpha.4-B7791F?style=flat-square" alt="Release v0.1.0-alpha.4"></a>
     <img src="https://img.shields.io/badge/macOS-14%2B-black?style=flat-square&amp;logo=apple" alt="macOS 14+">
     <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-3B7A57?style=flat-square" alt="MIT 许可证"></a>
   </p>
@@ -106,7 +106,7 @@ Monitor 的界面、采集器和由 Codex Desktop 启动的桥接进程分别运
 
 **运行状态** 显示已检测到的组件异常及恢复，**日志** 提供本地诊断记录，支持搜索、筛选、详情和复制。关闭设置窗口不会停止观察；这些检查不能排除所有软件错误。
 
-**关于** 显示完整版本、构建号、项目链接与许可。Sparkle 默认每天读取静态更新清单；有新版本时在主面板和关于页提示，点击 **查看更新** 后可在更新窗口前往发行页手动下载。可关闭自动检查或随时手动检查；检查不会上传聊天、日志或使用记录。
+**关于** 显示完整版本、构建号、项目链接与许可。Sparkle 默认每天读取静态更新清单；有新版本时，在主面板设置按钮左侧及「关于」侧栏行最右侧显示绿色向上箭头。点击主面板箭头直接定位到「关于 → 软件更新」，再点 **查看更新**，即可从标准更新窗口前往发行页手动下载。箭头在重启和选择稍后提醒后保留，升级完成或明确跳过该版本后清除。可关闭自动检查或随时手动检查；检查不会上传聊天、日志或使用记录。
 
 ## 隐私与兼容性
 

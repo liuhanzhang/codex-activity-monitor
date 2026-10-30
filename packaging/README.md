@@ -18,7 +18,7 @@ Python 依赖约束保存在 `requirements-build.lock`，项目直接依赖仍�
 默认输出：
 
 - `.local/standalone/Codex Activity Monitor.app`
-- `.local/standalone/Codex-Activity-Monitor-0.1.0-alpha.3-macos-arm64.dmg`：带中英文拖拽引导的只读安装映像。
+- `.local/standalone/Codex-Activity-Monitor-0.1.0-alpha.4-macos-arm64.dmg`：带中英文拖拽引导的只读安装映像。
 - `.local/standalone/SHA256SUMS.txt`：DMG 的 SHA-256。
 - `.local/standalone/build-result.json`：构建身份、DMG SHA-256、体积与逐个二进制检查结果。
 
@@ -34,7 +34,7 @@ bin/build-dmg '.local/standalone/Codex Activity Monitor.app'
 
 默认输出与 App 同目录，版本取自 App 本身，并生成同名 JSON 验证记录及 `SHA256SUMS.txt`。可用 `--output /绝对路径/installer.dmg` 指定输出。开发虚拟环境也可安装 `packaging/requirements-build.txt` 中的打包依赖后运行该命令。发行安装包只生成 DMG。DMG 是拖拽安装引导；签名、公证和运行要求与其中的 App 相同。
 
-发布版本由 `pyproject.toml` 中的项目版本和 `[tool.codex-activity-monitor].version-suffix` 组合而成，当前为 `0.1.0-alpha.3`；`version-suffix` 仅影响显示名称；GitHub 发布类型由独立的 `release-prerelease` 布尔值指定，两者不推断也不强制一致。安装包文件名使用 `Codex-Activity-Monitor-{发布版本}-macos-arm64.dmg`，tag 使用 `v{发布版本}`，构建清单与结果也记录完整发布版本。App 的数字版本保持为 `0.1.0`。Alpha 阶段与签名、公证状态分别记录。
+发布版本由 `pyproject.toml` 中的项目版本和 `[tool.codex-activity-monitor].version-suffix` 组合而成，当前为 `0.1.0-alpha.4`；`version-suffix` 仅影响显示名称；GitHub 发布类型由独立的 `release-prerelease` 布尔值指定，两者不推断也不强制一致。安装包文件名使用 `Codex-Activity-Monitor-{发布版本}-macos-arm64.dmg`，tag 使用 `v{发布版本}`，构建清单与结果也记录完整发布版本。App 的数字版本保持为 `0.1.0`。Alpha 阶段与签名、公证状态分别记录。
 
 外层 App 的包标识固定为 `com.liuhanzhang.codexactivitymonitor`，后端包标识为 `com.liuhanzhang.codexactivitymonitor.backend`，开发版与后续正式版沿用同一身份。本地 GUI 构建使用相同的主 App 标识，Preview 构建追加 `.preview` 后缀。
 
@@ -48,7 +48,7 @@ SwiftPM 可能为较低部署目标加入构建机器的 Swift 兼容库搜索�
 
 ```sh
 .local/packaging/portable-venv/bin/python packaging/verify_app.py \
-  .local/standalone/Codex-Activity-Monitor-0.1.0-alpha.3-macos-arm64.dmg \
+  .local/standalone/Codex-Activity-Monitor-0.1.0-alpha.4-macos-arm64.dmg \
   --result .local/standalone/acceptance-result.json --gui
 ```
 

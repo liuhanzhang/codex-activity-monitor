@@ -1,6 +1,6 @@
 # Sparkle 更新源与发布步骤
 
-当前模式：Sparkle 2.10.1 自动检查、应用内提醒、标准更新窗口、网页手动下载。不会下载或安装更新包，不会重启 App 或 Codex。
+当前模式：Sparkle 2.10.1 自动检查、应用内提醒、标准更新窗口、网页手动下载。信息更新按钮显示 Download（中文“下载”），点击后打开对应版本的 GitHub Release 页面。不会下载或安装更新包，不会重启 App 或 Codex。
 
 ## 配置位置
 
@@ -64,3 +64,5 @@ python3 tests/acceptance/verify_sparkle.py \
 原生验收需要可访问桌面的 macOS 上下文，并在外层 sandbox 之外运行。脚本复制临时 App、生成独立 bundle ID／偏好域，默认用 loopback HTTP 清单测试真实 Sparkle，禁止读取 SwiftPM 构建目录。它不访问日常 Codex；只有显式提供 `--feed-url` 才读取允许的生产更新源，合成版本从不发布到 Pages。`--interactive` 可检查提示和标准更新窗口，Ctrl-C 退出并清理。脚本清理进程使用终止信号，与产品正常 GUI 退出验收是不同证据。
 
 标准 Sparkle 窗口使用系统语言；Monitor 自身页面继续使用设置内的语言。实际结果与未验证边界见 [本轮结果](../dev-history/26_about_and_updates/sparkle-results.md)。
+
+打包只覆盖 App 随包 Sparkle Base／简繁中文资源里的 `Learn More…` 按钮标题，不修改 SwiftPM checkout 或原始 artifact。覆盖先于签名；SDK 资源键变化时打包会失败，要求重新审查。窗口布局、稍后提醒、跳过及网页手动下载行为保持不变；其他系统语言沿用上游文案。

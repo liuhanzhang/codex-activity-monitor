@@ -5,7 +5,7 @@
   <h1>Codex Activity Monitor</h1>
   <p>A macOS menu bar monitor for Codex Desktop with token output rates, session statistics, and agent execution trajectories, similar to DeepSeek Harness’s statistics and trajectory views.</p>
   <p>
-    <a href="https://github.com/LiuHanzhang/codex-activity-monitor/releases#release-v0.1.0-alpha.3"><img src="https://img.shields.io/badge/release-v0.1.0--alpha.3-B7791F?style=flat-square" alt="Release v0.1.0-alpha.3"></a>
+    <a href="https://github.com/LiuHanzhang/codex-activity-monitor/releases/tag/v0.1.0-alpha.4"><img src="https://img.shields.io/badge/release-v0.1.0--alpha.4-B7791F?style=flat-square" alt="Release v0.1.0-alpha.4"></a>
     <img src="https://img.shields.io/badge/macOS-14%2B-black?style=flat-square&amp;logo=apple" alt="macOS 14+">
     <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-3B7A57?style=flat-square" alt="MIT license"></a>
   </p>
@@ -106,7 +106,7 @@ Keep Monitor running while observing. The gear button opens a separate Settings 
 
 **Runtime Status** shows detected component problems and recovery; **Logs** provides local diagnostic records with search, filters, details, and copy. Closing Settings keeps observation running. These checks cannot rule out every software error.
 
-**About** shows the full version, build number, project links, and licenses. Sparkle checks the static update feed daily by default. A newer version appears in the overview and About; choose **View Update** to open its update window and continue to the release page for a manual download. Disable automatic checks or check manually in About. Update checks do not upload chats, logs, or usage records.
+**About** shows the full version, build number, project links, and licenses. Sparkle checks the static update feed daily by default. When an update is available, a green upward arrow appears beside Settings in the overview and at the right of the About sidebar row. Click the overview arrow to open About → Software Updates; choose **View Update** there to open the standard update window and continue to the release page for a manual download. The indicator survives restarts and choosing Remind Me Later; upgrading or explicitly skipping that version clears it. Disable automatic checks or check manually in About. Update checks do not upload chats, logs, or usage records.
 
 ## Privacy and compatibility
 

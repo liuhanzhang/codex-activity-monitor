@@ -1,10 +1,26 @@
 """Embed the pinned Sparkle artifact into an arm64 app, preserving framework links."""
 
 from pathlib import Path
+import plistlib
 import shutil
 import subprocess
 
 ROOT = Path(__file__).resolve().parents[1]
+
+
+def customize_download_button(framework):
+    """Override only the informational web-download label in our bundled copy."""
+    titles = {'Base': 'Download', 'zh_CN': '下载', 'zh_TW': '下載', 'zh_HK': '下載'}
+    tables = []
+    for language, title in titles.items():
+        path = Path(framework)/'Resources'/f'{language}.lproj/Sparkle.strings'
+        values = plistlib.loads(path.read_bytes())
+        if 'Learn More…' not in values:
+            raise RuntimeError(f'Sparkle web-download label changed in {language}; review the pinned SDK before packaging.')
+        values['Learn More…'] = title
+        tables.append((path, values))
+    for path, values in tables:
+        path.write_bytes(plistlib.dumps(values, fmt=plistlib.FMT_BINARY))
 
 
 def embed(app):
@@ -18,6 +34,7 @@ def embed(app):
         shutil.rmtree(destination)
     destination.parent.mkdir(parents=True, exist_ok=True)
     shutil.copytree(source, destination, symlinks=True)
+    customize_download_button(destination)
     # This product ships arm64 only. Re-sign from the innermost code outward
     # after thinning; never ship the upstream signatures over modified code.
     magics = {bytes.fromhex(value) for value in ('cffaedfe', 'feedfacf', 'cafebabe', 'bebafeca', 'cafebabf')}
