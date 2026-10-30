@@ -6,8 +6,8 @@
 
 | 阅读目的 | 入口 | 状态与边界 |
 | --- | --- | --- |
-| 修复回退／分叉后的近期历史读取 | [27：Codex 历史路径切换与继承读取](27_rollout_history_compatibility/README.md) | 当前来源定位、缓存切换及有效继承读取已实现；578 项 Python 回归、源码／独立包原生客户端与 DMG 隔离验收通过；10 月 30 日日常 Monitor 已更新重启，旧 bridge 待重启 Codex 切换，其余兼容项暂缓 |
-| 关于与自动更新检查 | [26：关于页与 Sparkle 更新检查](26_about_and_updates/README.md) | 关于页及 Sparkle 接入完成本地验收；静态清单和部署流程已准备，远程 Pages 尚未上线，下载与安装仍手动 |
+| 修复回退／分叉后的近期历史读取 | [27：Codex 历史路径切换与继承读取](27_rollout_history_compatibility/README.md) | 当前来源定位、缓存切换及有效继承读取已随 alpha.5 发布；发行 CI、最终 DMG／原生客户端及公网更新验收通过，其余兼容项暂缓 |
+| 关于与自动更新检查 | [26：关于页与 Sparkle 更新检查](26_about_and_updates/README.md) | 关于页、持久更新提示与 Sparkle 已实现；静态 HTTPS 清单已上线，下载与安装仍手动 |
 | 并行功能的集成与联合验证 | [25：设置、诊断与平均速度集成](25_settings_speed_integration/README.md) | 临时集成分支完成合并；回归、隔离跨进程联调及只读原生 Preview 通过，尚未合入 main 或更新日常版本 |
 | 了解每轮平均速度的算法与实现 | [24：每轮对话平均 Token 速度](24_average_token_speed/README.md) | 功能、定向验证、真实源增量与日常更新完成；下一完整轮次的实时观测恢复与长期使用另行观察 |
 | 独立设置窗口、接入开关与自诊断 | [23：设置与运行诊断](23_settings_and_diagnostics/README.md) | 独立窗口、接入状态、自诊断与有界日志已实现；隔离完整链及 macOS 27 原生验收通过，日常 Monitor 已原位更新；旧系统与 Codex 完整重启未验证 |

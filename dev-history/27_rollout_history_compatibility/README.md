@@ -2,7 +2,7 @@
 
 日期：2026-10-29，Asia/Shanghai。
 
-状态：RH01、RH02 已实现；578 项 Python 回归、源码／独立包的原生客户端及 DMG 隔离验收通过。2026-10-30 按用户要求更新并重启日常 Monitor，连接健康；Codex 仍持有旧 bridge，完整桥接切换待任务结束后重启 Codex。RH03–RH06 继续暂缓。原始调查、范围和计划保留于本章；实际实现、验证与交付边界见[实施结果](implementation-results.md)。
+状态：RH01、RH02 已实现并随 [alpha.5 发布](alpha5-release.md)；发行 CI 的 580 项 Python 测试、Swift 默认套件及最终 DMG／原生客户端验收通过，更新清单已上线。RH03–RH06 继续暂缓。原始调查、范围和计划保留于本章；实际实现、早期日常安装及 bridge 边界见[实施结果](implementation-results.md)。
 
 代码基线：
 
@@ -17,6 +17,7 @@
 | 路径解析、继承范围、缓存及失败处理 | [技术方案](technical-design.md) |
 | 实施顺序、回归场景及完成标准 | [实施计划](implementation-plan.md) |
 | 已实现行为、验证证据及剩余边界 | [实施结果](implementation-results.md) |
+| alpha.5 发行、最终包及公网更新验收 | [发布结果](alpha5-release.md) |
 
 相关背景：[历史 JSONL 校正](../14_jsonl_activity_reconciliation/README.md)、[历史读取与缓存架构](../18_engineering_hardening/implemented-architecture.md)、[每轮平均 Token 速度](../24_average_token_speed/README.md)。
 
