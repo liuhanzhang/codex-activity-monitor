@@ -14,7 +14,7 @@ private func management(_ configuration: String, runtime: String = "awaiting_han
 @MainActor private func dashboard() -> DashboardStore {
     DashboardStore(configuration: BackendConfiguration(python: "/unused", source_root: "/unused", runtime: "/unused",
                                                        data_root: "/unused", build_id: "fixture"),
-                   arguments: ["--test-profile", "/unused"])
+                   arguments: ["--test-profile", "/unused"], preferredLanguages: ["zh-Hans"])
 }
 
 @Test @MainActor func configurationReceiptAloneCannotProveRuntimeActivation() throws {

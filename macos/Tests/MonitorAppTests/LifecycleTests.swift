@@ -23,7 +23,7 @@ private func state(_ name: String, session: Bool = false) throws -> ManagementSt
 
 @MainActor private func store(_ backend: FakeBackend) -> DashboardStore {
     DashboardStore(configuration: BackendConfiguration(python: "/unused", source_root: "/unused", runtime: "/unused", data_root: "/unused", build_id: "test"),
-                   arguments: ["--test-profile", "/unused"], client: backend)
+                   arguments: ["--test-profile", "/unused"], client: backend, preferredLanguages: ["zh-Hans"])
 }
 
 @Test @MainActor func quittingWithoutOwnedSessionDoesNotStopAnotherGUI() async {
