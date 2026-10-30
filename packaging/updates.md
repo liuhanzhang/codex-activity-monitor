@@ -29,7 +29,7 @@ Pages 已于 2026-10-28 上线；三个地址（含旧兼容地址）通过无�
 
 ## 后续发布
 
-1. 在 `pyproject.toml` 更新版本，并递增 `build-number`。已发布的 alpha.2 为构建 `2`，alpha.3 为构建 `3`。构建号可以跳号，但不能复用旧号发布新内容。
+1. 在 `pyproject.toml` 更新版本，并递增 `build-number`。已发布的 alpha.2、alpha.3、alpha.4 分别为构建 `2`、`3`、`4`。构建号可以跳号，但不能复用旧号发布新内容。
 2. 构建 DMG，检查自动验证记录，并运行 DMG 隔离验收，确认包内 `CFBundleVersion` 与记录的构建号一致。
 3. 发布 GitHub Release，上传 `Codex-Activity-Monitor-{完整版本}-macos-arm64.dmg` 和 `SHA256SUMS.txt`；发行说明使用 DMG 拖拽安装步骤。
 4. 将实际发行追加到 `website/updates/releases.json`，记录完整版本、包内构建号；分类和发布时间通过下一步从 GitHub 同步。两项初始值可先抄取刚发布的 Release，不能从版本后缀推断。
