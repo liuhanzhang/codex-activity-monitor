@@ -37,4 +37,4 @@
 
 - EH01–EH06 的代码实现和受控验证已有记录；EH02、EH05 不再重复安排同一轮实现。未闭合的自然／长期验收列在上表，阶段细节仍由[第 18 章](18_engineering_hardening/README.md)维护。
 - 项目已采用 [MIT 许可证](../LICENSE)，已完成改名、原生设置／诊断、每轮平均速度及其集成。旧 TODO 的 `c3996dc` 基线不再代表当前实现状态。
-- 独立 arm64 DMG、macOS 14 最低部署目标、CI、Sparkle 更新检查及公开更新源均已落地，RH01/RH02 已随 alpha.5 发布，见[发布记录](27_rollout_history_compatibility/alpha5-release.md)。更新下载／安装按当前产品选择手动完成，不将自动安装列为缺陷。
+- 独立 arm64 DMG、macOS 14 最低部署目标、CI、Sparkle 更新检查及公开更新源均已落地，RH01/RH02 已随 alpha.5 发布，见[发布记录](27_rollout_history_compatibility/alpha5-release.md)。相同功能已作为 [v0.1.0 正式版](https://github.com/liuhanzhang/codex-activity-monitor/releases/tag/v0.1.0)发布，构建 `6`。更新下载／安装按当前产品选择手动完成，不将自动安装列为缺陷。
