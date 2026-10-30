@@ -16,9 +16,8 @@ dependencies = ["tiktoken==0.14.0", "rich==15.0.0"]
 codex-activity-monitor = "codex_activity_monitor.cli:main"
 
 [tool.codex-activity-monitor]
-version-suffix = "alpha.5"
-release-prerelease = true
-build-number = 5
+release-prerelease = false
+build-number = 6
 sparkle-public-key = "KyP+O/onQT86cTG0qCxPqNMdX1ZH0GT0DXNPm4APC+c="
 update-feed-base = "https://liuhanzhang.github.io/codex-activity-monitor/updates/"
 

@@ -5,14 +5,14 @@
   <h1>Codex Activity Monitor</h1>
   <p>A macOS menu bar monitor for Codex Desktop with token output rates, session statistics, and agent execution trajectories, similar to DeepSeek Harness’s statistics and trajectory views.</p>
   <p>
-    <a href="https://github.com/LiuHanzhang/codex-activity-monitor/releases/tag/v0.1.0-alpha.5"><img src="https://img.shields.io/badge/release-v0.1.0--alpha.5-B7791F?style=flat-square" alt="Release v0.1.0-alpha.5"></a>
+    <a href="https://github.com/LiuHanzhang/codex-activity-monitor/releases/tag/v0.1.0"><img src="https://img.shields.io/badge/release-v0.1.0-3B7A57?style=flat-square" alt="Release v0.1.0"></a>
     <img src="https://img.shields.io/badge/macOS-14%2B-black?style=flat-square&amp;logo=apple" alt="macOS 14+">
     <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-3B7A57?style=flat-square" alt="MIT license"></a>
   </p>
 </div>
 
 > [!IMPORTANT]
-> The app is still in early testing, and Developer ID signing and Apple notarization are not in place yet. If macOS blocks the app on first launch, you’ll need to allow it manually in **System Settings → Privacy & Security → Open Anyway**. See [Installation](#installation) for the steps.
+> Developer ID signing and Apple notarization are not in place yet. If macOS blocks the app on first launch, you’ll need to allow it manually in **System Settings → Privacy & Security → Open Anyway**. See [Installation](#installation) for the steps.
 
 <a id="see-it-in-action"></a>
 <p align="center">
@@ -42,7 +42,7 @@ Click a timeline block to open the activity viewer. Read the available user inpu
 
 ## Installation
 
-Go to [GitHub Releases](https://github.com/LiuHanzhang/codex-activity-monitor/releases) and prefer the Apple Silicon installer named `Codex-Activity-Monitor-<version>-macos-arm64.dmg` in the latest release's **Assets**. Earlier releases only provide the corresponding ZIP. This is an early prerelease with ad-hoc signing and no Apple notarization; follow the opening instructions below. You can also [build from source](#build-from-source).
+Go to [GitHub Releases](https://github.com/LiuHanzhang/codex-activity-monitor/releases) and prefer the Apple Silicon installer named `Codex-Activity-Monitor-<version>-macos-arm64.dmg` in the latest release's **Assets**. Earlier releases only provide the corresponding ZIP. Version 0.1.0 uses ad-hoc signing and has no Apple notarization; follow the opening instructions below. You can also [build from source](#build-from-source).
 
 ### Runtime requirements
 
@@ -77,7 +77,7 @@ For a ZIP release, extract `Codex Activity Monitor.app`, drag it into Applicatio
 
 ### Allow the app to open
 
-The current Alpha build **has no Developer ID signature and has not been notarized by Apple**. When you first open a downloaded copy, macOS may report that it cannot verify the developer or check the app for malicious software.
+The current release **has no Developer ID signature and has not been notarized by Apple**. When you first open a downloaded copy, macOS may report that it cannot verify the developer or check the app for malicious software.
 
 After confirming that the app came from this project, try opening it. If macOS blocks it:
 

@@ -1,4 +1,4 @@
-# 独立开发版的构建与验收
+# 独立 App 的构建与验收
 
 范围、设计与验收边界见 [第 20 章](../dev-history/20_standalone_packaging/README.md)。
 
@@ -18,7 +18,7 @@ Python 依赖约束保存在 `requirements-build.lock`，项目直接依赖仍�
 默认输出：
 
 - `.local/standalone/Codex Activity Monitor.app`
-- `.local/standalone/Codex-Activity-Monitor-0.1.0-alpha.5-macos-arm64.dmg`：带中英文拖拽引导的只读安装映像。
+- `.local/standalone/Codex-Activity-Monitor-0.1.0-macos-arm64.dmg`：带中英文拖拽引导的只读安装映像。
 - `.local/standalone/SHA256SUMS.txt`：DMG 的 SHA-256。
 - `.local/standalone/build-result.json`：构建身份、DMG SHA-256、体积与逐个二进制检查结果。
 
@@ -34,7 +34,7 @@ bin/build-dmg '.local/standalone/Codex Activity Monitor.app'
 
 默认输出与 App 同目录，版本取自 App 本身，并生成同名 JSON 验证记录及 `SHA256SUMS.txt`。可用 `--output /绝对路径/installer.dmg` 指定输出。开发虚拟环境也可安装 `packaging/requirements-build.txt` 中的打包依赖后运行该命令。发行安装包只生成 DMG。DMG 是拖拽安装引导；签名、公证和运行要求与其中的 App 相同。
 
-发布版本由 `pyproject.toml` 中的项目版本和 `[tool.codex-activity-monitor].version-suffix` 组合而成，当前为 `0.1.0-alpha.5`；`version-suffix` 仅影响显示名称；GitHub 发布类型由独立的 `release-prerelease` 布尔值指定，两者不推断也不强制一致。安装包文件名使用 `Codex-Activity-Monitor-{发布版本}-macos-arm64.dmg`，tag 使用 `v{发布版本}`，构建清单与结果也记录完整发布版本。App 的数字版本保持为 `0.1.0`。Alpha 阶段与签名、公证状态分别记录。
+发布版本由 `pyproject.toml` 中的项目版本和可选的 `[tool.codex-activity-monitor].version-suffix` 组合而成，当前为 `0.1.0`、构建 `6`，没有显示后缀；`version-suffix` 仅影响显示名称；GitHub 发布类型由独立的 `release-prerelease` 布尔值指定，当前为 `false`，两者不推断也不强制一致。安装包文件名使用 `Codex-Activity-Monitor-{发布版本}-macos-arm64.dmg`，tag 使用 `v{发布版本}`，构建清单与结果也记录完整发布版本。App 的数字版本保持为 `0.1.0`。发布分类与签名、公证状态分别记录。
 
 外层 App 的包标识固定为 `com.liuhanzhang.codexactivitymonitor`，后端包标识为 `com.liuhanzhang.codexactivitymonitor.backend`，开发版与后续正式版沿用同一身份。本地 GUI 构建使用相同的主 App 标识，Preview 构建追加 `.preview` 后缀。
 
@@ -48,7 +48,7 @@ SwiftPM 可能为较低部署目标加入构建机器的 Swift 兼容库搜索�
 
 ```sh
 .local/packaging/portable-venv/bin/python packaging/verify_app.py \
-  .local/standalone/Codex-Activity-Monitor-0.1.0-alpha.5-macos-arm64.dmg \
+  .local/standalone/Codex-Activity-Monitor-0.1.0-macos-arm64.dmg \
   --result .local/standalone/acceptance-result.json --gui
 ```
 
@@ -58,7 +58,7 @@ macOS 不允许嵌套调用 sandbox-exec，所以在 Codex 工具沙箱中运行
 
 ## 交付边界
 
-目前是 ad-hoc 签名的 Alpha 预发布版。代码签名验证通过不代表已通过 Gatekeeper 的下载安装流程，也不代表已公证。朋友仍需安装 Codex Desktop；默认原版 CLI 路径与开发构建一致，非默认安装路径尚需单独处理。安装、首次手动允许、真实 Desktop 接入、macOS 14 实机与自然长期使用不能由上述合成验证代替。macOS 14 兼容性目前以编译目标、包声明和逐个 Mach-O 检查为证据，旧系统实际运行仍待验收。
+0.1.0 使用 ad-hoc 签名，尚无 Developer ID 签名或 Apple 公证。代码签名验证通过不代表已通过 Gatekeeper 的下载安装流程，也不代表已公证。朋友仍需安装 Codex Desktop；默认原版 CLI 路径与开发构建一致，非默认安装路径尚需单独处理。安装、首次手动允许、真实 Desktop 接入、macOS 14 实机与自然长期使用不能由上述合成验证代替。macOS 14 兼容性目前以编译目标、包声明和逐个 Mach-O 检查为证据，旧系统实际运行仍待验收。
 
 升级前须等待任务结束，并完全退出 Codex Desktop 和 Monitor，再替换 `/Applications` 中的 App；先打开 Monitor 完成配置，再打开 Codex。GUI 退出只停止其观测会话与采集器，不结束 Desktop 持有的 bridge。只读卷上的独立 App（含 App Translocation 和磁盘映像）在写入接入配置前即被拒绝，以免将临时挂载路径写入长期 launcher。桥接代码或 App 路径变化后，接入状态会保留重启要求；旧版缺少配置修订证据的存活 bridge 也不能算作当前接入已生效。
 

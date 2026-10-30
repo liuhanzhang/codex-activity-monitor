@@ -5,14 +5,14 @@
   <h1>Codex Activity Monitor</h1>
   <p>一款用于 Codex Desktop 的 macOS 菜单栏监控工具，展示 Token 输出速率、会话统计和 Agent 执行轨迹，类似 DeepSeek Harness 的统计与轨迹视图。</p>
   <p>
-    <a href="https://github.com/LiuHanzhang/codex-activity-monitor/releases/tag/v0.1.0-alpha.5"><img src="https://img.shields.io/badge/release-v0.1.0--alpha.5-B7791F?style=flat-square" alt="Release v0.1.0-alpha.5"></a>
+    <a href="https://github.com/LiuHanzhang/codex-activity-monitor/releases/tag/v0.1.0"><img src="https://img.shields.io/badge/release-v0.1.0-3B7A57?style=flat-square" alt="Release v0.1.0"></a>
     <img src="https://img.shields.io/badge/macOS-14%2B-black?style=flat-square&amp;logo=apple" alt="macOS 14+">
     <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-3B7A57?style=flat-square" alt="MIT 许可证"></a>
   </p>
 </div>
 
 > [!IMPORTANT]
-> 应用目前还处于早期测试阶段，暂时还没完成 Developer ID 签名与 Apple 公证。首次打开时如果被 macOS 阻止，需要在 **系统设置 → 隐私与安全性 → 仍要打开** 中手动允许。具体步骤见[安装说明](#安装)。
+> 应用暂时还没完成 Developer ID 签名与 Apple 公证。首次打开时如果被 macOS 阻止，需要在 **系统设置 → 隐私与安全性 → 仍要打开** 中手动允许。具体步骤见[安装说明](#安装)。
 
 <a id="效果演示"></a>
 <p align="center">
@@ -42,7 +42,7 @@
 
 ## 安装
 
-前往 [GitHub Releases](https://github.com/LiuHanzhang/codex-activity-monitor/releases)，在最新发布的 **Assets** 中优先下载名为 `Codex-Activity-Monitor-<版本号>-macos-arm64.dmg` 的 Apple Silicon 安装包。早期版本仅提供同名 ZIP。这是使用 ad-hoc 签名、尚未经过 Apple 公证的早期预发布版本；首次打开请按下方步骤手动允许。也可以[从源码构建](#从源码构建)。
+前往 [GitHub Releases](https://github.com/LiuHanzhang/codex-activity-monitor/releases)，在最新发布的 **Assets** 中优先下载名为 `Codex-Activity-Monitor-<版本号>-macos-arm64.dmg` 的 Apple Silicon 安装包。早期版本仅提供同名 ZIP。0.1.0 使用 ad-hoc 签名，尚未经过 Apple 公证；首次打开请按下方步骤手动允许。也可以[从源码构建](#从源码构建)。
 
 ### 运行要求
 
@@ -77,7 +77,7 @@ Monitor 自己的设置、接入配置备份和时间线数据保存在 `~/Libra
 
 ### 首次打开时手动允许
 
-当前 Alpha 版本**没有 Developer ID 签名，也尚未经过 Apple 公证**。首次打开下载的 App 时，macOS 可能提示无法验证开发者或无法检查 App 是否包含恶意软件。
+当前发行版本**没有 Developer ID 签名，也尚未经过 Apple 公证**。首次打开下载的 App 时，macOS 可能提示无法验证开发者或无法检查 App 是否包含恶意软件。
 
 如果尝试打开后被 macOS 阻止，请确认 App 来自本项目，再按以下步骤操作：
 
