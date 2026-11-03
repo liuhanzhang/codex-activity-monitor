@@ -304,7 +304,7 @@ class IntegrationEvidenceTests(unittest.TestCase):
 
     def test_cli_stops_its_writer_before_restore_or_cleanup_can_remove_owned_files(self):
         from codex_activity_monitor.cli import main
-        for action in ('restore', 'cleanup'):
+        for action in ('restore', 'cleanup', 'cancel-cleanup'):
             with self.subTest(action=action):
                 writer = Mock()
                 writer.close.return_value = True
@@ -312,7 +312,7 @@ class IntegrationEvidenceTests(unittest.TestCase):
                     self.assertTrue(writer.close.called, 'purge must not race a live command writer')
                     return {'version': 1, 'ok': True, 'state': 'purged'}
                 control = Mock(root=self.control.root)
-                getattr(control, action).side_effect = purge
+                getattr(control, action.replace('-', '_')).side_effect = purge
                 with patch('codex_activity_monitor.app_control.AppController', return_value=control), \
                      patch('codex_activity_monitor.diagnostic_log.DiagnosticLog', return_value=writer) as factory, \
                      contextlib.redirect_stdout(io.StringIO()):

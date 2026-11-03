@@ -252,7 +252,7 @@ final class DashboardStore {
                     nextManagement = Date().addingTimeInterval(5)
                     await readManagement()
                 }
-                if management?.waitingForCleanup == true && !busy && Date() >= nextCleanup {
+                if management?.shouldAutomaticallyCleanup == true && !busy && Date() >= nextCleanup {
                     nextCleanup = Date().addingTimeInterval(5)
                     await cleanup()
                 }
@@ -497,7 +497,7 @@ final class DashboardStore {
             // launchctl values are session-scoped; reapply integration on login
             // without replacing its original backup.
             else if management?.configured == true { await configure() }
-            else if management?.waitingForCleanup == true { await cleanup() }
+            else if management?.shouldAutomaticallyCleanup == true { await cleanup() }
             loginEnabled = SMAppService.mainApp.status == .enabled
             loginNeedsApproval = SMAppService.mainApp.status == .requiresApproval
         } catch { recordError(error) }
@@ -557,6 +557,26 @@ final class DashboardStore {
         }
     }
 
+    func retryCleanup() async { await cleanup() }
+
+    func cancelCleanup() async {
+        guard !busy, !readOnly, !closing, management?.can_cancel_cleanup == true else { return }
+        busy = true
+        defer { busy = false }
+        await waitForLanguageSave()
+        updates.stop()
+        await recorder.finish()
+        do {
+            management = try await client.command("cancel-cleanup")
+            if management?.state == "purged" { finishPurge(); return }
+            operationError = nil
+        } catch { recordError(error) }
+        recorder = DiagnosticRecorder(root: dataRoot)
+        recorder.setRuntime(runtimePath)
+        recorder.startSession()
+        updates.start()
+    }
+
     private func cleanup() async {
         guard !busy, !readOnly, !closing else { return }
         busy = true
@@ -565,6 +585,7 @@ final class DashboardStore {
             await waitForLanguageSave()
             management = try await client.command("cleanup")
             if management?.state == "purged" { finishPurge() }
+            operationError = nil
         } catch { recordError(error) }
     }
 

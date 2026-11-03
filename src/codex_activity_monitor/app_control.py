@@ -20,6 +20,7 @@ from .runtime import ROOT, REAL_CLI, atomic_json, collector_alive
 from .execution import backend_command, is_frozen
 from .state_client import state_once, authorize_session, StateClientError
 from .i18n import CATALOGS, DEFAULT_LANGUAGE, message, render_message, validate_language
+from .owned_files import is_finder_metadata
 
 DATA_ROOT = Path.home() / 'Library/Application Support/CodexActivityMonitor'
 
@@ -221,12 +222,21 @@ class AppController:
         self.current_app = Path(current_app).resolve() if current_app else None
 
     @contextmanager
-    def locked(self):
+    def locked(self, create=True):
         if self.root in (Path('/'), Path.home(), ROOT):
             raise ControlError('unsafe_data_root', 'control.unsafe_data_root')
-        self.root.mkdir(parents=True, exist_ok=True, mode=0o700)
-        self.root.chmod(0o700)
-        with (self.root / 'management.lock').open('a+') as lock:
+        if create:
+            self.root.mkdir(parents=True, exist_ok=True, mode=0o700)
+            self.root.chmod(0o700)
+        lock_path = self.root / 'management.lock'
+        try:
+            handle = lock_path.open('a+' if create else 'r+')
+        except FileNotFoundError:
+            if create:
+                raise
+            yield False
+            return
+        with handle as lock:
             deadline=time.monotonic()+5
             while True:
                 try:
@@ -236,14 +246,28 @@ class AppController:
                     if time.monotonic()>=deadline:
                         raise ControlError('management_busy', 'control.management_busy')
                     time.sleep(.05)
+            if not create:
+                # A competing purge may have removed this directory while we
+                # waited on its old lock inode. Never recreate it on cancellation.
+                try:
+                    current = lock_path.stat()
+                except FileNotFoundError:
+                    yield False
+                    return
+                held = os.fstat(lock.fileno())
+                if (current.st_dev, current.st_ino) != (held.st_dev, held.st_ino):
+                    yield False
+                    return
             marker = self.root / '.monitor-owned'
             if not marker.exists():
+                if not create:
+                    raise ControlError('foreign_data_root', 'control.foreign_data_root.2')
                 if any(p.name != 'management.lock' for p in self.root.iterdir()):
                     raise ControlError('foreign_data_root', 'control.foreign_data_root')
                 marker.write_text('codex-activity-monitor:1\n')
             elif marker.read_text() != 'codex-activity-monitor:1\n':
                 raise ControlError('foreign_data_root', 'control.foreign_data_root.2')
-            yield
+            yield True
 
     def _receipt(self):
         value = read_json(self.receipt_path)
@@ -262,6 +286,9 @@ class AppController:
         return {'version': 1, 'ok': True, 'state': state,
                 'configured': state == 'configured', 'runtime': receipt.get('runtime'),
                 'purge': receipt.get('purge', False), 'pending': receipt.get('pending', []),
+                'cleanup_error': receipt.get('cleanup_error'),
+                'can_cancel_cleanup': state == 'pending_cleanup' and
+                    set(receipt.get('restored_keys', [])) == set(KEYS) and not self.enabled.exists(),
                 'bridge_restart_required': bridge_upgrade_required(receipt.get('runtime')),
                 'data_root': str(self.root), 'error': receipt.get('error'),
                 'integration_status': inspect_integration(self, receipt, state)}
@@ -361,7 +388,7 @@ class AppController:
                        'restored_keys': [], 'purge': False}
             receipt['configuration_revision'] = revision
             receipt['restart_processes'] = old.get('restart_processes', [])
-            if old.get('configuration_revision') != revision:
+            if old.get('state') != 'configured' or old.get('configuration_revision') != revision:
                 # The launcher path in launchctl may stay unchanged across an
                 # app move or bridge upgrade. Existing Desktop processes still
                 # need to release their old bridges before the switch is complete.
@@ -592,13 +619,47 @@ class AppController:
         # not a cleanup-only operation. Reacquire the lock inside restore.
         if self._receipt().get('state') == 'restoring':
             return self.restore()
-        with self.locked():
+        with self.locked(create=False) as active:
+            if not active:
+                return self.status()
             receipt = self._receipt()
             if receipt.get('state') != 'pending_cleanup':
                 return self.status()
             return self._cleanup(receipt)
 
+    def cancel_cleanup(self):
+        with self.locked(create=False) as active:
+            if not active:
+                return {'version': 1, 'ok': True, 'state': 'purged', 'configured': False, 'pending': []}
+            receipt = self._receipt()
+            if receipt.get('state') == 'restored' and not receipt.get('purge'):
+                return self.status()
+            if (receipt.get('state') != 'pending_cleanup' or
+                    set(receipt.get('restored_keys', [])) != set(KEYS) or self.enabled.exists()):
+                raise ControlError('cancel_cleanup_unavailable', 'control.cancel_cleanup_unavailable')
+            # Restore has already finished its environment writes. Keep remaining
+            # resources and Codex processes intact, but verify no collector writes.
+            self._stop(receipt)
+            receipt.update(state='restored', purge=False, pending=[])
+            for key in ('previous', 'error', 'cleanup_error'):
+                receipt.pop(key, None)
+            self._write(receipt)
+            self._save_restored(True)
+            return self.status()
+
     def _cleanup(self, receipt):
+        receipt.pop('cleanup_error', None)
+        try:
+            return self._finish_cleanup(receipt)
+        except (OSError, ControlError) as error:
+            if self.receipt_path.exists():
+                receipt['cleanup_error'] = {
+                    'code': getattr(error, 'code', 'cleanup_failed'),
+                    'display_message': getattr(error, 'display_message', None) or message('control.cleanup_failed')}
+                self._write(receipt)
+            raise
+
+    def _finish_cleanup(self, receipt):
         dependencies = self.services.dependents(receipt)
         if dependencies:
             receipt['pending'] = dependencies
@@ -641,7 +702,7 @@ class AppController:
         # recursively deleted based on an installation record.
         allowed = {'management.lock', '.monitor-owned', 'integration.json', 'app-state.json', 'codex-observed',
                    'integration.enabled', 'observation.json', 'run', 'timeline', 'diagnostics', 'gui-session.json', 'updates.json'}
-        unknown = [p.name for p in self.root.iterdir() if p.name not in allowed]
+        unknown = [p.name for p in self.root.iterdir() if p.name not in allowed and not is_finder_metadata(p)]
         if unknown:
             raise ControlError('unowned_data', 'control.unowned_data')
         from .timeline_storage import owned_directory
@@ -651,9 +712,12 @@ class AppController:
         if not owned_directory(self.root / 'timeline'):
             raise ControlError('unowned_data', 'control.unowned_data.2')
         run = self.root / 'run'
-        if run.exists() and (run.is_symlink() or any(p.name not in {'collector.lock', 'bridges'} for p in run.iterdir())):
+        if run.exists() and (run.is_symlink() or any(
+                p.name not in {'collector.lock', 'bridges'} and not is_finder_metadata(p) for p in run.iterdir())):
             raise ControlError('unowned_data', 'control.unowned_data.3')
-        if (run / 'bridges').exists() and any((run / 'bridges').iterdir()):
+        bridges = run / 'bridges'
+        if bridges.is_symlink() or bridges.exists() and (not bridges.is_dir() or any(
+                not is_finder_metadata(p) for p in bridges.iterdir())):
             raise ControlError('unowned_data', 'control.unowned_data.4')
         receipt=self._receipt()
         self.services.remove_gui_login(self.current_app or receipt.get('app'))

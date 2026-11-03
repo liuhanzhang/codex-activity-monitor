@@ -101,6 +101,18 @@ struct SettingsView: LocalizedView {
                 })).disabled(!store.integrationCanToggle).accessibilityIdentifier("monitor.integration.codex")
                 Text(store.integrationStatusText).font(.callout).foregroundStyle(.secondary).textSelection(.enabled)
                     .accessibilityIdentifier("monitor.integration.status")
+                if let error = store.cleanupErrorText {
+                    Text(error).font(.callout).foregroundStyle(.red).textSelection(.enabled)
+                        .accessibilityIdentifier("monitor.cleanup.error")
+                }
+                if store.management?.cleanupBlocked == true {
+                    Button(L("重试清理")) { Task { await store.retryCleanup() } }
+                        .disabled(store.busy || store.readOnly).accessibilityIdentifier("monitor.cleanup.retry")
+                }
+                if store.management?.can_cancel_cleanup == true {
+                    Button(L("取消清理并保留数据")) { Task { await store.cancelCleanup() } }
+                        .disabled(store.busy || store.readOnly).accessibilityIdentifier("monitor.cleanup.cancel")
+                }
                 if let status = store.management?.integration_status, status.restart == "required", !store.integrationEnabled {
                     Text(L("配置已恢复，重开 Codex 后使用恢复后的配置。"))
                         .font(.callout).foregroundStyle(.secondary)

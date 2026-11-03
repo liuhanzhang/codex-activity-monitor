@@ -22,7 +22,7 @@ BRIDGE_MODULES = ('bridge', 'observer_permit', 'events', 'usage', 'tool_labels',
                   'runtime', 'execution', 'publication', 'app_session', 'observation_lease',
                   'integration_status', 'integration', 'diagnostic_log', 'i18n',
                   'messages_zh_cn', 'messages_en', 'messages_control',
-                  'messages_diagnostics', 'messages_detail')
+                  'messages_diagnostics', 'messages_detail', 'owned_files')
 
 
 def source_identity(*modules):

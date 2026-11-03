@@ -47,7 +47,8 @@ COPY = {
 }
 for action, zh, en in [('configure', '配置接入', 'Configure integration'), ('restore', '恢复配置', 'Restore configuration'),
                        ('resume', '启动观察', 'Start observation'), ('cleanup', '清理', 'Cleanup'),
-                       ('stop', '停止观察', 'Stop observation'), ('preferences', '保存设置', 'Save preferences')]:
+                       ('stop', '停止观察', 'Stop observation'), ('preferences', '保存设置', 'Save preferences'),
+                       ('cancel_cleanup', '取消清理', 'Cancel cleanup')]:
     COPY[action + '_started'] = (zh + '：开始', en + ': started')
     COPY[action + '_completed'] = (zh + '：操作完成', en + ': operation completed')
 

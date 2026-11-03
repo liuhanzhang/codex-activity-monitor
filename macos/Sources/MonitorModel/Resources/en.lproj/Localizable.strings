@@ -54,3 +54,4 @@
 "配置已恢复，暂时无法确认 Codex 是否已退出" = "Configuration restored; cannot yet confirm whether Codex has quit";
 "配置已恢复，等待 Codex 退出后完成清理" = "Configuration restored; waiting for Codex to quit before cleanup";
 "配置已恢复，等待完成清理" = "Configuration restored; waiting for cleanup";
+"配置已恢复，清理受阻" = "Configuration restored; cleanup is blocked";

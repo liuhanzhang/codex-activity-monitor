@@ -1445,6 +1445,22 @@
     }
   },
   {
+    "expected": "取消清理：开始",
+    "language": "zh-CN",
+    "message": {
+      "key": "diagnostics.cancel_cleanup_started",
+      "params": {}
+    }
+  },
+  {
+    "expected": "取消清理：操作完成",
+    "language": "zh-CN",
+    "message": {
+      "key": "diagnostics.cancel_cleanup_completed",
+      "params": {}
+    }
+  },
+  {
     "expected": "无法读取管理记录：原始内容.py",
     "language": "zh-CN",
     "message": {
@@ -1635,6 +1651,22 @@
     "language": "zh-CN",
     "message": {
       "key": "control.cleanup_pending",
+      "params": {}
+    }
+  },
+  {
+    "expected": "请先完成配置恢复并停止采集，再取消清理。",
+    "language": "zh-CN",
+    "message": {
+      "key": "control.cancel_cleanup_unavailable",
+      "params": {}
+    }
+  },
+  {
+    "expected": "清理未完成，请重试；也可以取消清理并保留数据。",
+    "language": "zh-CN",
+    "message": {
+      "key": "control.cleanup_failed",
       "params": {}
     }
   },
@@ -3372,6 +3404,22 @@
     }
   },
   {
+    "expected": "Cancel cleanup: started",
+    "language": "en",
+    "message": {
+      "key": "diagnostics.cancel_cleanup_started",
+      "params": {}
+    }
+  },
+  {
+    "expected": "Cancel cleanup: operation completed",
+    "language": "en",
+    "message": {
+      "key": "diagnostics.cancel_cleanup_completed",
+      "params": {}
+    }
+  },
+  {
     "expected": "Cannot read management record: 原始内容.py",
     "language": "en",
     "message": {
@@ -3562,6 +3610,22 @@
     "language": "en",
     "message": {
       "key": "control.cleanup_pending",
+      "params": {}
+    }
+  },
+  {
+    "expected": "Finish restoring configuration and stop collection before cancelling cleanup.",
+    "language": "en",
+    "message": {
+      "key": "control.cancel_cleanup_unavailable",
+      "params": {}
+    }
+  },
+  {
+    "expected": "Cleanup is incomplete. Retry, or cancel cleanup to keep the data.",
+    "language": "en",
+    "message": {
+      "key": "control.cleanup_failed",
       "params": {}
     }
   },

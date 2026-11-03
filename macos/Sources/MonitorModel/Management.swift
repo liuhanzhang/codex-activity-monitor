@@ -15,6 +15,11 @@ public struct PendingDependency: Decodable, Sendable {
     public let reason: String?
 }
 
+public struct CleanupFailure: Decodable, Sendable {
+    public let code: String?
+    public let display_message: DisplayMessage?
+}
+
 public struct ManagementState: Decodable, Sendable {
     public let version: Int?
     public let ok: Bool?
@@ -29,9 +34,13 @@ public struct ManagementState: Decodable, Sendable {
     public let session: ObservationLease?
     public let bridge_restart_required: Bool?
     public let integration_status: IntegrationStatus?
+    public let cleanup_error: CleanupFailure?
+    public let can_cancel_cleanup: Bool?
 
     public var configured: Bool { state == "configured" }
     public var waitingForCleanup: Bool { state == "pending_cleanup" || state == "restoring" }
+    public var cleanupBlocked: Bool { cleanup_error != nil }
+    public var shouldAutomaticallyCleanup: Bool { waitingForCleanup && !cleanupBlocked }
     public var label: String { localizedLabel(.chinese) }
     public func localizedLabel(_ language: MonitorLanguage) -> String {
         ModelLocalizer.text(labelKey, language)
@@ -40,7 +49,7 @@ public struct ManagementState: Decodable, Sendable {
         switch state {
         case "configured": "已配置"
         case "pending_cleanup":
-            pending?.isEmpty != false ? "配置已恢复，等待完成清理" :
+            cleanupBlocked ? "配置已恢复，清理受阻" : pending?.isEmpty != false ? "配置已恢复，等待完成清理" :
                 (pending?.contains { $0.reason == "process_visibility_unknown" } == true ? "配置已恢复，暂时无法确认 Codex 是否已退出" : "配置已恢复，等待 Codex 退出后完成清理")
         case "restoring": "正在恢复配置"
         case "restored": "已恢复 · 可在设置中开启接入"

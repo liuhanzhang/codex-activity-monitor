@@ -13,6 +13,7 @@ extension DashboardStore {
         if busy { return text("正在处理…") }
         if managementCheckFailed { return text("暂时无法确认配置状态，保留上次结果。") }
         guard let management else { return text("正在检查接入状态…") }
+        if management.cleanupBlocked { return management.localizedLabel(language) }
         guard let status = management.integration_status, status.version == 1 else {
             return management.localizedLabel(language)
         }
@@ -36,6 +37,11 @@ extension DashboardStore {
         }
         if status.runtime == "waiting_for_codex" { return text("已配置，下次打开 Codex 后接入。") }
         return text("已配置，等待确认 Codex 接入；没有聊天不表示接入失败。")
+    }
+
+    var cleanupErrorText: String? {
+        guard let error = management?.cleanup_error else { return nil }
+        return error.display_message?.rendered(in: language) ?? localizedText("清理受阻，请重试或取消清理以保留数据。", language: language)
     }
 
     var diagnosticComponents: [ComponentHealth] {

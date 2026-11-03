@@ -11,6 +11,8 @@ import threading
 import time
 from typing import Literal
 
+from .owned_files import is_finder_metadata
+
 # Explicit allowlist keeps future display/content additions out of the database.
 FIELDS = frozenset(('id', 'scope_id', 'thread_id', 'turn_id', 'namespace', 'item_id', 'item_type',
                     'track', 'kind', 'label', 'tool_name', 'call_id', 'client_id', 'process_id',
@@ -211,5 +213,5 @@ def owned_directory(path):
     if path.is_symlink() or not path.is_dir():
         return False
     return all(p.is_file() and not p.is_symlink() and
-               (p.name in ('metadata.sqlite3','metadata.sqlite3-journal') or
+               (is_finder_metadata(p) or p.name in ('metadata.sqlite3','metadata.sqlite3-journal') or
                 re.fullmatch(r'metadata-unavailable-\d+\.sqlite3', p.name)) for p in path.iterdir())

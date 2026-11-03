@@ -57,10 +57,14 @@ for line in sys.stdin:
                 capture_output=True, env=environment, timeout=10, check=True)
             return json.loads(result.stdout)['average_speed']
 
-        def command(action, *extra):
+        def command(action, *extra, expect_error=None):
             result = subprocess.run([sys.executable, '-B', '-m', 'codex_activity_monitor.cli', 'app', action,
                 '--app', str(app), '--test-profile', str(profile), '--state-protocol', '1', *extra],
                 capture_output=True, env=environment, timeout=10)
+            if expect_error:
+                value = json.loads(result.stdout)
+                assert result.returncode and value.get('code') == expect_error, value
+                return value
             if result.returncode:
                 raise AssertionError(f'{action} failed: {result.stdout.decode()}')
             return json.loads(result.stdout)
@@ -114,7 +118,24 @@ for line in sys.stdin:
             logs = profile / 'data/diagnostics'
             assert any(logs.glob('*.jsonl'))
             assert command('configure')['integration_status']['configuration'] == 'enabled'
+            foreign = profile / 'data/keep-fixture.txt'
+            foreign.write_text('synthetic data to preserve')
+            command('restore', '--purge', expect_error='unowned_data')
+            blocked = command('status')
+            assert blocked['cleanup_error']['code'] == 'unowned_data'
+            assert blocked['can_cancel_cleanup'] is True
+            cancelled = command('cancel-cleanup')
+            assert cancelled['state'] == 'restored' and not cancelled['purge']
+            assert cancelled['cleanup_error'] is None
+            assert command('cleanup')['state'] == 'restored'
+            assert foreign.read_text() == 'synthetic data to preserve'
+            assert command('configure')['integration_status']['configuration'] == 'enabled'
+            foreign.unlink()
+            for directory in (profile / 'data', logs, profile / 'data/timeline', runtime, runtime / 'bridges'):
+                directory.mkdir(parents=True, exist_ok=True)
+                (directory / '.DS_Store').write_bytes(b'synthetic Finder metadata')
             assert command('restore', '--purge')['state'] == 'purged'
+            assert command('cancel-cleanup')['state'] == 'purged'
             assert not (profile / 'data').exists()
             print(json.dumps({'ok': True, 'scope': 'disposable profile, synthetic CLI',
                 'checks': ['stable revision', 'real bridge startup evidence', 'live health summary',
@@ -123,7 +144,9 @@ for line in sys.stdin:
                            'diagnostic status and average speed coexist',
                            'restore with pending bridge', 'stdio forwarding after restore',
                            'collector shutdown', 'cleanup', 'disabled status persists',
-                           'diagnostics retained', 'reconfigure', 'purge']}, indent=2))
+                           'diagnostics retained', 'reconfigure', 'persistent cleanup failure',
+                           'cancel cleanup and retain data', 'reconfigure after cancellation',
+                           'purge with Finder metadata', 'cancellation after purge does not recreate data']}, indent=2))
         finally:
             peer.close()
             if bridge is not None and bridge.poll() is None:

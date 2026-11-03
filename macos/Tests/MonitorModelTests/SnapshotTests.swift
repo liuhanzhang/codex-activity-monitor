@@ -124,6 +124,17 @@ private func hierarchy(_ rows: String) throws -> Snapshot {
     }
 }
 
+@Test func cleanupFailureIsLocalizedAndDoesNotMasqueradeAsWaitingForProcesses() throws {
+    let value = try JSONDecoder().decode(ManagementState.self, from: Data("""
+        {"version":1,"state":"pending_cleanup","pending":[{"pid":123,"reason":"codex_running"}],
+         "cleanup_error":{"code":"unowned_data","display_message":{"key":"control.unowned_data","params":{}}}}
+        """.utf8))
+    #expect(value.localizedLabel(.english) == "Configuration restored; cleanup is blocked")
+    #expect(!value.shouldAutomaticallyCleanup)
+    #expect(value.cleanup_error?.display_message?.rendered(in: .english) ==
+            "The data directory contains unregistered files; full cleanup was not performed.")
+}
+
 @Test func oldBridgesDoNotClaimPauseCapability() throws {
     let old = try JSONDecoder().decode(Backend.self, from: Data("{\"connected\":true}".utf8))
     let current = try JSONDecoder().decode(Backend.self, from: Data("{\"connected\":true,\"implementation\":{\"modules\":{\"observer_permit\":\"hash\"}}}".utf8))

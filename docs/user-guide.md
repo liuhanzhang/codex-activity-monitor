@@ -75,6 +75,8 @@ App preferences and structured diagnostic logs remain. Reopening the monitor kee
 
 Cleanup removes owned runtime state, derived timeline data, integration records, preferences, diagnostic logs, and the login item. It does not remove Codex-owned conversations, source checkouts, or development virtual environments. Unknown files or active processes can prevent cleanup; follow the displayed error instead of deleting the configuration backup.
 
+If cleanup is blocked, the cause remains visible after reopening and automatic cleanup pauses. Use **Retry cleanup** after resolving it, or **Cancel cleanup and keep data** to withdraw the cleanup request and enable integration again. Cancellation becomes available once configuration restoration is complete; it keeps remaining local data and does not terminate Codex. Ordinary Finder `.DS_Store` files do not block cleanup; unregistered files, directories, and symlinks remain protected.
+
 If the monitor exits before cleanup completes, reopen the same app to continue. If you already deleted it, restore or rebuild the app and use the restoration flow. Deleting the `.app` alone is not an uninstall: an external launcher can fall back to the original CLI, but configuration and data still need cleanup.
 
 ## Local data

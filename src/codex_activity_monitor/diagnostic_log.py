@@ -12,6 +12,8 @@ import threading
 import time
 import uuid
 
+from .owned_files import is_finder_metadata
+
 ROLES = ('gui', 'management', 'collector', 'bridge')
 MARKER = 'codex-activity-monitor-diagnostics:1\n'
 PARAMS = {'errno', 'type', 'reason', 'exit_code', 'count', 'attempt', 'bytes', 'discarded', 'timeout_ms'}
@@ -35,7 +37,8 @@ def owned_logs(directory):
             return False
         allowed = {'.monitor-owned'} | {f'{role}{suffix}' for role in ROLES
                                         for suffix in ('.lock', '.jsonl', '.jsonl.1', '.jsonl.2', '.jsonl.3')}
-        return all(p.name in allowed and p.is_file() and not p.is_symlink() for p in directory.iterdir())
+        return all((p.name in allowed or is_finder_metadata(p)) and p.is_file() and not p.is_symlink()
+                   for p in directory.iterdir())
     except OSError:
         return False
 

@@ -134,7 +134,7 @@ def main(argv=None):
     p.add_argument('request', help=argparse.SUPPRESS)
     p=subs.add_parser('app', help=tr('cli.app_help', language))
     p.add_argument('--operation-id', help=argparse.SUPPRESS)
-    p.add_argument('action', choices=('status','configure','resume','stop','restore','cleanup','preferences'))
+    p.add_argument('action', choices=('status','configure','resume','stop','restore','cleanup','cancel-cleanup','preferences'))
     p.add_argument('--data-root', type=Path)
     p.add_argument('--app', type=Path)
     p.add_argument('--real-cli', type=Path, default=REAL_CLI)
@@ -177,12 +177,13 @@ def main(argv=None):
                 args.legacy_runtime = None
             from .diagnostic_log import DiagnosticLog
             diagnostic_log = DiagnosticLog(control.root / 'diagnostics', 'management')
-            action = args.action if args.action in ('configure', 'restore', 'resume', 'stop', 'preferences') else None
+            action = args.action.replace('-', '_') if args.action in (
+                'configure', 'restore', 'resume', 'stop', 'preferences', 'cancel-cleanup') else None
             if action:
                 diagnostic_log.emit(action + '_started', operation_id=args.operation_id)
-            # Either action can finish a previously requested purge. Stop this
-            # command's writer before the controller removes its owned files.
-            if args.action in ('restore', 'cleanup'):
+            # Cleanup may finish a purge, and cancellation may race that purge.
+            # Stop this command's writer before either can return a purged state.
+            if args.action in ('restore', 'cleanup', 'cancel-cleanup'):
                 diagnostic_log.close()
                 diagnostic_log = None
             if args.action == 'configure':
@@ -196,6 +197,8 @@ def main(argv=None):
                 value = control.resume(args.owner_pid)
             elif args.action == 'restore':
                 value = control.restore(args.purge)
+            elif args.action == 'cancel-cleanup':
+                value = control.cancel_cleanup()
             elif args.action == 'stop':
                 value = control.stop(args.owner_pid)
             elif args.action == 'preferences':
@@ -213,7 +216,7 @@ def main(argv=None):
             print(json.dumps(value, ensure_ascii=False))
             return 0
         except (OSError, ValueError, RuntimeError) as exc:
-            if diagnostic_log is None and args.action in ('restore', 'cleanup') and 'control' in locals():
+            if diagnostic_log is None and args.action in ('restore', 'cleanup', 'cancel-cleanup') and 'control' in locals():
                 from .diagnostic_log import DiagnosticLog
                 diagnostic_log = DiagnosticLog(control.root / 'diagnostics', 'management')
             if diagnostic_log and args.action != 'status':
