@@ -10,11 +10,12 @@ struct ChatRowView: LocalizedView {
     private var live: Bool { store.sourceAvailable(for: chat) }
     private var working: Bool { store.snapshot?.hasActiveWork(in: chat) == true }
     private var unassigned: Bool { store.isUnassigned(chat) }
-    private var speedTitle: String? {
-        guard working else { return nil }
-        guard live, chat.generation_rate_status != "unavailable" else { return "—" }
-        if let rate = chat.generation_rate, rate.isFinite, rate >= 0 { return MetricFormat.compactSpeed(rate) }
-        return nil
+    private var groupSpeed: SnapshotProjection.GroupSpeed? { store.snapshot?.projection.groupSpeed(for: chat) }
+    var speedTitle: String? {
+        guard working, let groupSpeed else { return nil }
+        guard store.fresh else { return "—" }
+        if let rate = groupSpeed.rate { return MetricFormat.compactSpeed(rate) }
+        return groupSpeed.hasUnavailableMember || !live ? "—" : nil
     }
     private var speedHelp: String {
         if speedTitle == "—" { return L("当前无法可靠计算速度。") }
@@ -41,7 +42,7 @@ struct ChatRowView: LocalizedView {
                     Text(chat.localizedTitle(language)).font(.system(size: 12, weight: selected ? .medium : .regular))
                         .lineLimit(1).truncationMode(.tail)
                     Spacer(minLength: 0)
-                    if working, let notice = chat.speedObservationNotice {
+                    if working, let notice = groupSpeed?.notice {
                         Image(systemName: "exclamationmark.circle")
                             .font(.system(size: 11)).foregroundStyle(.orange)
                             .help(L(notice.rawValue)).accessibilityLabel(L(notice.rawValue))

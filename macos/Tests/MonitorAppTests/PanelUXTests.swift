@@ -19,8 +19,8 @@ import MonitorModel
 @Test @MainActor func panelSelectsOneWorkingRootAcrossScopesAndChildWork() throws {
     let store = try panelStore([
         ["id": "same", "home": "a", "has_active_work": false],
-        ["id": "child", "home": "a", "parent_thread_id": "same", "has_active_work": true],
-        ["id": "same", "home": "b", "has_active_work": true],
+        ["id": "child", "home": "a", "parent_thread_id": "same", "has_active_work": true, "generation_rate": 30],
+        ["id": "same", "home": "b", "has_active_work": true, "generation_rate": 20],
         ["id": "done", "home": "a", "status": "completed", "last_progress_seconds": 1]
     ])
     store.panelVisible = true
@@ -29,6 +29,28 @@ import MonitorModel
     #expect(store.visibleChats.map(\.id) == store.activeRows.map { $0.chat.id })
     #expect(!store.showRecent && store.recentRows.isEmpty)
     #expect(store.activeRows.map { $0.chat.scope } == ["a", "b"])
+    #expect(store.visibleChats.map { ChatRowView(chat: $0, store: store).speedTitle } == ["30 T/s", "20 T/s"])
+}
+
+@Test @MainActor func groupedSpeedIncludesNestedAgentsAndCarriesTheirObservationGaps() throws {
+    let store = try panelStore([
+        ["id": "root", "has_active_work": true, "generation_rate": 40],
+        ["id": "child", "parent_thread_id": "root", "has_active_work": true,
+         "generation_rate_status": "unavailable", "generation_rate_issues": ["observation_gap"]],
+        ["id": "nested", "parent_thread_id": "child", "has_active_work": true, "generation_rate": 30],
+        ["id": "unassigned", "thread_source": "subagent", "parent_thread_id": "root", "has_active_work": true,
+         "parent_quality": ["parent_identity_conflict"], "generation_rate": 20],
+        ["id": "ephemeral", "parent_thread_id": "root", "ephemeral": true, "has_active_work": true, "generation_rate": 90]
+    ])
+    store.panelVisible = true; store.showUnassigned = true
+    let root = try #require(store.activeRows.first?.chat)
+    let speed = try #require(store.snapshot?.projection.groupSpeed(for: root))
+    #expect(speed.notice == .observationGap)
+    #expect(root.generation_rate == 40)
+    #expect(store.visibleChats.map { ChatRowView(chat: $0, store: store).speedTitle } == ["70 T/s", "20 T/s"])
+
+    store.updatePresentation(at: Date().addingTimeInterval(4))
+    #expect(ChatRowView(chat: root, store: store).speedTitle == "—")
 }
 
 @Test @MainActor func selectionAndStableOrderSurviveRefreshAndNewWork() throws {
@@ -175,8 +197,8 @@ private func panelUsage(_ fields: [String: Any]) throws -> Usage {
 
 @Test @MainActor func confirmedParentKeepsSelectedChildAsARetainedReadingEntryUntilSwitching() throws {
     let rows: [[String: Any]] = [
-        ["id": "root", "home": "scope", "has_active_work": true],
-        ["id": "child", "home": "scope", "thread_source": "subagent", "has_active_work": true]
+        ["id": "root", "home": "scope", "has_active_work": true, "generation_rate": 40],
+        ["id": "child", "home": "scope", "thread_source": "subagent", "has_active_work": true, "generation_rate": 30]
     ]
     let store = try panelStore(rows)
     store.panelVisible = true; store.showUnassigned = true
@@ -188,6 +210,7 @@ private func panelUsage(_ fields: [String: Any]) throws -> Usage {
     #expect(store.selectedChatKey == childKey && store.unassignedRows.isEmpty)
     #expect(store.visibleChats.map(\.threadID) == ["root", "child"])
     #expect(store.visibleChats[1].isKnownSubagent && store.activeRows.count == 1)
+    #expect(store.visibleChats.map { ChatRowView(chat: $0, store: store).speedTitle } == ["70 T/s", nil])
     store.selectChat(store.activeRows[0].chat)
     #expect(store.visibleChats.map(\.threadID) == ["root"])
 }

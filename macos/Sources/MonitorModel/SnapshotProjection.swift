@@ -20,12 +20,37 @@ public final class SnapshotProjection: Sendable {
         public let cycleSteps: Int
     }
 
+    public struct GroupSpeed: Sendable {
+        public private(set) var rate: Double?
+        public private(set) var hasUnavailableMember = false
+        private var issues: Set<String> = []
+
+        public var notice: ObservationNotice? {
+            issues.isEmpty ? nil : ObservationNotice.speedIssue(issues)
+        }
+
+        fileprivate mutating func include(_ chat: Chat) {
+            issues.formUnion(chat.generation_rate_issues ?? [])
+            if chat.connected == false {
+                if chat.has_active_work == true {
+                    hasUnavailableMember = true
+                    issues.insert("disconnected")
+                }
+            } else if chat.generation_rate_status == "unavailable" {
+                hasUnavailableMember = true
+            } else if let value = chat.generation_rate, value.isFinite, value >= 0 {
+                rate = (rate ?? 0) + value
+            }
+        }
+    }
+
     private struct Group: Sendable {
         let chat: Chat
         var active = false
         var age = Double.infinity
         var terminal = false
         var nonIdle = false
+        var speed = GroupSpeed()
     }
 
     public let cost: Cost
@@ -33,6 +58,7 @@ public final class SnapshotProjection: Sendable {
     private let byID: [String: Chat]
     private let childrenByID: [String: [Chat]]
     private let rootByID: [String: String]
+    private let speedByRootID: [String: GroupSpeed]
     private let subtreeActive: Set<String>
     private let activeRoots: [Chat]
     private let recentRoots: [Group]
@@ -102,13 +128,16 @@ public final class SnapshotProjection: Sendable {
             }
         }
         var groups: [String: Group] = [:]
-        for chat in chats where eligible.contains(chat.id) {
-            guard let root = roots[chat.id], let parent = nodes[root] else { continue }
+        for chat in chats {
+            guard let root = roots[chat.id], eligible.contains(root), let parent = nodes[root] else { continue }
             var group = groups[root] ?? Group(chat: parent)
-            group.active = group.active || chat.has_active_work == true
-            group.age = min(group.age, chat.last_progress_seconds ?? .infinity)
-            group.terminal = group.terminal || chat.isTerminal
-            group.nonIdle = group.nonIdle || chat.status != "idle"
+            if eligible.contains(chat.id) {
+                group.active = group.active || chat.has_active_work == true
+                group.age = min(group.age, chat.last_progress_seconds ?? .infinity)
+                group.terminal = group.terminal || chat.isTerminal
+                group.nonIdle = group.nonIdle || chat.status != "idle"
+            }
+            group.speed.include(chat)
             groups[root] = group
         }
         var active = Set(chats.filter { $0.has_active_work == true }.map(\.id))
@@ -123,6 +152,7 @@ public final class SnapshotProjection: Sendable {
         let activeUnassigned = uncertain.filter(\.active).map(\.chat)
         let recentUnassigned = uncertain.filter { !$0.active && $0.nonIdle }.sorted { $0.age < $1.age }
         self.chats = chats; self.byID = byID; self.rootByID = roots; self.subtreeActive = active
+        self.speedByRootID = groups.mapValues(\.speed)
         self.childrenByID = childIDs.mapValues { $0.compactMap { nodes[$0] } }
         self.activeRoots = activeRoots; self.recentRoots = recentRoots
         self.activeUnassigned = activeUnassigned; self.recentUnassigned = recentUnassigned
@@ -154,6 +184,7 @@ public final class SnapshotProjection: Sendable {
     }
 
     public func chat(id: String) -> Chat? { byID[id] }
+    public func groupSpeed(for chat: Chat) -> GroupSpeed? { speedByRootID[chat.id] }
     public func children(of parent: Chat) -> [Chat] {
         guard memberIDs.contains(parent.id) else { return [] }
         return childrenByID[parent.id] ?? []
