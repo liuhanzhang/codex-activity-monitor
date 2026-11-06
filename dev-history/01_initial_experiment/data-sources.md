@@ -1,6 +1,6 @@
 # 状态与用量的数据来源
 
-整理日期：2026-10-10。通信层次见 [架构文档](/Users/bytedance/personal/codex-activity-monitor/dev-history/01_initial_experiment/architecture.md)。
+整理日期：2026-10-10。通信层次见 [架构文档](architecture.md)。
 
 ## 1. 先区分需要观察的东西
 
@@ -37,9 +37,9 @@ token 用量、实时生成速度、当前上下文大小、账户限额是四�
 
 `item/fileChange/patchUpdated` 曾在隔离配置实验中验证，属于特定版本、模式和开关下的能力。不能将它视为所有文件编辑都会产生的事件。`turn/diff/updated` 的快照也不能直接累加字节数。
 
-安装包核查发现，新增 / 删除行数计数和数字动画仍存在，显示还受界面模式、是否已有 diff 等条件影响。缺少补丁预览事件会使生成阶段没有行数增长，但目前没有证据确定 OpenAI 在某次更新中主动取消了该功能。diff 行数也不是 token 数。[动画与显示条件核查](/Users/bytedance/personal/codex-activity-monitor/analysis/file-edit-progress/FINDINGS.txt)
+安装包核查发现，新增 / 删除行数计数和数字动画仍存在，显示还受界面模式、是否已有 diff 等条件影响。缺少补丁预览事件会使生成阶段没有行数增长，但目前没有证据确定 OpenAI 在某次更新中主动取消了该功能。diff 行数也不是 token 数。[动画与显示条件核查](../../analysis/file-edit-progress/FINDINGS.txt)
 
-参考：[官方 app-server 文档](https://learn.chatgpt.com/docs/app-server)、[上游与 app-server 对照实验](/Users/bytedance/personal/codex-activity-monitor/analysis/upstream-stream/verification.json)。
+参考：[官方 app-server 文档](https://learn.chatgpt.com/docs/app-server)、[上游与 app-server 对照实验](../../analysis/upstream-stream/verification.json)。
 
 ## 3. app-server ↔ 模型服务的接收层日志
 
@@ -67,13 +67,13 @@ reasoning 开始后曾有约 3.88 秒没有上游新事件。无事件只能说�
 
 隐藏 reasoning 内容与提供进度计数是两回事。当前接口缺少所需计数；未来若服务端提供计数或心跳，仍可在不暴露内容的情况下监控进度。
 
-参考：[官方 delta 字段](https://developers.openai.com/api/reference/resources/responses/streaming-events#response.custom_tool_call_input.delta)、[实验记录](/Users/bytedance/personal/codex-activity-monitor/analysis/upstream-stream/FINDINGS.txt)、[分析脚本](/Users/bytedance/personal/codex-activity-monitor/analysis/upstream-stream/analyze_trace.py)。
+参考：[官方 delta 字段](https://developers.openai.com/api/reference/resources/responses/streaming-events#response.custom_tool_call_input.delta)、[实验记录](../../analysis/upstream-stream/FINDINGS.txt)、[分析脚本](../../analysis/upstream-stream/analyze_trace.py)。
 
 ## 4. sessions 与其他本地文件
 
 ### sessions / archived_sessions
 
-当前默认数据目录下，聊天记录位于 `/Users/bytedance/.codex/sessions/YYYY/MM/DD/rollout-*.jsonl`；归档记录可位于 `archived_sessions`。实际根目录应按 `CODEX_HOME` 和环境识别。
+当前默认数据目录下，聊天记录位于 `~/.codex/sessions/YYYY/MM/DD/rollout-*.jsonl`；归档记录可位于 `archived_sessions`。实际根目录应按 `CODEX_HOME` 和环境识别。
 
 **本机只读检查**：当前聊天记录中实际存在：
 
@@ -96,7 +96,7 @@ reasoning 开始后曾有约 3.88 秒没有上游新事件。无事件只能说�
 
 所以，尾读 sessions 能较快知道“刚完成了什么”，但不能仅凭历史中的 `started_at_ms` 判断“现在什么刚开始”。外层 `exec` 的调用与输出还可能包含 yield / wait，简单配对也不能保证恢复所有内部执行状态。
 
-参考：[持久化策略](/Users/bytedance/playground/codex/codex-rs/rollout/src/policy.rs:134)、[异步记录写入](/Users/bytedance/playground/codex/codex-rs/rollout/src/recorder.rs:1048)。公开源码快照与安装二进制的区别见索引；上述字段同时有本机会话检查证据。
+参考：[持久化策略](https://github.com/openai/codex/blob/806d9732c974bc8a51b8317c1bd8985544fe627c/codex-rs/rollout/src/policy.rs#L134)、[异步记录写入](https://github.com/openai/codex/blob/806d9732c974bc8a51b8317c1bd8985544fe627c/codex-rs/rollout/src/recorder.rs#L1048)。公开源码快照与安装二进制的区别见索引；上述字段同时有本机会话检查证据。
 
 ### 其他文件
 
@@ -128,7 +128,7 @@ Shell / unified exec 通常匹配 `Bash`；`apply_patch`、MCP 和多数本地�
 
 因此 hooks 是正式支持的扩展入口，但不是零开销、无遗漏的旁路探针，也没有逐 token / 工具参数 delta 回调。
 
-参考：[官方 Hooks 文档与覆盖说明](https://learn.chatgpt.com/docs/hooks#tool-coverage)、[后台 hooks](https://learn.chatgpt.com/docs/hooks#run-hooks-in-the-background)、[工具分发中的 hook 路径](/Users/bytedance/playground/codex/codex-rs/core/src/tools/registry.rs:697)。
+参考：[官方 Hooks 文档与覆盖说明](https://learn.chatgpt.com/docs/hooks#tool-coverage)、[后台 hooks](https://learn.chatgpt.com/docs/hooks#run-hooks-in-the-background)、[工具分发中的 hook 路径](https://github.com/openai/codex/blob/806d9732c974bc8a51b8317c1bd8985544fe627c/codex-rs/core/src/tools/registry.rs#L697)。
 
 ## 6. 账户限额与开源监控工具
 

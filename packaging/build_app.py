@@ -28,6 +28,27 @@ def run(*arguments, **kwargs):
     return subprocess.run([str(value) for value in arguments], check=True, **kwargs)
 
 
+def copy_dependency_licenses(licenses, distributions=None):
+    """Collect dependency notices without copying interpreter caches."""
+    if distributions is None:
+        distributions = importlib.metadata.distributions()
+    licenses = Path(licenses)
+    for dist in distributions:
+        name = dist.metadata.get('Name', '')
+        if name.lower() in ('codex-activity-monitor', 'pip'):
+            continue
+        for file in dist.files or []:
+            if (any(part.lower() == '__pycache__' for part in file.parts)
+                    or file.suffix.lower() in ('.pyc', '.pyo')):
+                continue
+            if any(part.lower().startswith(('license', 'copying', 'notice')) for part in file.parts):
+                source = Path(dist.locate_file(file))
+                if source.is_file():
+                    destination = licenses/name/Path(*file.parts[1:])
+                    destination.parent.mkdir(parents=True, exist_ok=True)
+                    shutil.copy2(source, destination)
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--output', type=Path, default=ROOT/'.local/standalone')
@@ -120,17 +141,7 @@ def main():
     (licenses/'Python').mkdir()
     shutil.copy2(python_license, licenses/'Python/LICENSE.txt')
     shutil.copy2(notices, licenses/'Python/standalone-distribution-notices.rst')
-    for dist in importlib.metadata.distributions():
-        name = dist.metadata.get('Name', '')
-        if name.lower() in ('codex-activity-monitor', 'pip'):
-            continue
-        for file in dist.files or []:
-            if any(part.lower().startswith(('license', 'copying', 'notice')) for part in file.parts):
-                source = Path(dist.locate_file(file))
-                if source.is_file():
-                    destination = licenses/name/Path(*file.parts[1:])
-                    destination.parent.mkdir(parents=True, exist_ok=True)
-                    shutil.copy2(source, destination)
+    copy_dependency_licenses(licenses)
     info = app_info
     (contents/'Info.plist').write_bytes(plistlib.dumps(info))
     embed_sparkle(stage)

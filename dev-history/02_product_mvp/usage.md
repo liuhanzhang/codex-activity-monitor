@@ -2,9 +2,9 @@
 
 本机终端看板已实现。正文、工具参数与摘要分别统计，采集器独立运行，关闭看板不会停止采集或 Codex 任务。当前机器已安装登录启动和 Desktop 默认包装器；原环境保存在 `.local/runtime/desktop-environment.json`，不纳入 Git。
 
-各组件如何通信、具体监听哪些事件，以及主 App / 隔离实例如何识别，见 [产品架构与工作方式](/Users/bytedance/personal/codex-activity-monitor/dev-history/02_product_mvp/architecture.md)。
+各组件如何通信、具体监听哪些事件，以及主 App / 隔离实例如何识别，见 [产品架构与工作方式](architecture.md)。
 
-每个启动步骤做什么、环境变量保存在哪里、如何暂停采集器并恢复，见 [启动步骤与进程管理](/Users/bytedance/personal/codex-activity-monitor/dev-history/02_product_mvp/startup-and-processes.md)。
+每个启动步骤做什么、环境变量保存在哪里、如何暂停采集器并恢复，见 [启动步骤与进程管理](startup-and-processes.md)。
 
 ## 界面语言
 
@@ -22,9 +22,9 @@ GUI 在顶部设置中独立选择语言，保存到其应用数据目录，互�
 本机隔离 App 的真实界面提交到实时指标路径已通过：正文持续正速度、工具完整执行时间、临时标题任务隐藏，任务期间没有丢弃或解析错误。无需重复已完成的有限任务；主 App 保持运行。其他机器或后续复查可以使用隔离实例。以下命令使用已有独立登录的测试 home 与产品测试 profile，创建额外实例：
 
 ```sh
-/Users/bytedance/personal/codex_progress_monitor/bin/codex-progress desktop \
-  --home /Users/bytedance/personal/codex_progress_monitor/experiments/desktop-isolation/runs/20261010-150337-2b232b/codex-home \
-  --profile /Users/bytedance/personal/codex_progress_monitor/.local/product-implementation/desktop-1/profile
+~/personal/codex_progress_monitor/bin/codex-progress desktop \
+  --home ~/personal/codex_progress_monitor/experiments/desktop-isolation/runs/20261010-150337-2b232b/codex-home \
+  --profile ~/personal/codex_progress_monitor/.local/product-implementation/desktop-1/profile
 ```
 
 隔离实例已经打开时不要重复执行。两个窗口图标相同；请在新打开、使用测试聊天记录的窗口中操作。随后在终端运行下方 `watch` 命令，在隔离窗口新建两条聊天并行测试。隔离 home 与 Electron profile 均独立于主 App；默认主 App 的现有后端不会因此切换。
@@ -39,7 +39,7 @@ GUI 在顶部设置中独立选择语言，保存到其应用数据目录，互�
 2. 在终端执行：
 
    ```sh
-   /Users/bytedance/personal/codex_progress_monitor/bin/codex-progress watch
+   ~/personal/codex_progress_monitor/bin/codex-progress watch
    ```
 
 3. 按平常方式提交聊天。新版看板显示当前活动、耗时、本回合 Token 和速度。Output 包含 Reasoning，两者不相加；数字在 usage 到达后分批更新。速度只表示可见文本按本地编码器统计的实时接收速度，不包含隐藏推理，也不代表官方用量的增长速率。
@@ -71,7 +71,7 @@ Codex 自动生成标题等内部临时任务默认隐藏，避免与用户聊�
 ## 常用命令
 
 ```sh
-cd /Users/bytedance/personal/codex_progress_monitor
+cd ~/personal/codex_progress_monitor
 bin/codex-progress status
 bin/codex-progress watch --thread 聊天名称或ID
 bin/codex-progress watch --once --json
@@ -85,7 +85,7 @@ bin/codex-progress replay .local/product-preflight/tools-20261011/capture.jsonl 
 ## 恢复原启动方式
 
 ```sh
-/Users/bytedance/personal/codex_progress_monitor/bin/codex-progress uninstall
+~/personal/codex_progress_monitor/bin/codex-progress uninstall
 ```
 
 此命令卸载本产品 LaunchAgent，恢复安装时保存的启动环境，并停止采集器。随后正常退出并重新打开 Codex，就会使用原 CLI。当前已经承载中的任务可以正常结束；不要在任务执行中删除其包装器或虚拟环境。安装与卸载的实际对照已通过。
@@ -97,7 +97,7 @@ bin/codex-progress stop
 bin/codex-progress start
 ```
 
-已经安装登录启动时，LaunchAgent 会自动重启退出的采集器。仅暂停本次登录会话的采集可使用 `launchctl bootout`，恢复使用 `bootstrap`，具体步骤见 [停止与恢复](/Users/bytedance/personal/codex-activity-monitor/dev-history/02_product_mvp/startup-and-processes.md#4-停止恢复与卸载)；完全卸载接入使用 `uninstall`。恢复期间漏收的内容会标为观测缺口，速度不可用；完整完成项到达后可校准最终计数，不能补造漏收期间的速度。
+已经安装登录启动时，LaunchAgent 会自动重启退出的采集器。仅暂停本次登录会话的采集可使用 `launchctl bootout`，恢复使用 `bootstrap`，具体步骤见 [停止与恢复](startup-and-processes.md#4-停止恢复与卸载)；完全卸载接入使用 `uninstall`。恢复期间漏收的内容会标为观测缺口，速度不可用；完整完成项到达后可校准最终计数，不能补造漏收期间的速度。
 
 重连时重放的是有限生命周期元数据，已收到的最终指标可以恢复；终止元数据不缓存正文或完整参数。身份冲突或某条并行流计数不完整时，对应合计速度也显示为不可用。
 
@@ -131,4 +131,4 @@ bin/codex-progress desktop --home /已登录的隔离home --profile /独立profi
 - 旁路解析、聚合器或看板故障可降级；关键 stdio 包装器进程自身故障可能影响其承载的任务。恢复原入口的命令已经提供，不能保证杀死包装器也对任务无影响。
 - 接入变量与上游诊断格式属于当前版本适配点。小更新沿用既有结论并做有限回归；出现实际缺口再定位，不自动重复全套实验。
 
-具体证据和未完成验收见 [产品实现验证报告](/Users/bytedance/personal/codex-activity-monitor/analysis/product-mvp/README.md)。
+具体证据和未完成验收见 [产品实现验证报告](../../analysis/product-mvp/README.md)。

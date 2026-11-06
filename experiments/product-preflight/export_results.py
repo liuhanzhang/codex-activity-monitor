@@ -4,6 +4,7 @@
 from datetime import datetime
 import hashlib
 import json
+import os
 from pathlib import Path
 import statistics
 from zoneinfo import ZoneInfo
@@ -11,6 +12,16 @@ from zoneinfo import ZoneInfo
 from tokenizer_probe import encoding
 from telemetry import Telemetry, read_capture
 from run_live import ROOT
+
+
+def display_evidence_path(path):
+    """Record the original location without exposing the home-directory name."""
+    path = Path(os.path.abspath(Path(path).expanduser()))
+    try:
+        relative = path.relative_to(Path(os.path.abspath(Path.home())))
+    except ValueError:
+        return str(path)
+    return str(Path('~')/relative)
 
 
 def main():
@@ -33,7 +44,7 @@ def main():
             paths = list((Path(local['isolated_home'])/'sessions').rglob('*'+thread['thread_id']+'.jsonl'))
             assert len(paths)==1
             path = paths[0]
-            evidence.append({'path':str(path), 'sha256':hashlib.sha256(path.read_bytes()).hexdigest()})
+            evidence.append({'path':display_evidence_path(path), 'sha256':hashlib.sha256(path.read_bytes()).hexdigest()})
             for line in path.read_text().splitlines():
                 row = json.loads(line)
                 if row.get('type')!='response_item':
@@ -72,7 +83,7 @@ def main():
                          'source_to_observed_lag_ms':{'p50':statistics.median(lag),
                                                      'p95':sorted(lag)[int(len(lag)*0.95)],
                                                      'max':max(lag)},
-                         'evidence':[{'path':str(run/'capture.jsonl'),
+                         'evidence':[{'path':display_evidence_path(run/'capture.jsonl'),
                                      'sha256':hashlib.sha256((run/'capture.jsonl').read_bytes()).hexdigest()},
                                      *evidence]})
     target = ROOT/'analysis/product-preflight/live.json'

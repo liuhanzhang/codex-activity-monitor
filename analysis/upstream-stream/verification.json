@@ -4,10 +4,10 @@
   "cli_version": "0.162.0-alpha.17.2",
   "transport": "Responses WebSocket",
   "method": "Built-in RUST_LOG receive logging; no proxy or binary modification",
-  "trace_log": "/Users/bytedance/personal/codex_progress_monitor/experiments/desktop-isolation/runs/20261010-150337-2b232b/backend-transport-20261010-171554.log.gz",
+  "trace_log": "~/personal/codex_progress_monitor/experiments/desktop-isolation/runs/20261010-150337-2b232b/backend-transport-20261010-171554.log.gz",
   "case_summaries": {
-    "tool": "/Users/bytedance/personal/codex_progress_monitor/experiments/desktop-isolation/runs/20261010-150337-2b232b/stream-20261010-171611-long_inline-auto/summary.json",
-    "reasoning": "/Users/bytedance/personal/codex_progress_monitor/experiments/desktop-isolation/runs/20261010-150337-2b232b/stream-20261010-171729-reasoning-auto/summary.json"
+    "tool": "~/personal/codex_progress_monitor/experiments/desktop-isolation/runs/20261010-150337-2b232b/stream-20261010-171611-long_inline-auto/summary.json",
+    "reasoning": "~/personal/codex_progress_monitor/experiments/desktop-isolation/runs/20261010-150337-2b232b/stream-20261010-171729-reasoning-auto/summary.json"
   },
   "tool_case": {
     "thread_id": "01a12519-3743-79c1-82ca-78cef0a473e1",

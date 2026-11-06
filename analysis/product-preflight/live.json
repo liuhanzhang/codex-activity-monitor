@@ -211,15 +211,15 @@
       },
       "evidence": [
         {
-          "path": "/Users/bytedance/personal/codex_progress_monitor/.local/product-preflight/live-20261011/capture.jsonl",
+          "path": "~/personal/codex_progress_monitor/.local/product-preflight/live-20261011/capture.jsonl",
           "sha256": "82ca0868fc2b219dc402b07fb6fd6f103a41a8ffb2bfcadb4018be28e7688582"
         },
         {
-          "path": "/Users/bytedance/personal/codex_progress_monitor/experiments/desktop-isolation/runs/20261010-150337-2b232b/codex-home/sessions/2026/10/11/rollout-2026-10-11T15-26-37-01a129db-4016-71f3-b283-9559475016b8.jsonl",
+          "path": "~/personal/codex_progress_monitor/experiments/desktop-isolation/runs/20261010-150337-2b232b/codex-home/sessions/2026/10/11/rollout-2026-10-11T15-26-37-01a129db-4016-71f3-b283-9559475016b8.jsonl",
           "sha256": "67f6f95a3b21399eeae1ac8fe92cfb67fdad5c61f7032e95dbca93af07f549ad"
         },
         {
-          "path": "/Users/bytedance/personal/codex_progress_monitor/experiments/desktop-isolation/runs/20261010-150337-2b232b/codex-home/sessions/2026/10/11/rollout-2026-10-11T15-26-37-01a129db-4245-7ed3-ab24-01cc155d8f65.jsonl",
+          "path": "~/personal/codex_progress_monitor/experiments/desktop-isolation/runs/20261010-150337-2b232b/codex-home/sessions/2026/10/11/rollout-2026-10-11T15-26-37-01a129db-4245-7ed3-ab24-01cc155d8f65.jsonl",
           "sha256": "66e5a78da63194ebb7880597da69cb398a5515d910f489194350f3991a328b8c"
         }
       ]
@@ -450,15 +450,15 @@
       },
       "evidence": [
         {
-          "path": "/Users/bytedance/personal/codex_progress_monitor/.local/product-preflight/tools-20261011/capture.jsonl",
+          "path": "~/personal/codex_progress_monitor/.local/product-preflight/tools-20261011/capture.jsonl",
           "sha256": "3b7ade5d4ff232d71114ee11a1664c401d674d14668e4ef22180b59b7bdad229"
         },
         {
-          "path": "/Users/bytedance/personal/codex_progress_monitor/experiments/desktop-isolation/runs/20261010-150337-2b232b/codex-home/sessions/2026/10/11/rollout-2026-10-11T15-29-26-01a129dd-d552-76a0-8aa3-711bfd0789d8.jsonl",
+          "path": "~/personal/codex_progress_monitor/experiments/desktop-isolation/runs/20261010-150337-2b232b/codex-home/sessions/2026/10/11/rollout-2026-10-11T15-29-26-01a129dd-d552-76a0-8aa3-711bfd0789d8.jsonl",
           "sha256": "9a71335e031b8b5ff08a44382d4fa66c74352602f874ef0cc56ec194e1c78986"
         },
         {
-          "path": "/Users/bytedance/personal/codex_progress_monitor/experiments/desktop-isolation/runs/20261010-150337-2b232b/codex-home/sessions/2026/10/11/rollout-2026-10-11T15-29-27-01a129dd-d7c1-74b3-bcc0-ee7fc95f65e3.jsonl",
+          "path": "~/personal/codex_progress_monitor/experiments/desktop-isolation/runs/20261010-150337-2b232b/codex-home/sessions/2026/10/11/rollout-2026-10-11T15-29-27-01a129dd-d7c1-74b3-bcc0-ee7fc95f65e3.jsonl",
           "sha256": "d66b348a76bd4230f0f76263d710c24d0e73dc42770c60704ef173e734c59276"
         }
       ]

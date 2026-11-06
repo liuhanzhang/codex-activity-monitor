@@ -5,7 +5,7 @@
   "legacy_root_deleted": true,
   "legacy_contents_removed": true,
   "pending_empty_working_directory_removal": false,
-  "legacy_data_root_deleted": "/Users/bytedance/Library/Application Support/CodexProgressMonitor",
+  "legacy_data_root_deleted": "~/Library/Application Support/CodexProgressMonitor",
   "shared_login_bundle_id_preserved": "com.liuhanzhang.codexactivitymonitor",
   "separate_old_login_identity_removed": false,
   "new_installation_environment_preserved": true,

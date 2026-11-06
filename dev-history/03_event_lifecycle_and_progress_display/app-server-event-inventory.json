@@ -3,13 +3,13 @@
   "scope": "source-declared protocol inventory and current monitor implementation; not all events are live-verified",
   "codex_source_commit": "806d9732c974bc8a51b8317c1bd8985544fe627c",
   "source_hashes": {
-    "/Users/bytedance/playground/codex/codex-rs/app-server-protocol/src/protocol/common.rs": "a25bada0ac3706b9f987efd4f0329a431fdafd0a507b5bbd46981288ef4c5e8e",
-    "/Users/bytedance/playground/codex/codex-rs/protocol/src/protocol.rs": "63ab3274451ea56398dcdba2861e8de797608b2939cad189bfb79a8b180cd0c8",
-    "/Users/bytedance/playground/codex/codex-rs/app-server-protocol/src/protocol/v2/item.rs": "e3ca6b9b880d815a16ff956b701beb9690abc222fb70a5b7e697e1c0ff91e099",
-    "/Users/bytedance/personal/codex_progress_monitor/src/codex_progress_monitor/events.py": "bee2732648f7997dfc240e861310e58b37e8b5f9399e647d792e81739026c77e",
-    "/Users/bytedance/personal/codex_progress_monitor/src/codex_progress_monitor/engine.py": "8270baaa414cdfc2ce1693b73e12d8f4f541ae30ec689e30459e052ddcf952b6",
-    "/Users/bytedance/personal/codex_progress_monitor/src/codex_progress_monitor/display.py": "3728119e98c88ed51fb1e1968e7013f3b7f56bd533e0de4a15f5f628e6f06337",
-    "/Users/bytedance/personal/codex_progress_monitor/src/codex_progress_monitor/bridge.py": "aada864a4f13eef65a0cb2751f4c664050c7b1ac608a5695d9f2c08d1e6325b3"
+    "~/playground/codex/codex-rs/app-server-protocol/src/protocol/common.rs": "a25bada0ac3706b9f987efd4f0329a431fdafd0a507b5bbd46981288ef4c5e8e",
+    "~/playground/codex/codex-rs/protocol/src/protocol.rs": "63ab3274451ea56398dcdba2861e8de797608b2939cad189bfb79a8b180cd0c8",
+    "~/playground/codex/codex-rs/app-server-protocol/src/protocol/v2/item.rs": "e3ca6b9b880d815a16ff956b701beb9690abc222fb70a5b7e697e1c0ff91e099",
+    "~/personal/codex_progress_monitor/src/codex_progress_monitor/events.py": "bee2732648f7997dfc240e861310e58b37e8b5f9399e647d792e81739026c77e",
+    "~/personal/codex_progress_monitor/src/codex_progress_monitor/engine.py": "8270baaa414cdfc2ce1693b73e12d8f4f541ae30ec689e30459e052ddcf952b6",
+    "~/personal/codex_progress_monitor/src/codex_progress_monitor/display.py": "3728119e98c88ed51fb1e1968e7013f3b7f56bd533e0de4a15f5f628e6f06337",
+    "~/personal/codex_progress_monitor/src/codex_progress_monitor/bridge.py": "aada864a4f13eef65a0cb2751f4c664050c7b1ac608a5695d9f2c08d1e6325b3"
   },
   "counts": {
     "notifications": 87,
@@ -36,7 +36,7 @@
       "method": "error",
       "experimental": false,
       "source": {
-        "file": "/Users/bytedance/playground/codex/codex-rs/app-server-protocol/src/protocol/common.rs",
+        "file": "~/playground/codex/codex-rs/app-server-protocol/src/protocol/common.rs",
         "line": 1950
       },
       "filter": "丢弃",
@@ -50,7 +50,7 @@
       "method": "thread/started",
       "experimental": false,
       "source": {
-        "file": "/Users/bytedance/playground/codex/codex-rs/app-server-protocol/src/protocol/common.rs",
+        "file": "~/playground/codex/codex-rs/app-server-protocol/src/protocol/common.rs",
         "line": 1951
       },
       "filter": "透传",
@@ -64,7 +64,7 @@
       "method": "thread/status/changed",
       "experimental": false,
       "source": {
-        "file": "/Users/bytedance/playground/codex/codex-rs/app-server-protocol/src/protocol/common.rs",
+        "file": "~/playground/codex/codex-rs/app-server-protocol/src/protocol/common.rs",
         "line": 1952
       },
       "filter": "透传",
@@ -78,7 +78,7 @@
       "method": "thread/readState/changed",
       "experimental": true,
       "source": {
-        "file": "/Users/bytedance/playground/codex/codex-rs/app-server-protocol/src/protocol/common.rs",
+        "file": "~/playground/codex/codex-rs/app-server-protocol/src/protocol/common.rs",
         "line": 1954
       },
       "filter": "透传",
@@ -92,7 +92,7 @@
       "method": "thread/archived",
       "experimental": false,
       "source": {
-        "file": "/Users/bytedance/playground/codex/codex-rs/app-server-protocol/src/protocol/common.rs",
+        "file": "~/playground/codex/codex-rs/app-server-protocol/src/protocol/common.rs",
         "line": 1955
       },
       "filter": "透传",
@@ -106,7 +106,7 @@
       "method": "thread/deleted",
       "experimental": false,
       "source": {
-        "file": "/Users/bytedance/playground/codex/codex-rs/app-server-protocol/src/protocol/common.rs",
+        "file": "~/playground/codex/codex-rs/app-server-protocol/src/protocol/common.rs",
         "line": 1956
       },
       "filter": "透传",
@@ -120,7 +120,7 @@
       "method": "thread/unarchived",
       "experimental": false,
       "source": {
-        "file": "/Users/bytedance/playground/codex/codex-rs/app-server-protocol/src/protocol/common.rs",
+        "file": "~/playground/codex/codex-rs/app-server-protocol/src/protocol/common.rs",
         "line": 1957
       },
       "filter": "透传",
@@ -134,7 +134,7 @@
       "method": "thread/closed",
       "experimental": false,
       "source": {
-        "file": "/Users/bytedance/playground/codex/codex-rs/app-server-protocol/src/protocol/common.rs",
+        "file": "~/playground/codex/codex-rs/app-server-protocol/src/protocol/common.rs",
         "line": 1958
       },
       "filter": "透传",
@@ -148,7 +148,7 @@
       "method": "thread/reverted",
       "experimental": false,
       "source": {
-        "file": "/Users/bytedance/playground/codex/codex-rs/app-server-protocol/src/protocol/common.rs",
+        "file": "~/playground/codex/codex-rs/app-server-protocol/src/protocol/common.rs",
         "line": 1959
       },
       "filter": "透传",
@@ -162,7 +162,7 @@
       "method": "skills/changed",
       "experimental": false,
       "source": {
-        "file": "/Users/bytedance/playground/codex/codex-rs/app-server-protocol/src/protocol/common.rs",
+        "file": "~/playground/codex/codex-rs/app-server-protocol/src/protocol/common.rs",
         "line": 1960
       },
       "filter": "丢弃",
@@ -176,7 +176,7 @@
       "method": "thread/name/updated",
       "experimental": false,
       "source": {
-        "file": "/Users/bytedance/playground/codex/codex-rs/app-server-protocol/src/protocol/common.rs",
+        "file": "~/playground/codex/codex-rs/app-server-protocol/src/protocol/common.rs",
         "line": 1961
       },
       "filter": "透传",
@@ -190,7 +190,7 @@
       "method": "thread/attachment/updated",
       "experimental": false,
       "source": {
-        "file": "/Users/bytedance/playground/codex/codex-rs/app-server-protocol/src/protocol/common.rs",
+        "file": "~/playground/codex/codex-rs/app-server-protocol/src/protocol/common.rs",
         "line": 1962
       },
       "filter": "透传",
@@ -204,7 +204,7 @@
       "method": "thread/goal/updated",
       "experimental": false,
       "source": {
-        "file": "/Users/bytedance/playground/codex/codex-rs/app-server-protocol/src/protocol/common.rs",
+        "file": "~/playground/codex/codex-rs/app-server-protocol/src/protocol/common.rs",
         "line": 1963
       },
       "filter": "透传",
@@ -218,7 +218,7 @@
       "method": "thread/prediction/updated",
       "experimental": true,
       "source": {
-        "file": "/Users/bytedance/playground/codex/codex-rs/app-server-protocol/src/protocol/common.rs",
+        "file": "~/playground/codex/codex-rs/app-server-protocol/src/protocol/common.rs",
         "line": 1965
       },
       "filter": "透传",
@@ -232,7 +232,7 @@
       "method": "thread/goal/cleared",
       "experimental": false,
       "source": {
-        "file": "/Users/bytedance/playground/codex/codex-rs/app-server-protocol/src/protocol/common.rs",
+        "file": "~/playground/codex/codex-rs/app-server-protocol/src/protocol/common.rs",
         "line": 1966
       },
       "filter": "透传",
@@ -246,7 +246,7 @@
       "method": "thread/queue/changed",
       "experimental": true,
       "source": {
-        "file": "/Users/bytedance/playground/codex/codex-rs/app-server-protocol/src/protocol/common.rs",
+        "file": "~/playground/codex/codex-rs/app-server-protocol/src/protocol/common.rs",
         "line": 1968
       },
       "filter": "透传",
@@ -260,7 +260,7 @@
       "method": "project/changed",
       "experimental": true,
       "source": {
-        "file": "/Users/bytedance/playground/codex/codex-rs/app-server-protocol/src/protocol/common.rs",
+        "file": "~/playground/codex/codex-rs/app-server-protocol/src/protocol/common.rs",
         "line": 1970
       },
       "filter": "丢弃",
@@ -274,7 +274,7 @@
       "method": "thread/project/updated",
       "experimental": true,
       "source": {
-        "file": "/Users/bytedance/playground/codex/codex-rs/app-server-protocol/src/protocol/common.rs",
+        "file": "~/playground/codex/codex-rs/app-server-protocol/src/protocol/common.rs",
         "line": 1972
       },
       "filter": "透传",
@@ -288,7 +288,7 @@
       "method": "thread/environment/connected",
       "experimental": true,
       "source": {
-        "file": "/Users/bytedance/playground/codex/codex-rs/app-server-protocol/src/protocol/common.rs",
+        "file": "~/playground/codex/codex-rs/app-server-protocol/src/protocol/common.rs",
         "line": 1974
       },
       "filter": "透传",
@@ -302,7 +302,7 @@
       "method": "thread/environment/disconnected",
       "experimental": true,
       "source": {
-        "file": "/Users/bytedance/playground/codex/codex-rs/app-server-protocol/src/protocol/common.rs",
+        "file": "~/playground/codex/codex-rs/app-server-protocol/src/protocol/common.rs",
         "line": 1976
       },
       "filter": "透传",
@@ -316,7 +316,7 @@
       "method": "thread/settings/updated",
       "experimental": true,
       "source": {
-        "file": "/Users/bytedance/playground/codex/codex-rs/app-server-protocol/src/protocol/common.rs",
+        "file": "~/playground/codex/codex-rs/app-server-protocol/src/protocol/common.rs",
         "line": 1978
       },
       "filter": "透传",
@@ -330,7 +330,7 @@
       "method": "thread/tokenUsage/updated",
       "experimental": false,
       "source": {
-        "file": "/Users/bytedance/playground/codex/codex-rs/app-server-protocol/src/protocol/common.rs",
+        "file": "~/playground/codex/codex-rs/app-server-protocol/src/protocol/common.rs",
         "line": 1979
       },
       "filter": "丢弃",
@@ -344,7 +344,7 @@
       "method": "turn/started",
       "experimental": false,
       "source": {
-        "file": "/Users/bytedance/playground/codex/codex-rs/app-server-protocol/src/protocol/common.rs",
+        "file": "~/playground/codex/codex-rs/app-server-protocol/src/protocol/common.rs",
         "line": 1980
       },
       "filter": "透传",
@@ -358,7 +358,7 @@
       "method": "hook/started",
       "experimental": false,
       "source": {
-        "file": "/Users/bytedance/playground/codex/codex-rs/app-server-protocol/src/protocol/common.rs",
+        "file": "~/playground/codex/codex-rs/app-server-protocol/src/protocol/common.rs",
         "line": 1981
       },
       "filter": "丢弃",
@@ -372,7 +372,7 @@
       "method": "turn/completed",
       "experimental": false,
       "source": {
-        "file": "/Users/bytedance/playground/codex/codex-rs/app-server-protocol/src/protocol/common.rs",
+        "file": "~/playground/codex/codex-rs/app-server-protocol/src/protocol/common.rs",
         "line": 1982
       },
       "filter": "透传",
@@ -386,7 +386,7 @@
       "method": "hook/completed",
       "experimental": false,
       "source": {
-        "file": "/Users/bytedance/playground/codex/codex-rs/app-server-protocol/src/protocol/common.rs",
+        "file": "~/playground/codex/codex-rs/app-server-protocol/src/protocol/common.rs",
         "line": 1983
       },
       "filter": "丢弃",
@@ -400,7 +400,7 @@
       "method": "turn/diff/updated",
       "experimental": false,
       "source": {
-        "file": "/Users/bytedance/playground/codex/codex-rs/app-server-protocol/src/protocol/common.rs",
+        "file": "~/playground/codex/codex-rs/app-server-protocol/src/protocol/common.rs",
         "line": 1984
       },
       "filter": "丢弃",
@@ -414,7 +414,7 @@
       "method": "turn/plan/updated",
       "experimental": false,
       "source": {
-        "file": "/Users/bytedance/playground/codex/codex-rs/app-server-protocol/src/protocol/common.rs",
+        "file": "~/playground/codex/codex-rs/app-server-protocol/src/protocol/common.rs",
         "line": 1985
       },
       "filter": "丢弃",
@@ -428,7 +428,7 @@
       "method": "item/started",
       "experimental": false,
       "source": {
-        "file": "/Users/bytedance/playground/codex/codex-rs/app-server-protocol/src/protocol/common.rs",
+        "file": "~/playground/codex/codex-rs/app-server-protocol/src/protocol/common.rs",
         "line": 1986
       },
       "filter": "透传",
@@ -442,7 +442,7 @@
       "method": "item/autoApprovalReview/started",
       "experimental": false,
       "source": {
-        "file": "/Users/bytedance/playground/codex/codex-rs/app-server-protocol/src/protocol/common.rs",
+        "file": "~/playground/codex/codex-rs/app-server-protocol/src/protocol/common.rs",
         "line": 1987
       },
       "filter": "透传",
@@ -456,7 +456,7 @@
       "method": "item/autoApprovalReview/completed",
       "experimental": false,
       "source": {
-        "file": "/Users/bytedance/playground/codex/codex-rs/app-server-protocol/src/protocol/common.rs",
+        "file": "~/playground/codex/codex-rs/app-server-protocol/src/protocol/common.rs",
         "line": 1988
       },
       "filter": "透传",
@@ -470,7 +470,7 @@
       "method": "autoApprovalReview/strictReviewRequired",
       "experimental": true,
       "source": {
-        "file": "/Users/bytedance/playground/codex/codex-rs/app-server-protocol/src/protocol/common.rs",
+        "file": "~/playground/codex/codex-rs/app-server-protocol/src/protocol/common.rs",
         "line": 1990
       },
       "filter": "丢弃",
@@ -484,7 +484,7 @@
       "method": "item/completed",
       "experimental": false,
       "source": {
-        "file": "/Users/bytedance/playground/codex/codex-rs/app-server-protocol/src/protocol/common.rs",
+        "file": "~/playground/codex/codex-rs/app-server-protocol/src/protocol/common.rs",
         "line": 1991
       },
       "filter": "透传",
@@ -498,7 +498,7 @@
       "method": "rawResponseItem/completed",
       "experimental": false,
       "source": {
-        "file": "/Users/bytedance/playground/codex/codex-rs/app-server-protocol/src/protocol/common.rs",
+        "file": "~/playground/codex/codex-rs/app-server-protocol/src/protocol/common.rs",
         "line": 1993
       },
       "filter": "丢弃",
@@ -512,7 +512,7 @@
       "method": "rawResponse/completed",
       "experimental": false,
       "source": {
-        "file": "/Users/bytedance/playground/codex/codex-rs/app-server-protocol/src/protocol/common.rs",
+        "file": "~/playground/codex/codex-rs/app-server-protocol/src/protocol/common.rs",
         "line": 1995
       },
       "filter": "丢弃",
@@ -526,7 +526,7 @@
       "method": "item/agentMessage/delta",
       "experimental": false,
       "source": {
-        "file": "/Users/bytedance/playground/codex/codex-rs/app-server-protocol/src/protocol/common.rs",
+        "file": "~/playground/codex/codex-rs/app-server-protocol/src/protocol/common.rs",
         "line": 1996
       },
       "filter": "透传",
@@ -540,7 +540,7 @@
       "method": "item/plan/delta",
       "experimental": false,
       "source": {
-        "file": "/Users/bytedance/playground/codex/codex-rs/app-server-protocol/src/protocol/common.rs",
+        "file": "~/playground/codex/codex-rs/app-server-protocol/src/protocol/common.rs",
         "line": 1998
       },
       "filter": "透传",
@@ -554,7 +554,7 @@
       "method": "command/exec/outputDelta",
       "experimental": false,
       "source": {
-        "file": "/Users/bytedance/playground/codex/codex-rs/app-server-protocol/src/protocol/common.rs",
+        "file": "~/playground/codex/codex-rs/app-server-protocol/src/protocol/common.rs",
         "line": 2000
       },
       "filter": "丢弃",
@@ -568,7 +568,7 @@
       "method": "process/outputDelta",
       "experimental": true,
       "source": {
-        "file": "/Users/bytedance/playground/codex/codex-rs/app-server-protocol/src/protocol/common.rs",
+        "file": "~/playground/codex/codex-rs/app-server-protocol/src/protocol/common.rs",
         "line": 2003
       },
       "filter": "丢弃",
@@ -582,7 +582,7 @@
       "method": "process/exited",
       "experimental": true,
       "source": {
-        "file": "/Users/bytedance/playground/codex/codex-rs/app-server-protocol/src/protocol/common.rs",
+        "file": "~/playground/codex/codex-rs/app-server-protocol/src/protocol/common.rs",
         "line": 2006
       },
       "filter": "丢弃",
@@ -596,7 +596,7 @@
       "method": "item/commandExecution/outputDelta",
       "experimental": false,
       "source": {
-        "file": "/Users/bytedance/playground/codex/codex-rs/app-server-protocol/src/protocol/common.rs",
+        "file": "~/playground/codex/codex-rs/app-server-protocol/src/protocol/common.rs",
         "line": 2007
       },
       "filter": "透传",
@@ -610,7 +610,7 @@
       "method": "item/commandExecution/terminalInteraction",
       "experimental": false,
       "source": {
-        "file": "/Users/bytedance/playground/codex/codex-rs/app-server-protocol/src/protocol/common.rs",
+        "file": "~/playground/codex/codex-rs/app-server-protocol/src/protocol/common.rs",
         "line": 2008
       },
       "filter": "透传",
@@ -624,7 +624,7 @@
       "method": "item/fileChange/outputDelta",
       "experimental": false,
       "source": {
-        "file": "/Users/bytedance/playground/codex/codex-rs/app-server-protocol/src/protocol/common.rs",
+        "file": "~/playground/codex/codex-rs/app-server-protocol/src/protocol/common.rs",
         "line": 2010
       },
       "filter": "透传",
@@ -638,7 +638,7 @@
       "method": "item/fileChange/patchUpdated",
       "experimental": false,
       "source": {
-        "file": "/Users/bytedance/playground/codex/codex-rs/app-server-protocol/src/protocol/common.rs",
+        "file": "~/playground/codex/codex-rs/app-server-protocol/src/protocol/common.rs",
         "line": 2011
       },
       "filter": "透传",
@@ -652,7 +652,7 @@
       "method": "serverRequest/resolved",
       "experimental": false,
       "source": {
-        "file": "/Users/bytedance/playground/codex/codex-rs/app-server-protocol/src/protocol/common.rs",
+        "file": "~/playground/codex/codex-rs/app-server-protocol/src/protocol/common.rs",
         "line": 2012
       },
       "filter": "透传",
@@ -666,7 +666,7 @@
       "method": "item/mcpToolCall/progress",
       "experimental": false,
       "source": {
-        "file": "/Users/bytedance/playground/codex/codex-rs/app-server-protocol/src/protocol/common.rs",
+        "file": "~/playground/codex/codex-rs/app-server-protocol/src/protocol/common.rs",
         "line": 2013
       },
       "filter": "透传",
@@ -680,7 +680,7 @@
       "method": "mcpServer/oauthLogin/completed",
       "experimental": false,
       "source": {
-        "file": "/Users/bytedance/playground/codex/codex-rs/app-server-protocol/src/protocol/common.rs",
+        "file": "~/playground/codex/codex-rs/app-server-protocol/src/protocol/common.rs",
         "line": 2014
       },
       "filter": "丢弃",
@@ -694,7 +694,7 @@
       "method": "mcpServer/startupStatus/updated",
       "experimental": false,
       "source": {
-        "file": "/Users/bytedance/playground/codex/codex-rs/app-server-protocol/src/protocol/common.rs",
+        "file": "~/playground/codex/codex-rs/app-server-protocol/src/protocol/common.rs",
         "line": 2015
       },
       "filter": "丢弃",
@@ -708,7 +708,7 @@
       "method": "mcpServer/event/stream/notification",
       "experimental": true,
       "source": {
-        "file": "/Users/bytedance/playground/codex/codex-rs/app-server-protocol/src/protocol/common.rs",
+        "file": "~/playground/codex/codex-rs/app-server-protocol/src/protocol/common.rs",
         "line": 2017
       },
       "filter": "丢弃",
@@ -722,7 +722,7 @@
       "method": "account/updated",
       "experimental": false,
       "source": {
-        "file": "/Users/bytedance/playground/codex/codex-rs/app-server-protocol/src/protocol/common.rs",
+        "file": "~/playground/codex/codex-rs/app-server-protocol/src/protocol/common.rs",
         "line": 2018
       },
       "filter": "丢弃",
@@ -736,7 +736,7 @@
       "method": "account/gatewayOAuth/changed",
       "experimental": false,
       "source": {
-        "file": "/Users/bytedance/playground/codex/codex-rs/app-server-protocol/src/protocol/common.rs",
+        "file": "~/playground/codex/codex-rs/app-server-protocol/src/protocol/common.rs",
         "line": 2019
       },
       "filter": "丢弃",
@@ -750,7 +750,7 @@
       "method": "account/rateLimits/updated",
       "experimental": false,
       "source": {
-        "file": "/Users/bytedance/playground/codex/codex-rs/app-server-protocol/src/protocol/common.rs",
+        "file": "~/playground/codex/codex-rs/app-server-protocol/src/protocol/common.rs",
         "line": 2020
       },
       "filter": "丢弃",
@@ -764,7 +764,7 @@
       "method": "app/list/updated",
       "experimental": false,
       "source": {
-        "file": "/Users/bytedance/playground/codex/codex-rs/app-server-protocol/src/protocol/common.rs",
+        "file": "~/playground/codex/codex-rs/app-server-protocol/src/protocol/common.rs",
         "line": 2021
       },
       "filter": "丢弃",
@@ -778,7 +778,7 @@
       "method": "remoteControl/status/changed",
       "experimental": false,
       "source": {
-        "file": "/Users/bytedance/playground/codex/codex-rs/app-server-protocol/src/protocol/common.rs",
+        "file": "~/playground/codex/codex-rs/app-server-protocol/src/protocol/common.rs",
         "line": 2022
       },
       "filter": "丢弃",
@@ -792,7 +792,7 @@
       "method": "externalAgentConfig/import/progress",
       "experimental": false,
       "source": {
-        "file": "/Users/bytedance/playground/codex/codex-rs/app-server-protocol/src/protocol/common.rs",
+        "file": "~/playground/codex/codex-rs/app-server-protocol/src/protocol/common.rs",
         "line": 2023
       },
       "filter": "丢弃",
@@ -806,7 +806,7 @@
       "method": "externalAgentConfig/import/completed",
       "experimental": false,
       "source": {
-        "file": "/Users/bytedance/playground/codex/codex-rs/app-server-protocol/src/protocol/common.rs",
+        "file": "~/playground/codex/codex-rs/app-server-protocol/src/protocol/common.rs",
         "line": 2024
       },
       "filter": "丢弃",
@@ -820,7 +820,7 @@
       "method": "fs/changed",
       "experimental": false,
       "source": {
-        "file": "/Users/bytedance/playground/codex/codex-rs/app-server-protocol/src/protocol/common.rs",
+        "file": "~/playground/codex/codex-rs/app-server-protocol/src/protocol/common.rs",
         "line": 2025
       },
       "filter": "丢弃",
@@ -834,7 +834,7 @@
       "method": "item/reasoning/summaryTextDelta",
       "experimental": false,
       "source": {
-        "file": "/Users/bytedance/playground/codex/codex-rs/app-server-protocol/src/protocol/common.rs",
+        "file": "~/playground/codex/codex-rs/app-server-protocol/src/protocol/common.rs",
         "line": 2026
       },
       "filter": "透传",
@@ -848,7 +848,7 @@
       "method": "item/reasoning/summaryPartAdded",
       "experimental": false,
       "source": {
-        "file": "/Users/bytedance/playground/codex/codex-rs/app-server-protocol/src/protocol/common.rs",
+        "file": "~/playground/codex/codex-rs/app-server-protocol/src/protocol/common.rs",
         "line": 2027
       },
       "filter": "透传",
@@ -862,7 +862,7 @@
       "method": "item/reasoning/textDelta",
       "experimental": false,
       "source": {
-        "file": "/Users/bytedance/playground/codex/codex-rs/app-server-protocol/src/protocol/common.rs",
+        "file": "~/playground/codex/codex-rs/app-server-protocol/src/protocol/common.rs",
         "line": 2028
       },
       "filter": "透传",
@@ -876,7 +876,7 @@
       "method": "thread/compacted",
       "experimental": false,
       "source": {
-        "file": "/Users/bytedance/playground/codex/codex-rs/app-server-protocol/src/protocol/common.rs",
+        "file": "~/playground/codex/codex-rs/app-server-protocol/src/protocol/common.rs",
         "line": 2030
       },
       "filter": "透传",
@@ -890,7 +890,7 @@
       "method": "model/rerouted",
       "experimental": false,
       "source": {
-        "file": "/Users/bytedance/playground/codex/codex-rs/app-server-protocol/src/protocol/common.rs",
+        "file": "~/playground/codex/codex-rs/app-server-protocol/src/protocol/common.rs",
         "line": 2031
       },
       "filter": "透传",
@@ -904,7 +904,7 @@
       "method": "model/verification",
       "experimental": false,
       "source": {
-        "file": "/Users/bytedance/playground/codex/codex-rs/app-server-protocol/src/protocol/common.rs",
+        "file": "~/playground/codex/codex-rs/app-server-protocol/src/protocol/common.rs",
         "line": 2032
       },
       "filter": "透传",
@@ -918,7 +918,7 @@
       "method": "modelProvider/authRecoveryStarted",
       "experimental": false,
       "source": {
-        "file": "/Users/bytedance/playground/codex/codex-rs/app-server-protocol/src/protocol/common.rs",
+        "file": "~/playground/codex/codex-rs/app-server-protocol/src/protocol/common.rs",
         "line": 2033
       },
       "filter": "丢弃",
@@ -932,7 +932,7 @@
       "method": "modelProvider/authRecoveryCompleted",
       "experimental": false,
       "source": {
-        "file": "/Users/bytedance/playground/codex/codex-rs/app-server-protocol/src/protocol/common.rs",
+        "file": "~/playground/codex/codex-rs/app-server-protocol/src/protocol/common.rs",
         "line": 2034
       },
       "filter": "丢弃",
@@ -946,7 +946,7 @@
       "method": "turn/moderationMetadata",
       "experimental": true,
       "source": {
-        "file": "/Users/bytedance/playground/codex/codex-rs/app-server-protocol/src/protocol/common.rs",
+        "file": "~/playground/codex/codex-rs/app-server-protocol/src/protocol/common.rs",
         "line": 2036
       },
       "filter": "透传",
@@ -960,7 +960,7 @@
       "method": "model/safetyBuffering/updated",
       "experimental": false,
       "source": {
-        "file": "/Users/bytedance/playground/codex/codex-rs/app-server-protocol/src/protocol/common.rs",
+        "file": "~/playground/codex/codex-rs/app-server-protocol/src/protocol/common.rs",
         "line": 2037
       },
       "filter": "透传",
@@ -974,7 +974,7 @@
       "method": "warning",
       "experimental": false,
       "source": {
-        "file": "/Users/bytedance/playground/codex/codex-rs/app-server-protocol/src/protocol/common.rs",
+        "file": "~/playground/codex/codex-rs/app-server-protocol/src/protocol/common.rs",
         "line": 2038
       },
       "filter": "丢弃",
@@ -988,7 +988,7 @@
       "method": "guardianWarning",
       "experimental": false,
       "source": {
-        "file": "/Users/bytedance/playground/codex/codex-rs/app-server-protocol/src/protocol/common.rs",
+        "file": "~/playground/codex/codex-rs/app-server-protocol/src/protocol/common.rs",
         "line": 2039
       },
       "filter": "丢弃",
@@ -1002,7 +1002,7 @@
       "method": "deprecationNotice",
       "experimental": false,
       "source": {
-        "file": "/Users/bytedance/playground/codex/codex-rs/app-server-protocol/src/protocol/common.rs",
+        "file": "~/playground/codex/codex-rs/app-server-protocol/src/protocol/common.rs",
         "line": 2040
       },
       "filter": "丢弃",
@@ -1016,7 +1016,7 @@
       "method": "configWarning",
       "experimental": false,
       "source": {
-        "file": "/Users/bytedance/playground/codex/codex-rs/app-server-protocol/src/protocol/common.rs",
+        "file": "~/playground/codex/codex-rs/app-server-protocol/src/protocol/common.rs",
         "line": 2041
       },
       "filter": "丢弃",
@@ -1030,7 +1030,7 @@
       "method": "fuzzyFileSearch/sessionUpdated",
       "experimental": false,
       "source": {
-        "file": "/Users/bytedance/playground/codex/codex-rs/app-server-protocol/src/protocol/common.rs",
+        "file": "~/playground/codex/codex-rs/app-server-protocol/src/protocol/common.rs",
         "line": 2042
       },
       "filter": "丢弃",
@@ -1044,7 +1044,7 @@
       "method": "fuzzyFileSearch/sessionCompleted",
       "experimental": false,
       "source": {
-        "file": "/Users/bytedance/playground/codex/codex-rs/app-server-protocol/src/protocol/common.rs",
+        "file": "~/playground/codex/codex-rs/app-server-protocol/src/protocol/common.rs",
         "line": 2043
       },
       "filter": "丢弃",
@@ -1058,7 +1058,7 @@
       "method": "thread/realtime/started",
       "experimental": true,
       "source": {
-        "file": "/Users/bytedance/playground/codex/codex-rs/app-server-protocol/src/protocol/common.rs",
+        "file": "~/playground/codex/codex-rs/app-server-protocol/src/protocol/common.rs",
         "line": 2045
       },
       "filter": "透传",
@@ -1072,7 +1072,7 @@
       "method": "thread/realtime/itemAdded",
       "experimental": true,
       "source": {
-        "file": "/Users/bytedance/playground/codex/codex-rs/app-server-protocol/src/protocol/common.rs",
+        "file": "~/playground/codex/codex-rs/app-server-protocol/src/protocol/common.rs",
         "line": 2047
       },
       "filter": "透传",
@@ -1086,7 +1086,7 @@
       "method": "thread/realtime/item/started",
       "experimental": true,
       "source": {
-        "file": "/Users/bytedance/playground/codex/codex-rs/app-server-protocol/src/protocol/common.rs",
+        "file": "~/playground/codex/codex-rs/app-server-protocol/src/protocol/common.rs",
         "line": 2049
       },
       "filter": "透传",
@@ -1100,7 +1100,7 @@
       "method": "thread/realtime/item/transcript/delta",
       "experimental": true,
       "source": {
-        "file": "/Users/bytedance/playground/codex/codex-rs/app-server-protocol/src/protocol/common.rs",
+        "file": "~/playground/codex/codex-rs/app-server-protocol/src/protocol/common.rs",
         "line": 2051
       },
       "filter": "透传",
@@ -1114,7 +1114,7 @@
       "method": "thread/realtime/item/completed",
       "experimental": true,
       "source": {
-        "file": "/Users/bytedance/playground/codex/codex-rs/app-server-protocol/src/protocol/common.rs",
+        "file": "~/playground/codex/codex-rs/app-server-protocol/src/protocol/common.rs",
         "line": 2053
       },
       "filter": "透传",
@@ -1128,7 +1128,7 @@
       "method": "thread/realtime/transcript/delta",
       "experimental": true,
       "source": {
-        "file": "/Users/bytedance/playground/codex/codex-rs/app-server-protocol/src/protocol/common.rs",
+        "file": "~/playground/codex/codex-rs/app-server-protocol/src/protocol/common.rs",
         "line": 2055
       },
       "filter": "透传",
@@ -1142,7 +1142,7 @@
       "method": "thread/realtime/transcript/done",
       "experimental": true,
       "source": {
-        "file": "/Users/bytedance/playground/codex/codex-rs/app-server-protocol/src/protocol/common.rs",
+        "file": "~/playground/codex/codex-rs/app-server-protocol/src/protocol/common.rs",
         "line": 2057
       },
       "filter": "透传",
@@ -1156,7 +1156,7 @@
       "method": "thread/realtime/outputAudio/delta",
       "experimental": true,
       "source": {
-        "file": "/Users/bytedance/playground/codex/codex-rs/app-server-protocol/src/protocol/common.rs",
+        "file": "~/playground/codex/codex-rs/app-server-protocol/src/protocol/common.rs",
         "line": 2059
       },
       "filter": "透传",
@@ -1170,7 +1170,7 @@
       "method": "thread/realtime/sdp",
       "experimental": true,
       "source": {
-        "file": "/Users/bytedance/playground/codex/codex-rs/app-server-protocol/src/protocol/common.rs",
+        "file": "~/playground/codex/codex-rs/app-server-protocol/src/protocol/common.rs",
         "line": 2061
       },
       "filter": "透传",
@@ -1184,7 +1184,7 @@
       "method": "thread/realtime/error",
       "experimental": true,
       "source": {
-        "file": "/Users/bytedance/playground/codex/codex-rs/app-server-protocol/src/protocol/common.rs",
+        "file": "~/playground/codex/codex-rs/app-server-protocol/src/protocol/common.rs",
         "line": 2063
       },
       "filter": "透传",
@@ -1198,7 +1198,7 @@
       "method": "thread/realtime/closed",
       "experimental": true,
       "source": {
-        "file": "/Users/bytedance/playground/codex/codex-rs/app-server-protocol/src/protocol/common.rs",
+        "file": "~/playground/codex/codex-rs/app-server-protocol/src/protocol/common.rs",
         "line": 2065
       },
       "filter": "透传",
@@ -1212,7 +1212,7 @@
       "method": "windows/worldWritableWarning",
       "experimental": false,
       "source": {
-        "file": "/Users/bytedance/playground/codex/codex-rs/app-server-protocol/src/protocol/common.rs",
+        "file": "~/playground/codex/codex-rs/app-server-protocol/src/protocol/common.rs",
         "line": 2068
       },
       "filter": "丢弃",
@@ -1226,7 +1226,7 @@
       "method": "windowsSandbox/setupCompleted",
       "experimental": false,
       "source": {
-        "file": "/Users/bytedance/playground/codex/codex-rs/app-server-protocol/src/protocol/common.rs",
+        "file": "~/playground/codex/codex-rs/app-server-protocol/src/protocol/common.rs",
         "line": 2069
       },
       "filter": "丢弃",
@@ -1240,7 +1240,7 @@
       "method": "account/login/completed",
       "experimental": false,
       "source": {
-        "file": "/Users/bytedance/playground/codex/codex-rs/app-server-protocol/src/protocol/common.rs",
+        "file": "~/playground/codex/codex-rs/app-server-protocol/src/protocol/common.rs",
         "line": 2074
       },
       "filter": "丢弃",
@@ -1256,7 +1256,7 @@
       "method": "item/commandExecution/requestApproval",
       "experimental": false,
       "source": {
-        "file": "/Users/bytedance/playground/codex/codex-rs/app-server-protocol/src/protocol/common.rs",
+        "file": "~/playground/codex/codex-rs/app-server-protocol/src/protocol/common.rs",
         "line": 1797
       },
       "filter": "透传",
@@ -1270,7 +1270,7 @@
       "method": "item/fileChange/requestApproval",
       "experimental": false,
       "source": {
-        "file": "/Users/bytedance/playground/codex/codex-rs/app-server-protocol/src/protocol/common.rs",
+        "file": "~/playground/codex/codex-rs/app-server-protocol/src/protocol/common.rs",
         "line": 1804
       },
       "filter": "透传",
@@ -1284,7 +1284,7 @@
       "method": "item/tool/requestUserInput",
       "experimental": false,
       "source": {
-        "file": "/Users/bytedance/playground/codex/codex-rs/app-server-protocol/src/protocol/common.rs",
+        "file": "~/playground/codex/codex-rs/app-server-protocol/src/protocol/common.rs",
         "line": 1810
       },
       "filter": "透传",
@@ -1298,7 +1298,7 @@
       "method": "mcpServer/elicitation/request",
       "experimental": false,
       "source": {
-        "file": "/Users/bytedance/playground/codex/codex-rs/app-server-protocol/src/protocol/common.rs",
+        "file": "~/playground/codex/codex-rs/app-server-protocol/src/protocol/common.rs",
         "line": 1816
       },
       "filter": "丢弃",
@@ -1312,7 +1312,7 @@
       "method": "item/permissions/requestApproval",
       "experimental": false,
       "source": {
-        "file": "/Users/bytedance/playground/codex/codex-rs/app-server-protocol/src/protocol/common.rs",
+        "file": "~/playground/codex/codex-rs/app-server-protocol/src/protocol/common.rs",
         "line": 1822
       },
       "filter": "透传",
@@ -1326,7 +1326,7 @@
       "method": "item/tool/call",
       "experimental": false,
       "source": {
-        "file": "/Users/bytedance/playground/codex/codex-rs/app-server-protocol/src/protocol/common.rs",
+        "file": "~/playground/codex/codex-rs/app-server-protocol/src/protocol/common.rs",
         "line": 1828
       },
       "filter": "透传",
@@ -1340,7 +1340,7 @@
       "method": "account/chatgptAuthTokens/refresh",
       "experimental": false,
       "source": {
-        "file": "/Users/bytedance/playground/codex/codex-rs/app-server-protocol/src/protocol/common.rs",
+        "file": "~/playground/codex/codex-rs/app-server-protocol/src/protocol/common.rs",
         "line": 1833
       },
       "filter": "丢弃",
@@ -1354,7 +1354,7 @@
       "method": "attestation/generate",
       "experimental": false,
       "source": {
-        "file": "/Users/bytedance/playground/codex/codex-rs/app-server-protocol/src/protocol/common.rs",
+        "file": "~/playground/codex/codex-rs/app-server-protocol/src/protocol/common.rs",
         "line": 1839
       },
       "filter": "丢弃",
@@ -1368,7 +1368,7 @@
       "method": "currentTime/read",
       "experimental": true,
       "source": {
-        "file": "/Users/bytedance/playground/codex/codex-rs/app-server-protocol/src/protocol/common.rs",
+        "file": "~/playground/codex/codex-rs/app-server-protocol/src/protocol/common.rs",
         "line": 1846
       },
       "filter": "丢弃",
@@ -1382,7 +1382,7 @@
       "method": "applyPatchApproval",
       "experimental": false,
       "source": {
-        "file": "/Users/bytedance/playground/codex/codex-rs/app-server-protocol/src/protocol/common.rs",
+        "file": "~/playground/codex/codex-rs/app-server-protocol/src/protocol/common.rs",
         "line": 1854
       },
       "filter": "丢弃",
@@ -1396,7 +1396,7 @@
       "method": "execCommandApproval",
       "experimental": false,
       "source": {
-        "file": "/Users/bytedance/playground/codex/codex-rs/app-server-protocol/src/protocol/common.rs",
+        "file": "~/playground/codex/codex-rs/app-server-protocol/src/protocol/common.rs",
         "line": 1860
       },
       "filter": "丢弃",
@@ -1410,7 +1410,7 @@
     {
       "variant": "UserMessage",
       "source": {
-        "file": "/Users/bytedance/playground/codex/codex-rs/app-server-protocol/src/protocol/v2/item.rs",
+        "file": "~/playground/codex/codex-rs/app-server-protocol/src/protocol/v2/item.rs",
         "line": 239
       },
       "type": "userMessage",
@@ -1420,7 +1420,7 @@
     {
       "variant": "HookPrompt",
       "source": {
-        "file": "/Users/bytedance/playground/codex/codex-rs/app-server-protocol/src/protocol/v2/item.rs",
+        "file": "~/playground/codex/codex-rs/app-server-protocol/src/protocol/v2/item.rs",
         "line": 246
       },
       "type": "hookPrompt",
@@ -1430,7 +1430,7 @@
     {
       "variant": "AgentMessage",
       "source": {
-        "file": "/Users/bytedance/playground/codex/codex-rs/app-server-protocol/src/protocol/v2/item.rs",
+        "file": "~/playground/codex/codex-rs/app-server-protocol/src/protocol/v2/item.rs",
         "line": 252
       },
       "type": "agentMessage",
@@ -1440,7 +1440,7 @@
     {
       "variant": "FunctionCallOutput",
       "source": {
-        "file": "/Users/bytedance/playground/codex/codex-rs/app-server-protocol/src/protocol/v2/item.rs",
+        "file": "~/playground/codex/codex-rs/app-server-protocol/src/protocol/v2/item.rs",
         "line": 266
       },
       "type": "functionCallOutput",
@@ -1450,7 +1450,7 @@
     {
       "variant": "Plan",
       "source": {
-        "file": "/Users/bytedance/playground/codex/codex-rs/app-server-protocol/src/protocol/v2/item.rs",
+        "file": "~/playground/codex/codex-rs/app-server-protocol/src/protocol/v2/item.rs",
         "line": 276
       },
       "type": "plan",
@@ -1460,7 +1460,7 @@
     {
       "variant": "Reasoning",
       "source": {
-        "file": "/Users/bytedance/playground/codex/codex-rs/app-server-protocol/src/protocol/v2/item.rs",
+        "file": "~/playground/codex/codex-rs/app-server-protocol/src/protocol/v2/item.rs",
         "line": 282
       },
       "type": "reasoning",
@@ -1470,7 +1470,7 @@
     {
       "variant": "CommandExecution",
       "source": {
-        "file": "/Users/bytedance/playground/codex/codex-rs/app-server-protocol/src/protocol/v2/item.rs",
+        "file": "~/playground/codex/codex-rs/app-server-protocol/src/protocol/v2/item.rs",
         "line": 291
       },
       "type": "commandExecution",
@@ -1480,7 +1480,7 @@
     {
       "variant": "FileChange",
       "source": {
-        "file": "/Users/bytedance/playground/codex/codex-rs/app-server-protocol/src/protocol/v2/item.rs",
+        "file": "~/playground/codex/codex-rs/app-server-protocol/src/protocol/v2/item.rs",
         "line": 330
       },
       "type": "fileChange",
@@ -1490,7 +1490,7 @@
     {
       "variant": "McpToolCall",
       "source": {
-        "file": "/Users/bytedance/playground/codex/codex-rs/app-server-protocol/src/protocol/v2/item.rs",
+        "file": "~/playground/codex/codex-rs/app-server-protocol/src/protocol/v2/item.rs",
         "line": 337
       },
       "type": "mcpToolCall",
@@ -1500,7 +1500,7 @@
     {
       "variant": "DynamicToolCall",
       "source": {
-        "file": "/Users/bytedance/playground/codex/codex-rs/app-server-protocol/src/protocol/v2/item.rs",
+        "file": "~/playground/codex/codex-rs/app-server-protocol/src/protocol/v2/item.rs",
         "line": 360
       },
       "type": "dynamicToolCall",
@@ -1510,7 +1510,7 @@
     {
       "variant": "CollabAgentToolCall",
       "source": {
-        "file": "/Users/bytedance/playground/codex/codex-rs/app-server-protocol/src/protocol/v2/item.rs",
+        "file": "~/playground/codex/codex-rs/app-server-protocol/src/protocol/v2/item.rs",
         "line": 374
       },
       "type": "collabAgentToolCall",
@@ -1520,7 +1520,7 @@
     {
       "variant": "SubAgentActivity",
       "source": {
-        "file": "/Users/bytedance/playground/codex/codex-rs/app-server-protocol/src/protocol/v2/item.rs",
+        "file": "~/playground/codex/codex-rs/app-server-protocol/src/protocol/v2/item.rs",
         "line": 397
       },
       "type": "subAgentActivity",
@@ -1530,7 +1530,7 @@
     {
       "variant": "WebSearch",
       "source": {
-        "file": "/Users/bytedance/playground/codex/codex-rs/app-server-protocol/src/protocol/v2/item.rs",
+        "file": "~/playground/codex/codex-rs/app-server-protocol/src/protocol/v2/item.rs",
         "line": 407
       },
       "type": "webSearch",
@@ -1540,7 +1540,7 @@
     {
       "variant": "ImageView",
       "source": {
-        "file": "/Users/bytedance/playground/codex/codex-rs/app-server-protocol/src/protocol/v2/item.rs",
+        "file": "~/playground/codex/codex-rs/app-server-protocol/src/protocol/v2/item.rs",
         "line": 410
       },
       "type": "imageView",
@@ -1550,7 +1550,7 @@
     {
       "variant": "Sleep",
       "source": {
-        "file": "/Users/bytedance/playground/codex/codex-rs/app-server-protocol/src/protocol/v2/item.rs",
+        "file": "~/playground/codex/codex-rs/app-server-protocol/src/protocol/v2/item.rs",
         "line": 414
       },
       "type": "sleep",
@@ -1560,7 +1560,7 @@
     {
       "variant": "ImageGeneration",
       "source": {
-        "file": "/Users/bytedance/playground/codex/codex-rs/app-server-protocol/src/protocol/v2/item.rs",
+        "file": "~/playground/codex/codex-rs/app-server-protocol/src/protocol/v2/item.rs",
         "line": 415
       },
       "type": "imageGeneration",
@@ -1570,7 +1570,7 @@
     {
       "variant": "EnteredReviewMode",
       "source": {
-        "file": "/Users/bytedance/playground/codex/codex-rs/app-server-protocol/src/protocol/v2/item.rs",
+        "file": "~/playground/codex/codex-rs/app-server-protocol/src/protocol/v2/item.rs",
         "line": 418
       },
       "type": "enteredReviewMode",
@@ -1580,7 +1580,7 @@
     {
       "variant": "ExitedReviewMode",
       "source": {
-        "file": "/Users/bytedance/playground/codex/codex-rs/app-server-protocol/src/protocol/v2/item.rs",
+        "file": "~/playground/codex/codex-rs/app-server-protocol/src/protocol/v2/item.rs",
         "line": 424
       },
       "type": "exitedReviewMode",
@@ -1590,7 +1590,7 @@
     {
       "variant": "ContextCompaction",
       "source": {
-        "file": "/Users/bytedance/playground/codex/codex-rs/app-server-protocol/src/protocol/v2/item.rs",
+        "file": "~/playground/codex/codex-rs/app-server-protocol/src/protocol/v2/item.rs",
         "line": 430
       },
       "type": "contextCompaction",
@@ -1602,588 +1602,588 @@
     {
       "variant": "Error",
       "source": {
-        "file": "/Users/bytedance/playground/codex/codex-rs/protocol/src/protocol.rs",
+        "file": "~/playground/codex/codex-rs/protocol/src/protocol.rs",
         "line": 1466
       }
     },
     {
       "variant": "Warning",
       "source": {
-        "file": "/Users/bytedance/playground/codex/codex-rs/protocol/src/protocol.rs",
+        "file": "~/playground/codex/codex-rs/protocol/src/protocol.rs",
         "line": 1470
       }
     },
     {
       "variant": "AuthRecoveryStarted",
       "source": {
-        "file": "/Users/bytedance/playground/codex/codex-rs/protocol/src/protocol.rs",
+        "file": "~/playground/codex/codex-rs/protocol/src/protocol.rs",
         "line": 1473
       }
     },
     {
       "variant": "AuthRecoveryCompleted",
       "source": {
-        "file": "/Users/bytedance/playground/codex/codex-rs/protocol/src/protocol.rs",
+        "file": "~/playground/codex/codex-rs/protocol/src/protocol.rs",
         "line": 1476
       }
     },
     {
       "variant": "GuardianWarning",
       "source": {
-        "file": "/Users/bytedance/playground/codex/codex-rs/protocol/src/protocol.rs",
+        "file": "~/playground/codex/codex-rs/protocol/src/protocol.rs",
         "line": 1479
       }
     },
     {
       "variant": "RealtimeConversationStarted",
       "source": {
-        "file": "/Users/bytedance/playground/codex/codex-rs/protocol/src/protocol.rs",
+        "file": "~/playground/codex/codex-rs/protocol/src/protocol.rs",
         "line": 1482
       }
     },
     {
       "variant": "RealtimeConversationRealtime",
       "source": {
-        "file": "/Users/bytedance/playground/codex/codex-rs/protocol/src/protocol.rs",
+        "file": "~/playground/codex/codex-rs/protocol/src/protocol.rs",
         "line": 1485
       }
     },
     {
       "variant": "RealtimeConversationClosed",
       "source": {
-        "file": "/Users/bytedance/playground/codex/codex-rs/protocol/src/protocol.rs",
+        "file": "~/playground/codex/codex-rs/protocol/src/protocol.rs",
         "line": 1488
       }
     },
     {
       "variant": "RealtimeConversationSdp",
       "source": {
-        "file": "/Users/bytedance/playground/codex/codex-rs/protocol/src/protocol.rs",
+        "file": "~/playground/codex/codex-rs/protocol/src/protocol.rs",
         "line": 1491
       }
     },
     {
       "variant": "ModelReroute",
       "source": {
-        "file": "/Users/bytedance/playground/codex/codex-rs/protocol/src/protocol.rs",
+        "file": "~/playground/codex/codex-rs/protocol/src/protocol.rs",
         "line": 1494
       }
     },
     {
       "variant": "ModelVerification",
       "source": {
-        "file": "/Users/bytedance/playground/codex/codex-rs/protocol/src/protocol.rs",
+        "file": "~/playground/codex/codex-rs/protocol/src/protocol.rs",
         "line": 1497
       }
     },
     {
       "variant": "TurnModerationMetadata",
       "source": {
-        "file": "/Users/bytedance/playground/codex/codex-rs/protocol/src/protocol.rs",
+        "file": "~/playground/codex/codex-rs/protocol/src/protocol.rs",
         "line": 1500
       }
     },
     {
       "variant": "SafetyBuffering",
       "source": {
-        "file": "/Users/bytedance/playground/codex/codex-rs/protocol/src/protocol.rs",
+        "file": "~/playground/codex/codex-rs/protocol/src/protocol.rs",
         "line": 1503
       }
     },
     {
       "variant": "ContextCompacted",
       "source": {
-        "file": "/Users/bytedance/playground/codex/codex-rs/protocol/src/protocol.rs",
+        "file": "~/playground/codex/codex-rs/protocol/src/protocol.rs",
         "line": 1506
       }
     },
     {
       "variant": "ThreadRolledBack",
       "source": {
-        "file": "/Users/bytedance/playground/codex/codex-rs/protocol/src/protocol.rs",
+        "file": "~/playground/codex/codex-rs/protocol/src/protocol.rs",
         "line": 1510
       }
     },
     {
       "variant": "TurnStarted",
       "source": {
-        "file": "/Users/bytedance/playground/codex/codex-rs/protocol/src/protocol.rs",
+        "file": "~/playground/codex/codex-rs/protocol/src/protocol.rs",
         "line": 1515
       }
     },
     {
       "variant": "ThreadSettingsApplied",
       "source": {
-        "file": "/Users/bytedance/playground/codex/codex-rs/protocol/src/protocol.rs",
+        "file": "~/playground/codex/codex-rs/protocol/src/protocol.rs",
         "line": 1519
       }
     },
     {
       "variant": "TurnComplete",
       "source": {
-        "file": "/Users/bytedance/playground/codex/codex-rs/protocol/src/protocol.rs",
+        "file": "~/playground/codex/codex-rs/protocol/src/protocol.rs",
         "line": 1524
       }
     },
     {
       "variant": "TokenCount",
       "source": {
-        "file": "/Users/bytedance/playground/codex/codex-rs/protocol/src/protocol.rs",
+        "file": "~/playground/codex/codex-rs/protocol/src/protocol.rs",
         "line": 1528
       }
     },
     {
       "variant": "AgentMessage",
       "source": {
-        "file": "/Users/bytedance/playground/codex/codex-rs/protocol/src/protocol.rs",
+        "file": "~/playground/codex/codex-rs/protocol/src/protocol.rs",
         "line": 1531
       }
     },
     {
       "variant": "UserMessage",
       "source": {
-        "file": "/Users/bytedance/playground/codex/codex-rs/protocol/src/protocol.rs",
+        "file": "~/playground/codex/codex-rs/protocol/src/protocol.rs",
         "line": 1534
       }
     },
     {
       "variant": "AgentReasoning",
       "source": {
-        "file": "/Users/bytedance/playground/codex/codex-rs/protocol/src/protocol.rs",
+        "file": "~/playground/codex/codex-rs/protocol/src/protocol.rs",
         "line": 1537
       }
     },
     {
       "variant": "AgentReasoningRawContent",
       "source": {
-        "file": "/Users/bytedance/playground/codex/codex-rs/protocol/src/protocol.rs",
+        "file": "~/playground/codex/codex-rs/protocol/src/protocol.rs",
         "line": 1540
       }
     },
     {
       "variant": "AgentReasoningSectionBreak",
       "source": {
-        "file": "/Users/bytedance/playground/codex/codex-rs/protocol/src/protocol.rs",
+        "file": "~/playground/codex/codex-rs/protocol/src/protocol.rs",
         "line": 1543
       }
     },
     {
       "variant": "SessionConfigured",
       "source": {
-        "file": "/Users/bytedance/playground/codex/codex-rs/protocol/src/protocol.rs",
+        "file": "~/playground/codex/codex-rs/protocol/src/protocol.rs",
         "line": 1546
       }
     },
     {
       "variant": "EnvironmentConnected",
       "source": {
-        "file": "/Users/bytedance/playground/codex/codex-rs/protocol/src/protocol.rs",
+        "file": "~/playground/codex/codex-rs/protocol/src/protocol.rs",
         "line": 1549
       }
     },
     {
       "variant": "EnvironmentDisconnected",
       "source": {
-        "file": "/Users/bytedance/playground/codex/codex-rs/protocol/src/protocol.rs",
+        "file": "~/playground/codex/codex-rs/protocol/src/protocol.rs",
         "line": 1552
       }
     },
     {
       "variant": "ThreadGoalUpdated",
       "source": {
-        "file": "/Users/bytedance/playground/codex/codex-rs/protocol/src/protocol.rs",
+        "file": "~/playground/codex/codex-rs/protocol/src/protocol.rs",
         "line": 1555
       }
     },
     {
       "variant": "ThreadQueueChanged",
       "source": {
-        "file": "/Users/bytedance/playground/codex/codex-rs/protocol/src/protocol.rs",
+        "file": "~/playground/codex/codex-rs/protocol/src/protocol.rs",
         "line": 1558
       }
     },
     {
       "variant": "McpStartupUpdate",
       "source": {
-        "file": "/Users/bytedance/playground/codex/codex-rs/protocol/src/protocol.rs",
+        "file": "~/playground/codex/codex-rs/protocol/src/protocol.rs",
         "line": 1561
       }
     },
     {
       "variant": "McpStartupComplete",
       "source": {
-        "file": "/Users/bytedance/playground/codex/codex-rs/protocol/src/protocol.rs",
+        "file": "~/playground/codex/codex-rs/protocol/src/protocol.rs",
         "line": 1564
       }
     },
     {
       "variant": "McpToolCallBegin",
       "source": {
-        "file": "/Users/bytedance/playground/codex/codex-rs/protocol/src/protocol.rs",
+        "file": "~/playground/codex/codex-rs/protocol/src/protocol.rs",
         "line": 1566
       }
     },
     {
       "variant": "McpToolCallEnd",
       "source": {
-        "file": "/Users/bytedance/playground/codex/codex-rs/protocol/src/protocol.rs",
+        "file": "~/playground/codex/codex-rs/protocol/src/protocol.rs",
         "line": 1568
       }
     },
     {
       "variant": "WebSearchBegin",
       "source": {
-        "file": "/Users/bytedance/playground/codex/codex-rs/protocol/src/protocol.rs",
+        "file": "~/playground/codex/codex-rs/protocol/src/protocol.rs",
         "line": 1570
       }
     },
     {
       "variant": "WebSearchEnd",
       "source": {
-        "file": "/Users/bytedance/playground/codex/codex-rs/protocol/src/protocol.rs",
+        "file": "~/playground/codex/codex-rs/protocol/src/protocol.rs",
         "line": 1572
       }
     },
     {
       "variant": "ImageGenerationBegin",
       "source": {
-        "file": "/Users/bytedance/playground/codex/codex-rs/protocol/src/protocol.rs",
+        "file": "~/playground/codex/codex-rs/protocol/src/protocol.rs",
         "line": 1574
       }
     },
     {
       "variant": "ImageGenerationEnd",
       "source": {
-        "file": "/Users/bytedance/playground/codex/codex-rs/protocol/src/protocol.rs",
+        "file": "~/playground/codex/codex-rs/protocol/src/protocol.rs",
         "line": 1576
       }
     },
     {
       "variant": "ExecCommandBegin",
       "source": {
-        "file": "/Users/bytedance/playground/codex/codex-rs/protocol/src/protocol.rs",
+        "file": "~/playground/codex/codex-rs/protocol/src/protocol.rs",
         "line": 1579
       }
     },
     {
       "variant": "ExecCommandOutputDelta",
       "source": {
-        "file": "/Users/bytedance/playground/codex/codex-rs/protocol/src/protocol.rs",
+        "file": "~/playground/codex/codex-rs/protocol/src/protocol.rs",
         "line": 1582
       }
     },
     {
       "variant": "TerminalInteraction",
       "source": {
-        "file": "/Users/bytedance/playground/codex/codex-rs/protocol/src/protocol.rs",
+        "file": "~/playground/codex/codex-rs/protocol/src/protocol.rs",
         "line": 1585
       }
     },
     {
       "variant": "ExecCommandEnd",
       "source": {
-        "file": "/Users/bytedance/playground/codex/codex-rs/protocol/src/protocol.rs",
+        "file": "~/playground/codex/codex-rs/protocol/src/protocol.rs",
         "line": 1587
       }
     },
     {
       "variant": "ViewImageToolCall",
       "source": {
-        "file": "/Users/bytedance/playground/codex/codex-rs/protocol/src/protocol.rs",
+        "file": "~/playground/codex/codex-rs/protocol/src/protocol.rs",
         "line": 1590
       }
     },
     {
       "variant": "ExecApprovalRequest",
       "source": {
-        "file": "/Users/bytedance/playground/codex/codex-rs/protocol/src/protocol.rs",
+        "file": "~/playground/codex/codex-rs/protocol/src/protocol.rs",
         "line": 1592
       }
     },
     {
       "variant": "RequestPermissions",
       "source": {
-        "file": "/Users/bytedance/playground/codex/codex-rs/protocol/src/protocol.rs",
+        "file": "~/playground/codex/codex-rs/protocol/src/protocol.rs",
         "line": 1594
       }
     },
     {
       "variant": "RequestUserInput",
       "source": {
-        "file": "/Users/bytedance/playground/codex/codex-rs/protocol/src/protocol.rs",
+        "file": "~/playground/codex/codex-rs/protocol/src/protocol.rs",
         "line": 1596
       }
     },
     {
       "variant": "DynamicToolCallRequest",
       "source": {
-        "file": "/Users/bytedance/playground/codex/codex-rs/protocol/src/protocol.rs",
+        "file": "~/playground/codex/codex-rs/protocol/src/protocol.rs",
         "line": 1598
       }
     },
     {
       "variant": "DynamicToolCallResponse",
       "source": {
-        "file": "/Users/bytedance/playground/codex/codex-rs/protocol/src/protocol.rs",
+        "file": "~/playground/codex/codex-rs/protocol/src/protocol.rs",
         "line": 1600
       }
     },
     {
       "variant": "ElicitationRequest",
       "source": {
-        "file": "/Users/bytedance/playground/codex/codex-rs/protocol/src/protocol.rs",
+        "file": "~/playground/codex/codex-rs/protocol/src/protocol.rs",
         "line": 1602
       }
     },
     {
       "variant": "ElicitationAbandoned",
       "source": {
-        "file": "/Users/bytedance/playground/codex/codex-rs/protocol/src/protocol.rs",
+        "file": "~/playground/codex/codex-rs/protocol/src/protocol.rs",
         "line": 1605
       }
     },
     {
       "variant": "ApplyPatchApprovalRequest",
       "source": {
-        "file": "/Users/bytedance/playground/codex/codex-rs/protocol/src/protocol.rs",
+        "file": "~/playground/codex/codex-rs/protocol/src/protocol.rs",
         "line": 1607
       }
     },
     {
       "variant": "GuardianAssessment",
       "source": {
-        "file": "/Users/bytedance/playground/codex/codex-rs/protocol/src/protocol.rs",
+        "file": "~/playground/codex/codex-rs/protocol/src/protocol.rs",
         "line": 1610
       }
     },
     {
       "variant": "DeprecationNotice",
       "source": {
-        "file": "/Users/bytedance/playground/codex/codex-rs/protocol/src/protocol.rs",
+        "file": "~/playground/codex/codex-rs/protocol/src/protocol.rs",
         "line": 1614
       }
     },
     {
       "variant": "StreamError",
       "source": {
-        "file": "/Users/bytedance/playground/codex/codex-rs/protocol/src/protocol.rs",
+        "file": "~/playground/codex/codex-rs/protocol/src/protocol.rs",
         "line": 1618
       }
     },
     {
       "variant": "PatchApplyBegin",
       "source": {
-        "file": "/Users/bytedance/playground/codex/codex-rs/protocol/src/protocol.rs",
+        "file": "~/playground/codex/codex-rs/protocol/src/protocol.rs",
         "line": 1622
       }
     },
     {
       "variant": "PatchApplyUpdated",
       "source": {
-        "file": "/Users/bytedance/playground/codex/codex-rs/protocol/src/protocol.rs",
+        "file": "~/playground/codex/codex-rs/protocol/src/protocol.rs",
         "line": 1625
       }
     },
     {
       "variant": "PatchApplyEnd",
       "source": {
-        "file": "/Users/bytedance/playground/codex/codex-rs/protocol/src/protocol.rs",
+        "file": "~/playground/codex/codex-rs/protocol/src/protocol.rs",
         "line": 1628
       }
     },
     {
       "variant": "TurnDiff",
       "source": {
-        "file": "/Users/bytedance/playground/codex/codex-rs/protocol/src/protocol.rs",
+        "file": "~/playground/codex/codex-rs/protocol/src/protocol.rs",
         "line": 1630
       }
     },
     {
       "variant": "RealtimeConversationListVoicesResponse",
       "source": {
-        "file": "/Users/bytedance/playground/codex/codex-rs/protocol/src/protocol.rs",
+        "file": "~/playground/codex/codex-rs/protocol/src/protocol.rs",
         "line": 1633
       }
     },
     {
       "variant": "PlanUpdate",
       "source": {
-        "file": "/Users/bytedance/playground/codex/codex-rs/protocol/src/protocol.rs",
+        "file": "~/playground/codex/codex-rs/protocol/src/protocol.rs",
         "line": 1635
       }
     },
     {
       "variant": "TurnAborted",
       "source": {
-        "file": "/Users/bytedance/playground/codex/codex-rs/protocol/src/protocol.rs",
+        "file": "~/playground/codex/codex-rs/protocol/src/protocol.rs",
         "line": 1637
       }
     },
     {
       "variant": "ShutdownComplete",
       "source": {
-        "file": "/Users/bytedance/playground/codex/codex-rs/protocol/src/protocol.rs",
+        "file": "~/playground/codex/codex-rs/protocol/src/protocol.rs",
         "line": 1640
       }
     },
     {
       "variant": "EnteredReviewMode",
       "source": {
-        "file": "/Users/bytedance/playground/codex/codex-rs/protocol/src/protocol.rs",
+        "file": "~/playground/codex/codex-rs/protocol/src/protocol.rs",
         "line": 1643
       }
     },
     {
       "variant": "ExitedReviewMode",
       "source": {
-        "file": "/Users/bytedance/playground/codex/codex-rs/protocol/src/protocol.rs",
+        "file": "~/playground/codex/codex-rs/protocol/src/protocol.rs",
         "line": 1646
       }
     },
     {
       "variant": "RawResponseItem",
       "source": {
-        "file": "/Users/bytedance/playground/codex/codex-rs/protocol/src/protocol.rs",
+        "file": "~/playground/codex/codex-rs/protocol/src/protocol.rs",
         "line": 1648
       }
     },
     {
       "variant": "RawResponseCompleted",
       "source": {
-        "file": "/Users/bytedance/playground/codex/codex-rs/protocol/src/protocol.rs",
+        "file": "~/playground/codex/codex-rs/protocol/src/protocol.rs",
         "line": 1649
       }
     },
     {
       "variant": "ItemStarted",
       "source": {
-        "file": "/Users/bytedance/playground/codex/codex-rs/protocol/src/protocol.rs",
+        "file": "~/playground/codex/codex-rs/protocol/src/protocol.rs",
         "line": 1651
       }
     },
     {
       "variant": "ItemCompleted",
       "source": {
-        "file": "/Users/bytedance/playground/codex/codex-rs/protocol/src/protocol.rs",
+        "file": "~/playground/codex/codex-rs/protocol/src/protocol.rs",
         "line": 1652
       }
     },
     {
       "variant": "HookStarted",
       "source": {
-        "file": "/Users/bytedance/playground/codex/codex-rs/protocol/src/protocol.rs",
+        "file": "~/playground/codex/codex-rs/protocol/src/protocol.rs",
         "line": 1653
       }
     },
     {
       "variant": "HookCompleted",
       "source": {
-        "file": "/Users/bytedance/playground/codex/codex-rs/protocol/src/protocol.rs",
+        "file": "~/playground/codex/codex-rs/protocol/src/protocol.rs",
         "line": 1654
       }
     },
     {
       "variant": "AgentMessageContentDelta",
       "source": {
-        "file": "/Users/bytedance/playground/codex/codex-rs/protocol/src/protocol.rs",
+        "file": "~/playground/codex/codex-rs/protocol/src/protocol.rs",
         "line": 1656
       }
     },
     {
       "variant": "PlanDelta",
       "source": {
-        "file": "/Users/bytedance/playground/codex/codex-rs/protocol/src/protocol.rs",
+        "file": "~/playground/codex/codex-rs/protocol/src/protocol.rs",
         "line": 1657
       }
     },
     {
       "variant": "ReasoningContentDelta",
       "source": {
-        "file": "/Users/bytedance/playground/codex/codex-rs/protocol/src/protocol.rs",
+        "file": "~/playground/codex/codex-rs/protocol/src/protocol.rs",
         "line": 1658
       }
     },
     {
       "variant": "ReasoningRawContentDelta",
       "source": {
-        "file": "/Users/bytedance/playground/codex/codex-rs/protocol/src/protocol.rs",
+        "file": "~/playground/codex/codex-rs/protocol/src/protocol.rs",
         "line": 1659
       }
     },
     {
       "variant": "CollabAgentSpawnBegin",
       "source": {
-        "file": "/Users/bytedance/playground/codex/codex-rs/protocol/src/protocol.rs",
+        "file": "~/playground/codex/codex-rs/protocol/src/protocol.rs",
         "line": 1662
       }
     },
     {
       "variant": "CollabAgentSpawnEnd",
       "source": {
-        "file": "/Users/bytedance/playground/codex/codex-rs/protocol/src/protocol.rs",
+        "file": "~/playground/codex/codex-rs/protocol/src/protocol.rs",
         "line": 1664
       }
     },
     {
       "variant": "CollabAgentInteractionBegin",
       "source": {
-        "file": "/Users/bytedance/playground/codex/codex-rs/protocol/src/protocol.rs",
+        "file": "~/playground/codex/codex-rs/protocol/src/protocol.rs",
         "line": 1666
       }
     },
     {
       "variant": "CollabAgentInteractionEnd",
       "source": {
-        "file": "/Users/bytedance/playground/codex/codex-rs/protocol/src/protocol.rs",
+        "file": "~/playground/codex/codex-rs/protocol/src/protocol.rs",
         "line": 1668
       }
     },
     {
       "variant": "CollabWaitingBegin",
       "source": {
-        "file": "/Users/bytedance/playground/codex/codex-rs/protocol/src/protocol.rs",
+        "file": "~/playground/codex/codex-rs/protocol/src/protocol.rs",
         "line": 1670
       }
     },
     {
       "variant": "CollabWaitingEnd",
       "source": {
-        "file": "/Users/bytedance/playground/codex/codex-rs/protocol/src/protocol.rs",
+        "file": "~/playground/codex/codex-rs/protocol/src/protocol.rs",
         "line": 1672
       }
     },
     {
       "variant": "CollabCloseBegin",
       "source": {
-        "file": "/Users/bytedance/playground/codex/codex-rs/protocol/src/protocol.rs",
+        "file": "~/playground/codex/codex-rs/protocol/src/protocol.rs",
         "line": 1674
       }
     },
     {
       "variant": "CollabCloseEnd",
       "source": {
-        "file": "/Users/bytedance/playground/codex/codex-rs/protocol/src/protocol.rs",
+        "file": "~/playground/codex/codex-rs/protocol/src/protocol.rs",
         "line": 1676
       }
     },
     {
       "variant": "CollabResumeBegin",
       "source": {
-        "file": "/Users/bytedance/playground/codex/codex-rs/protocol/src/protocol.rs",
+        "file": "~/playground/codex/codex-rs/protocol/src/protocol.rs",
         "line": 1678
       }
     },
     {
       "variant": "CollabResumeEnd",
       "source": {
-        "file": "/Users/bytedance/playground/codex/codex-rs/protocol/src/protocol.rs",
+        "file": "~/playground/codex/codex-rs/protocol/src/protocol.rs",
         "line": 1680
       }
     },
     {
       "variant": "SubAgentActivity",
       "source": {
-        "file": "/Users/bytedance/playground/codex/codex-rs/protocol/src/protocol.rs",
+        "file": "~/playground/codex/codex-rs/protocol/src/protocol.rs",
         "line": 1683
       }
     }

@@ -509,7 +509,7 @@
       {
         "connected": true,
         "last_seen": 108460.562812416,
-        "home": "/Users/bytedance/personal/codex_progress_monitor/experiments/desktop-isolation/runs/20261010-150337-2b232b/codex-home",
+        "home": "~/personal/codex_progress_monitor/experiments/desktop-isolation/runs/20261010-150337-2b232b/codex-home",
         "cli": "/Applications/ChatGPT.app/Contents/Resources/codex-cli/CodexCLI.app/Contents/MacOS/codex",
         "drop_reasons": {},
         "last_send_error": null,

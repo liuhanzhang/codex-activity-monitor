@@ -61,7 +61,7 @@ Python 故障隔离测试会主动触发 tokenizer 原生 panic；日志中的 `
 
 最终入口：
 
-- 主仓库：`/Users/bytedance/personal/codex-activity-monitor`
+- 主仓库：`~/personal/codex-activity-monitor`
 - 私有远程：`https://github.com/liuhanzhang/codex-activity-monitor`
 - `origin`：`git@github.com:LiuHanzhang/codex-activity-monitor.git`
 - 日常 App：`.local/gui/Codex Activity Monitor.app`

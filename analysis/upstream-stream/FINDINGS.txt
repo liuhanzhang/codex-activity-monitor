@@ -73,13 +73,13 @@ analyze_trace.py：从原始日志和保存的聊天重新生成统计，并校�
 
 源码入口（本地公开源码快照比已安装 CLI 旧，运行结果以本轮实测为准）
 
-/Users/bytedance/playground/codex/codex-rs/codex-api/src/sse/responses.rs:530 原始 SSE event trace。
-/Users/bytedance/playground/codex/codex-rs/codex-api/src/sse/responses.rs:343 自定义工具输入增量解析。
-/Users/bytedance/playground/codex/codex-rs/codex-api/src/endpoint/responses_websocket.rs:710 WebSocket 文本事件解析。
-/Users/bytedance/playground/codex/codex-rs/app-server/src/lib.rs:619 RUST_LOG 与 JSON stderr 日志初始化。
-/Users/bytedance/playground/codex/codex-rs/model-provider-info/src/lib.rs:242 按认证方式选择默认端点。
-/Users/bytedance/playground/codex/codex-rs/responses-api-proxy/README.md 官方仓库中的 HTTP 代理，以 API key 注入为主，仅允许 POST /v1/responses，不是现成的 WSS 监控器。
-/Users/bytedance/playground/codex/codex-rs/responses-api-proxy/src/dump.rs 响应读取时积累，EOF/Drop 才写整份 dump，没有每个增量的实时到达时间。
+~/playground/codex/codex-rs/codex-api/src/sse/responses.rs:530 原始 SSE event trace。
+~/playground/codex/codex-rs/codex-api/src/sse/responses.rs:343 自定义工具输入增量解析。
+~/playground/codex/codex-rs/codex-api/src/endpoint/responses_websocket.rs:710 WebSocket 文本事件解析。
+~/playground/codex/codex-rs/app-server/src/lib.rs:619 RUST_LOG 与 JSON stderr 日志初始化。
+~/playground/codex/codex-rs/model-provider-info/src/lib.rs:242 按认证方式选择默认端点。
+~/playground/codex/codex-rs/responses-api-proxy/README.md 官方仓库中的 HTTP 代理，以 API key 注入为主，仅允许 POST /v1/responses，不是现成的 WSS 监控器。
+~/playground/codex/codex-rs/responses-api-proxy/src/dump.rs 响应读取时积累，EOF/Drop 才写整份 dump，没有每个增量的实时到达时间。
 
 官方文档
 

@@ -46,7 +46,7 @@
     "final_placeholder_removed_by": "user; absence verified read-only"
   },
   "repository": {
-    "local": "/Users/bytedance/personal/codex-activity-monitor",
+    "local": "~/personal/codex-activity-monitor",
     "remote_rename_complete": true,
     "origin_changed": true,
     "git_history_preserved": true,

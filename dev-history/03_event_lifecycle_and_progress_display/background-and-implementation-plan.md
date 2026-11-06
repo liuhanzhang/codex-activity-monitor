@@ -29,7 +29,7 @@
 - 上一次名称 / 命令预览扩展记录了 57 项测试通过及真实捕获回放。该结果只验证既有改动，不代表本计划中的新状态、统一速度列或长尾事件已完成。
 - 已盘点 87 种服务端通知、11 种服务端请求、19 种活动类型、10 种已接入模型流事件及 84 种 core 事件路径。它们处于不同层次，不是 211 种独立客户端消息。
 
-源码基线为 `/Users/bytedance/playground/codex` 的 `806d9732c974bc8a51b8317c1bd8985544fe627c`。前轮安装版 CLI schema 基线为 `0.162.0-alpha.17.2`；尚未证明该二进制与本地源码完全对应。后续实测开始时重新记录运行版本与路径，不能沿用版本号作为当前运行证明。
+源码基线为 `~/playground/codex` 的 `806d9732c974bc8a51b8317c1bd8985544fe627c`。前轮安装版 CLI schema 基线为 `0.162.0-alpha.17.2`；尚未证明该二进制与本地源码完全对应。后续实测开始时重新记录运行版本与路径，不能沿用版本号作为当前运行证明。
 
 ### 2.2 已定位的问题
 
@@ -90,9 +90,9 @@
 | Q4 | 自动审核在当前配置中是否启用、消息是否完整到达 | 先核对安装 schema 与已有配置，再观察真实可触发路径；检查审核身份、可空目标、结果与请求关闭顺序 | 区分 schema 存在、合成回放通过与当前真实路径触发三种结论 | 不为触发实验改写日常审批策略；保留兼容处理和明确的未实测范围。 |
 | Q5 | 新增状态在断线重连中能否准确恢复 | 检查桥接缓存和 collector 快照；回放开始、完成、resolved、重复及乱序事件，隔离测试消费者断开与重连 | 已关闭请求不会重现，旧活动不会被恢复为正在执行，生成计数不重复 | 将无法恢复的状态降为暂不可用，不猜成功、运行或批准。 |
 
-Q1 / Q2 的源码入口是 [命令事件映射](/Users/bytedance/playground/codex/codex-rs/app-server-protocol/src/protocol/event_mapping.rs)、[app-server 事件处理](/Users/bytedance/playground/codex/codex-rs/app-server/src/bespoke_event_handling.rs)、[unified_exec](/Users/bytedance/playground/codex/codex-rs/core/src/unified_exec/process_manager.rs) 与 [Code Mode](/Users/bytedance/playground/codex/codex-rs/core/src/tools/code_mode/mod.rs)。
+Q1 / Q2 的源码入口是 [命令事件映射](https://github.com/openai/codex/blob/806d9732c974bc8a51b8317c1bd8985544fe627c/codex-rs/app-server-protocol/src/protocol/event_mapping.rs)、[app-server 事件处理](https://github.com/openai/codex/blob/806d9732c974bc8a51b8317c1bd8985544fe627c/codex-rs/app-server/src/bespoke_event_handling.rs)、[unified_exec](https://github.com/openai/codex/blob/806d9732c974bc8a51b8317c1bd8985544fe627c/codex-rs/core/src/unified_exec/process_manager.rs) 与 [Code Mode](https://github.com/openai/codex/blob/806d9732c974bc8a51b8317c1bd8985544fe627c/codex-rs/core/src/tools/code_mode/mod.rs)。
 
-[工具调用 trace](/Users/bytedance/playground/codex/codex-rs/core/src/tools/parallel.rs:451) 是候选补充来源，当前 monitor 尚未接入。完成时发出的 `execution_started` 与耗时字段只能证明已经发生的执行，不能倒推成实时启动通知。仅在当前版本可用、作用范围明确且现有协议不足时评估补充；不预先扩大 trace 范围或启用原始实验事件。
+[工具调用 trace](https://github.com/openai/codex/blob/806d9732c974bc8a51b8317c1bd8985544fe627c/codex-rs/core/src/tools/parallel.rs#L451) 是候选补充来源，当前 monitor 尚未接入。完成时发出的 `execution_started` 与耗时字段只能证明已经发生的执行，不能倒推成实时启动通知。仅在当前版本可用、作用范围明确且现有协议不足时评估补充；不预先扩大 trace 范围或启用原始实验事件。
 
 查证与实现可以交错推进：先完成运行基线与 Q1 / Q2 的最小追踪，再修复已确定的字段和状态问题；Q3 / Q4 中难以触发的长尾场景不阻塞这些修复。需要新的信号才能交付的功能，必须标明依赖，不能用展示文案掩盖缺失证据。
 
@@ -138,7 +138,7 @@ Q1 / Q2 的源码入口是 [命令事件映射](/Users/bytedance/playground/code
 5. 调整主状态：有真实工作优先展示动作；所有前台工作确实被阻塞才暂停。自动审核具有独立进行中 / 结束状态；没有其他实际工作时可成为主状态，并行时也保留可见活动。命令参数完成或审核通过不作为实际执行证据。
 6. 补齐重连的最小快照、关闭标记和重复事件处理；观测缺失时停止速度并使过期状态失效。后台进程按独立生命周期维护。
 
-主要文件：[events.py](/Users/bytedance/personal/codex-activity-monitor/src/codex_activity_monitor/events.py)、[engine.py](/Users/bytedance/personal/codex-activity-monitor/src/codex_activity_monitor/engine.py)、[bridge.py](/Users/bytedance/personal/codex-activity-monitor/src/codex_activity_monitor/bridge.py)、必要时的 [collector.py](/Users/bytedance/personal/codex-activity-monitor/src/codex_activity_monitor/collector.py)。
+主要文件：[events.py](../../src/codex_activity_monitor/events.py)、[engine.py](../../src/codex_activity_monitor/engine.py)、[bridge.py](../../src/codex_activity_monitor/bridge.py)、必要时的 [collector.py](../../src/codex_activity_monitor/collector.py)。
 
 完成条件：已定位字段 / 类型 / 清理问题不再复现；参数、审核、执行与结束不互相替代；并行工作不被另一个请求覆盖；已结束请求和流不残留；无事件依据的外层结束不再被当作运行事实。
 
@@ -151,7 +151,7 @@ Q1 / Q2 的源码入口是 [命令事件映射](/Users/bytedance/playground/code
 5. 约 2 秒接收窗口内的有效生成流可以显示速率；未知 encoding 标记估算。没有可观测生成流时显示 `—`；结束内容只校正计数，不倒填实时速度。命令输出、进度消息和服务端 usage 不计入。
 6. 移除默认技术字段，保留具体动作、耗时和必要并行上下文。合并短暂等待，保持状态连续；失败、终止和断线立即呈现。1 秒 / 3 秒的初始合并阈值通过回放调整。
 
-主要文件：[tool_labels.py](/Users/bytedance/personal/codex-activity-monitor/src/codex_activity_monitor/tool_labels.py)、[metrics.py](/Users/bytedance/personal/codex-activity-monitor/src/codex_activity_monitor/metrics.py)、[engine.py](/Users/bytedance/personal/codex-activity-monitor/src/codex_activity_monitor/engine.py)、[display.py](/Users/bytedance/personal/codex-activity-monitor/src/codex_activity_monitor/display.py)。
+主要文件：[tool_labels.py](../../src/codex_activity_monitor/tool_labels.py)、[metrics.py](../../src/codex_activity_monitor/metrics.py)、[engine.py](../../src/codex_activity_monitor/engine.py)、[display.py](../../src/codex_activity_monitor/display.py)。
 
 完成条件：默认列表符合展示方案；生成参数时可显示已有名称 / 命令前缀；工作状态和流速不会在结束后残留；普通详情不变成协议事件列表，也不出现重复用户操作提示。
 
@@ -184,7 +184,7 @@ Q1 / Q2 的源码入口是 [命令事件映射](/Users/bytedance/playground/code
 .local/venv/bin/python -m unittest discover -s tests -p 'test_*.py' -v
 ```
 
-已有 [捕获回放工具](/Users/bytedance/personal/codex-activity-monitor/tests/verify_captures.py) 可复用：
+已有 [捕获回放工具](../../tests/verify_captures.py) 可复用：
 
 ```sh
 .local/venv/bin/python tests/verify_captures.py \
@@ -196,7 +196,7 @@ Q1 / Q2 的源码入口是 [命令事件映射](/Users/bytedance/playground/code
 
 ### 6.2 当前版本真实路径验证
 
-复用 [产品 smoke](/Users/bytedance/personal/codex-activity-monitor/tests/product_smoke.py)、[后台进程 probe](/Users/bytedance/personal/codex-activity-monitor/tests/background_probe.py) 和 [审批 probe](/Users/bytedance/personal/codex-activity-monitor/experiments/product-preflight/approval_probe.py) 的隔离方式，按新快照与展示口径调整断言。脚本入口是可复用基础，不表示所有新场景已经由现有脚本覆盖。
+复用 [产品 smoke](../../tests/product_smoke.py)、[后台进程 probe](../../tests/background_probe.py) 和 [审批 probe](../../experiments/product-preflight/approval_probe.py) 的隔离方式，按新快照与展示口径调整断言。脚本入口是可复用基础，不表示所有新场景已经由现有脚本覆盖。
 
 最低场景为：生成文本与工具参数、实际短命令 / 静默命令、一个真实审批结束路径、两项并行工作、后台进程及消费者重连。计划和子任务增加可触发的真实场景；自动审核与其他条件长尾若无法触发，单独标记，不能用模拟结果替代。
 

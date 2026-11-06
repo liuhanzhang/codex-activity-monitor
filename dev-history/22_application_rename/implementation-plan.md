@@ -63,7 +63,7 @@ bin/codex-activity-monitor --help
 
 1. 将远程仓库改为 `LiuHanzhang/codex-activity-monitor`，实际检查新仓库入口；保持现有可见性、权限和提交历史。
 2. 更新 `origin` 为 `git@github.com:LiuHanzhang/codex-activity-monitor.git`，验证远程可读。不自动提交 / 推送工作区改动或此前已有的 7 个未推送提交。
-3. 在旧安装依赖允许后，将本地主目录改为 `/Users/bytedance/personal/codex-activity-monitor`。若实施时新增了 linked worktree，使用对应的 Git 移动 / 修复流程并检查，不直接修改 Git 内部路径记录。
+3. 在旧安装依赖允许后，将本地主目录改为 `~/personal/codex-activity-monitor`。若实施时新增了 linked worktree，使用对应的 Git 移动 / 修复流程并检查，不直接修改 Git 内部路径记录。
 4. 确认后续命令和 Codex 的项目 / 工作目录能转到新路径；不要靠保留永久旧目录软链掩盖未更新的依赖，也不直接改写 Codex 内部数据库。
 5. 在最终路径重建 Python venv / editable install、Swift 缓存和 App。重新生成 `backend.json`、launcher、安装配置中所有绝对路径，不能复用移动前的构建结果作为日常安装。
 6. 从最终路径再做 CLI、本地化检查及 GUI 构建冒烟验证，确认新产物未引用旧源码目录。

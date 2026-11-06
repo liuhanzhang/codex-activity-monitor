@@ -55,7 +55,7 @@ schema 导出命令：
 /Applications/ChatGPT.app/Contents/Resources/codex-cli/CodexCLI.app/Contents/MacOS/codex app-server generate-json-schema --experimental --out /private/tmp/codex-monitor-protocol-20261012
 ```
 
-协议形状由安装版验证；Guardian 内部实现参考本地 `/Users/bytedance/playground/codex`，未证明该源码提交与安装二进制完全一致。上述三份已有捕获均未包含自动审核事件，因此尚未验证 Desktop 自动审核通知在当前采集链中实际到达。schema 支持不等于当前运行配置会启用此功能。
+协议形状由安装版验证；Guardian 内部实现参考本地 `~/playground/codex`，未证明该源码提交与安装二进制完全一致。上述三份已有捕获均未包含自动审核事件，因此尚未验证 Desktop 自动审核通知在当前采集链中实际到达。schema 支持不等于当前运行配置会启用此功能。
 
 ## 当前 monitor 的问题
 

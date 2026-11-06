@@ -9,7 +9,7 @@
 | 来源 | 本次基线 | 证据范围 |
 | --- | --- | --- |
 | Monitor 仓库 | 文档整理前 `20cc995`，工作树干净 | 当前实现与已存在测试源码；本轮未运行产品测试 |
-| 本地 Codex 源码 | `/Users/bytedance/playground/codex`，`806d9732c974bc8a51b8317c1bd8985544fe627c`，检查时工作树干净 | 指定源码快照的协议、持久化策略及 writer 行为 |
+| 本地 Codex 源码 | `~/playground/codex`，`806d9732c974bc8a51b8317c1bd8985544fe627c`，检查时工作树干净 | 指定源码快照的协议、持久化策略及 writer 行为 |
 | 两份本机历史样本 | `cli_version=0.163.0-alpha.10.2`，`history_mode=paginated` | 这两份文件的实际字段与结构；不代表所有历史格式 |
 
 源码快照与实际运行二进制没有在本轮做 hash／构建对应验证。源码支持的字段和 API 不等于本机当前链路已成功读取它们。
@@ -19,10 +19,10 @@
 本次只读检查了以下 Codex 自有文件，统计不把全文复制到仓库：
 
 ```text
-/Users/bytedance/.codex/sessions/2026/10/17/
+~/.codex/sessions/2026/10/17/
   rollout-2026-10-17T16-24-16-01a148f6-3133-78e3-9074-9dc9a4c31121.jsonl
 
-/Users/bytedance/.codex/sessions/2026/10/16/
+~/.codex/sessions/2026/10/16/
   rollout-2026-10-16T18-41-30-01a1444d-786e-75a0-8c91-c7e441c1dbf9.jsonl
 ```
 

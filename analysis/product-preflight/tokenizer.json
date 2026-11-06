@@ -9,7 +9,7 @@
   "selected_encoding": "o200k_base",
   "encoding_status": "explicit_estimate_for_unmapped_models",
   "text_count_definition": "encode_ordinary received text; no hidden/format tokens",
-  "source_trace": "/Users/bytedance/personal/codex_progress_monitor/experiments/desktop-isolation/runs/20261010-150337-2b232b/backend-transport-20261010-171554.log.gz",
+  "source_trace": "~/personal/codex_progress_monitor/experiments/desktop-isolation/runs/20261010-150337-2b232b/backend-transport-20261010-171554.log.gz",
   "samples": [
     {
       "kind": "response.output_text.delta",

@@ -2,7 +2,7 @@
   "date": "2026-10-12T08:14:25.114661+00:00",
   "scope": "Regenerable caches and unused duplicate environment only",
   "checks": {
-    "current_runtime_python": "/Users/bytedance/personal/codex_progress_monitor/.local/venv/bin/python",
+    "current_runtime_python": "~/personal/codex_progress_monitor/.local/venv/bin/python",
     "legacy_open_files": 0,
     "legacy_open_files_check": "lsof completed successfully; no matching open files",
     "process_check": "Only project runtime processes observed; no legacy experiment environment invocation"

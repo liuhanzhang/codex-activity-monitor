@@ -1,7 +1,7 @@
 [
   {
     "version": "26.1002.52244",
-    "source": "/Users/bytedance/playground/codex-app-reverse/versions/26.1002.52244-13536-arm64/original/ChatGPT.app/Contents/Resources/app.asar",
+    "source": "~/playground/codex-app-reverse/versions/26.1002.52244-13536-arm64/original/ChatGPT.app/Contents/Resources/app.asar",
     "files": [
       {
         "path": ".vite/build/bootstrap-CTpobVUg.js",

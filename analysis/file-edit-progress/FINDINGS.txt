@@ -13,7 +13,7 @@ Codex Desktop 写代码时的行数增长显示：源码核查
 
 对比范围
 1. 逆向项目唯一的归档版本：26.1002.52244，build 13536。
-   /Users/bytedance/playground/codex-app-reverse/versions/26.1002.52244-13536-arm64/original/ChatGPT.app/Contents/Resources/app.asar
+   ~/playground/codex-app-reverse/versions/26.1002.52244-13536-arm64/original/ChatGPT.app/Contents/Resources/app.asar
 2. 当前安装版本：26.1007.21159，build 20052。
    /Applications/ChatGPT.app/Contents/Resources/app.asar
 3. 当前安装的 CLI：0.162.0-alpha.17.2。

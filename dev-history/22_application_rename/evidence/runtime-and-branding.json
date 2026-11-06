@@ -1,6 +1,6 @@
 {
   "new_integration_state": "configured",
-  "runtime": "/Users/bytedance/Library/Application Support/CodexActivityMonitor/run",
+  "runtime": "~/Library/Application Support/CodexActivityMonitor/run",
   "environment_matches_installation": {
     "CODEX_CLI_PATH": true,
     "CODEX_APP_SERVER_FORCE_CLI": true,

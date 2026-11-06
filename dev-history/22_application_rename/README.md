@@ -20,7 +20,7 @@
 | --- | --- | --- |
 | 产品显示名、README 标题、终端标题 | Codex Progress Monitor / Codex Monitor / Codex Progress | Codex Activity Monitor |
 | GitHub 仓库 | `LiuHanzhang/codex_progress_monitor` | `LiuHanzhang/codex-activity-monitor` |
-| 本地主仓库目录 | `/Users/bytedance/personal/codex_progress_monitor` | `/Users/bytedance/personal/codex-activity-monitor` |
+| 本地主仓库目录 | `~/personal/codex_progress_monitor` | `~/personal/codex-activity-monitor` |
 | Python 发行包名 | `codex-progress-monitor` | `codex-activity-monitor` |
 | Python 模块、源码目录 | `codex_progress_monitor` / `src/codex_progress_monitor/` | `codex_activity_monitor` / `src/codex_activity_monitor/` |
 | CLI、仓库脚本入口 | `codex-progress` / `bin/codex-progress` | `codex-activity-monitor` / `bin/codex-activity-monitor` |

@@ -34,7 +34,7 @@
 
 请求按 backend + requestId 单独记录；自动审核按 reviewId 单独记录，并用 startedAtMs 去重 strict review 占位。它们不会覆盖原工具。带 threadId 的 resolved、客户端回复、重复或乱序结束会清理对应请求；审核通过不会变成进程启动证明。
 
-命令启动采用 `source=unifiedExecStartup/unifiedExecInteraction` 与 processId，或明确的命令输出 / 终端交互。当前源码中 unified exec 的 Begin 在进程创建后发出；app-server 可能在审批前已登记同一 item，抑制后续 canonical started。因此缺少实际启动证据的静默命令仍只能显示“处理中”。依据见 [进程管理器](/Users/bytedance/playground/codex/codex-rs/core/src/unified_exec/process_manager.rs:548) 和 [app-server 转换](/Users/bytedance/playground/codex/codex-rs/app-server/src/bespoke_event_handling.rs:1074)。
+命令启动采用 `source=unifiedExecStartup/unifiedExecInteraction` 与 processId，或明确的命令输出 / 终端交互。当前源码中 unified exec 的 Begin 在进程创建后发出；app-server 可能在审批前已登记同一 item，抑制后续 canonical started。因此缺少实际启动证据的静默命令仍只能显示“处理中”。依据见 [进程管理器](https://github.com/openai/codex/blob/806d9732c974bc8a51b8317c1bd8985544fe627c/codex-rs/core/src/unified_exec/process_manager.rs#L548) 和 [app-server 转换](https://github.com/openai/codex/blob/806d9732c974bc8a51b8317c1bd8985544fe627c/codex-rs/app-server/src/bespoke_event_handling.rs#L1074)。
 
 Code Mode 外层 cell 与嵌套工具的精确生命周期关联仍未取得。新模型输出只能关闭旧“准备上下文”为未知，不能把外层 cell 或后台工具标记为完成。functionCallOutput 的实际来源不是所有工具的通用返回通知，也不能批量关闭 exec。完成 trace 的 execution_started 属于完成后事实；本轮没有扩大 trace 订阅。
 
