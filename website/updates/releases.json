@@ -1,5 +1,11 @@
 [
   {
+    "version": "0.1.1",
+    "build": 7,
+    "prerelease": false,
+    "published_at": "2026-11-07T09:51:40Z"
+  },
+  {
     "version": "0.1.0",
     "build": 6,
     "prerelease": false,
