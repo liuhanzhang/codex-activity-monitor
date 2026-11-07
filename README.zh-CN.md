@@ -5,7 +5,7 @@
   <h1>Codex Activity Monitor</h1>
   <p>一款用于 Codex Desktop 的 macOS 菜单栏监控工具，展示 Token 输出速率、会话统计和 Agent 执行轨迹，类似 DeepSeek Harness 的统计与轨迹视图。</p>
   <p>
-    <a href="https://github.com/LiuHanzhang/codex-activity-monitor/releases/tag/v0.1.0"><img src="https://img.shields.io/badge/release-v0.1.0-3B7A57?style=flat-square" alt="Release v0.1.0"></a>
+    <a href="https://github.com/LiuHanzhang/codex-activity-monitor/releases/tag/v0.1.1"><img src="https://img.shields.io/badge/release-v0.1.1-3B7A57?style=flat-square" alt="Release v0.1.1"></a>
     <img src="https://img.shields.io/badge/macOS-14%2B-black?style=flat-square&amp;logo=apple" alt="macOS 14+">
     <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-3B7A57?style=flat-square" alt="MIT 许可证"></a>
   </p>
@@ -42,7 +42,7 @@
 
 ## 安装
 
-前往 [GitHub Releases](https://github.com/LiuHanzhang/codex-activity-monitor/releases)，在最新发布的 **Assets** 中优先下载名为 `Codex-Activity-Monitor-<版本号>-macos-arm64.dmg` 的 Apple Silicon 安装包。早期版本仅提供同名 ZIP。0.1.0 使用 ad-hoc 签名，尚未经过 Apple 公证；首次打开请按下方步骤手动允许。也可以[从源码构建](#从源码构建)。
+前往 [GitHub Releases](https://github.com/LiuHanzhang/codex-activity-monitor/releases)，在最新发布的 **Assets** 中优先下载名为 `Codex-Activity-Monitor-<版本号>-macos-arm64.dmg` 的 Apple Silicon 安装包。早期版本仅提供同名 ZIP。0.1.1 使用 ad-hoc 签名，尚未经过 Apple 公证；首次打开请按下方步骤手动允许。也可以[从源码构建](#从源码构建)。
 
 ### 运行要求
 

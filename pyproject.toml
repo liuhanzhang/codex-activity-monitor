@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "codex-activity-monitor"
-version = "0.1.0"
+version = "0.1.1"
 description = "Local live activity and received-token feedback for Codex Desktop"
 readme = "README.md"
 license = "MIT"
@@ -17,7 +17,7 @@ codex-activity-monitor = "codex_activity_monitor.cli:main"
 
 [tool.codex-activity-monitor]
 release-prerelease = false
-build-number = 6
+build-number = 7
 sparkle-public-key = "KyP+O/onQT86cTG0qCxPqNMdX1ZH0GT0DXNPm4APC+c="
 update-feed-base = "https://liuhanzhang.github.io/codex-activity-monitor/updates/"
 
