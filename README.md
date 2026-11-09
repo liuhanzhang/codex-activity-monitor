@@ -5,7 +5,7 @@
   <h1>Codex Activity Monitor</h1>
   <p>A macOS menu bar monitor for Codex Desktop with token output rates, session statistics, and agent execution trajectories, similar to DeepSeek Harness’s statistics and trajectory views.</p>
   <p>
-    <a href="https://github.com/LiuHanzhang/codex-activity-monitor/releases/tag/v0.1.1"><img src="https://img.shields.io/badge/release-v0.1.1-3B7A57?style=flat-square" alt="Release v0.1.1"></a>
+    <a href="https://github.com/LiuHanzhang/codex-activity-monitor/releases/tag/v0.1.2"><img src="https://img.shields.io/badge/release-v0.1.2-3B7A57?style=flat-square" alt="Release v0.1.2"></a>
     <img src="https://img.shields.io/badge/macOS-14%2B-black?style=flat-square&amp;logo=apple" alt="macOS 14+">
     <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-3B7A57?style=flat-square" alt="MIT license"></a>
   </p>
@@ -42,7 +42,7 @@ Click a timeline block to open the activity viewer. Read the available user inpu
 
 ## Installation
 
-Go to [GitHub Releases](https://github.com/LiuHanzhang/codex-activity-monitor/releases) and prefer the Apple Silicon installer named `Codex-Activity-Monitor-<version>-macos-arm64.dmg` in the latest release's **Assets**. Earlier releases only provide the corresponding ZIP. Version 0.1.1 uses ad-hoc signing and has no Apple notarization; follow the opening instructions below. You can also [build from source](#build-from-source).
+Go to [GitHub Releases](https://github.com/LiuHanzhang/codex-activity-monitor/releases) and prefer the Apple Silicon installer named `Codex-Activity-Monitor-<version>-macos-arm64.dmg` in the latest release's **Assets**. Earlier releases only provide the corresponding ZIP. Version 0.1.2 uses ad-hoc signing and has no Apple notarization; follow the opening instructions below. You can also [build from source](#build-from-source).
 
 ### Runtime requirements
 
