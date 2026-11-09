@@ -20,6 +20,8 @@ With multiple active root chats, the menu bar shows their available aggregate sp
 
 Click the menu bar item, then select a chat. The list shows its title, project, activity, duration, and token generation speed. Recently completed chats can be expanded below the active list.
 
+The information button beside the connection indicator shows current observation details and any observed subtotal. Connection or operation issues that require attention remain visible in the overview.
+
 The selected chat has a turn selector, a speech-bubble button for its input, and a timeline. Each agent has a model lane above a tool lane. Activities are positioned by recorded times; colored blocks distinguish reasoning, responses, tool input, edits, and tool execution. Short or overlapping activities remain selectable; the viewer can open a group of overlapping tools.
 
 Use `−` and `+` to change the reference scale between 30, 60, and 120 seconds. The displayed visible range can be shorter because agent labels and the window occupy space. Horizontal scrolling pauses automatic following; **Back to latest** resumes it.
@@ -121,7 +123,7 @@ Confirm that the monitor is configured and running. Finish active Codex work, fu
 
 ### Speed displays `—` or `0`
 
-`—` indicates unavailable information. Read the connection indicator or observation notice for the specific cause. `0` is a known zero in the most recent window; reasoning, waiting, and tool work can continue without incoming visible text. A historical gap can coexist with a valid current per-stream rate.
+`—` indicates unavailable information. Check the connection indicator or open its information button for the specific cause. `0` is a known zero in the most recent window; reasoning, waiting, and tool work can continue without incoming visible text. A historical gap can coexist with a valid current per-stream rate.
 
 ### A tool result or reasoning summary is missing
 

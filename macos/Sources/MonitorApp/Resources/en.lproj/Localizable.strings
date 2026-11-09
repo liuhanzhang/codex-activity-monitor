@@ -222,6 +222,7 @@
 "聊天实时状态暂不可用；以下仅为可读取的活动记录。" = "Live chat status is unavailable. Readable activity records are shown below.";
 "菜单栏原尺寸" = "Actual menu bar size";
 "设置" = "Settings";
+"观测状态详情" = "Observation details";
 "该样本不属于所选轮次，未计入本轮统计。" = "This sample belongs to another turn and is excluded from these statistics.";
 "语言" = "Language";
 "语言已切换，本次选择未能保存。" = "Language changed, but the preference could not be saved.";

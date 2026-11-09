@@ -1,5 +1,6 @@
 import AppKit
 import Foundation
+import SwiftUI
 import Testing
 import MonitorModel
 @testable import MonitorApp
@@ -96,6 +97,91 @@ import MonitorModel
         #expect(store.connectionLabel == L("已连接", language: language))
         #expect(store.compactConnectionLabel == L("已连接", language: language))
         #expect(store.connectionDetail == nil)
+    }
+}
+
+@Test @MainActor func observationFluctuationsStaySeparateFromConnectionActions() throws {
+    let store = DashboardStore(configuration: BackendConfiguration(python: "/unused", source_root: "/unused", runtime: "/unused",
+        data_root: "/unused", build_id: "observation-test"), arguments: ["--snapshot", "/unused"])
+    func snapshot(coverage: String, quality: [String], subtotal: Double?, connected: Bool = true) throws -> Snapshot {
+        var overview: [String: Any] = ["version": 1, "coverage": coverage, "quality": quality, "rate_status": "ready"]
+        if let subtotal { overview["observed_subtotal"] = subtotal }
+        return try Snapshot.decode(JSONSerialization.data(withJSONObject: [
+            "schema_version": 1, "running": true, "updated_at": Date().timeIntervalSince1970, "threads": [],
+            "overview": overview,
+            "backends": ["b": ["connected": connected, "implementation": ["modules": ["observer_permit": "test"]]]]]))
+    }
+    store.fresh = true
+    for language: MonitorLanguage in [.chinese, .english] {
+        store.setLanguage(language)
+        store.snapshot = try snapshot(coverage: "partial", quality: ["unassociated_events"], subtotal: 0)
+        #expect(store.connectionActionDetail == nil)
+        #expect(store.observationDetail == L("NoticeAssociatingEvents", language: language))
+        #expect(store.connectionDetail == store.observationDetail)
+        #expect(store.observedSubtotal == 0)
+
+        store.snapshot = try snapshot(coverage: "complete", quality: [], subtotal: 10)
+        #expect(store.connectionActionDetail == nil && store.observationDetail == nil)
+        #expect(store.observedSubtotal == nil)
+
+        store.snapshot = try snapshot(coverage: "unavailable", quality: [], subtotal: nil, connected: false)
+        #expect(store.connectionActionDetail == L("NoticeWaitingForConnection", language: language))
+        #expect(store.observationDetail == nil)
+    }
+}
+
+@Test(.enabled(if: ProcessInfo.processInfo.environment["MONITOR_WINDOW_TESTS"] == "1"))
+@MainActor func observationFluctuationsDoNotResizeTheNativePanel() async throws {
+    _ = NSApplication.shared
+    let store = DashboardStore(configuration: BackendConfiguration(python: "/unused", source_root: "/unused", runtime: "/unused",
+        data_root: "/unused", build_id: "observation-layout-test"), arguments: ["--snapshot", "/unused"])
+    func setSnapshot(_ coverage: String, _ quality: [String], _ subtotal: Double?) throws {
+        var overview: [String: Any] = ["version": 1, "coverage": coverage, "quality": quality,
+                                      "rate_status": subtotal == nil ? "unavailable" : "ready"]
+        if let subtotal { overview["observed_subtotal"] = subtotal }
+        store.snapshot = try Snapshot.decode(JSONSerialization.data(withJSONObject: [
+            "schema_version": 1, "running": true, "updated_at": Date().timeIntervalSince1970, "threads": [],
+            "overview": overview,
+            "backends": ["b": ["connected": true, "implementation": ["modules": ["observer_permit": "test"]]]]]))
+        store.updatePresentation()
+    }
+    try setSnapshot("complete", [], 48)
+    store.panelVisible = true
+    let host = NSHostingView(rootView: DashboardView(store: store, quit: {}))
+    let window = NSWindow(contentRect: NSRect(x: 0, y: 0, width: 420, height: 300),
+                          styleMask: [.titled], backing: .buffered, defer: false)
+    window.contentView = host
+    window.orderFront(nil)
+    defer { window.orderOut(nil) }
+    for language: MonitorLanguage in [.chinese, .english] {
+        store.setLanguage(language)
+        try setSnapshot("complete", [], 48)
+        try await Task.sleep(for: .milliseconds(400))
+        host.layoutSubtreeIfNeeded()
+        let initial = host.fittingSize
+        #expect(initial.height > 0 && initial.height < 800)
+        var measured = [initial.height]
+
+        for (coverage, subtotal) in [("partial", 48.0 as Double?), ("unavailable", nil), ("complete", 48.0)] {
+            try setSnapshot(coverage, coverage == "complete" ? [] : ["unassociated_events"], subtotal)
+            try await Task.sleep(for: .milliseconds(300))
+            host.layoutSubtreeIfNeeded()
+            let height = host.fittingSize.height
+            measured.append(height)
+            #expect(abs(height - initial.height) <= 0.5)
+        }
+        // Confirm the measurement can detect a genuine panel row, and that an
+        // actionable operation failure remains visible instead of being hidden.
+        store.operationError = "管理操作失败，请重试。"
+        try await Task.sleep(for: .milliseconds(300))
+        host.layoutSubtreeIfNeeded()
+        let actionHeight = host.fittingSize.height
+        #expect(actionHeight > initial.height + 5)
+        store.operationError = nil
+        try await Task.sleep(for: .milliseconds(300))
+        host.layoutSubtreeIfNeeded()
+        #expect(abs(host.fittingSize.height - initial.height) <= 0.5)
+        print("OBSERVATION_PANEL_HEIGHTS \(language.rawValue): \(measured)")
     }
 }
 

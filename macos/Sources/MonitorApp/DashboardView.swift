@@ -2,6 +2,7 @@ import SwiftUI
 import MonitorModel
 
 private struct RestoreRequest: Identifiable { let id = UUID() }
+private struct ObservationRequest: Identifiable { let id = UUID() }
 
 struct DashboardView: LocalizedView {
     var language: MonitorLanguage { store.language }
@@ -15,6 +16,7 @@ struct DashboardView: LocalizedView {
     @State private var controlsHeight: CGFloat = 0
     @State private var detailHeight: CGFloat = 180
     @State private var noticeExpanded = false
+    @State private var observationRequest: ObservationRequest?
 
     private var budget: PanelLayoutBudget {
         PanelLayoutBudget(maximum: store.panelMaxHeight,
@@ -78,7 +80,9 @@ struct DashboardView: LocalizedView {
         }
         .frame(width: 420)
         .environment(store.auxiliary)
-        .onChange(of: store.dismissPresentation) { restoreRequest = nil }
+        .onChange(of: store.dismissPresentation) { restoreRequest = nil; observationRequest = nil }
+        .onChange(of: store.panelVisible) { if !store.panelVisible { observationRequest = nil } }
+        .onDisappear { observationRequest = nil }
         .onGeometryChange(for: CGSize.self) { $0.size } action: { onSizeChange($0) }
         .environment(\.monitorLanguage, store.language)
         .environment(\.locale, store.language.locale)
@@ -129,8 +133,38 @@ struct DashboardView: LocalizedView {
                 .frame(width: 6, height: 6).accessibilityHidden(true)
             Text(store.compactConnectionLabel).font(.system(size: 11)).foregroundStyle(.secondary)
                 .lineLimit(1).help(store.connectionLabel)
+            Button { observationRequest = ObservationRequest() } label: {
+                Image(systemName: "info.circle").font(.system(size: 11))
+            }
+            .buttonStyle(.borderless).foregroundStyle(.secondary)
+            .help(store.connectionDetail ?? store.connectionLabel)
+            .accessibilityLabel(L("观测状态详情"))
+            .accessibilityIdentifier("monitor.notice")
+            .popover(item: $observationRequest, arrowEdge: .bottom) { request in
+                PanelAuxiliaryContent(id: request.id, close: { observationRequest = nil }) {
+                    observationDetails.padding(14).frame(width: 300)
+                }
+            }
             settings
         }.font(.system(size: 12))
+    }
+
+    private var observationDetails: some View {
+        VStack(alignment: .leading, spacing: 7) {
+            HStack {
+                Text(L("观测状态详情")).fontWeight(.medium)
+                Spacer()
+                Button { observationRequest = nil } label: { Image(systemName: "xmark") }
+                    .buttonStyle(.borderless).accessibilityLabel(L("关闭提示"))
+            }
+            Text(store.connectionDetail ?? store.connectionLabel).textSelection(.enabled)
+            if let subtotal = store.observedSubtotal {
+                Text(String(format: L("已观测小计 %@"), MetricFormat.compactSpeed(subtotal)))
+                    .help(MetricFormat.speed(subtotal))
+            }
+        }
+        .font(.system(size: 11)).foregroundStyle(.secondary)
+        .lineLimit(nil).fixedSize(horizontal: false, vertical: true)
     }
 
     @ViewBuilder private var notices: some View {
@@ -144,7 +178,7 @@ struct DashboardView: LocalizedView {
             .font(.system(size: 11)).foregroundStyle(.red)
             .padding(.horizontal, 14).padding(.bottom, 10)
         }
-        if let notice = store.connectionDetail {
+        if let notice = store.connectionActionDetail {
             Button { noticeExpanded.toggle() } label: {
                 HStack(alignment: .top, spacing: 7) {
                     Image(systemName: "info.circle")
@@ -154,16 +188,8 @@ struct DashboardView: LocalizedView {
                 }.contentShape(Rectangle())
             }
             .buttonStyle(.plain).font(.system(size: 11)).foregroundStyle(.secondary)
-            .help(notice).accessibilityIdentifier("monitor.notice")
+            .help(notice).accessibilityIdentifier("monitor.connectionAction")
             .padding(.horizontal, 14).padding(.bottom, 10)
-        }
-        if store.fresh, store.snapshot?.overview?.coverage == "partial",
-           let subtotal = store.snapshot?.overview?.observed_subtotal {
-            Text(String(format: L("已观测小计 %@"), MetricFormat.compactSpeed(subtotal)))
-                .help(MetricFormat.speed(subtotal))
-                .font(.system(size: 11)).foregroundStyle(.secondary)
-                .frame(maxWidth: .infinity, alignment: .leading)
-                .padding(.horizontal, 14).padding(.bottom, 10)
         }
     }
 

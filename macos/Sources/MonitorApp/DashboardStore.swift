@@ -478,13 +478,29 @@ final class DashboardStore {
         return L("等待接入")
     }
 
-    var connectionDetail: String? {
+    var connectionActionDetail: String? {
         if bridgeNeedsRestart { return L("旧接入仍在运行；任务结束后重开 Codex，以启用退出暂停采集。") }
         if management?.configured == true, management?.integration_status?.restart == "required" { return integrationStatusText }
         if !readOnly, let management, !management.configured { return management.localizedLabel(language) }
         if !fresh { return connectionLabel }
-        if let notice = snapshot?.observationNotice { return L(notice.rawValue) }
+        if let notice = snapshot?.observationNotice, [.waitingForConnection, .resourceLimit].contains(notice) {
+            return L(notice.rawValue)
+        }
         return nil
+    }
+
+    var observationDetail: String? {
+        guard connectionActionDetail == nil, let notice = snapshot?.observationNotice else { return nil }
+        return L(notice.rawValue)
+    }
+
+    var connectionDetail: String? { connectionActionDetail ?? observationDetail }
+
+    var observedSubtotal: Double? {
+        guard fresh, snapshot?.overview?.coverage == "partial",
+              let subtotal = snapshot?.overview?.observed_subtotal,
+              subtotal.isFinite, subtotal >= 0 else { return nil }
+        return subtotal
     }
 
     private func bootstrap() async {
