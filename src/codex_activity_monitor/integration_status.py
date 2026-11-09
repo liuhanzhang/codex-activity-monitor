@@ -79,6 +79,7 @@ def inspect_integration(control, receipt, state):
     from .app_session import process_identity
     try:
         records = runtime / 'bridges'
+        resident_bridges = 0
         for index, path in enumerate(records.glob('*.json')):
             if index >= 32 or time.monotonic() > deadline:
                 result['reasons'].append('process_check_incomplete')
@@ -102,18 +103,29 @@ def inspect_integration(control, receipt, state):
                 result['unknown_bridges'] += 1
             elif info.get('identity') != identity:
                 continue
-            elif (revision and info.get('configuration_revision') == revision and
-                  info.get('configuration_matches') is True and info.get('observation_protocol') == 1):
-                result['matching_bridges'] += 1
             else:
-                # A verified resident bridge without startup revision evidence
-                # predates that evidence. A restart is needed to establish the
-                # current integration, even if its observation protocol works.
-                result['old_bridges'] += 1
+                resident_bridges += 1
+                if (revision and info.get('configuration_revision') == revision and
+                        info.get('observation_protocol') == 1):
+                    if info.get('configuration_matches') is True:
+                        result['matching_bridges'] += 1
+                    else:
+                        # Tool subprocesses can inherit the current revision but
+                        # different routing settings. That does not prove age,
+                        # or that restarting Codex would change those settings.
+                        result['unknown_bridges'] += 1
+                        reason = ('startup_environment_mismatch' if info.get('configuration_matches') is False
+                                  else 'startup_evidence_incomplete')
+                        if reason not in result['reasons']:
+                            result['reasons'].append(reason)
+                else:
+                    # A different revision or a legacy bridge still requires
+                    # restarting to establish the current integration.
+                    result['old_bridges'] += 1
         probe = getattr(control.services, 'inspect_dependents', control.services.dependents)
         dependencies = probe(receipt)
         visible = not any(p.get('reason') == 'process_visibility_unknown' for p in dependencies)
-        running = any(p.get('reason') in ('codex_running', 'bridge_running') for p in dependencies) or bool(result['matching_bridges'] or result['old_bridges'])
+        running = any(p.get('reason') in ('codex_running', 'bridge_running') for p in dependencies) or bool(resident_bridges)
         result['processes_running'] = running if visible else None
         old_hosts = False
         for process in receipt.get('restart_processes', [])[:32]:

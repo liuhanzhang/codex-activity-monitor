@@ -2,6 +2,16 @@ import Foundation
 import MonitorModel
 
 extension DashboardStore {
+    var integrationObservationDetail: String? {
+        guard let status = management?.integration_status, status.version == 1,
+              status.confirmedEnabled == true else { return nil }
+        if status.reasons?.contains("startup_environment_mismatch") == true {
+            return localizedText("部分连接的启动配置不同，接入状态暂无法确认。", language: language)
+        }
+        if status.reasons?.contains("startup_evidence_incomplete") == true { return integrationStatusText }
+        return nil
+    }
+
     var integrationEnabled: Bool { management?.integration_status?.confirmedEnabled ?? management?.configured ?? false }
     var integrationCanToggle: Bool {
         !readOnly && !busy && management != nil && management?.waitingForCleanup != true &&

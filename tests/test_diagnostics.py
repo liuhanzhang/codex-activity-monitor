@@ -286,6 +286,66 @@ class IntegrationEvidenceTests(unittest.TestCase):
             self.control.status()
         self.assertTrue(path.exists())
 
+    def test_current_tool_routing_difference_does_not_require_repeated_restarts(self):
+        revision = self.configure()['integration_status']['configuration_revision']
+        bridges = Path(self.control.status()['runtime']) / 'bridges'
+        bridges.mkdir()
+        parent = dict(self.environment.values)
+        parent.update({REVISION_ENV: revision, EXPECTED_ENV: fingerprint(parent)})
+        child = {key: value for key, value in parent.items() if key not in KEYS[1:]}
+        for pid, environment in [(101, parent), (102, child)]:
+            (bridges / f'{pid}.json').write_text(json.dumps({
+                'pid': pid, 'identity': 'current-start', 'observation_protocol': 1,
+                **startup_evidence(environment)}))
+        with patch('codex_activity_monitor.app_session.process_identity', return_value='current-start'):
+            status = self.control.status()['integration_status']
+            self.assertEqual(status['matching_bridges'], 1)
+            self.assertEqual(status['old_bridges'], 0)
+            self.assertEqual(status['unknown_bridges'], 1)
+            self.assertEqual(status['restart'], 'unknown')
+            self.assertEqual(status['reasons'], ['startup_environment_mismatch'])
+            # The helper alone is resident, but not proven fully integrated.
+            (bridges / '101.json').unlink()
+            status = self.control.status()['integration_status']
+            self.assertEqual(status['runtime'], 'waiting_for_connection')
+            self.assertEqual(status['matching_bridges'], 0)
+            self.assertTrue(status['processes_running'])
+            self.assertEqual(status['restart'], 'unknown')
+            # Closing the helper removes the uncertainty without a host restart.
+            (bridges / '102.json').unlink()
+            self.assertEqual(self.control.status()['integration_status']['restart'], 'not_required')
+
+    def test_current_revision_with_incomplete_proof_is_neither_old_nor_matching(self):
+        revision = self.configure()['integration_status']['configuration_revision']
+        bridges = Path(self.control.status()['runtime']) / 'bridges'
+        bridges.mkdir()
+        for proof in [{}, {'configuration_matches': None}, {'configuration_matches': 1}]:
+            with self.subTest(proof=proof):
+                (bridges / 'current.json').write_text(json.dumps({
+                    'pid': 101, 'identity': 'current-start', 'observation_protocol': 1,
+                    'configuration_revision': revision, **proof}))
+                with patch('codex_activity_monitor.app_session.process_identity', return_value='current-start'):
+                    status = self.control.status()['integration_status']
+                self.assertEqual(status['old_bridges'], 0)
+                self.assertEqual(status['matching_bridges'], 0)
+                self.assertEqual(status['unknown_bridges'], 1)
+                self.assertEqual(status['restart'], 'unknown')
+                self.assertIn('startup_evidence_incomplete', status['reasons'])
+
+    def test_current_environment_mismatch_does_not_hide_a_real_old_revision(self):
+        revision = self.configure()['integration_status']['configuration_revision']
+        bridges = Path(self.control.status()['runtime']) / 'bridges'
+        bridges.mkdir()
+        for pid, version in [(101, revision), (102, 'previous-revision')]:
+            (bridges / f'{pid}.json').write_text(json.dumps({
+                'pid': pid, 'identity': 'resident-start', 'observation_protocol': 1,
+                'configuration_revision': version, 'configuration_matches': False}))
+        with patch('codex_activity_monitor.app_session.process_identity', return_value='resident-start'):
+            status = self.control.status()['integration_status']
+        self.assertEqual(status['unknown_bridges'], 1)
+        self.assertEqual(status['old_bridges'], 1)
+        self.assertEqual(status['restart'], 'required')
+
     def test_restore_keeps_diagnostics_and_purge_refuses_unknown_log_files(self):
         self.configure()
         log = DiagnosticLog(self.control.root / 'diagnostics', 'management')

@@ -170,6 +170,20 @@ import MonitorModel
             measured.append(height)
             #expect(abs(height - initial.height) <= 0.5)
         }
+        for mismatch in [true, false] {
+            let management: [String: Any] = ["version": 1, "ok": true, "state": "configured",
+                "integration_status": ["version": 1, "configuration": "enabled", "operation": "idle",
+                    "runtime": "awaiting_handshake", "restart": mismatch ? "unknown" : "not_required",
+                    "matching_bridges": 1, "old_bridges": 0, "unknown_bridges": mismatch ? 1 : 0,
+                    "reasons": mismatch ? ["startup_environment_mismatch"] : []]]
+            store.management = try JSONDecoder().decode(ManagementState.self, from: JSONSerialization.data(withJSONObject: management))
+            try await Task.sleep(for: .milliseconds(300))
+            host.layoutSubtreeIfNeeded()
+            let height = host.fittingSize.height
+            measured.append(height)
+            #expect(store.connectionActionDetail == nil)
+            #expect(abs(height - initial.height) <= 0.5)
+        }
         // Confirm the measurement can detect a genuine panel row, and that an
         // actionable operation failure remains visible instead of being hidden.
         store.operationError = "管理操作失败，请重试。"

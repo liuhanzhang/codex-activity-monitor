@@ -65,6 +65,34 @@ private func management(_ configuration: String, runtime: String = "awaiting_han
     #expect(store.connectionDetail?.contains("完全退出并重新打开 Codex") == true)
 }
 
+@Test @MainActor func currentStartupDifferencesStayInInfoWithoutAFalseRestartBanner() throws {
+    let store = DashboardStore(configuration: BackendConfiguration(python: "/unused", source_root: "/unused", runtime: "/unused",
+        data_root: "/unused", build_id: "startup-difference"), arguments: ["--snapshot", "/unused"])
+    let object: [String: Any] = ["version": 1, "ok": true, "state": "configured",
+        "integration_status": ["version": 1, "configuration": "enabled", "operation": "idle", "runtime": "awaiting_handshake",
+            "restart": "unknown", "configuration_revision": "revision-example", "matching_bridges": 1,
+            "old_bridges": 0, "unknown_bridges": 1, "reasons": ["startup_environment_mismatch"]]]
+    store.management = try JSONDecoder().decode(ManagementState.self, from: JSONSerialization.data(withJSONObject: object))
+    store.snapshot = try Snapshot.decode(JSONSerialization.data(withJSONObject: [
+        "schema_version": 1, "threads": [], "overview": ["version": 1, "coverage": "complete"],
+        "backends": ["b": ["connected": true, "configuration_revision": "revision-example", "configuration_matches": true,
+                           "implementation": ["modules": ["observer_permit": "current"]]]]]))
+    store.fresh = true
+    for language: MonitorLanguage in [.chinese, .english] {
+        store.setLanguage(language)
+        #expect(store.connectionActionDetail == nil)
+        #expect(store.connectionDetail == L("部分连接的启动配置不同，接入状态暂无法确认。", language: language))
+        #expect(!store.diagnosticComponents.contains { $0.code == "restart_required" })
+    }
+    store.snapshot = try Snapshot.decode(JSONSerialization.data(withJSONObject: [
+        "schema_version": 1, "threads": [],
+        "overview": ["version": 1, "coverage": "partial", "quality": ["unassociated_events"]],
+        "backends": ["b": ["connected": true, "implementation": ["modules": ["observer_permit": "current"]]]]]))
+    #expect(store.connectionActionDetail == nil)
+    #expect(store.connectionDetail?.contains(L("NoticeAssociatingEvents", language: .english)) == true)
+    #expect(store.connectionDetail?.contains(L("部分连接的启动配置不同，接入状态暂无法确认。", language: .english)) == true)
+}
+
 @Test @MainActor func restoredConfigurationAndPendingRestartRemainSeparate() throws {
     let store = dashboard()
     store.management = try management("disabled", runtime: "disabled", restart: "required")

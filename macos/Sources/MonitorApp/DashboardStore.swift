@@ -157,6 +157,8 @@ final class DashboardStore {
     @ObservationIgnored private var stateSubscriptionKey: String?
     @ObservationIgnored private var stateSubscriptionGeneration = 0
     @ObservationIgnored private var healthClock: Task<Void, Never>?
+    @ObservationIgnored private var menuSamplingDeadline: ContinuousClock.Instant?
+    @ObservationIgnored private var menuSamplingExpiry: Task<Void, Never>?
     private var liveState: StateUpdate?
     var liveInstanceID: String? { liveState?.instanceID }
     var liveSequence: UInt64? { liveState?.sequence }
@@ -357,15 +359,17 @@ final class DashboardStore {
         onUpdate?()
     }
 
-    func updatePresentation(at date: Date = Date(), projectionElapsed elapsed: Double? = nil) {
+    func updatePresentation(at date: Date = Date(), projectionElapsed elapsed: Double? = nil,
+                            menuTime: ContinuousClock.Instant = .now) {
         let elapsed = elapsed ?? projectionElapsed
         if chatSelection?.nextExpiry.map({ elapsed >= $0 }) == true {
             chatSelection = snapshot?.projection.selection(elapsed: elapsed)
         }
         let connectionFresh = usesLiveState ? liveState?.isFresh == true : nil
         fresh = readError == nil && (connectionFresh ?? (snapshot?.isFresh(at: date) == true))
-        menuTitle = fresh ? (snapshot?.menuTitle(at: date, connectionFresh: connectionFresh, language: language) ?? "—") : "—"
-        menuMode = fresh ? (snapshot?.menuMode(at: date, connectionFresh: connectionFresh) ?? .unavailable) : .unavailable
+        let title = fresh ? (snapshot?.menuTitle(at: date, connectionFresh: connectionFresh, language: language) ?? "—") : "—"
+        let mode = fresh ? (snapshot?.menuMode(at: date, connectionFresh: connectionFresh) ?? .unavailable) : .unavailable
+        updateMenuPresentation(title: title, mode: mode, now: menuTime)
         let chats = snapshot?.threads ?? []
         let ids = Set(chats.map(\.id))
         chatOrder = chatOrder.filter { ids.contains($0.key) }
@@ -375,6 +379,35 @@ final class DashboardStore {
         }
         reconcileSelection()
         timelines = timelines.filter { ids.contains($0.key) || $0.key == selectedChatKey }
+    }
+
+    private func updateMenuPresentation(title: String, mode: MenuMode, now: ContinuousClock.Instant) {
+        // Only bridge the first asynchronous count of an otherwise healthy stream.
+        // Snapshot metrics remain unchanged; faults and stale connections bypass this.
+        if !closing, fresh, snapshot?.isMeasuringSpeed == true, title == "—",
+           menuTitle != "—", menuMode != .unavailable {
+            if menuSamplingDeadline == nil {
+                let deadline = now.advanced(by: .milliseconds(500))
+                menuSamplingDeadline = deadline
+                menuSamplingExpiry = Task { [weak self] in
+                    do { try await Task.sleep(until: deadline, clock: .continuous) }
+                    catch { return }
+                    guard let self, !closing, menuSamplingDeadline == deadline else { return }
+                    updatePresentation()
+                    onUpdate?()
+                }
+            }
+            if let deadline = menuSamplingDeadline, now < deadline { return }
+        }
+        clearMenuSampling()
+        menuTitle = title
+        menuMode = mode
+    }
+
+    private func clearMenuSampling() {
+        menuSamplingExpiry?.cancel()
+        menuSamplingExpiry = nil
+        menuSamplingDeadline = nil
     }
 
     var selectedChat: Chat? {
@@ -494,7 +527,11 @@ final class DashboardStore {
         return L(notice.rawValue)
     }
 
-    var connectionDetail: String? { connectionActionDetail ?? observationDetail }
+    var connectionDetail: String? {
+        if let connectionActionDetail { return connectionActionDetail }
+        let details = [observationDetail, integrationObservationDetail].compactMap { $0 }
+        return details.isEmpty ? nil : details.joined(separator: "\n\n")
+    }
 
     var observedSubtotal: Double? {
         guard fresh, snapshot?.overview?.coverage == "partial",
@@ -607,6 +644,7 @@ final class DashboardStore {
 
     private func finishPurge() {
         closing = true
+        clearMenuSampling()
         updates.stop()
         polling?.cancel()
         snapshotWatching?.cancel()
@@ -620,6 +658,7 @@ final class DashboardStore {
         guard !busy else { operationError = "管理操作仍在完成，请稍后退出。"; return false }
         let ownedSession = lease != nil
         closing = true
+        clearMenuSampling()
         await waitForLanguageSave()
         if let stateConnection { _ = await stateConnection.release() }
         guard !readOnly, management?.state != "purged" else {

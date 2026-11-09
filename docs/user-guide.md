@@ -16,11 +16,15 @@ The current app targets local Codex Desktop observation on macOS 14+. The deploy
 
 With multiple active root chats, the menu bar shows their available aggregate speed. Explicitly associated subagents belong to their parent's group. A zero is a known measurement, not proof that work has stopped. The app cannot measure hidden reasoning speed.
 
+While a healthy stream waits for its first token count, the menu bar can retain its previous display for up to half a second to avoid a brief flicker. A new measurement appears immediately. Longer waits show `—`; disconnections and measurement failures show it immediately. This display grace does not change the underlying speed calculation.
+
 ## Use the overview and timeline
 
 Click the menu bar item, then select a chat. The list shows its title, project, activity, duration, and token generation speed. Recently completed chats can be expanded below the active list.
 
 The information button beside the connection indicator shows current observation details and any observed subtotal. Connection or operation issues that require attention remain visible in the overview.
+
+Tool connections using the current integration can have different startup settings. Monitor lists this uncertainty in the information popover; that difference alone does not mean Codex needs another restart. Verified earlier processes or integration versions still trigger the restart reminder.
 
 The selected chat has a turn selector, a speech-bubble button for its input, and a timeline. Each agent has a model lane above a tool lane. Activities are positioned by recorded times; colored blocks distinguish reasoning, responses, tool input, edits, and tool execution. Short or overlapping activities remain selectable; the viewer can open a group of overlapping tools.
 

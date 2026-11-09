@@ -28,6 +28,7 @@
 "NoticeStreamUnavailable" = "Some current generation rates are unavailable.";
 "NoticeTotalUnavailable" = "This connection does not currently provide total speed data.";
 "NoticeWaitingForConnection" = "If Codex is already open, reopen it after your tasks finish to connect.";
+"部分连接的启动配置不同，接入状态暂无法确认。" = "Some connections use different startup settings; their integration status is unverified.";
 "Quit" = "Quit Codex Activity Monitor";
 "ReadOnly" = "Read-only preview";
 "Restore" = "Restore configuration…";

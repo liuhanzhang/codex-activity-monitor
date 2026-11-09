@@ -28,6 +28,7 @@
 "NoticeStreamUnavailable" = "部分当前生成速度暂不可用。";
 "NoticeTotalUnavailable" = "当前接入暂不提供总速度数据。";
 "NoticeWaitingForConnection" = "若 Codex 已经打开，请在任务结束后重开以接入。";
+"部分连接的启动配置不同，接入状态暂无法确认。" = "部分连接的启动配置不同，接入状态暂无法确认。";
 "Quit" = "退出 Codex Activity Monitor";
 "ReadOnly" = "只读预览";
 "Restore" = "恢复配置…";
