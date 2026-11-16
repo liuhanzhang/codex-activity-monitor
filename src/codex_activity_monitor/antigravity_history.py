@@ -61,11 +61,14 @@ class TranscriptIndex:
 
     def __init__(self, path, scope, thread):
         self.path, self.scope, self.thread = path, scope, thread
+        self._reset()
+
+    def _reset(self):
         self.turns, self.phases = OrderedDict(), OrderedDict()
         self.refs, self.usage, self.relations, self.outputs = {}, {}, {}, {}
         self.spawn_calls, self.quality, self.seed_phase_ids = set(), set(), set()
         self.agent_metadata = {}
-        self.request_rates = RequestRateBook(thread)
+        self.request_rates = RequestRateBook(self.thread)
         self.revision = self.offset = 0
         self.fingerprint = self.generation = self.stamp = self.anchor = None
         self.trajectory_snapshot = (None, None)
@@ -83,7 +86,7 @@ class TranscriptIndex:
             if (self.stamp is None or before[:2] != self.stamp[:2] or before[2] <= self.stamp[2] or
                     anchor != self.anchor):
                 offset = self.revision + 1
-                self.__init__(self.path, self.scope, self.thread)
+                self._reset()
                 self.revision = offset
                 self.fingerprint = before[:2]
                 self.generation = identity(self.path.name, before)
@@ -168,16 +171,24 @@ class TranscriptIndex:
         row = json.loads(line)
         return detail_result(history_step(row), part, source='antigravity_history', calls=row.get('tool_calls'))
 
-    def trajectory_turn(self, turn, read_steps):
+    def trajectory_request(self, turn):
+        cached_turn, _ = self.trajectory_snapshot
+        if cached_turn == turn:
+            return None
+        record = self.turns.get(turn)
+        return record['step_index'] if record is not None else None
+
+    def trajectory_turn(self, turn, read_steps=None, *, prefetched=None):
         """Recover the selected turn's timings without retaining trajectory bodies."""
         cached_turn, cached = self.trajectory_snapshot
         if cached_turn == turn:
-            return cached
+            return deepcopy(cached)
         record = self.turns.get(turn)
         if record is None:
             return None
         first, last = record['step_index'], record['last_step_index']
-        rows = read_steps(self.scope, self.thread, first)
+        rows = prefetched if prefetched is not None else (
+            read_steps(self.scope, self.thread, first) if read_steps else [])
         if not rows:
             return None
         phases, requests, bounds = [], {}, {}
@@ -207,7 +218,7 @@ class TranscriptIndex:
         projection = {'phases': phases, 'model_requests': requests, 'bounds': bounds}
         if last-first < len(rows):
             self.trajectory_snapshot = (turn, projection)
-        return projection
+        return deepcopy(projection)
 
     def reconciliation(self, turns):
         selected = set(turns)
@@ -219,21 +230,3 @@ class TranscriptIndex:
                 'phases': [deepcopy(p) for p in self.phases.values() if p['turn_id'] in selected],
                 'step_usage': [(turn, index, dict(value)) for (turn, index), value in self.usage.items()
                                if turn in selected]}
-
-
-class AntigravityHistory:
-    def __init__(self):
-        self.indices = OrderedDict()
-
-    def index(self, scope, thread):
-        path = transcript_path(scope, thread)
-        key = scope, thread
-        index = self.indices.pop(key, None) or TranscriptIndex(path, scope, thread)
-        try:
-            index.refresh()
-        except FileNotFoundError:
-            return None
-        self.indices[key] = index
-        while len(self.indices) > 8:
-            self.indices.popitem(last=False)
-        return index

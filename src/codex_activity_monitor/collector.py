@@ -367,7 +367,8 @@ def serve(runtime, diagnostic_log=None):
                                                    'quality':[e for e in (timeline_error, timeline_store.error if timeline_store else None) if e]}
                     query_error = 'query_unavailable' if query_thread is not None and not query_thread.is_alive() else timeline_error
                     snapshot['diagnostics'] = health.snapshot(engine, history, timeline_store, query_error,
-                                                              writer.diagnostics(), now, antigravity=antigravity.status)
+                                                              writer.diagnostics(), now, antigravity=antigravity.status,
+                                                              observe_codex=observe_codex)
                 retain_history(snapshot)
                 identities.enrich(snapshot['threads'])
                 snapshot['menu_presentation'] = menu_presentation(engine, snapshot['threads'], snapshot['overview'])

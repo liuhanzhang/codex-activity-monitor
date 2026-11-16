@@ -61,16 +61,29 @@ class TimelineQuery:
                 record.update(status='unknown', quality=sorted(set(record.get('quality', [])) | {'observation_stopped'}))
         return result
 
-    def bundle(self, scope, thread, selected=None):
+    def _locked_bundle(self, scope, thread, selected, prefetched):
         with self.history.lock:
             for attempt in range(2):
                 try:
-                    return self._bundle(scope, thread, selected)
+                    return self._bundle(scope, thread, selected, prefetched)
                 except HistoryChanged:
                     if attempt:
                         raise
 
-    def _bundle(self, scope, thread, selected=None):
+    def bundle(self, scope, thread, selected=None):
+        result, needed = self._locked_bundle(scope, thread, selected, None)
+        if not needed:
+            return result
+        prefetched = {}
+        for owner, first in needed:
+            try:
+                prefetched[owner, first] = self.read_antigravity_steps(scope, owner, first)
+            except RPC_ERRORS:
+                prefetched[owner, first] = []
+        result, _ = self._locked_bundle(scope, thread, selected, prefetched)
+        return result
+
+    def _bundle(self, scope, thread, selected=None, prefetched=None):
         antigravity = antigravity_scope(scope)
         observed = self._observed(scope, thread)
         phases = {p['id']: p for p in observed['phases']}
@@ -228,15 +241,29 @@ class TimelineQuery:
         present_agents(agents, loaded, engine_names)
         recovered_requests = {}
         if self.read_antigravity_steps and antigravity:
+            if prefetched is None:
+                needed = []
+                for owner, owner_turn in owners:
+                    index = loaded[owner]
+                    record = turns.get((owner, owner_turn))
+                    if not index or not record or record['status'] == 'active':
+                        continue
+                    first = index.trajectory_request(owner_turn)
+                    if first is not None and (owner, first) not in needed:
+                        needed.append((owner, first))
+                if needed:
+                    return None, needed
             for owner, owner_turn in owners:
                 index = loaded[owner]
                 record = turns.get((owner, owner_turn))
                 if not index or not record or record['status'] == 'active':
                     continue
-                try:
-                    trajectory = index.trajectory_turn(owner_turn, self.read_antigravity_steps)
-                except RPC_ERRORS:
+                first = index.trajectory_request(owner_turn)
+                steps = prefetched.get((owner, first)) if prefetched and first is not None else None
+                if first is not None and not steps:
                     continue
+                trajectory = self.history.trajectory_turn(scope, owner, owner_turn,
+                                                          prefetched=steps, fallback=index)
                 if trajectory:
                     record.update(trajectory['bounds'])
                     if owner == thread:
@@ -333,16 +360,23 @@ class TimelineQuery:
         if average and root_index and root_index.quality:
             average = {**average, 'quality': sorted(set(average['quality']) | root_index.quality),
                        'coverage': 'partial' if average['coverage'] == 'complete' else average['coverage']}
-        return {'version': 1, 'scope_id': scope, 'thread_id': thread, 'selected_turn_id': selected,
-                'average_speed': average,
-                'current_turn_id': current, 'turns': recent, 'agents': agents,
-                'phases': [p for p in visible if p['track'] != 'marker'],
-                'markers': [p for p in visible if p['track'] == 'marker'],
-                'origin_ms': start, 'end_ms': end, 'earlier_active_turns': earlier,
-                'quality': sorted(quality), 'revision': identity(revisions, selected), 'now_ms': time.time() * 1000}
+        return ({'version': 1, 'scope_id': scope, 'thread_id': thread, 'selected_turn_id': selected,
+                 'average_speed': average,
+                 'current_turn_id': current, 'turns': recent, 'agents': agents,
+                 'phases': [p for p in visible if p['track'] != 'marker'],
+                 'markers': [p for p in visible if p['track'] == 'marker'],
+                 'origin_ms': start, 'end_ms': end, 'earlier_active_turns': earlier,
+                 'quality': sorted(quality), 'revision': identity(revisions, selected), 'now_ms': time.time() * 1000},
+                [])
 
     def detail(self, scope, thread, turn, phase_id, section_id=None, offset=0, limit=262144, *,
                page_token=None, remote_detail=None):
+        with self.history.lock:
+            return self._detail(scope, thread, turn, phase_id, section_id, offset, limit,
+                                page_token=page_token, remote_detail=remote_detail)
+
+    def _detail(self, scope, thread, turn, phase_id, section_id=None, offset=0, limit=262144, *,
+                page_token=None, remote_detail=None):
         version = page_request(scope, thread, turn, phase_id, section_id, offset, page_token)
         observed = self._observed(scope, thread)
         phase = next((p for p in observed['phases'] if p['id'] == phase_id and p['thread_id'] == thread and p['turn_id'] == turn), None)
@@ -466,14 +500,14 @@ class TimelineQuery:
     def query(self, request):
         request = TimelineRequest.parse(request)
         scope, thread = request.scope_id, request.thread_id
-        remote = self._antigravity_detail(request) if request.action == 'detail' else None
-        # Serialise each provider's offset/index updates, not the collector event loop.
-        with self.history.lock:
-            if request.action == 'detail':
-                return self.detail(scope, thread, request.turn_id, request.phase_id,
-                                   request.section_id, request.offset, page_token=request.page_token, remote_detail=remote)
-            if request.action == 'timeline':
-                return self.bundle(scope, thread, request.turn_id)
+        # Serialise each provider's offset/index updates, not the collector event loop
+        # or out-of-process trajectory RPCs.
+        if request.action == 'detail':
+            remote = self._antigravity_detail(request)
+            return self.detail(scope, thread, request.turn_id, request.phase_id,
+                               request.section_id, request.offset, page_token=request.page_token, remote_detail=remote)
+        if request.action == 'timeline':
+            return self.bundle(scope, thread, request.turn_id)
         raise ValueError('unsupported_query')
 
 

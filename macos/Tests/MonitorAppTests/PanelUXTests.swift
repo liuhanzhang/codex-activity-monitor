@@ -53,6 +53,21 @@ import MonitorModel
     #expect(ChatRowView(chat: root, store: store).speedTitle == "—")
 }
 
+@Test @MainActor func groupedSpeedMarksApproximateRatesFromSubagentsAndResolvesSourceDisplayName() throws {
+    let store = try panelStore([
+        ["id": "root", "home": "ag", "source": "antigravity", "has_active_work": false],
+        ["id": "child", "home": "ag", "source": "antigravity", "parent_thread_id": "root",
+         "has_active_work": true, "generation_rate": 25, "generation_estimated": true],
+        ["id": "codex-root", "home": "cx", "has_active_work": true, "generation_rate": 15, "generation_estimated": true]
+    ])
+    store.panelVisible = true
+    let chats = store.visibleChats
+    #expect(chats.map { ChatRowView(chat: $0, store: store).speedTitle } == ["≈25 T/s", "15 T/s"])
+    #expect(chats[0].sourceDisplayName(multiSourceEnabled: false) == "Antigravity")
+    #expect(chats[1].sourceDisplayName(multiSourceEnabled: false) == nil)
+    #expect(chats[1].sourceDisplayName(multiSourceEnabled: true) == "Codex")
+}
+
 @Test @MainActor func selectionAndStableOrderSurviveRefreshAndNewWork() throws {
     let a: [String: Any] = ["id": "a", "has_active_work": true]
     let b: [String: Any] = ["id": "b", "has_active_work": true]

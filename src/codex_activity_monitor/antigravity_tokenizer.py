@@ -14,7 +14,7 @@ REVISION = '4ecc2ba63bcac23ba4a767fc87025b1450f84c9c'
 URL = f'https://huggingface.co/google/gemma-4-E4B-it/resolve/{REVISION}/tokenizer.json'
 SHA256 = '91d9cf86906f78e197021fda88214d448e5c120665d0243a8e776e046986c6bc'
 LICENSE = 'https://www.apache.org/licenses/LICENSE-2.0.txt'
-MODELS = ('gemini-4-argon', 'gemini-3.5-flash', 'gemini-3.1-flash-lite', 'gemini-3.1-pro')
+MODELS = ('gemini-', 'gemma-')
 
 
 def cache_path():

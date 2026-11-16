@@ -17,7 +17,8 @@ class HealthMonitor:
             self.changed_at[name] = now
         return now - self.changed_at.get(name, -1000) < 5
 
-    def snapshot(self, engine, history, metadata, timeline_error, persistence, now=None, *, antigravity=None):
+    def snapshot(self, engine, history, metadata, timeline_error, persistence, now=None, *,
+                 antigravity=None, observe_codex=True):
         now = time.monotonic() if now is None else now
         components = []
 
@@ -44,7 +45,7 @@ class HealthMonitor:
         if connected:
             add('bridge', 'degraded' if recent_gap else 'healthy',
                 'observation_gap' if recent_gap else 'bridge_connected', gaps)
-        else:
+        elif observe_codex:
             add('bridge', 'unknown', 'waiting_for_connection')
         if antigravity and antigravity.get('state') != 'disabled':
             state = antigravity.get('state', 'waiting')

@@ -14,7 +14,7 @@ struct ChatRowView: LocalizedView {
     var speedTitle: String? {
         guard working, let groupSpeed else { return nil }
         guard store.fresh else { return "—" }
-        if let rate = groupSpeed.rate { return (chat.source == "antigravity" ? "≈" : "") + MetricFormat.compactSpeed(rate) }
+        if let rate = groupSpeed.rate { return (groupSpeed.isApproximate ? "≈" : "") + MetricFormat.compactSpeed(rate) }
         return groupSpeed.hasUnavailableMember || !live ? "—" : nil
     }
     private var speedHelp: String {
@@ -31,7 +31,7 @@ struct ChatRowView: LocalizedView {
         case "completed": L("已完成")
         case "failed": L("失败")
         case "interrupted": L("已停止")
-        case "idle" where chat.source == "antigravity": chat.activityLabel(language)
+        case "idle" where chat.retainsIdleHistory: chat.activityLabel(language)
         default: L("状态未知")
         }
     }
@@ -54,8 +54,8 @@ struct ChatRowView: LocalizedView {
                     }
                 }
                 HStack(spacing: 5) {
-                    if chat.source == "antigravity" || store.management?.antigravity_enabled == true {
-                        Text(chat.source == "antigravity" ? "Antigravity" : "Codex").lineLimit(1)
+                    if let sourceName = chat.sourceDisplayName(multiSourceEnabled: store.management?.antigravity_enabled == true) {
+                        Text(sourceName).lineLimit(1)
                         Text("·").accessibilityHidden(true)
                     }
                     if chat.isKnownSubagent {

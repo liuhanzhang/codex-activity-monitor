@@ -171,6 +171,22 @@ print(json.dumps({'elapsed':elapsed,'skipped':skipped}))
         self.assertEqual(recovered['metadata']['state'], 'healthy')
         self.assertTrue(any(call.kwargs.get('transition') == 'recovered' for call in log.emit.call_args_list))
 
+    def test_antigravity_only_observation_omits_idle_codex_bridge_component(self):
+        log = Mock(instance='example')
+        log.diagnostics.return_value = {'last_error': None, 'dropped': 0}
+        engine = Engine(asynchronous_counts=False)
+        self.addCleanup(engine.close)
+        engine.backends['antigravity-1'] = {'connected': True, 'source': 'antigravity'}
+        history = Mock(); history.diagnostics.return_value = {'read_errors': 0}
+        storage = SimpleNamespace(error=None)
+        monitor = HealthMonitor(log)
+        components = {c['component']: c for c in monitor.snapshot(
+            engine, history, storage, None, {'current_error': None}, 10,
+            antigravity={'state': 'connected', 'active': 1}, observe_codex=False)['components']}
+        self.assertNotIn('bridge', components)
+        self.assertEqual(components['antigravity']['state'], 'healthy')
+        self.assertEqual(components['collector']['state'], 'healthy')
+
 
 class IntegrationEvidenceTests(unittest.TestCase):
     setUp = controls.AppControlTests.setUp

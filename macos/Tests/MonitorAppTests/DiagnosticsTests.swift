@@ -103,6 +103,27 @@ private func management(_ configuration: String, runtime: String = "awaiting_han
     #expect(store.diagnosticComponents.contains { $0.component == "management" && $0.state == "unknown" })
 }
 
+@Test @MainActor func antigravityOnlyObservationShowsHealthyConnectionAndBackendComponents() throws {
+    let store = dashboard()
+    let object: [String: Any] = ["version": 1, "ok": true, "state": "restored", "antigravity_enabled": true,
+        "integration_status": ["version": 1, "configuration": "disabled", "operation": "idle",
+                               "runtime": "disabled", "restart": "not_required"]]
+    store.management = try JSONDecoder().decode(ManagementState.self, from: JSONSerialization.data(withJSONObject: object))
+    store.fresh = true
+    store.snapshot = try Snapshot.decode(JSONSerialization.data(withJSONObject: [
+        "schema_version": 1, "threads": [],
+        "backends": ["antigravity-1": ["connected": true, "source": "antigravity"]],
+        "diagnostics": ["version": 1, "instance_id": "ag", "components": [
+            ["component": "collector", "agent": "codex", "state": "healthy", "code": "collector_responsive", "count": 0],
+            ["component": "antigravity", "agent": "antigravity", "state": "healthy", "code": "antigravity_connected", "count": 1]
+        ]]
+    ]))
+    #expect(store.diagnosticComponents.first?.component == "connection")
+    #expect(store.diagnosticComponents.first?.state == "healthy")
+    #expect(store.diagnosticComponents.contains { $0.component == "antigravity" && $0.state == "healthy" })
+    #expect(store.diagnosticComponents.contains { $0.component == "collector" && $0.state == "healthy" })
+}
+
 @Test func missingAndUnknownDiagnosticsDoNotInvalidateActivitySnapshots() throws {
     let original = Data("{\"schema_version\":1,\"threads\":[]}".utf8)
     #expect(try Snapshot.decode(original).diagnostics == nil)

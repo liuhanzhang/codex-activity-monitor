@@ -65,23 +65,28 @@ class AntigravityProjection:
 
     def directory(self, scope, changed, deleted, *, at, wall):
         backend = self.backend(scope)
+        if not self.engine.admit_identities(backend, at=at):
+            return
         self.engine.backends.setdefault(backend, {}).update(home=scope, source='antigravity', connected=True)
         for conversation in deleted:
             self.gap(scope, conversation, at=at, wall=wall)
             self.sessions.pop((scope, conversation), None)
             self.engine.threads.pop((backend, conversation), None)
         for conversation, summary in changed.items():
+            index = summary.get('lastUserInputStepIndex')
+            initial_turn = turn_id(conversation, index) if step_index(index) else None
+            if not self.engine.admit_identities(backend, ('thread', conversation), ('turn', initial_turn), at=at):
+                continue
             thread, cursor = self._thread(scope, conversation)
             annotations = object_value(summary.get('annotations'))
             thread.name = (string(annotations.get('title')) or string(summary.get('summary')))[:256]
             thread.cwd = workspace(summary) or thread.cwd
             if not thread.activities and thread.status != 'inProgress':
                 thread.history_progress_ms = timestamp(summary.get('lastModifiedTime'))
-            index = summary.get('lastUserInputStepIndex')
             if step_index(index):
                 cursor.summary_index = index
                 if thread.turn_id is None:
-                    thread.turn_id = turn_id(conversation, index)
+                    thread.turn_id = initial_turn
             meta = object_value(summary.get('trajectoryMetadata'))
             root = meta.get('rootConversationId')
             cursor.root = root if uuid_string(root) and root != conversation else None
@@ -106,6 +111,9 @@ class AntigravityProjection:
         data = object_value(value.get('update'))
         if data.get('conversationId') != conversation:
             return
+        backend = self.backend(scope)
+        if not self.engine.admit_identities(backend, ('thread', conversation), at=at):
+            return
         thread, cursor = self._thread(scope, conversation)
         trajectory = string(data.get('trajectoryId'))
         if cursor.trajectory and trajectory and trajectory != cursor.trajectory:
@@ -128,6 +136,9 @@ class AntigravityProjection:
             if not step.type:
                 continue
             if step.type == 'USER_INPUT':
+                if not self.engine.admit_identities(thread.backend, ('turn', turn_id(conversation, step.index)),
+                                                    ('item', step_id(conversation, step.index)), at=at):
+                    return
                 self._begin(scope, thread, cursor, step, initial, at, wall)
             anchor = cursor.input_index
             if anchor is None and cursor.summary_index is not None and index >= cursor.summary_index:
@@ -137,17 +148,22 @@ class AntigravityProjection:
             if anchor is None or index < anchor:
                 continue
             turn = turn_id(conversation, anchor)
+            if not self.engine.admit_identities(thread.backend, ('turn', turn),
+                                                ('item', step_id(conversation, index)), at=at):
+                return
             if thread.turn_id is None:
                 thread.turn_id = turn
                 self._turn(scope, thread, turn, wall, status='unknown')
             if step.model and step.type == 'PLANNER_RESPONSE':
                 thread.model = self.models.get(step.model, step.model)
             self._step(scope, thread, turn, step, initial, at, wall)
-            self._children(scope, thread, turn, step)
+            self._children(scope, thread, turn, step, at)
             if step.state in OPEN:
                 cursor.open_steps[index] = turn
             else:
                 cursor.open_steps.pop(index, None)
+                if step.state != 'unknown':
+                    self.engine.identity_budget.retire('item', thread.backend, step_id(conversation, index))
             if step.usage and step.state == 'completed' and step.type == 'PLANNER_RESPONSE':
                 self.engine.usage.record_attributed((scope, conversation), turn, thread.backend,
                                                    step_id(conversation, index), step.usage, at, live=True)
@@ -164,12 +180,14 @@ class AntigravityProjection:
         if initial and not cursor.open_steps:
             thread.quality.discard('observation_gap')
 
-    def _children(self, scope, thread, turn, step):
+    def _children(self, scope, thread, turn, step, at):
         if step.type != 'INVOKE_SUBAGENT' or not self.book:
             return
         for child in step.children:
             if not uuid_string(child) or child == thread.id:
                 continue
+            if not self.engine.admit_identities(thread.backend, ('thread', child), at=at):
+                return
             dependent, _ = self._thread(scope, child)
             if dependent.parent_thread_id not in (None, thread.id):
                 dependent.parent_quality.add('parent_identity_conflict')
@@ -326,6 +344,8 @@ class AntigravityProjection:
                 self._end_activity(activity, at, terminal if terminal != 'completed' else 'unknown')
         cursor.open_steps.clear()
         thread.status = terminal if thread.turn_id else 'idle'
+        if thread.turn_id and terminal in ('completed', 'failed', 'interrupted'):
+            self.engine.identity_budget.retire('turn', thread.backend, thread.turn_id)
         if pending and not initial:
             self._turn(scope, thread, thread.turn_id, wall, status=terminal, end=wall * 1000)
 

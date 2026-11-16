@@ -95,6 +95,14 @@ public struct Chat: Decodable, Identifiable, Sendable {
     public var project: String { cwd.map { URL(fileURLWithPath: $0).lastPathComponent } ?? "" }
     public var isKnownSubagent: Bool { thread_source != "user" && (thread_source == "subagent" || parent_thread_id != nil) }
     public var isTerminal: Bool { ["completed", "failed", "interrupted"].contains(status ?? "") }
+    public var retainsIdleHistory: Bool { source == "antigravity" }
+    public var isApproximateSpeed: Bool { source == "antigravity" || (source != nil && source != "codex" && generation_estimated == true) }
+    public func sourceDisplayName(multiSourceEnabled: Bool) -> String? {
+        if let source, !source.isEmpty, source != "codex" {
+            return source == "antigravity" ? "Antigravity" : source
+        }
+        return multiSourceEnabled ? "Codex" : nil
+    }
     public var speedObservationNotice: ObservationNotice? {
         guard let issues = generation_rate_issues, !issues.isEmpty else { return nil }
         return ObservationNotice.speedIssue(Set(issues))

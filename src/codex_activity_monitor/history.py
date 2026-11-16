@@ -18,7 +18,7 @@ from .history_content import (ABSENT, CANONICAL_TYPES, fields, item_content, raw
 from .history_index import HistoryDirectory, HistoryDetails, HistoryFacts, HistoryMetadata, RolloutIndex, canonical_item, timestamp
 from .history_read import HistoryChanged, HistoryRead
 from .history_source import RolloutResolver
-from .antigravity_history import AntigravityHistory, TranscriptIndex, antigravity_scope
+from .antigravity_history import TranscriptIndex, antigravity_scope, transcript_path
 from .resource_budget import retained_bytes
 from .timeline import phase_id
 
@@ -45,7 +45,6 @@ class HistoryProvider:
         if capacity < 0 or max_cache_bytes < 0 or max_turn_indices < 0:
             raise ValueError('invalid_history_budget')
         self.resolver = RolloutResolver()
-        self.antigravity = AntigravityHistory()
         self.sources = OrderedDict()
         self.source_epochs = {}
         self.source_sequence = 0
@@ -60,6 +59,45 @@ class HistoryProvider:
         self.evictions = 0
         self._stats = HistoryCacheStats(0, 0, max_cache_bytes, 0, time.monotonic())
 
+    def _antigravity_index(self, scope, thread):
+        path = transcript_path(scope, thread)
+        key = HistoryCacheKey(scope, thread, 'full')
+        missing_key = (scope, thread)
+        index = self.indices.get(key)
+        if index is None:
+            index = TranscriptIndex(path, scope, thread)
+        try:
+            index.refresh()
+        except FileNotFoundError:
+            self.indices.pop(key, None)
+            self.weights.pop(key, None)
+            self._publish_stats()
+            self.missing[missing_key] = time.monotonic()
+            self.missing.move_to_end(missing_key)
+            while len(self.missing) > 512:
+                self.missing.popitem(last=False)
+            return None
+        except (OSError, ValueError, TypeError):
+            self.invalidate(scope, thread)
+            raise
+        self.missing.pop(missing_key, None)
+        self.indices[key] = index
+        self.indices.move_to_end(key)
+        self._budget(key, index)
+        return index
+
+    def trajectory_turn(self, scope, thread, turn, read_steps=None, *, prefetched=None, fallback=None):
+        with self.lock:
+            key = HistoryCacheKey(scope, thread, 'full')
+            index = self.indices.get(key)
+            if isinstance(index, TranscriptIndex):
+                result = index.trajectory_turn(turn, read_steps, prefetched=prefetched)
+                self._budget(key, index)
+                return result
+            if isinstance(fallback, TranscriptIndex):
+                return fallback.trajectory_turn(turn, read_steps, prefetched=prefetched)
+            return None
+
     def view(self, scope, thread):
         """Detach mutable index metadata before releasing the reader lock."""
         with self.lock:
@@ -72,7 +110,7 @@ class HistoryProvider:
         """Read and cache one turn; source size cannot force a full phase rebuild."""
         with self.lock:
             if antigravity_scope(scope):
-                index = self.antigravity.index(scope, thread)
+                index = self._antigravity_index(scope, thread)
                 return self._view(index, turn) if index else None
             self._source(scope, thread)
             cached = self._cached_selection(scope, thread, {turn})
@@ -89,9 +127,6 @@ class HistoryProvider:
 
     def cached_path(self, scope, thread):
         with self.lock:
-            if antigravity_scope(scope):
-                index = self.antigravity.indices.get((scope, thread))
-                return index.path if index else None
             return next((index.path for key, index in reversed(self.indices.items())
                          if (key.scope, key.thread) == (scope, thread)), None)
 
@@ -100,7 +135,8 @@ class HistoryProvider:
         key = HistoryCacheKey(scope, thread, 'detail', turn, selected_id)
         with self.lock:
             if antigravity_scope(scope):
-                return self.antigravity.index(scope, thread)
+                index = self._antigravity_index(scope, thread)
+                return self._view(index) if index else None
             self._source(scope, thread)
             cached = self.indices.get(key)
             if cached is not None and cached.hint_signature == HistoryDetails.hint_key(observed_phase):
@@ -134,7 +170,7 @@ class HistoryProvider:
     def timeline_view(self, directory, turns):
         """Full phase metadata for a timeline, without unused content references."""
         if isinstance(directory, TranscriptIndex):
-            return directory
+            return self._view(directory)
         return self._turn_views(directory, turns, 'timeline')
 
     def _turn_views(self, directory, turns, kind):
@@ -226,13 +262,14 @@ class HistoryProvider:
             r['parent_turn_id'] == turn or r['child_thread_id'] == index.thread})
         result.agent_metadata = deepcopy(index.agent_metadata)
         result.quality = set(index.quality)
+        if hasattr(index, 'usage'):
+            result.usage = deepcopy({k: u for k, u in index.usage.items() if turn is None or k[0] == turn})
+        if hasattr(index, 'trajectory_snapshot'):
+            result.trajectory_snapshot = deepcopy(index.trajectory_snapshot)
         return result
 
     def invalidate(self, scope, thread):
         with self.lock:
-            if antigravity_scope(scope):
-                self.antigravity.indices.pop((scope, thread), None)
-                return
             for key in list(self.indices):
                 if (key.scope, key.thread) == (scope, thread):
                     self.indices.pop(key, None); self.weights.pop(key, None)
@@ -257,7 +294,7 @@ class HistoryProvider:
             self.max_cache_bytes, self.evictions, time.monotonic())
 
     def _budget(self, key, index):
-        version = (index.revision, index.generation)
+        version = (index.revision, index.generation, getattr(index, 'trajectory_snapshot', (None, None))[0])
         if self.weights.get(key, (None,))[0] != version:
             weight = retained_bytes(index.turns, index.phases, index.refs, index.outputs,
                                     index.relations, index.agent_metadata, index.quality,
@@ -266,7 +303,8 @@ class HistoryProvider:
                                     getattr(index, 'seed_phase_ids', frozenset()),
                                     getattr(index, 'request_rates', None),
                                     getattr(index, 'source', None),
-                                    getattr(index, 'selection', None), getattr(index, 'hint_signature', None))
+                                    getattr(index, 'selection', None), getattr(index, 'hint_signature', None),
+                                    getattr(index, 'usage', {}), getattr(index, 'trajectory_snapshot', None))
             self.weights[key] = (version, weight)
         if self.weights[key][1] > self.max_cache_bytes:
             # A selection that cannot be admitted must not first flush the
@@ -296,7 +334,7 @@ class HistoryProvider:
         """Small, content-free summary for the event loop; all I/O stays here."""
         with self.lock:
             if antigravity_scope(scope):
-                index = self.antigravity.index(scope, thread)
+                index = self._antigravity_index(scope, thread)
                 return (index.reconciliation(turns) if index else
                         {'source': 'antigravity', 'scope_id': scope, 'thread_id': thread, 'quality': ['history_unavailable']})
             selected = set(turns)
@@ -423,7 +461,8 @@ class HistoryProvider:
         missing_key = (scope, thread)
         with self.lock:
             if antigravity_scope(scope):
-                return self.antigravity.index(scope, thread)
+                index = self._antigravity_index(scope, thread)
+                return self._view(index) if index else None
             source = self._source(scope, thread)
             if source is None:
                 self.missing[missing_key] = time.monotonic()

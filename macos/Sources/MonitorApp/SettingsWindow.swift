@@ -195,7 +195,7 @@ private struct UninstallSettingsSheet: LocalizedView {
     var body: some View {
         VStack(alignment: .leading, spacing: 16) {
             Text(L("清理本机数据并退出，用于卸载")).font(.headline)
-            Text(L("恢复接入配置并清理 Monitor 的设置、日志和派生数据。请结束任务并退出 Codex，等待清理完成后再删除 App。"))
+            Text(L("恢复接入配置并清理 Monitor 的设置、日志和派生数据。若已接入 Codex，请结束任务并退出 Codex，等待清理完成后再删除 App。"))
                 .fixedSize(horizontal: false, vertical: true)
             HStack {
                 Spacer()

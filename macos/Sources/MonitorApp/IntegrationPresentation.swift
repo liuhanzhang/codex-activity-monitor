@@ -56,8 +56,9 @@ extension DashboardStore {
 
     var diagnosticComponents: [ComponentHealth] {
         _ = diagnosticPulse
-        let disabled = management?.waitingForCleanup == true || management?.integration_status?.confirmedEnabled == false ||
+        let codexDisabled = management?.waitingForCleanup == true || management?.integration_status?.confirmedEnabled == false ||
             (management != nil && management?.configured == false && management?.state != "error")
+        let disabled = codexDisabled && (management?.antigravity_enabled != true || management?.purge == true)
         var values: [ComponentHealth] = [.init(component: "connection", state: disabled ? "disabled" : busy || management == nil ? "unknown" : fresh ? "healthy" : "unavailable",
                                               code: disabled ? "stop_completed" : fresh ? "state_connected" : "state_disconnected")]
         if !disabled {

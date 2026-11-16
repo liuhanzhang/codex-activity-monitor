@@ -4,17 +4,21 @@ import json
 from pathlib import Path
 import queue
 from tempfile import TemporaryDirectory
+import threading
 import time
 from types import SimpleNamespace
 import unittest
+from unittest.mock import patch
 
 from codex_activity_monitor.antigravity_history import transcript_path
 from codex_activity_monitor.antigravity_projection import AntigravityProjection
 from codex_activity_monitor.antigravity_records import live_step, step_id, turn_id
 from codex_activity_monitor.antigravity_source import AntigravitySource
+from codex_activity_monitor.antigravity_tokenizer import encoding_for_model
 from codex_activity_monitor.app_control import AppController
 from codex_activity_monitor.engine import Engine
 from codex_activity_monitor.history import HistoryProvider
+from codex_activity_monitor.identity_budget import IdentityBudget
 from codex_activity_monitor.timeline import TimelineBook
 from codex_activity_monitor.timeline_query import TimelineQuery
 
@@ -302,6 +306,86 @@ class AntigravityProjectionTests(unittest.TestCase):
         self.assertEqual(json.loads(record.arguments), {'absolutePathUri': 'file:///synthetic/note.txt',
                                                        'startLine': 3, 'endLine': 5})
         self.assertEqual(json.loads(record.output), {'numLines': 4, 'lineRangeBytes': 12})
+
+    def test_bundle_trajectory_rpc_does_not_hold_history_lock(self):
+        path = transcript_path(self.scope, ROOT)
+        path.parent.mkdir(parents=True)
+        path.write_text(''.join(json.dumps(row)+'\n' for row in (
+            {'step_index': 0, 'type': 'USER_INPUT', 'status': 'DONE', 'created_at': WHEN+1},
+            {'step_index': 1, 'type': 'PLANNER_RESPONSE', 'status': 'DONE', 'content': 'Done.',
+             'created_at': WHEN+2, 'completed_at': WHEN+3},
+        )))
+        history = HistoryProvider()
+        entered, release = threading.Event(), threading.Event()
+        concurrent_acquired = []
+
+        def slow_steps(scope, thread, index):
+            entered.set()
+            self.assertTrue(release.wait(2))
+            return [
+                step('USER_INPUT', 'DONE', metadata={'createdAt': WHEN+1}),
+                step('PLANNER_RESPONSE', 'DONE', plannerResponse={'response': 'Done.'},
+                     metadata={'createdAt': WHEN+2, 'finishedGeneratingAt': WHEN+3}),
+            ]
+
+        query = TimelineQuery(history=history, read_antigravity_steps=slow_steps)
+        result_holder = []
+        worker = threading.Thread(target=lambda: result_holder.append(
+            query.query({'action': 'timeline', 'scope_id': self.scope, 'thread_id': ROOT})))
+        worker.start()
+        try:
+            self.assertTrue(entered.wait(1))
+            with history.lock:
+                concurrent_acquired.append(True)
+        finally:
+            release.set()
+            worker.join(2)
+        self.assertEqual(concurrent_acquired, [True])
+        self.assertEqual(result_holder[0]['selected_turn_id'], turn_id(ROOT, 0))
+
+    def test_antigravity_history_is_detached_and_accounted_in_cache_budget(self):
+        path = transcript_path(self.scope, ROOT)
+        path.parent.mkdir(parents=True)
+        path.write_text(''.join(json.dumps(row)+'\n' for row in (
+            {'step_index': 0, 'type': 'USER_INPUT', 'status': 'DONE', 'created_at': WHEN+1},
+            {'step_index': 1, 'type': 'PLANNER_RESPONSE', 'status': 'DONE', 'content': 'Done.',
+             'output_tokens': 12, 'created_at': WHEN+2, 'completed_at': WHEN+3},
+        )))
+        history = HistoryProvider()
+        first = history.index(self.scope, ROOT, directory_only=True)
+        self.assertEqual(history.diagnostics()['indices'], 1)
+        self.assertGreater(history.diagnostics()['cache_bytes'], 0)
+        next(iter(first.phases.values()))['label'] = 'mutated'
+        second = history.detail_view(self.scope, ROOT, turn_id(ROOT, 0), next(iter(first.phases)))
+        self.assertNotEqual(next(iter(second.phases.values()))['label'], 'mutated')
+
+        limited = HistoryProvider(max_cache_bytes=1)
+        self.assertIsNotNone(limited.selected_view(self.scope, ROOT, turn_id(ROOT, 0)))
+        self.assertEqual(limited.diagnostics()['indices'], 0)
+        self.assertEqual(limited.diagnostics()['cache_bytes'], 0)
+        self.assertGreaterEqual(limited.diagnostics()['evictions'], 1)
+
+    def test_identity_budget_exhaustion_stops_antigravity_admission_and_marks_gap(self):
+        self.engine.identity_budget = IdentityBudget(capacity=4)
+        self.push({0: step('USER_INPUT', 'DONE')}, 1)
+        self.push({1: step('PLANNER_RESPONSE', 'GENERATING', plannerResponse={'response': 'Unadmitted'})}, 2)
+        self.assertTrue(self.engine.identity_budget.sealed)
+        self.assertGreater(self.engine.counts['identity_budget_dropped'], 0)
+        self.assertIn('identity_budget', self.engine.threads[self.thread_key].quality)
+        self.assertIn('observation_gap', self.engine.threads[self.thread_key].quality)
+        self.assertIn('identity_budget', self.engine.snapshot(2)['overview']['quality'])
+        self.assertIsNone(self.engine.snapshot(2)['overview']['generation_rate'])
+
+    def test_gemini_and_gemma_model_families_select_gemma4_when_cached(self):
+        with TemporaryDirectory() as directory:
+            cache_file = Path(directory)/'gemma-4-E4B-it-tokenizer.json'
+            cache_file.write_text('{}')
+            with patch('codex_activity_monitor.antigravity_tokenizer.cache_path', return_value=cache_file):
+                self.assertEqual(encoding_for_model('Gemini 4 Argon (High)'), 'gemma4')
+                self.assertEqual(encoding_for_model('Gemini 4 Hydrogen'), 'gemma4')
+                self.assertEqual(encoding_for_model('gemini-2.5-pro'), 'gemma4')
+                self.assertEqual(encoding_for_model('gemma-4-e4b-it'), 'gemma4')
+                self.assertEqual(encoding_for_model('claude-3-7-sonnet'), 'o200k_base')
 
 
 class PushStream:

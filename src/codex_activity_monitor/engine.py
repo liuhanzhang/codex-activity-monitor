@@ -258,25 +258,32 @@ class Engine:
         child.thread_source = 'subagent'
         parent.subagents.setdefault(child_id, 'spawn_agent')
 
+    def admit_identities(self, backend, *pairs, at=None):
+        if at is not None:
+            self.clock = max(self.clock, at)
+        if self.identity_budget.sealed:
+            self._identity_budget_gap(at)
+            self.counts['identity_budget_dropped'] += 1
+            return False
+        if self.identity_budget.contains('backend', backend, backend):
+            self.counts['retired_backend_events'] += 1
+            return False
+        try:
+            admitted = all(self.identity_budget.reserve(kind, backend, identity)
+                           for kind, identity in [('backend', backend), *pairs] if identity is not None)
+        except ValueError:
+            self.counts['invalid_observation_identity'] += 1
+            return False
+        if not admitted:
+            self._identity_budget_gap(at)
+            self.counts['identity_budget_dropped'] += 1
+            return False
+        return True
+
     def ingest(self, row):
         event = row if isinstance(row,Event) else Event.from_row(row)
         self.clock=max(self.clock,event.at)
-        if self.identity_budget.sealed:
-            self._identity_budget_gap()
-            self.counts['identity_budget_dropped'] += 1
-            return
-        if self.identity_budget.contains('backend', event.backend, event.backend):
-            self.counts['retired_backend_events'] += 1
-            return
-        try:
-            admitted = all(self.identity_budget.reserve(kind, event.backend, identity)
-                           for kind, identity in observation_identities(event))
-        except ValueError:
-            self.counts['invalid_observation_identity'] += 1
-            return
-        if not admitted:
-            self._identity_budget_gap()
-            self.counts['identity_budget_dropped'] += 1
+        if not self.admit_identities(event.backend, *observation_identities(event)[1:], at=event.at):
             return
         self.backends.setdefault(event.backend,{'connected':True,'model':'unknown','last_seen':event.at})
         self.backends[event.backend]['last_seen'] = event.at
