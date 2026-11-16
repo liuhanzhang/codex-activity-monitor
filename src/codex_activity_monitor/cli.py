@@ -67,7 +67,7 @@ def stop(runtime):
 
 def replay(path,output=None):
     from .engine import Engine
-    from .events import filter_event,Event
+    from .agents.codex.events import filter_event, Event
     engine=Engine(asynchronous_counts=False)
     at=0
     opener=gzip.open if str(path).endswith('.gz') else open
@@ -271,7 +271,7 @@ def main(argv=None):
                               'backends':value.get('backends',{}),'threads':len(value.get('threads',[])),
                               'counters':value.get('counters',{})},ensure_ascii=False,indent=2))
         elif args.command=='bridge':
-            from .bridge import forward
+            from .agents.codex.bridge import forward
             return forward(args.args[1:] if args.args[:1]==['--'] else args.args,runtime,args.real_cli)
         elif args.command=='watch':
             from .display import watch
@@ -281,7 +281,7 @@ def main(argv=None):
         else:
             if args.command in ('setup', 'uninstall') and (runtime/'app-managed.json').exists():
                 raise RuntimeError(tr('cli.gui_managed', language))
-            from .integration import setup,uninstall,desktop
+            from .agents.codex.integration import setup, uninstall, desktop
             if args.command=='setup':
                 setup(runtime,args.real_cli,args.launch_agent,language)
             elif args.command=='uninstall':

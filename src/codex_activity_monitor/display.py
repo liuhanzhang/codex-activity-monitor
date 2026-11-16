@@ -15,7 +15,7 @@ from rich.table import Table
 from rich.text import Text
 
 from .i18n import DEFAULT_LANGUAGE, available_languages, message, phase_message, render_message, tr
-from .progress_state import activity_message
+from .agents.codex.progress_state import activity_message
 from .runtime import save_ui_language, ui_language, snapshot_age, snapshot_fresh
 from .state_client import current_state
 

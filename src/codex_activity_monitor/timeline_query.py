@@ -16,15 +16,15 @@ from .timeline_storage import metadata_path, read_records
 from .agent_presentation import present_agents, present_coordination, scoped_status
 from .agent_relations import SPAWN_OPERATIONS
 from .content_version import DETAIL_VERSION, page_request, paginate
-from .history_read import HistoryChanged
+from .agents.codex.history_read import HistoryChanged
 from .query_request import TimelineRequest
 from .query_response import encode_response, read_response, failure
 from .runtime import collector_alive
 from .state import source_traits
-from .antigravity_history import (
+from .agents.antigravity.history import (
     antigravity_scope, antigravity_turn_average_speed, detail_result, fetch_remote_detail,
 )
-from .antigravity_source import RPC_ERRORS
+from .agents.antigravity.source import RPC_ERRORS
 
 
 def validated_request(value):

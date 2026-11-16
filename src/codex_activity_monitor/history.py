@@ -13,12 +13,12 @@ import time
 from typing import Literal
 
 # Preserve the established read helpers at this facade.
-from .history_content import (ABSENT, CANONICAL_TYPES, fields, item_content, raw_section, result_texts,
-                              section, source_truncated, text_content, tool_content)
-from .history_index import HistoryDirectory, HistoryDetails, HistoryFacts, HistoryMetadata, RolloutIndex, canonical_item, timestamp
-from .history_read import HistoryChanged, HistoryRead
-from .history_source import RolloutResolver
-from .antigravity_history import TranscriptIndex, antigravity_scope, transcript_path
+from .agents.codex.history_content import (ABSENT, CANONICAL_TYPES, fields, item_content, raw_section, result_texts,
+                                           section, source_truncated, text_content, tool_content)
+from .agents.codex.history_index import HistoryDirectory, HistoryDetails, HistoryFacts, HistoryMetadata, RolloutIndex, canonical_item, timestamp
+from .agents.codex.history_read import HistoryChanged, HistoryRead
+from .agents.codex.history_source import RolloutResolver
+from .agents.antigravity.history import TranscriptIndex, antigravity_scope, transcript_path
 from .resource_budget import retained_bytes
 from .timeline import phase_id
 

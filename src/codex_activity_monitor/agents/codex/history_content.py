@@ -4,7 +4,7 @@ import json
 import re
 
 from .events import TOOL_TYPES
-from .i18n import message
+from ...i18n import message
 
 CANONICAL_TYPES = {'UserMessage': 'userMessage', 'AgentMessage': 'agentMessage', 'Reasoning': 'reasoning',
                    'Plan': 'plan', 'CommandExecution': 'commandExecution', 'McpToolCall': 'mcpToolCall',

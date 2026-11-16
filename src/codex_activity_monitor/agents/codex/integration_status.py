@@ -7,7 +7,7 @@ from pathlib import Path
 import time
 
 from .integration import KEYS
-from .runtime import bridge_identity
+from ...runtime import bridge_identity
 
 
 REVISION_ENV = 'CODEX_ACTIVITY_MONITOR_CONFIG_REVISION'
@@ -35,7 +35,7 @@ def startup_evidence(environment=None):
 
 
 def restart_candidates(control, receipt):
-    from .app_session import process_identity
+    from ...app_session import process_identity
     probe = getattr(control.services, 'inspect_dependents', control.services.dependents)
     candidates = []
     deadline = time.monotonic() + 1
@@ -76,7 +76,7 @@ def inspect_integration(control, receipt, state):
     revision = receipt.get('configuration_revision')
     result['configuration_revision'] = revision
     deadline = time.monotonic() + 1.5
-    from .app_session import process_identity
+    from ...app_session import process_identity
     try:
         records = runtime / 'bridges'
         resident_bridges = 0

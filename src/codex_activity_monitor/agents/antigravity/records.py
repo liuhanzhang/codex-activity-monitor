@@ -5,9 +5,9 @@ import json
 import re
 from urllib.parse import unquote, urlsplit
 
-from .history_index import timestamp
-from .timeline import item_phase
-from .usage import token_number
+from ..codex.history_index import timestamp
+from ...timeline import item_phase
+from ...usage import token_number
 
 
 TYPE_PREFIX = 'CORTEX_STEP_TYPE_'

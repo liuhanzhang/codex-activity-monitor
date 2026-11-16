@@ -7,12 +7,12 @@ import json
 import os
 from pathlib import Path
 
-from .antigravity_records import OPEN, history_step, live_step, step_id, step_index, turn_id
-from .antigravity_transport import uuid_string
-from .history_content import ABSENT, raw_section
-from .history_read import HistoryChanged
-from .request_rate import RequestRateBook, ResponseSample, TurnRates
-from .timeline import identity, phase_id
+from .records import OPEN, history_step, live_step, step_id, step_index, turn_id
+from .transport import uuid_string
+from ..codex.history_content import ABSENT, raw_section
+from ..codex.history_read import HistoryChanged
+from ...request_rate import RequestRateBook, ResponseSample, TurnRates
+from ...timeline import identity, phase_id
 
 
 MAX_LINE = 8 * 1024 * 1024

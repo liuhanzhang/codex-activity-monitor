@@ -15,7 +15,7 @@ import sys
 import time
 import uuid
 
-from .integration import KEYS, LABEL
+from .agents.codex.integration import KEYS, LABEL
 from .runtime import ROOT, REAL_CLI, atomic_json, collector_alive
 from .execution import backend_command, is_frozen
 from .state_client import state_once, authorize_session, StateClientError
@@ -306,7 +306,7 @@ class AppController:
         state = receipt.get('state', 'restored' if prefs.get('restored') else 'new')
         runtime = self._runtime(receipt)
         antigravity = (runtime/'antigravity.enabled').is_file()
-        from .integration_status import inspect_integration
+        from .agents.codex.integration_status import inspect_integration
         return {'version': 1, 'ok': True, 'state': state,
                 'configured': state == 'configured', 'runtime': str(runtime) if antigravity else receipt.get('runtime'),
                 'antigravity_enabled': antigravity,
@@ -403,7 +403,7 @@ class AppController:
             if actual == launcher:
                 raise ControlError('recursive_cli', 'control.recursive_cli')
             installed = dict(zip(KEYS, (str(launcher), '0', '0', '')))
-            from .integration_status import configuration_revision
+            from .agents.codex.integration_status import configuration_revision
             revision = configuration_revision(installed, app, actual)
             receipt = {'version': 1, 'id': old.get('id') if old.get('state') == 'configured' else uuid.uuid4().hex,
                        'state': 'configuring', 'previous': previous, 'installed': installed,
@@ -417,7 +417,7 @@ class AppController:
                 # The launcher path in launchctl may stay unchanged across an
                 # app move or bridge upgrade. Existing Desktop processes still
                 # need to release their old bridges before the switch is complete.
-                from .integration_status import restart_candidates
+                from .agents.codex.integration_status import restart_candidates
                 receipt['restart_processes'] = restart_candidates(self, receipt)
             if legacy_backup:
                 receipt['legacy_backup'] = legacy_backup
@@ -499,7 +499,7 @@ class AppController:
         environment = (['-u', 'PYTHONPATH', '-u', 'PYTHONHOME', 'PYINSTALLER_RESET_ENVIRONMENT=1'] if is_frozen()
                        else ['PYTHONPATH=' + str(source / 'src')])
         if revision and installed:
-            from .integration_status import REVISION_ENV, EXPECTED_ENV, fingerprint
+            from .agents.codex.integration_status import REVISION_ENV, EXPECTED_ENV, fingerprint
             environment += [REVISION_ENV + '=' + revision, EXPECTED_ENV + '=' + fingerprint(installed)]
         command = ['exec', '/usr/bin/env', *environment,
                    *backend_command('--runtime', runtime, 'bridge', '--real-cli', actual, '--', executable=python)]

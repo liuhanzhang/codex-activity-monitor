@@ -78,7 +78,9 @@ def main():
                 except subprocess.TimeoutExpired:
                     os.killpg(collector.pid, signal.SIGTERM)
                     collector.wait(timeout=5)
-        hashes = {p.stem: hashlib.sha256(p.read_bytes()).hexdigest() for p in sorted((ROOT/'src/codex_activity_monitor').glob('*.py'))}
+        package_root = ROOT / 'src/codex_activity_monitor'
+        hashes = {p.relative_to(package_root).with_suffix('').as_posix(): hashlib.sha256(p.read_bytes()).hexdigest()
+                  for p in sorted(package_root.rglob('*.py')) if '__pycache__' not in p.parts}
         result = {'version': 1, 'ok': True, 'transport': 'isolated collector, bridge stdio, CLI and tl.sock',
                   'backend': 'bundled' if args.backend else 'source', 'checks': checks, 'source_modules': hashes}
         args.output.parent.mkdir(parents=True, exist_ok=True)

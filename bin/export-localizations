@@ -61,7 +61,7 @@ def validate_ui_resources():
             fields = lambda value: sorted(re.findall(r'%(?:\d+\$)?[-.\d]*[d@fgs]', value))
             if fields(english) != fields(catalogs['zh-Hans'][key]):
                 raise ValueError(f'GUI template mismatch: {target}/{key}')
-        for path in root.glob('*.swift'):
+        for path in sorted(root.rglob('*.swift')):
             for key in re.findall(r'(?:\bL|ModelLocalizer.text)\("((?:[^"\\]|\\.)*)"', path.read_text()):
                 if key not in catalogs['en']:
                     raise ValueError(f'Missing GUI resource: {path.name}/{key}')

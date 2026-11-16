@@ -4,8 +4,8 @@ from collections import OrderedDict, defaultdict
 import json
 import time
 
-from .events import DELTA_KINDS, TOOL_TYPES, Event
-from .progress_state import handle_protocol, resolve_request, presentation
+from .agents.codex.events import DELTA_KINDS, TOOL_TYPES, Event
+from .agents.codex.progress_state import handle_protocol, resolve_request, presentation
 from .metrics import TextStream, TokenCounter
 from .overview import overview, annotate_parents
 from .menu_presentation import menu_presentation
@@ -13,8 +13,8 @@ from .agent_relations import raw_coordination, SPAWN_OPERATIONS, VERIFIED_PARENT
 from .usage import UsageBook
 from .state import Activity, Thread, source_traits
 from .identity_budget import IdentityBudget, observation_identities
-from .history_contract import HistorySelection
-from .reconciliation import apply_history
+from .agents.codex.history_contract import HistorySelection
+from .agents.codex.reconciliation import apply_history
 from .i18n import PHASE_KEYS, phase_message, render_message, tr
 from .tool_labels import code_tool_names, command_name, command_previews, command_summary, file_edit_preview, is_code_exec, is_command_tool, is_patch_tool, tool_display, tool_label, tool_name
 

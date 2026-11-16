@@ -20,7 +20,11 @@
   - 在 `Engine` 与 `TimelineBook` 上提供正式公共写入 API（`register_backend`、`thread`、`remove_thread`、`activity`、`record_turn`、`record_turn_request`、`record_phase`、`record_relation`、`set_live_content`），消除 `AntigravityProjection` 对私有方法的直接穿透调用（`MR05`）；
   - 将回合平均速率计算（`turn_average_speed`）与远程步骤详情补齐（`fetch_remote_detail`）下沉至历史索引/适配器层，并在 Swift `Snapshot.swift` 中通过 `AgentSourceTraits` 与 `Backend.requiresBridgeRestart` 收敛客户端源特征判断（`MR06`）；
   - 全量 617 项 Python 单元测试、170 项 Swift 测试与本地化导出检查通过。
-- **第三阶段（`MR08` 物理目录分层）待执行**。
+- **第三阶段（`MR08` 物理目录分层，方案 A1）已完成**：
+  - Python 侧建立 `src/codex_activity_monitor/agents/{codex,antigravity}/` 子包，将 12 个 Codex 专属模块与 6 个 Antigravity 专属模块迁入对应子包，顶层目录从 55 个平铺文件精简为通用核心模块，并通过 `MetaPathFinder` 保留零文件堆积的向后兼容导入别名；
+  - Swift 侧将 `macos/Sources/MonitorApp/` 下的 37 个 `.swift` 源文件按职责划分为 `App/`、`Dashboard/`、`Timeline/`、`Settings/`、`Diagnostics/` 5 个子目录；
+  - 同步升级 `runtime.py`、`packaging/build_app.py`、`bin/build-gui` 与 `bin/export-localizations` 的子目录递归扫描与模块指纹映射；
+  - 全量 618 项 Python 单元测试、170 项 Swift 测试、本地化导出检查及 `build-standalone` 独立打包校验全部通过。
 
 ## 核心结论
 

@@ -2,14 +2,14 @@
 
 from dataclasses import dataclass, field
 
-from .antigravity_records import (OPEN, live_step, object_value, step_id, step_index, string,
-                                  turn_id, workspace)
-from .antigravity_source import active
-from .antigravity_transport import uuid_string
-from .history_index import timestamp
-from .metrics import TextStream
-from .timeline import identity
-from .tool_labels import command_name, command_summary
+from .records import (OPEN, live_step, object_value, step_id, step_index, string,
+                      turn_id, workspace)
+from .source import active
+from .transport import uuid_string
+from ..codex.history_index import timestamp
+from ...metrics import TextStream
+from ...timeline import identity
+from ...tool_labels import command_name, command_summary
 
 
 @dataclass(slots=True)

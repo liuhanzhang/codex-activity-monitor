@@ -11,7 +11,7 @@ import threading
 import uuid
 
 from .engine import Engine
-from .events import Event
+from .agents.codex.events import Event
 from .runtime import SnapshotCadence, atomic_json, read_snapshot, snapshot_age, source_identity
 from .publication import DetachedSnapshot, RecoveryWriter, encode_frame
 from .state_transport import StateServer
@@ -23,8 +23,8 @@ from .timeline_query import TimelineQuery, QueryServer
 from .agent_identity import AgentIdentityCache
 from .menu_presentation import menu_presentation
 from .history_refresh import HistoryRefresh
-from .antigravity_projection import AntigravityProjection
-from .antigravity_source import AntigravitySource
+from .agents.antigravity.projection import AntigravityProjection
+from .agents.antigravity.source import AntigravitySource
 from .agent_relations import VERIFIED_PARENTS
 
 

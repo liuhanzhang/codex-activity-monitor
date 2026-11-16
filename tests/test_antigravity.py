@@ -477,6 +477,23 @@ class AntigravityProjectionTests(unittest.TestCase):
         self.engine.remove_thread(backend, ROOT)
         self.assertNotIn((backend, ROOT), self.engine.threads)
 
+    def test_agents_package_hierarchy_and_source_identity_resolution(self):
+        from codex_activity_monitor.agents import source_traits as package_traits
+        from codex_activity_monitor.agents.antigravity import projection as ag_projection
+        from codex_activity_monitor.agents.codex import bridge as codex_bridge
+        from codex_activity_monitor import antigravity_projection as legacy_ag_projection
+        from codex_activity_monitor import bridge as legacy_codex_bridge
+        from codex_activity_monitor.runtime import source_identity
+
+        self.assertIs(package_traits, source_traits)
+        self.assertIs(ag_projection, legacy_ag_projection)
+        self.assertIs(codex_bridge, legacy_codex_bridge)
+        identity = source_identity('antigravity_source', 'agents/antigravity/source', 'bridge', 'agents/codex/bridge')
+        self.assertEqual(identity['modules']['antigravity_source'],
+                         identity['modules']['agents/antigravity/source'])
+        self.assertEqual(identity['modules']['bridge'],
+                         identity['modules']['agents/codex/bridge'])
+
 
 class PushStream:
     def __init__(self):

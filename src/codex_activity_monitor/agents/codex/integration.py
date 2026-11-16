@@ -8,9 +8,9 @@ import shlex
 import subprocess
 import sys
 
-from .runtime import atomic_json
-from .execution import backend_command
-from .i18n import DEFAULT_LANGUAGE, tr
+from ...runtime import atomic_json
+from ...execution import backend_command
+from ...i18n import DEFAULT_LANGUAGE, tr
 
 LABEL='com.liuhanzhang.codexactivitymonitor.collector'
 KEYS=('CODEX_CLI_PATH','CODEX_APP_SERVER_FORCE_CLI','CODEX_APP_SERVER_USE_LOCAL_DAEMON','CODEX_APP_SERVER_WS_URL')
@@ -75,13 +75,13 @@ def setup(runtime,actual,launch_agent=False,language=DEFAULT_LANGUAGE):
               'ProcessType':'Background','WorkingDirectory':str(runtime)}
         plist.write_bytes(plistlib.dumps(data))
         plist.chmod(0o600)
-        from .cli import stop
+        from ...cli import stop
         stop(runtime)
         _run(['/bin/launchctl','bootout',f'gui/{os.getuid()}/{LABEL}'],False)
         _run(['/bin/launchctl','bootstrap',f'gui/{os.getuid()}',str(plist)])
         print(tr('cli.installed', language))
     else:
-        from .cli import start
+        from ...cli import start
         start(runtime,language)
         print(tr('cli.prepared', language, path=str(wrapper)))
 
@@ -101,13 +101,13 @@ def uninstall(runtime,language=DEFAULT_LANGUAGE):
             previous=state['previous'].get(key)
             _run(['/bin/launchctl','setenv',key,previous] if previous is not None else ['/bin/launchctl','unsetenv',key])
         saved.unlink()
-    from .cli import stop
+    from ...cli import stop
     stop(runtime)
     print(tr('cli.uninstalled', language))
 
 
 def desktop(runtime,actual,home=None,profile=None,language=DEFAULT_LANGUAGE):
-    from .cli import start
+    from ...cli import start
     setup(runtime,actual,language=language)
     start(runtime,language)
     values=_values(runtime/'codex-observed')

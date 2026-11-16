@@ -16,8 +16,8 @@ import time
 import uuid
 
 from .events import decode_log, filter_event, BLOCKING_REQUESTS
-from .runtime import REAL_CLI, bridge_identity
-from .observer_permit import PermitExchange
+from ...runtime import REAL_CLI, bridge_identity
+from ...observer_permit import PermitExchange
 
 TRACE_FILTER='warn,codex_api::sse=trace,tungstenite::protocol=trace,tungstenite::protocol::frame=off'
 
@@ -285,7 +285,7 @@ class Observer:
             self.disconnect()
 
     def run(self):
-        from .diagnostic_log import DiagnosticLog
+        from ...diagnostic_log import DiagnosticLog
         log = DiagnosticLog.for_runtime(self.runtime, 'bridge')
         log.emit('bridge_started')
         try:
@@ -412,8 +412,8 @@ def forward(args,runtime,actual=None):
         raise
     registration=None
     if (runtime/'app-managed.json').exists():
-        from .app_session import process_identity
-        from .runtime import atomic_json
+        from ...app_session import process_identity
+        from ...runtime import atomic_json
         try:
             directory=runtime/'bridges'
             directory.mkdir(mode=0o700,exist_ok=True)

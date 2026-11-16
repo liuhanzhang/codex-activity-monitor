@@ -13,7 +13,7 @@ cd "$task_root"
 export TIKTOKEN_CACHE_DIR="$task_root/.local/tokenizer-cache"
 "$task_root/.local/venv/bin/python" - <<'PY'
 import tiktoken
-from codex_activity_monitor.antigravity_tokenizer import count, prepare
+from codex_activity_monitor.agents.antigravity.tokenizer import count, prepare
 import os
 
 for name in tiktoken.list_encoding_names():

@@ -24,15 +24,38 @@ BRIDGE_MODULES = ('bridge', 'observer_permit', 'events', 'usage', 'tool_labels',
                   'messages_zh_cn', 'messages_en', 'messages_control',
                   'messages_diagnostics', 'messages_detail', 'owned_files')
 
+MODULE_PATHS = {
+    'bridge': 'agents/codex/bridge',
+    'events': 'agents/codex/events',
+    'progress_state': 'agents/codex/progress_state',
+    'integration': 'agents/codex/integration',
+    'integration_status': 'agents/codex/integration_status',
+    'history_index': 'agents/codex/history_index',
+    'history_read': 'agents/codex/history_read',
+    'history_source': 'agents/codex/history_source',
+    'history_stream': 'agents/codex/history_stream',
+    'history_content': 'agents/codex/history_content',
+    'history_contract': 'agents/codex/history_contract',
+    'reconciliation': 'agents/codex/reconciliation',
+    'antigravity_transport': 'agents/antigravity/transport',
+    'antigravity_source': 'agents/antigravity/source',
+    'antigravity_records': 'agents/antigravity/records',
+    'antigravity_projection': 'agents/antigravity/projection',
+    'antigravity_history': 'agents/antigravity/history',
+    'antigravity_tokenizer': 'agents/antigravity/tokenizer',
+}
+
 
 def source_identity(*modules):
     """Fingerprint code at process startup, for rollout diagnostics only."""
     if is_frozen():
         manifest=json.loads((bundle_resources()/'build-manifest.json').read_text())
-        hashes={name:manifest['modules'][name] for name in modules}
+        hashes={name:(manifest['modules'][name] if name in manifest['modules']
+                      else manifest['modules'][MODULE_PATHS.get(name, name)]) for name in modules}
     else:
         directory=Path(__file__).resolve().parent
-        hashes={name:hashlib.sha256((directory/(name+'.py')).read_bytes()).hexdigest() for name in modules}
+        hashes={name:hashlib.sha256((directory/(MODULE_PATHS.get(name, name)+'.py')).read_bytes()).hexdigest()
+                for name in modules}
     return {'source_sha256':hashlib.sha256(json.dumps(hashes,sort_keys=True).encode()).hexdigest(),
             'modules':hashes}
 

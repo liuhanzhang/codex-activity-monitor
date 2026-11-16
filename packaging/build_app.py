@@ -85,13 +85,16 @@ def main():
     encodings = sorted(tiktoken.list_encoding_names())
     for name in encodings:
         tiktoken.get_encoding(name).encode_ordinary('Hello, 世界！打包验证。')
-    from codex_activity_monitor.antigravity_tokenizer import count as count_gemma, prepare as prepare_gemma
+    from codex_activity_monitor.agents.antigravity.tokenizer import count as count_gemma, prepare as prepare_gemma
+    from codex_activity_monitor.runtime import MODULE_PATHS
     prepare_gemma(cache, assets/'notices')
     if count_gemma('Hello, 世界！打包验证。') <= 0:
         raise RuntimeError('Gemma tokenizer verification failed')
     encodings.append('gemma4')
 
-    files = sorted([*ROOT.glob('src/codex_activity_monitor/*.py'), *ROOT.glob('macos/Sources/**/*'),
+    package_root = ROOT/'src/codex_activity_monitor'
+    py_files = sorted(p for p in package_root.rglob('*.py') if '__pycache__' not in p.parts)
+    files = sorted([*py_files, *ROOT.glob('macos/Sources/**/*'),
                     *ROOT.glob('packaging/*'), ROOT/'pyproject.toml', ROOT/'LICENSE',
                     ROOT/'macos/Assets/AppIcon.png', ROOT/'macos/Package.swift', ROOT/'macos/Package.resolved',
                     ROOT/'bin/build-app-icon'])
@@ -100,8 +103,11 @@ def main():
         if path.is_file():
             digest.update(str(path.relative_to(ROOT)).encode()+b'\0'+path.read_bytes())
     build_id = digest.hexdigest()
-    modules = {path.stem: hashlib.sha256(path.read_bytes()).hexdigest()
-               for path in sorted(ROOT.glob('src/codex_activity_monitor/*.py'))}
+    modules = {path.relative_to(package_root).with_suffix('').as_posix(): hashlib.sha256(path.read_bytes()).hexdigest()
+               for path in py_files}
+    for alias, target in MODULE_PATHS.items():
+        if target in modules:
+            modules[alias] = modules[target]
     dependencies = {dist.metadata['Name']: dist.version for dist in importlib.metadata.distributions()
                     if dist.metadata.get('Name')}
     manifest = {'version': 1, 'release_version': release_version, 'release_prerelease': app_info['CAMReleasePrerelease'],

@@ -8,11 +8,11 @@ import math
 import threading
 import time
 
-from .events import TOOL_TYPES, SERVER_REQUESTS
+from .agents.codex.events import TOOL_TYPES, SERVER_REQUESTS
 from .tool_labels import code_tool_names, file_edit_preview, is_patch_tool, tool_name
 from .agent_relations import raw_coordination
 from .i18n import message
-from .history_contract import HistoryCoverage
+from .agents.codex.history_contract import HistoryCoverage
 from .state import source_traits
 
 MODEL_TYPES = {'reasoning': 'reasoning', 'agentMessage': 'text', 'message': 'text', 'plan': 'text'}

@@ -8,7 +8,7 @@ import threading
 import time
 
 from .history import HistoryProvider
-from .history_contract import HistorySelection
+from .agents.codex.history_contract import HistorySelection
 from .json_encoding import encode_limited
 
 

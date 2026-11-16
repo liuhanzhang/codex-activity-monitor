@@ -1,8 +1,8 @@
 """Event-loop-owned application of detached, authoritative JSONL facts."""
 
 from .history_contract import HistoryCoverage
-from .state import Activity
-from .timeline import HISTORY_SEED_LIMIT, HISTORY_SEED_TYPES, merge_phase, retired_model_supplement, settled_model_items
+from ...state import Activity
+from ...timeline import HISTORY_SEED_LIMIT, HISTORY_SEED_TYPES, merge_phase, retired_model_supplement, settled_model_items
 
 
 def apply_history(engine, summary):

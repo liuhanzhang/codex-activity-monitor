@@ -10,7 +10,7 @@ import threading
 import time
 from uuid import uuid4
 
-from .antigravity_transport import LocalRPC, VERBOSITY, discover, installed_apps, uuid_string
+from .transport import LocalRPC, VERBOSITY, discover, installed_apps, uuid_string
 
 
 MAX_BYTES = 16 * 1024 * 1024

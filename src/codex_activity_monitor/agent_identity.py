@@ -10,7 +10,7 @@ import time
 from .agent_presentation import agent_metadata
 from .agent_relations import thread_identity
 from .overview import annotate_parents
-from .history_source import RolloutResolver
+from .agents.codex.history_source import RolloutResolver
 
 
 def read_header(scope, thread, path=None, resolver=None):

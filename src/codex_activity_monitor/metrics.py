@@ -65,7 +65,7 @@ class TextStream:
         previous = self.encoding_name
         self.model = model or 'unknown'
         if self.source == 'antigravity':
-            from .antigravity_tokenizer import encoding_for_model
+            from .agents.antigravity.tokenizer import encoding_for_model
             self.encoding_name, self.estimated = encoding_for_model(self.model), True
         else:
             try:
@@ -244,7 +244,7 @@ def count_text(text, encoding_name):
     begin = time.perf_counter()
     try:
         if encoding_name == 'gemma4':
-            from .antigravity_tokenizer import count as gemma_count
+            from .agents.antigravity.tokenizer import count as gemma_count
             count = gemma_count(text)
         else:
             count = len(tiktoken.get_encoding(encoding_name).encode_ordinary(text))

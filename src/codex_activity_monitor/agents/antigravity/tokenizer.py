@@ -19,7 +19,7 @@ MODELS = ('gemini-', 'gemma-')
 
 def cache_path():
     configured = os.environ.get('TIKTOKEN_CACHE_DIR')
-    return Path(configured)/FILE if configured else Path(__file__).resolve().parents[2]/'.local/tokenizer-cache'/FILE
+    return Path(configured)/FILE if configured else Path(__file__).resolve().parents[4]/'.local/tokenizer-cache'/FILE
 
 
 def encoding_for_model(model):

@@ -137,7 +137,18 @@ src/codex_activity_monitor/
 
 ---
 
-## 五、后续阶段决策备忘
+## 五、第三阶段实施与验收记录（2026-11-16）
 
-1. **物理目录结构（阶段 3）**：采用方案 A1，建立 `agents/{codex,antigravity}/` 子包收敛特定 Agent 实现，通用核心模块保留顶层；Swift `MonitorApp/` 按功能建立子文件夹分组。
-2. **协议与特征（阶段 2）**：已保持现有 `Snapshot` / `ManagementState` wire JSON 兼容，在内部通过 `SourceTraits` 与公共写入 API 收口逻辑边界。
+第三阶段已按照方案 A1 完成 `MR08` 的物理目录分层与打包脚本同步改造：
+
+| 编号 | 修改内容 | 回归测试与验证 |
+| --- | --- | --- |
+| `MR08-Python` | 在 `src/codex_activity_monitor/agents/` 下建立 [`codex/`](../../src/codex_activity_monitor/agents/codex/__init__.py)（迁移 `bridge`、`events`、`progress_state`、`integration`、`integration_status`、`history_index`、`history_read`、`history_source`、`history_stream`、`history_content`、`history_contract`、`reconciliation` 共 12 个模块）与 [`antigravity/`](../../src/codex_activity_monitor/agents/antigravity/__init__.py)（迁移 `transport`、`source`、`records`、`projection`、`history`、`tokenizer` 共 6 个模块），顶层仅保留通用核心引擎、时间线、历史门面与控制面模块；在 [`__init__.py`](../../src/codex_activity_monitor/__init__.py) 中提供无文件堆积的 `MetaPathFinder` 兼容别名映射，确保新旧导入路径指向同一模块实例 | `AntigravityProjectionTests.test_agents_package_hierarchy_and_source_identity_resolution` 及全量 618 项 Python 测试 |
+| `MR08-Swift` | 将 `macos/Sources/MonitorApp/` 下平铺的 37 个 `.swift` 文件按职责迁移至 5 个子目录：[`App/`](../../macos/Sources/MonitorApp/App/Main.swift)（13 个文件）、[`Dashboard/`](../../macos/Sources/MonitorApp/Dashboard/DashboardStore.swift)（7 个文件）、[`Timeline/`](../../macos/Sources/MonitorApp/Timeline/TimelineStore.swift)（7 个文件）、[`Settings/`](../../macos/Sources/MonitorApp/Settings/SettingsWindow.swift)（6 个文件）、[`Diagnostics/`](../../macos/Sources/MonitorApp/Diagnostics/DiagnosticsStore.swift)（4 个文件） | 全量 170 项 Swift 测试 |
+| `MR08-Build` | 更新 [`runtime.py`](../../src/codex_activity_monitor/runtime.py) 的 `MODULE_PATHS` 与 `source_identity`、[`packaging/build_app.py`](../../packaging/build_app.py) 的 `rglob('*.py')` 清单生成逻辑、[`bin/build-gui`](../../bin/build-gui) 以及 [`bin/export-localizations`](../../bin/export-localizations) 的 `rglob('*.swift')` 扫描 | `BundledExecutionTests`、`bin/export-localizations --check`、`bin/build-standalone` 与 `bin/build-gui` |
+
+验证结果：
+- `.local/venv/bin/python -m unittest discover -s tests -p 'test_*.py'`：**618 项测试全部通过**。
+- `.local/venv/bin/python bin/export-localizations --check`：**通过**。
+- `swift test --package-path macos`：**170 项测试（3 个测试套件）全部通过**。
+- `./bin/build-standalone` 与 `./bin/build-gui`：**独立应用打包、PyInstaller `--self-check`、代码签名与二进制检查全部通过**。

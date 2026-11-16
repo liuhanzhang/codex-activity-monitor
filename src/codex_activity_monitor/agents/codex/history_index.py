@@ -9,11 +9,11 @@ import hashlib
 import json
 import uuid
 
-from .agent_presentation import agent_metadata
+from ...agent_presentation import agent_metadata
 from .history_content import ABSENT, CANONICAL_TYPES, item_content, raw_section, source_truncated
 from .history_read import HistoryChanged, HistoryRead, HistoryReference, explicit_turn, open_history
-from .request_rate import RequestRateBook
-from .timeline import HISTORY_SEED_LIMIT, HISTORY_SEED_TYPES, identity, item_namespace, item_phase, phase_id, merge_history_phase, merge_phase, status, valid_ms
+from ...request_rate import RequestRateBook
+from ...timeline import HISTORY_SEED_LIMIT, HISTORY_SEED_TYPES, identity, item_namespace, item_phase, phase_id, merge_history_phase, merge_phase, status, valid_ms
 
 def timestamp(value):
     if isinstance(value, (int, float)):
