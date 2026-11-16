@@ -7,12 +7,12 @@ import json
 import os
 from pathlib import Path
 
-from .antigravity_records import OPEN, history_step, live_step, step_index, turn_id
+from .antigravity_records import OPEN, history_step, live_step, step_id, step_index, turn_id
 from .antigravity_transport import uuid_string
 from .history_content import ABSENT, raw_section
 from .history_read import HistoryChanged
 from .request_rate import RequestRateBook
-from .timeline import identity
+from .timeline import identity, phase_id
 
 
 MAX_LINE = 8 * 1024 * 1024
@@ -171,6 +171,27 @@ class TranscriptIndex:
         row = json.loads(line)
         return detail_result(history_step(row), part, source='antigravity_history', calls=row.get('tool_calls'))
 
+    def detail_phase(self, turn, selected):
+        phase = self.phases.get(selected)
+        if phase is not None:
+            return phase
+        cached_turn, cached = self.trajectory_snapshot
+        if cached_turn == turn and cached:
+            phase = next((p for p in cached['phases'] if p['id'] == selected), None)
+            if phase is not None:
+                return phase
+        for p in self.phases.values():
+            if p['turn_id'] == turn and p['track'] == 'tool':
+                if phase_id(self.scope, self.thread, turn, 'input', p['item_id']+'-input') == selected:
+                    return p
+        for turn_key, index in self.usage:
+            if turn_key == turn:
+                item = step_id(self.thread, index) + '-summary'
+                if phase_id(self.scope, self.thread, turn, 'model', item) == selected:
+                    return {'id': selected, 'scope_id': self.scope, 'thread_id': self.thread,
+                            'turn_id': turn, 'step_index': index}
+        return None
+
     def trajectory_request(self, turn):
         cached_turn, _ = self.trajectory_snapshot
         if cached_turn == turn:
@@ -178,7 +199,7 @@ class TranscriptIndex:
         record = self.turns.get(turn)
         return record['step_index'] if record is not None else None
 
-    def trajectory_turn(self, turn, read_steps=None, *, prefetched=None):
+    def trajectory_turn(self, turn, read_steps=None, *, prefetched=None, observed_phases=None):
         """Recover the selected turn's timings without retaining trajectory bodies."""
         cached_turn, cached = self.trajectory_snapshot
         if cached_turn == turn:
@@ -191,9 +212,10 @@ class TranscriptIndex:
             read_steps(self.scope, self.thread, first) if read_steps else [])
         if not rows:
             return None
+        steps = [live_step(index, row) for index, row in enumerate(rows[:last-first+1], first)]
         phases, requests, bounds = [], {}, {}
-        for index, row in enumerate(rows[:last-first+1], first):
-            step = live_step(index, row)
+        for pos, step in enumerate(steps):
+            index = step.index
             if index == first:
                 if step.type not in ('USER_INPUT', 'SYSTEM_MESSAGE'):
                     return None
@@ -201,6 +223,11 @@ class TranscriptIndex:
                     bounds.update(start_ms=step.created, start_source='producer')
             elif step.type == 'USER_INPUT':
                 return None  # The current trajectory has a different turn boundary.
+            if pos + 1 < len(steps):
+                step.pair_next(steps[pos + 1])
+            if observed_phases and step.type == 'PLANNER_RESPONSE' and step.text and step.thinking_ended is None:
+                main_id = step.phase(self.scope, self.thread, turn, 'main')['id']
+                step.pair_text_receipt(observed_phases.get(main_id))
             sample = step.model_request()
             if sample is not None:
                 requests[str(index)] = sample
@@ -211,8 +238,7 @@ class TranscriptIndex:
                     bounds.update(end_ms=end, end_source='producer')
             for part in step.parts():
                 # A textual preamble can share its request with tool arguments.
-                if step.type == 'PLANNER_RESPONSE' and part == 'main' and not (
-                        final_response and step.thinking_ended is not None):
+                if step.type == 'PLANNER_RESPONSE' and part == 'main' and not final_response:
                     continue
                 phases.append(step.phase(self.scope, self.thread, turn, part, final_response=final_response))
         projection = {'phases': phases, 'model_requests': requests, 'bounds': bounds}

@@ -159,7 +159,8 @@ class TimelineQuery:
                                           absent_turns={(scope, owner, p['turn_id']) for p in phases.values()
                                               if index.source and index.source.branched and p['thread_id'] == owner and
                                               p['turn_id'] in pending and p['turn_id'] not in index.turns and
-                                              p['status'] not in ('active', 'waiting')})
+                                              p['status'] not in ('active', 'waiting')},
+                                          planner_steps=((scope, owner, t, s) for t, s in getattr(index, 'usage', ())))
             for key, phase in list(phases.items()):
                 if phase['thread_id'] == owner and phase['turn_id'] in pending:
                     phases[key] = apply_model_membership(phase, settled)
@@ -263,13 +264,14 @@ class TimelineQuery:
                 if first is not None and not steps:
                     continue
                 trajectory = self.history.trajectory_turn(scope, owner, owner_turn,
-                                                          prefetched=steps, fallback=index)
+                                                          prefetched=steps, fallback=index,
+                                                          observed_phases=phases)
                 if trajectory:
                     record.update(trajectory['bounds'])
                     if owner == thread:
                         recovered_requests = trajectory['model_requests']
                     for phase in trajectory['phases']:
-                        phases[phase['id']] = merge_phase(phases.get(phase['id']), phase)
+                        phases[phase['id']] = {**merge_phase(phases.get(phase['id']), phase), 'history_retired': False}
 
         def observed_phase(phase):
             if (antigravity and phase['status'] in ('active', 'waiting') and
@@ -407,7 +409,8 @@ class TimelineQuery:
                     break
         if phase and index:
             phase = apply_model_membership(phase, settled_model_items(
-                index.turns.values(), index.phases.values(), read_complete=index.read_complete, quality=index.quality))
+                index.turns.values(), index.phases.values(), read_complete=index.read_complete, quality=index.quality,
+                planner_steps=((scope, thread, t, s) for t, s in getattr(index, 'usage', ()))))
         branched = bool(index and index.source and index.source.branched)
         if (phase and phase.get('history_retired') or
                 index and index.read_complete and branched and historical is None and
@@ -483,16 +486,19 @@ class TimelineQuery:
             if not phase:
                 with self.history.lock:
                     index = self.history.index(scope, thread, directory_only=True)
-                    phase = index.phases.get(selected) if index else None
-                    if not phase and index:
-                        phase = next((p for p in index.phases.values() if p['turn_id'] == turn and
-                                      p['track'] == 'tool' and
-                                      phase_id(scope, thread, turn, 'input', p['item_id']+'-input') == selected), None)
+                    phase = index.detail_phase(turn, selected) if index else None
             if phase and phase['turn_id'] == turn and step_index(phase.get('step_index')):
                 index = phase['step_index']
                 rows = self.read_antigravity_steps(scope, thread, index)
                 if rows:
-                    return live_step(index, rows[0])
+                    step = live_step(index, rows[0])
+                    if len(rows) > 1:
+                        step.pair_next(live_step(index + 1, rows[1]))
+                    if step.type == 'PLANNER_RESPONSE' and step.text and step.thinking_ended is None:
+                        main_id = step.phase(scope, thread, turn, 'main')['id']
+                        main_phase = next((p for p in observed['phases'] if p['id'] == main_id), None)
+                        step.pair_text_receipt(main_phase)
+                    return step
         except RPC_ERRORS:
             pass
         return None

@@ -20,6 +20,7 @@ class Conversation:
     root: str | None = None
     termination: str | None = None
     open_steps: dict = field(default_factory=dict)
+    steps: dict = field(default_factory=dict)
 
 
 class AntigravityProjection:
@@ -120,6 +121,7 @@ class AntigravityProjection:
             self.gap(scope, conversation, at=at, wall=wall)
             cursor.input_index = None
             cursor.open_steps.clear()
+            cursor.steps.clear()
             initial = True
         cursor.trajectory = trajectory or cursor.trajectory
         self.engine.backends[thread.backend]['connected'] = True
@@ -129,6 +131,7 @@ class AntigravityProjection:
         if initial:
             # A reconnect can replace the view of steps already in progress.
             cursor.input_index = None
+            cursor.steps.clear()
         pairs = zip(steps.get('indices', ()), steps.get('steps', ()))
         entries = sorted(((index, row) for index, row in pairs if step_index(index)), key=lambda x: x[0])
         for index, row in entries:
@@ -156,7 +159,17 @@ class AntigravityProjection:
                 self._turn(scope, thread, turn, wall, status='unknown')
             if step.model and step.type == 'PLANNER_RESPONSE':
                 thread.model = self.models.get(step.model, step.model)
+            cursor.steps[index] = step
+            if len(cursor.steps) > 256:
+                cursor.steps.pop(next(iter(cursor.steps)))
+            step.pair_next(cursor.steps.get(index + 1))
+            if self.book and step.type == 'PLANNER_RESPONSE' and step.text and step.thinking_ended is None:
+                main_id = step.phase(scope, thread.id, turn, 'main')['id']
+                step.pair_text_receipt(self.book.phases.get(main_id))
             self._step(scope, thread, turn, step, initial, at, wall)
+            prev = cursor.steps.get(index - 1)
+            if prev is not None and prev.pair_next(step):
+                self._step(scope, thread, turn, prev, initial, at, wall)
             self._children(scope, thread, turn, step, at)
             if step.state in OPEN:
                 cursor.open_steps[index] = turn
@@ -219,6 +232,7 @@ class AntigravityProjection:
         cursor.input_index = step.index
         if thread.turn_id != turn:
             cursor.termination = None
+            cursor.steps.clear()
             if not initial:
                 for activity in thread.activities.values():
                     if activity.turn_id != turn and activity.active:

@@ -387,6 +387,74 @@ class AntigravityProjectionTests(unittest.TestCase):
                 self.assertEqual(encoding_for_model('gemma-4-e4b-it'), 'gemma4')
                 self.assertEqual(encoding_for_model('claude-3-7-sonnet'), 'o200k_base')
 
+    def test_silent_thinking_steps_recover_reasoning_intervals_without_thinking_summary(self):
+        # Live observation: step 1 thinks silently then calls step 2 (tool);
+        # step 3 thinks silently then streams final text starting at t=15.
+        self.push({0: step('USER_INPUT', 'DONE', metadata={'createdAt': WHEN+1})}, 1)
+        self.push({1: step('PLANNER_RESPONSE', 'DONE', metadata={
+                       'createdAt': WHEN+2, 'finishedGeneratingAt': WHEN+6.3,
+                       'modelUsage': {'outputTokens': '89', 'thinkingOutputTokens': '46', 'responseOutputTokens': '43'}}),
+                   2: step('RUN_COMMAND', 'DONE', runCommand={'commandLine': 'git status', 'exitCode': 0},
+                           metadata={'createdAt': WHEN+6, 'finishedGeneratingAt': WHEN+6.3,
+                                     'startedAt': WHEN+6.35, 'completedAt': WHEN+6.5,
+                                     'source': 'CORTEX_STEP_SOURCE_MODEL'})}, 7)
+        self.push({3: step('PLANNER_RESPONSE', 'GENERATING', plannerResponse={'response': 'Final'})}, 15)
+        self.push({3: step('PLANNER_RESPONSE', 'DONE', plannerResponse={'response': 'Final answer'},
+                           metadata={'createdAt': WHEN+10, 'finishedGeneratingAt': WHEN+17,
+                                     'modelUsage': {'outputTokens': '290', 'thinkingOutputTokens': '27',
+                                                    'responseOutputTokens': '263'}})}, 17, status='IDLE')
+
+        path = transcript_path(self.scope, ROOT)
+        path.parent.mkdir(parents=True)
+        path.write_text(''.join(json.dumps(row)+'\n' for row in (
+            {'step_index': 0, 'type': 'USER_INPUT', 'status': 'DONE', 'created_at': WHEN+1},
+            {'step_index': 1, 'type': 'PLANNER_RESPONSE', 'status': 'DONE', 'created_at': WHEN+2,
+             'output_tokens': 89, 'tool_calls': [{'name': 'run_command'}]},
+            {'step_index': 2, 'type': 'GENERIC', 'status': 'DONE', 'created_at': WHEN+6},
+            {'step_index': 3, 'type': 'PLANNER_RESPONSE', 'status': 'DONE', 'created_at': WHEN+10,
+             'output_tokens': 290, 'content': 'Final answer'},
+        )))
+        trajectory_rows = [
+            step('USER_INPUT', 'DONE', metadata={'createdAt': WHEN+1}),
+            step('PLANNER_RESPONSE', 'DONE', metadata={
+                'createdAt': WHEN+2, 'finishedGeneratingAt': WHEN+6.3,
+                'modelUsage': {'outputTokens': '89', 'thinkingOutputTokens': '46', 'responseOutputTokens': '43'}}),
+            step('RUN_COMMAND', 'DONE', runCommand={'commandLine': 'git status', 'exitCode': 0},
+                 metadata={'createdAt': WHEN+6, 'finishedGeneratingAt': WHEN+6.3,
+                           'startedAt': WHEN+6.35, 'completedAt': WHEN+6.5,
+                           'source': 'CORTEX_STEP_SOURCE_MODEL'}),
+            step('PLANNER_RESPONSE', 'DONE', plannerResponse={'response': 'Final answer'},
+                 metadata={'createdAt': WHEN+10, 'finishedGeneratingAt': WHEN+17,
+                           'modelUsage': {'outputTokens': '290', 'thinkingOutputTokens': '27',
+                                          'responseOutputTokens': '263'}}),
+        ]
+        query = TimelineQuery(self.book, read_antigravity_steps=lambda _s, _t, idx: trajectory_rows[idx:])
+        turn = turn_id(ROOT, 0)
+        bundle = query.bundle(self.scope, ROOT, turn)
+        reasoning_steps = {p['step_index']: p for p in bundle['phases'] if p['kind'] == 'reasoning'}
+        self.assertEqual(set(reasoning_steps), {1, 3})
+        self.assertEqual((reasoning_steps[1]['start_ms'], reasoning_steps[1]['end_ms'], reasoning_steps[1]['end_source']),
+                         ((WHEN+2)*1000, (WHEN+6)*1000, 'producer'))
+        self.assertEqual((reasoning_steps[3]['start_ms'], reasoning_steps[3]['end_ms'], reasoning_steps[3]['end_source']),
+                         ((WHEN+10)*1000, (WHEN+15)*1000, 'receipt'))
+        final_text = next(p for p in bundle['phases'] if p['step_index'] == 3 and p['kind'] == 'text')
+        self.assertEqual((final_text['start_ms'], final_text['end_ms'], final_text['start_source'], final_text['end_source']),
+                         ((WHEN+15)*1000, (WHEN+17)*1000, 'receipt', 'producer'))
+
+        detail = query.query({'action': 'detail', 'scope_id': self.scope, 'thread_id': ROOT,
+                              'turn_id': turn, 'phase_id': reasoning_steps[1]['id']})
+        self.assertEqual(detail['state'], 'content_unavailable')
+        self.assertFalse(detail['phase'].get('history_retired'))
+        self.assertEqual((detail['phase']['start_ms'], detail['phase']['end_ms']),
+                         ((WHEN+2)*1000, (WHEN+6)*1000))
+
+        code_action = live_step(4, step('CODE_ACTION', 'DONE', metadata={
+            'createdAt': WHEN+18, 'finishedGeneratingAt': WHEN+18.4,
+            'startedAt': WHEN+18.45, 'completedAt': WHEN+19,
+            'source': 'CORTEX_STEP_SOURCE_MODEL'}))
+        edit_phase = code_action.phase(self.scope, ROOT, turn, 'input')
+        self.assertEqual((edit_phase['track'], edit_phase['kind']), ('model', 'file_edit_input'))
+
 
 class PushStream:
     def __init__(self):

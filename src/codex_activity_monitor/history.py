@@ -86,16 +86,19 @@ class HistoryProvider:
         self._budget(key, index)
         return index
 
-    def trajectory_turn(self, scope, thread, turn, read_steps=None, *, prefetched=None, fallback=None):
+    def trajectory_turn(self, scope, thread, turn, read_steps=None, *, prefetched=None, fallback=None,
+                        observed_phases=None):
         with self.lock:
             key = HistoryCacheKey(scope, thread, 'full')
             index = self.indices.get(key)
             if isinstance(index, TranscriptIndex):
-                result = index.trajectory_turn(turn, read_steps, prefetched=prefetched)
+                result = index.trajectory_turn(turn, read_steps, prefetched=prefetched,
+                                               observed_phases=observed_phases)
                 self._budget(key, index)
                 return result
             if isinstance(fallback, TranscriptIndex):
-                return fallback.trajectory_turn(turn, read_steps, prefetched=prefetched)
+                return fallback.trajectory_turn(turn, read_steps, prefetched=prefetched,
+                                                observed_phases=observed_phases)
             return None
 
     def view(self, scope, thread):

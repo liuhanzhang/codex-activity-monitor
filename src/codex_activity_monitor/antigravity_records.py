@@ -133,10 +133,35 @@ class Step:
     children: tuple = ()
     model_generated: bool = False
     thinking_ended: float | None = None
+    thinking_end_source: str = 'producer'
 
     @property
     def is_tool(self):
         return bool(self.type) and self.type not in ('SYSTEM_MESSAGE', 'CHECKPOINT', 'USER_INPUT', 'PLANNER_RESPONSE')
+
+    def pair_next(self, nxt):
+        """Use the following model tool call's creation time when thinking summary text was omitted."""
+        if (self.type == 'PLANNER_RESPONSE' and self.thinking_ended is None and not self.text and
+                (self.usage.get('reasoning_tokens') or 0) > 0 and nxt is not None and
+                nxt.is_tool and nxt.model_generated and self.created is not None and
+                nxt.created is not None and self.generation_ended is not None and
+                self.created < nxt.created <= self.generation_ended):
+            self.thinking_ended = nxt.created
+            self.thinking_end_source = 'producer'
+            return True
+        return False
+
+    def pair_text_receipt(self, main_phase):
+        """Bound silent thinking before a text response using its observed first-chunk receipt."""
+        if (self.type == 'PLANNER_RESPONSE' and self.thinking_ended is None and self.text and
+                (self.usage.get('reasoning_tokens') or 0) > 0 and isinstance(main_phase, dict) and
+                main_phase.get('start_source') == 'receipt' and self.created is not None and
+                main_phase.get('start_ms') is not None and self.generation_ended is not None and
+                self.created < main_phase['start_ms'] <= self.generation_ended):
+            self.thinking_ended = main_phase['start_ms']
+            self.thinking_end_source = 'receipt'
+            return True
+        return False
 
     def item(self, conversation, part='main'):
         name = step_id(conversation, self.index)
@@ -177,7 +202,7 @@ class Step:
         start = self.started if history or self.type != 'PLANNER_RESPONSE' else None
         terminal = self.state not in OPEN and self.state != 'unknown'
         end = self.ended if terminal else None
-        end_from_receipt = False
+        start_source = end_source = 'history' if history else 'producer'
         if self.type == 'USER_INPUT':
             start = end = self.created
         elif part == 'input':
@@ -185,17 +210,27 @@ class Step:
         elif part == 'summary' and not history:
             start = self.created if self.thinking_ended is not None else None
             end = self.thinking_ended
-        elif final_response and self.thinking_ended is not None:
-            start, end = self.thinking_ended, self.generation_ended
+            end_source = self.thinking_end_source
+        elif final_response and not history:
+            if self.thinking_ended is not None:
+                start, end = self.thinking_ended, self.generation_ended
+                start_source = self.thinking_end_source
+            elif not (self.usage.get('reasoning_tokens') or 0):
+                start, end = self.created, self.generation_ended
+            else:
+                start, end = None, self.generation_ended
         elif history and start is None and not self.is_tool:
             start = self.created
         if terminal and end is None and not history:
             end = at
-            end_from_receipt = at is not None
+            if at is not None:
+                end_source = 'receipt'
         value = item_phase(scope, conversation, turn, item, start, end, 'history' if history else 'producer')
         value.update(source='antigravity', step_index=self.index, step_type=self.type)
-        if end_from_receipt:
-            value['end_source'] = 'receipt'
+        if value.get('start_ms') is not None:
+            value['start_source'] = start_source
+        if value.get('end_ms') is not None:
+            value['end_source'] = end_source
         if part != 'input' and self.exit_code is not None:
             value['exit_code'] = self.exit_code
         if history:

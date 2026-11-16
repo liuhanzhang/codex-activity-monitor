@@ -44,8 +44,12 @@ def status(value):
             'done': 'completed', 'cancelled': 'interrupted'}.get(value, value or 'unknown')
 
 
+FILE_EDIT_TOOLS = ('code_action', 'write_to_file', 'replace_file_content',
+                   'multi_replace_file_content', 'edit_file', 'write_file')
+
+
 def edit_input(name, code):
-    if is_patch_tool(name):
+    if is_patch_tool(name) or name in FILE_EDIT_TOOLS:
         return True
     if not isinstance(code, str):
         return False
@@ -102,7 +106,7 @@ def item_phase(scope, thread, turn, item, start=None, end=None, source='producer
             'quality': [], 'mirrored': item.get('delivery') == 'async', **raw_coordination(item)}
 
 
-def settled_model_items(turns, phases, *, read_complete, quality=(), absent_turns=()):
+def settled_model_items(turns, phases, *, read_complete, quality=(), absent_turns=(), planner_steps=()):
     """Membership for reliable, ended JSONL turns; None means no new decision."""
     if not read_complete or quality:
         return None
@@ -115,6 +119,11 @@ def settled_model_items(turns, phases, *, read_complete, quality=(), absent_turn
             settled[key].add(({'message': 'agentMessage'}.get(phase['item_type'], phase['item_type']), phase['item_id']))
             if phase.get('source') == 'antigravity' and phase['track'] == 'tool':
                 settled[key].add(('function_call', phase['item_id']+'-input'))
+            if phase.get('source') == 'antigravity' and phase['item_type'] == 'agentMessage':
+                settled[key].add(('reasoning', phase['item_id']+'-summary'))
+    for scope, thread, turn, index in planner_steps:
+        if (scope, thread, turn) in settled:
+            settled[scope, thread, turn].add(('reasoning', f'{thread}-step-{index}-summary'))
     return settled
 
 
