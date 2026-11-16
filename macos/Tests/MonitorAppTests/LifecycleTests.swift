@@ -16,9 +16,10 @@ private actor FakeBackend: BackendManaging {
     func actions() -> [String] { calls }
 }
 
-private func state(_ name: String, session: Bool = false) throws -> ManagementState {
+private func state(_ name: String, session: Bool = false, antigravity: Bool = false) throws -> ManagementState {
     let lease = session ? ",\"session\":{\"version\":2,\"id\":\"test\",\"secret\":\"fixture-secret\",\"owner_pid\":123,\"created_at\":1,\"active\":true}" : ""
-    return try JSONDecoder().decode(ManagementState.self, from: Data("{\"version\":1,\"ok\":true,\"state\":\"\(name)\"\(lease)}".utf8))
+    return try JSONDecoder().decode(ManagementState.self, from: Data(
+        "{\"version\":1,\"ok\":true,\"state\":\"\(name)\",\"antigravity_enabled\":\(antigravity)\(lease)}".utf8))
 }
 
 @MainActor private func store(_ backend: FakeBackend) -> DashboardStore {
@@ -31,6 +32,20 @@ private func state(_ name: String, session: Bool = false) throws -> ManagementSt
     let value = store(backend)
     #expect(await value.prepareQuit())
     #expect(await backend.actions().isEmpty)
+}
+
+@Test @MainActor func antigravityResumesObservationWithoutConfiguringCodex() async throws {
+    let backend = FakeBackend([.success(try state("restored", antigravity: true)),
+                               .success(try state("restored", session: true, antigravity: true)),
+                               .success(try state("restored"))])
+    let value = store(backend)
+    await value.setAntigravity(true)
+    #expect(value.management?.observationEnabled == true)
+    #expect(value.management?.configured == false)
+    #expect(value.operationError == nil)
+    await value.setAntigravity(false)
+    #expect(value.management?.observationEnabled == false)
+    #expect(await backend.actions() == ["antigravity", "resume", "antigravity"])
 }
 
 @Test @MainActor func failedStopKeepsGUIAvailableForRetry() async throws {

@@ -113,6 +113,8 @@ def settled_model_items(turns, phases, *, read_complete, quality=(), absent_turn
         key = (phase['scope_id'], phase['thread_id'], phase['turn_id'])
         if key in settled:
             settled[key].add(({'message': 'agentMessage'}.get(phase['item_type'], phase['item_type']), phase['item_id']))
+            if phase.get('source') == 'antigravity' and phase['track'] == 'tool':
+                settled[key].add(('function_call', phase['item_id']+'-input'))
     return settled
 
 
@@ -148,33 +150,50 @@ def display_phase(phase):
 
 def merge_phase(old, new):
     """Merge the same semantic phase, never reopen terminal work on a late start."""
-    if old is None:
-        result = dict(new)
-    else:
-        result = {**old, **{k: v for k, v in new.items() if v is not None}}
+    result = dict(new) if old is None else {**old, **{k: v for k, v in new.items() if v is not None}}
+    antigravity = result.get('source') == 'antigravity'
+    antigravity_tool = antigravity and result.get('track') == 'tool'
+    if old is not None:
         result['quality'] = sorted(set(old.get('quality', [])) | set(new.get('quality', [])))
         result['mirrored'] = old.get('mirrored', False) or new.get('mirrored', False)
         # History replaces a live supplement. Never retain an alternate history
         # underneath it to resurrect after the authoritative source changes.
         result.pop('observation', None)
-        rank = lambda value: 3 if value == 'history' else 2 if value == 'producer' else 1 if value == 'receipt' else 0
+        ranks = {'history': 3, 'producer': 2, 'receipt': 1}
+        if antigravity:
+            # Antigravity's transcript can omit boundaries and round creation times to whole seconds.
+            ranks.update(history=2, producer=3)
+            if result.get('track') == 'model':
+                ranks.update(history=1, receipt=2)
         for bound in ('start', 'end'):
             key, provenance = bound + '_ms', bound + '_source'
-            if old.get(key) is not None and (new.get(key) is None or
-                    rank(old.get(provenance)) >= rank(new.get(provenance))):
+            old_rank = ranks.get(old.get(provenance), 0)
+            new_rank = ranks.get(new.get(provenance), 0)
+            newer_native_bound = antigravity and new.get(provenance) == 'producer'
+            if old.get(key) is not None and (new.get(key) is None or old_rank > new_rank or
+                    (old_rank == new_rank and not newer_native_bound)):
                 result[key], result[provenance] = old[key], old.get(provenance)
         if old.get('status') not in ('active', 'waiting') and new.get('status') == 'active':
             result['status'] = old['status']
         terminal = {'completed', 'failed', 'interrupted', 'declined'}
-        if old.get('status') in terminal and new.get('status') in terminal and old['status'] != new['status']:
-            result['quality'] = sorted(set(result['quality']) | {'lifecycle_conflict'})
         if old.get('history_terminal') and not new.get('history_terminal'):
             result['status'] = old['status']
+        if antigravity_tool:
+            for phase in (new, old):
+                if phase.get('end_source') == 'producer' and phase.get('status') in terminal:
+                    result['status'] = phase['status']
+                    break
+        if (old.get('status') in terminal and new.get('status') in terminal and old['status'] != new['status'] and
+                (not antigravity_tool or old.get('end_source') == new.get('end_source'))):
+            result['quality'] = sorted(set(result['quality']) | {'lifecycle_conflict'})
         if old.get('kind') == 'file_edit_input':
             result['kind'] = 'file_edit_input'
         if new.get('execution_confirmed'):
             result['quality'] = [q for q in result['quality'] if q != 'execution_unconfirmed']
     result.pop('observation', None)  # Also discard legacy sidecar shadow state.
+    exit_code = result.get('exit_code')
+    if antigravity_tool and result.get('status') == 'completed' and type(exit_code) is int and exit_code != 0:
+        result['status'] = 'failed'
     if result.get('start_ms') is None:
         result['quality'] = sorted(set(result.get('quality', [])) | {'start_unknown'})
     else:
@@ -191,10 +210,21 @@ def merge_history_phase(observed, historical, *, read_complete=True):
     basis = observed
     if historical is None and not read_complete:
         return observed
+    if (observed and historical and historical.get('step_type') == 'GENERIC' and
+            observed.get('step_type') not in (None, 'GENERIC')):
+        # A generic transcript row can settle the same step without losing
+        # its more specific type and label from the state or trajectory API.
+        historical = {**historical, **{key: observed[key] for key in
+                      ('item_type', 'step_type', 'tool_name', 'label', 'label_message', 'exit_code') if key in observed}}
     if observed and observed.get('history_terminal'):
         basis = {k: v for k, v in observed.items()
                  if k not in ('history_terminal', 'exit_code', 'observation')}
-        basis['status'] = 'unknown'
+        if (observed.get('source') == 'antigravity' and observed.get('track') == 'tool' and
+                observed.get('end_source') == 'producer'):
+            if 'exit_code' in observed:
+                basis['exit_code'] = observed['exit_code']
+        else:
+            basis['status'] = 'unknown'
         for bound in ('start', 'end'):
             if basis.get(bound + '_source') == 'history':
                 basis[bound + '_ms'] = basis[bound + '_source'] = None
@@ -311,12 +341,14 @@ class TimelineBook:
             return
         self._save('phase', merge_phase(self.phases.get(record['id']), record))
 
-    def _relation(self, scope, parent, turn, child, call, operation=None):
+    def _relation(self, scope, parent, turn, child, call, operation=None, *, source=None):
         if not child or child == parent:
             return
         record = {'id': identity('relation', scope, parent, turn, child, call), 'scope_id': scope,
                   'parent_thread_id': parent, 'parent_turn_id': turn, 'child_thread_id': child,
                   'call_id': call, 'operation': operation}
+        if source:
+            record['source'] = source
         self._save('relation', record)
 
     def observe(self, event, engine):
@@ -470,9 +502,10 @@ class TimelineBook:
         state['text'] = (state['text'] + chunk)[-262144:]
         state['partial'] = True  # subscription may have started after the first output
 
-    def gap(self, scope, at, backend=None):
+    def gap(self, scope, at, backend=None, *, thread=None):
         for turn in list(self.turns.values()):
             if (turn['scope_id'] == scope and turn['status'] == 'active' and
+                    (thread is None or turn['thread_id'] == thread) and
                     (backend is None or turn.get('observation_backend') == backend)):
                 marker = item_phase(scope, turn['thread_id'], turn['turn_id'],
                                     {'id': identity('gap', backend, at), 'type': 'sleep'}, at, at, 'receipt', namespace='marker')
@@ -480,11 +513,13 @@ class TimelineBook:
                 self._put(marker)
         for record in list(self.phases.values()):
             if (record['scope_id'] == scope and record['status'] in ('active', 'waiting') and
+                    (thread is None or record['thread_id'] == thread) and
                     (backend is None or record.get('observation_backend') == backend)):
                 self._put({**record, 'status': 'unknown', 'observed_until_ms': at,
                            'quality': sorted(set(record['quality']) | {'observation_gap'})})
         for turn in list(self.turns.values()):
             if (turn['scope_id'] == scope and turn['status'] == 'active' and
+                    (thread is None or turn['thread_id'] == thread) and
                     (backend is None or turn.get('observation_backend') == backend)):
                 self._save('turn', {**turn, 'status': 'unknown'})
 
@@ -549,9 +584,18 @@ class TimelineBook:
                         if self.store:
                             self.store.delete(key)
             for key, record in list(self.relations.items()):
-                if (record['scope_id'], record['parent_thread_id'], record['parent_turn_id']) not in keep:
+                if (record.get('source') != 'antigravity' and
+                        (record['scope_id'], record['parent_thread_id'], record['parent_turn_id']) not in keep):
                     del self.relations[key]
                     if self.store:
                         self.store.delete(key)
+            # Native child transcripts have no parent turn identifier. Retain
+            # verified invocation links alongside the JSONL, within a cap.
+            antigravity = [key for key, record in self.relations.items() if record.get('source') == 'antigravity']
+            for key in antigravity[:-4096]:
+                self.relations.pop(key)
+                self.revision += 1
+                if self.store:
+                    self.store.delete(key)
             self.waiting = {key: phase for key, phase in self.waiting.items()
                             if phase in self.phases and self.phases[phase]['status'] in ('active', 'waiting')}

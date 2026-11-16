@@ -18,6 +18,7 @@ from .history_content import (ABSENT, CANONICAL_TYPES, fields, item_content, raw
 from .history_index import HistoryDirectory, HistoryDetails, HistoryFacts, HistoryMetadata, RolloutIndex, canonical_item, timestamp
 from .history_read import HistoryChanged, HistoryRead
 from .history_source import RolloutResolver
+from .antigravity_history import AntigravityHistory, TranscriptIndex, antigravity_scope
 from .resource_budget import retained_bytes
 from .timeline import phase_id
 
@@ -44,6 +45,7 @@ class HistoryProvider:
         if capacity < 0 or max_cache_bytes < 0 or max_turn_indices < 0:
             raise ValueError('invalid_history_budget')
         self.resolver = RolloutResolver()
+        self.antigravity = AntigravityHistory()
         self.sources = OrderedDict()
         self.source_epochs = {}
         self.source_sequence = 0
@@ -69,6 +71,9 @@ class HistoryProvider:
     def selected_view(self, scope, thread, turn):
         """Read and cache one turn; source size cannot force a full phase rebuild."""
         with self.lock:
+            if antigravity_scope(scope):
+                index = self.antigravity.index(scope, thread)
+                return self._view(index, turn) if index else None
             self._source(scope, thread)
             cached = self._cached_selection(scope, thread, {turn})
             if cached is not None:
@@ -84,6 +89,9 @@ class HistoryProvider:
 
     def cached_path(self, scope, thread):
         with self.lock:
+            if antigravity_scope(scope):
+                index = self.antigravity.indices.get((scope, thread))
+                return index.path if index else None
             return next((index.path for key, index in reversed(self.indices.items())
                          if (key.scope, key.thread) == (scope, thread)), None)
 
@@ -91,6 +99,8 @@ class HistoryProvider:
         """One phase and explicit call dependencies, independent of turn width."""
         key = HistoryCacheKey(scope, thread, 'detail', turn, selected_id)
         with self.lock:
+            if antigravity_scope(scope):
+                return self.antigravity.index(scope, thread)
             self._source(scope, thread)
             cached = self.indices.get(key)
             if cached is not None and cached.hint_signature == HistoryDetails.hint_key(observed_phase):
@@ -123,6 +133,8 @@ class HistoryProvider:
 
     def timeline_view(self, directory, turns):
         """Full phase metadata for a timeline, without unused content references."""
+        if isinstance(directory, TranscriptIndex):
+            return directory
         return self._turn_views(directory, turns, 'timeline')
 
     def _turn_views(self, directory, turns, kind):
@@ -218,6 +230,9 @@ class HistoryProvider:
 
     def invalidate(self, scope, thread):
         with self.lock:
+            if antigravity_scope(scope):
+                self.antigravity.indices.pop((scope, thread), None)
+                return
             for key in list(self.indices):
                 if (key.scope, key.thread) == (scope, thread):
                     self.indices.pop(key, None); self.weights.pop(key, None)
@@ -280,6 +295,10 @@ class HistoryProvider:
     def reconciliation(self, scope, thread, turns, *, items=None):
         """Small, content-free summary for the event loop; all I/O stays here."""
         with self.lock:
+            if antigravity_scope(scope):
+                index = self.antigravity.index(scope, thread)
+                return (index.reconciliation(turns) if index else
+                        {'source': 'antigravity', 'scope_id': scope, 'thread_id': thread, 'quality': ['history_unavailable']})
             selected = set(turns)
             required = None if items is None else self._item_phases(scope, thread, items)
             index = self._cached_selection(scope, thread, selected, required_ids=required)
@@ -352,6 +371,8 @@ class HistoryProvider:
             self.invalidate(scope, thread)
 
     def configure_source(self, scope, thread, epoch, hint):
+        if antigravity_scope(scope):
+            return
         with self.lock:
             key = scope, thread
             old = self.input_versions.get(key)
@@ -401,6 +422,8 @@ class HistoryProvider:
         key = HistoryCacheKey(scope, thread, 'directory' if directory_only else 'full')
         missing_key = (scope, thread)
         with self.lock:
+            if antigravity_scope(scope):
+                return self.antigravity.index(scope, thread)
             source = self._source(scope, thread)
             if source is None:
                 self.missing[missing_key] = time.monotonic()

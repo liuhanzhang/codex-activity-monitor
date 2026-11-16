@@ -85,6 +85,11 @@ def main():
     encodings = sorted(tiktoken.list_encoding_names())
     for name in encodings:
         tiktoken.get_encoding(name).encode_ordinary('Hello, 世界！打包验证。')
+    from codex_activity_monitor.antigravity_tokenizer import count as count_gemma, prepare as prepare_gemma
+    prepare_gemma(cache, assets/'notices')
+    if count_gemma('Hello, 世界！打包验证。') <= 0:
+        raise RuntimeError('Gemma tokenizer verification failed')
+    encodings.append('gemma4')
 
     files = sorted([*ROOT.glob('src/codex_activity_monitor/*.py'), *ROOT.glob('macos/Sources/**/*'),
                     *ROOT.glob('packaging/*'), ROOT/'pyproject.toml', ROOT/'LICENSE',
@@ -142,6 +147,7 @@ def main():
     shutil.copy2(python_license, licenses/'Python/LICENSE.txt')
     shutil.copy2(notices, licenses/'Python/standalone-distribution-notices.rst')
     copy_dependency_licenses(licenses)
+    shutil.copytree(assets/'notices/Gemma4Tokenizer', licenses/'Gemma4Tokenizer')
     info = app_info
     (contents/'Info.plist').write_bytes(plistlib.dumps(info))
     embed_sparkle(stage)

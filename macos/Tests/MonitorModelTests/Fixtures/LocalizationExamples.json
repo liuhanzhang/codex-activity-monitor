@@ -1005,6 +1005,46 @@
     }
   },
   {
+    "expected": "已连接 Antigravity Desktop",
+    "language": "zh-CN",
+    "message": {
+      "key": "diagnostics.antigravity_connected",
+      "params": {}
+    }
+  },
+  {
+    "expected": "等待 Antigravity Desktop 启动",
+    "language": "zh-CN",
+    "message": {
+      "key": "diagnostics.antigravity_waiting",
+      "params": {}
+    }
+  },
+  {
+    "expected": "未找到 Antigravity Desktop",
+    "language": "zh-CN",
+    "message": {
+      "key": "diagnostics.antigravity_not_installed",
+      "params": {}
+    }
+  },
+  {
+    "expected": "暂时无法连接 Antigravity Desktop",
+    "language": "zh-CN",
+    "message": {
+      "key": "diagnostics.antigravity_unavailable",
+      "params": {}
+    }
+  },
+  {
+    "expected": "部分 Antigravity 会话未订阅",
+    "language": "zh-CN",
+    "message": {
+      "key": "diagnostics.antigravity_limited",
+      "params": {}
+    }
+  },
+  {
     "expected": "请在任务结束后重开 Codex，让配置完成切换",
     "language": "zh-CN",
     "message": {
@@ -2960,6 +3000,46 @@
     "language": "en",
     "message": {
       "key": "cli.desktop",
+      "params": {}
+    }
+  },
+  {
+    "expected": "Connected to Antigravity Desktop",
+    "language": "en",
+    "message": {
+      "key": "diagnostics.antigravity_connected",
+      "params": {}
+    }
+  },
+  {
+    "expected": "Waiting for Antigravity Desktop",
+    "language": "en",
+    "message": {
+      "key": "diagnostics.antigravity_waiting",
+      "params": {}
+    }
+  },
+  {
+    "expected": "Antigravity Desktop was not found",
+    "language": "en",
+    "message": {
+      "key": "diagnostics.antigravity_not_installed",
+      "params": {}
+    }
+  },
+  {
+    "expected": "Antigravity Desktop is currently unavailable",
+    "language": "en",
+    "message": {
+      "key": "diagnostics.antigravity_unavailable",
+      "params": {}
+    }
+  },
+  {
+    "expected": "Some Antigravity chats are not being observed",
+    "language": "en",
+    "message": {
+      "key": "diagnostics.antigravity_limited",
       "params": {}
     }
   },

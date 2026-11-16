@@ -17,12 +17,12 @@ class HealthMonitor:
             self.changed_at[name] = now
         return now - self.changed_at.get(name, -1000) < 5
 
-    def snapshot(self, engine, history, metadata, timeline_error, persistence, now=None):
+    def snapshot(self, engine, history, metadata, timeline_error, persistence, now=None, *, antigravity=None):
         now = time.monotonic() if now is None else now
         components = []
 
-        def add(component, state, code, count=0):
-            item = {'component': component, 'agent': 'codex', 'instance_id': self.log.instance,
+        def add(component, state, code, count=0, agent='codex'):
+            item = {'component': component, 'agent': agent, 'instance_id': self.log.instance,
                     'state': state, 'code': code, 'count': count}
             components.append(item)
             previous = self.previous.get(component)
@@ -35,7 +35,7 @@ class HealthMonitor:
                 self.previous[component] = identity
 
         add('collector', 'healthy', 'collector_responsive')
-        backends = list(engine.backends.values())
+        backends = [backend for backend in engine.backends.values() if backend.get('source') != 'antigravity']
         connected = [b for b in backends if b.get('connected')]
         gaps = sum(b.get('parse_errors', 0) + b.get('dropped_packets', 0) - b.get('unrelated_dropped_packets', 0)
                    for b in backends)
@@ -46,6 +46,10 @@ class HealthMonitor:
                 'observation_gap' if recent_gap else 'bridge_connected', gaps)
         else:
             add('bridge', 'unknown', 'waiting_for_connection')
+        if antigravity and antigravity.get('state') != 'disabled':
+            state = antigravity.get('state', 'waiting')
+            health = {'connected': 'healthy', 'limited': 'degraded', 'unavailable': 'unavailable'}.get(state, 'unknown')
+            add('antigravity', health, 'antigravity_' + state, antigravity.get('active', 0), agent='antigravity')
         errors = sum(engine.counts.get(k, 0) for k in ('invalid_ipc', 'oversized_ipc', 'timeline_projection_error'))
         invalid = self.recent_increment('ipc', errors, now)
         add('parsing', 'degraded' if invalid else 'healthy', 'parse_error' if invalid else 'parsing_ready', errors)

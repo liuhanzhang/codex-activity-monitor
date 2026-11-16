@@ -128,6 +128,10 @@ Keep Monitor running while observing. The gear button opens a separate Settings 
 
 Restoration preserves configuration values you changed after integration and does not forcibly end tasks. Leave Monitor open until cleanup finishes; reopen it to continue if interrupted. Codex-owned conversations, source checkouts, and development virtual environments are outside the uninstall cleanup scope. See [the full uninstall guide](docs/user-guide.md#uninstall).
 
+## Antigravity in development builds
+
+With Antigravity Desktop running, turn on **Antigravity** under **Settings → General → Agent Integration** and open the menu bar panel. The integration subscribes to the running desktop over loopback and reads its local transcripts. It shows estimated visible-response speed, reported token usage, tool activity, and history. Codex and Antigravity have separate switches. Runtime verification covers Antigravity Desktop 2.32.1. [Implementation and verification](dev-history/30_antigravity/README.md)
+
 ## Build from source
 
 These steps are for developers and run from the repository root. Use Python 3.11+ and Xcode 26+ with its Swift toolchain; the build machine's macOS must support the selected Xcode. Installing dependencies and downloading tokenizer assets for the first time require network access.

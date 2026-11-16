@@ -3,6 +3,7 @@
 import json
 
 SPAWN_OPERATIONS = ('spawnAgent', 'spawn_agent', 'spawn')
+VERIFIED_PARENTS = ('session_header', 'spawn_call', 'trajectory_metadata')
 OPERATIONS = {value: action for action, values in {
     'spawn': SPAWN_OPERATIONS,
     'send': ('sendInput', 'send_input', 'send_message'),

@@ -11,9 +11,9 @@
 "%d 项工具.one" = "%d tool";
 "Codex Activity Monitor · 只读验证" = "Codex Activity Monitor · Read-only preview";
 "Codex Activity Monitor · 隔离验证" = "Codex Activity Monitor · Isolated preview";
-"Codex 保留的活动记录" = "Activity records retained by Codex";
+"源应用保留的活动记录" = "Activity records retained by the source app";
 "Codex 生成速度 · 点击查看实时活动" = "Codex generation speed · Click to view live activity";
-"Codex 记录的活动生命周期。" = "Activity lifecycle recorded by Codex.";
+"源应用记录的活动生命周期。" = "Activity lifecycle recorded by the source app.";
 "Configure" = "Configure";
 "Details" = "Activity details";
 "Empty" = "No chats to display";
@@ -166,7 +166,7 @@
 "本轮等待中" = "Waiting in this turn";
 "本轮统计" = "Turn statistics";
 "来源中尚无这次调用的结果。" = "The source has no result for this call yet.";
-"来源已截断，以下是 Codex 保留的全部可用内容。" = "The source was truncated. All content retained by Codex is shown below.";
+"来源已截断，以下是源应用保留的全部可用内容。" = "The source was truncated. All retained content is shown below.";
 "来源未提供可查看内容，活动状态与时间见上方。" = "The source provides no viewable content. Activity status and timing are shown above.";
 "来源记录为空字符串。" = "The source record is an empty string.";
 "查看可用活动" = "View available activities";
@@ -234,7 +234,7 @@
 "轮次" = "Turn";
 "输出" = "Output";
 "输出包含推理，仅统计所选轮次。" = "Selected turn only. Output includes reasoning.";
-"这段未完成的内容未被 Codex 历史保留。" = "Codex history did not retain this unfinished content.";
+"源应用的历史未保留这段未完成的内容。" = "The source app's history did not retain this unfinished content.";
 "这轮暂无可用轨迹" = "No timeline available for this turn";
 "进行中" = "Active";
 "连接中断" = "Disconnected";
@@ -262,6 +262,10 @@
 "日志" = "Logs";
 "应用设置" = "Application";
 "Agent 接入" = "Agent Integration";
+"等待 Antigravity Desktop 启动" = "Waiting for Antigravity Desktop";
+"未检测到 Antigravity Desktop" = "Antigravity Desktop not found";
+"暂时无法连接 Antigravity" = "Antigravity connection unavailable";
+"部分 Antigravity 会话未订阅" = "Some Antigravity chats aren't being observed";
 "维护" = "Maintenance";
 "正在处理…" = "Working…";
 "暂时无法确认配置状态，保留上次结果。" = "Unable to verify configuration; showing the last confirmed result.";

@@ -10,7 +10,7 @@ import time
 
 from .history import HistoryProvider, raw_section
 from .timeline import (
-    apply_model_membership, display_phase, identity, merge_history_phase, settled_model_items,
+    apply_model_membership, display_phase, identity, merge_history_phase, merge_phase, phase_id, settled_model_items,
 )
 from .timeline_storage import metadata_path, read_records
 from .agent_presentation import present_agents, present_coordination, scoped_status
@@ -20,6 +20,10 @@ from .history_read import HistoryChanged
 from .query_request import TimelineRequest
 from .query_response import encode_response, read_response, failure
 from .runtime import collector_alive
+from .antigravity_history import antigravity_scope, detail_result
+from .antigravity_records import live_step, step_index
+from .antigravity_source import RPC_ERRORS
+from .request_rate import ResponseSample, TurnRates
 
 
 def validated_request(value):
@@ -28,10 +32,11 @@ def validated_request(value):
 
 
 class TimelineQuery:
-    def __init__(self, book=None, metadata=None, history=None):
+    def __init__(self, book=None, metadata=None, history=None, read_antigravity_steps=None):
         self.book = book
         self.metadata = metadata
         self.history = history or HistoryProvider()
+        self.read_antigravity_steps = read_antigravity_steps
 
     def _configure_source(self, scope, thread):
         engine = getattr(self.book, 'engine', None)
@@ -66,6 +71,7 @@ class TimelineQuery:
                         raise
 
     def _bundle(self, scope, thread, selected=None):
+        antigravity = antigravity_scope(scope)
         observed = self._observed(scope, thread)
         phases = {p['id']: p for p in observed['phases']}
         turns = {(t['thread_id'], t['turn_id']): t for t in observed['turns']}
@@ -220,7 +226,34 @@ class TimelineQuery:
                     if matches:
                         engine_names[agent['thread_id']] = matches[0].name
         present_agents(agents, loaded, engine_names)
-        owned = [p for p in phases.values() if (p['thread_id'], p['turn_id']) in owners
+        recovered_requests = {}
+        if self.read_antigravity_steps and antigravity:
+            for owner, owner_turn in owners:
+                index = loaded[owner]
+                record = turns.get((owner, owner_turn))
+                if not index or not record or record['status'] == 'active':
+                    continue
+                try:
+                    trajectory = index.trajectory_turn(owner_turn, self.read_antigravity_steps)
+                except RPC_ERRORS:
+                    continue
+                if trajectory:
+                    record.update(trajectory['bounds'])
+                    if owner == thread:
+                        recovered_requests = trajectory['model_requests']
+                    for phase in trajectory['phases']:
+                        phases[phase['id']] = merge_phase(phases.get(phase['id']), phase)
+
+        def observed_phase(phase):
+            if (antigravity and phase['status'] in ('active', 'waiting') and
+                    not phase.get('observation_backend') and phase.get('start_source') != 'producer' and
+                    turns.get((phase['thread_id'], phase['turn_id']), {}).get('status') in
+                    ('completed', 'failed', 'interrupted')):
+                # A transcript can retain a RUNNING export after the turn finished.
+                return {**phase, 'status': 'unknown'}
+            return phase
+
+        owned = [observed_phase(p) for p in phases.values() if (p['thread_id'], p['turn_id']) in owners
                  and not p.get('mirrored') and not p.get('history_retired')]
         by_agent = {}
         for phase in owned:
@@ -257,7 +290,7 @@ class TimelineQuery:
         if root_index is None:
             quality.add('history_pending' if any(p['status'] == 'active' for p in visible) else 'history_unavailable')
         earlier = sorted({p['turn_id'] for p in phases.values() if p['thread_id'] == thread and
-                          p['turn_id'] != selected and p['status'] == 'active' and not p.get('history_retired')})
+                          p['turn_id'] != selected and observed_phase(p)['status'] == 'active' and not p.get('history_retired')})
         earlier_relations = {}
         for relation in list(relations.values()):
             if relation['parent_thread_id'] != thread or relation['parent_turn_id'] == selected:
@@ -270,7 +303,8 @@ class TimelineQuery:
                 continue
             child_turns = [t for t in turns.values() if t['thread_id'] == child]
             first = min(child_turns, key=lambda t: t.get('start_ms') or t.get('updated_ms') or 0) if child_turns else None
-            active = [p for p in phases.values() if p['thread_id'] == child and p['status'] == 'active' and not p.get('history_retired')]
+            active = [p for p in phases.values() if p['thread_id'] == child and
+                      observed_phase(p)['status'] == 'active' and not p.get('history_retired')]
             for p in active:
                 owned = turns.get((child, p['turn_id']), {})
                 for relation in candidates:
@@ -286,7 +320,17 @@ class TimelineQuery:
             if t['turn_id'] in earlier or t['turn_id'] == selected:
                 recent.append(t)
         average = root_index.request_rates.projection(selected) if root_index else None
-        if average and root_index.quality:
+        if antigravity and selected:
+            observed_requests = {**selected_turn.get('model_requests', {}), **recovered_requests}
+            rates = TurnRates()
+            for sample_id, sample in observed_requests.items():
+                rates.responses[sample_id] = ResponseSample((0, sample['output_tokens'], 0, 0), None,
+                                                            sample.get('duration_ms'), pending=False)
+            if root_index:
+                rates.untracked = sum(1 for (turn, step) in root_index.usage
+                                      if turn == selected and str(step) not in observed_requests)
+            average = rates.wire(thread, selected)
+        if average and root_index and root_index.quality:
             average = {**average, 'quality': sorted(set(average['quality']) | root_index.quality),
                        'coverage': 'partial' if average['coverage'] == 'complete' else average['coverage']}
         return {'version': 1, 'scope_id': scope, 'thread_id': thread, 'selected_turn_id': selected,
@@ -297,7 +341,8 @@ class TimelineQuery:
                 'origin_ms': start, 'end_ms': end, 'earlier_active_turns': earlier,
                 'quality': sorted(quality), 'revision': identity(revisions, selected), 'now_ms': time.time() * 1000}
 
-    def detail(self, scope, thread, turn, phase_id, section_id=None, offset=0, limit=262144, *, page_token=None):
+    def detail(self, scope, thread, turn, phase_id, section_id=None, offset=0, limit=262144, *,
+               page_token=None, remote_detail=None):
         version = page_request(scope, thread, turn, phase_id, section_id, offset, page_token)
         observed = self._observed(scope, thread)
         phase = next((p for p in observed['phases'] if p['id'] == phase_id and p['thread_id'] == thread and p['turn_id'] == turn), None)
@@ -318,6 +363,14 @@ class TimelineQuery:
             historical = None
         if index:
             phase = merge_history_phase(phase, historical, read_complete=index.read_complete)
+        if remote_detail:
+            final_response = remote_detail.index == (index.turns.get(turn, {}).get('final_response_step')
+                                                      if index else None)
+            for part in remote_detail.parts():
+                projected = remote_detail.phase(scope, thread, turn, part, final_response=final_response)
+                if projected['id'] == phase_id:
+                    phase = merge_phase(phase, projected)
+                    break
         if phase and index:
             phase = apply_model_membership(phase, settled_model_items(
                 index.turns.values(), index.phases.values(), read_complete=index.read_complete, quality=index.quality))
@@ -373,20 +426,52 @@ class TimelineQuery:
                                 [{'id': 'live', 'title': '实时内容', 'title_message': {'key': 'detail.live', 'params': {}}, 'format': 'code', 'text': live['text']}])
                     result = {'state': 'partial', 'sections': sections,
                               'attachments': [], 'source': 'observed_stream'}
+        if remote_detail:
+            part = 'input' if phase['namespace'] == 'input' else 'summary' if phase['kind'] == 'reasoning' else 'main'
+            candidate = detail_result(remote_detail, part, source='antigravity_rpc')
+            if candidate['sections'] and (remote_detail.text or remote_detail.thinking or
+                                          remote_detail.arguments or remote_detail.output):
+                result = candidate
         fallback = ('pending' if phase['status'] in ('active', 'waiting') else
                     'not_retained' if index and phase['namespace'] == 'input' and phase.get('end_ms') is None else
                     'content_unavailable' if index else 'history_unavailable')
         result = result or {'state': history_error or fallback, 'sections': [], 'attachments': []}
         return paginate(result, phase, section_id, offset, limit, version)
 
+    def _antigravity_detail(self, request):
+        if not self.read_antigravity_steps or not antigravity_scope(request.scope_id):
+            return None
+        scope, thread, turn, selected = request.scope_id, request.thread_id, request.turn_id, request.phase_id
+        observed = self._observed(scope, thread)
+        phase = next((p for p in observed['phases'] if (p['id'], p['thread_id'], p['turn_id']) ==
+                      (selected, thread, turn)), None)
+        try:
+            if not phase:
+                with self.history.lock:
+                    index = self.history.index(scope, thread, directory_only=True)
+                    phase = index.phases.get(selected) if index else None
+                    if not phase and index:
+                        phase = next((p for p in index.phases.values() if p['turn_id'] == turn and
+                                      p['track'] == 'tool' and
+                                      phase_id(scope, thread, turn, 'input', p['item_id']+'-input') == selected), None)
+            if phase and phase['turn_id'] == turn and step_index(phase.get('step_index')):
+                index = phase['step_index']
+                rows = self.read_antigravity_steps(scope, thread, index)
+                if rows:
+                    return live_step(index, rows[0])
+        except RPC_ERRORS:
+            pass
+        return None
+
     def query(self, request):
         request = TimelineRequest.parse(request)
         scope, thread = request.scope_id, request.thread_id
+        remote = self._antigravity_detail(request) if request.action == 'detail' else None
         # Serialise each provider's offset/index updates, not the collector event loop.
         with self.history.lock:
             if request.action == 'detail':
                 return self.detail(scope, thread, request.turn_id, request.phase_id,
-                                   request.section_id, request.offset, page_token=request.page_token)
+                                   request.section_id, request.offset, page_token=request.page_token, remote_detail=remote)
             if request.action == 'timeline':
                 return self.bundle(scope, thread, request.turn_id)
         raise ValueError('unsupported_query')

@@ -23,6 +23,9 @@ from .timeline_query import TimelineQuery, QueryServer
 from .agent_identity import AgentIdentityCache
 from .menu_presentation import menu_presentation
 from .history_refresh import HistoryRefresh
+from .antigravity_projection import AntigravityProjection
+from .antigravity_source import AntigravitySource
+from .agent_relations import VERIFIED_PARENTS
 
 
 def serve(runtime, diagnostic_log=None):
@@ -69,6 +72,18 @@ def serve(runtime, diagnostic_log=None):
         timeline_error = 'metadata_unavailable'
     timeline = TimelineBook(timeline_store)
     engine=Engine(timeline=timeline)
+    antigravity = AntigravityProjection(engine)
+    antigravity_source = None
+    antigravity_enabled = runtime/'antigravity.enabled'
+
+    def read_antigravity_steps(scope, conversation, step):
+        source = antigravity_source
+        return source.read_steps(scope, conversation, step) if source else []
+
+    managed = json.loads((runtime/'app-managed.json').read_text()) if observation.managed else None
+    from pathlib import Path
+    codex_enabled = Path(managed['enabled_file']) if managed else None
+    observe_codex = True
     cadence = SnapshotCadence()
     archive_cadence = SnapshotCadence(interval=10)
     history = HistoryRefresh()
@@ -76,7 +91,8 @@ def serve(runtime, diagnostic_log=None):
     query_server = None
     query_thread = None
     try:
-        query_server = QueryServer(runtime/'tl.sock', TimelineQuery(timeline, history=history.provider))
+        query_server = QueryServer(runtime/'tl.sock', TimelineQuery(
+            timeline, history=history.provider, read_antigravity_steps=read_antigravity_steps))
         query_thread = threading.Thread(target=query_server.serve_forever, kwargs={'poll_interval': .1}, daemon=True,
                                         name='timeline-queries')
         query_thread.start()
@@ -86,10 +102,13 @@ def serve(runtime, diagnostic_log=None):
                                    'state','timeline','timeline_storage','timeline_query','history','reconciliation','agent_presentation','agent_relations','agent_identity',
                                    'publication','state_transport','observation_lease','history_read','content_version',
                                    'resource_budget','identity_budget','query_request','query_response','json_encoding','history_index','history_content','history_refresh','history_contract','request_rate','tokenizer_process',
-                                   'diagnostic_log','diagnostic_health','integration_status')
+                                   'diagnostic_log','diagnostic_health','integration_status','antigravity_source',
+                                   'antigravity_transport','antigravity_projection','antigravity_records','antigravity_history')
     previous=read_snapshot(runtime)
     previous_age = snapshot_age(previous)
     historical = previous.get('threads', []) if previous_age is not None and -5 <= previous_age < 600 else []
+    if not antigravity_enabled.is_file():
+        historical = [row for row in historical if row.get('source') != 'antigravity']
     if historical:
         engine.usage.restore(previous.get('usage_recovery'))
     for thread in historical:
@@ -97,7 +116,7 @@ def serve(runtime, diagnostic_log=None):
             thread['usage'].pop('latest_reasoning', None)
         # Old snapshots inferred these edges from communication. Re-verify them
         # from session headers / new explicit live creation evidence.
-        if thread.get('parent_source') not in ('session_header', 'spawn_call'):
+        if thread.get('parent_source') not in VERIFIED_PARENTS:
             thread.pop('parent_thread_id', None)
         thread['subagents'] = {}
         thread['connected']=False
@@ -121,7 +140,8 @@ def serve(runtime, diagnostic_log=None):
     def retain_history(snapshot):
         if time.time()-recovered_at>=600:
             return
-        older={(t.get('home'),t['id']):t for t in historical}
+        older={(t.get('home'),t['id']):t for t in historical if
+               t.get('source') != 'antigravity' or antigravity_source is not None}
         fresh=set()
         for index,thread in enumerate(snapshot['threads']):
             identity=(thread.get('home'),thread['id'])
@@ -199,6 +219,22 @@ def serve(runtime, diagnostic_log=None):
             if time.monotonic()>=next_owner_check:
                 if not observation.is_observing():
                     break
+                observe_codex = codex_enabled is None or codex_enabled.is_file()
+                if not observe_codex:
+                    for conn in list(clients):
+                        if clients[conn].get('backend'):
+                            close_client(conn, 'codex_disabled')
+                enabled = antigravity_enabled.is_file()
+                if enabled and antigravity_source is None:
+                    antigravity_source = AntigravitySource()
+                    antigravity.status = {'state': 'waiting'}
+                elif not enabled and antigravity_source is not None:
+                    antigravity_source.close()
+                    antigravity_source = None
+                    with timeline.lock:
+                        antigravity.disable(time.monotonic(), time.time())
+                if not (observe_codex or enabled):
+                    break
                 next_owner_check=time.monotonic()+0.5
             for key,events in selector.select(timeout=0.05):
                 conn=key.fileobj
@@ -266,7 +302,7 @@ def serve(runtime, diagnostic_log=None):
                                 owners[backend]=conn
                             state['permit_protocol']=1
                             tick_age=max(0,time.monotonic()-last_progress)*1000
-                            allowed=observation.is_observing() and tick_age < 1000 and owners.get(backend) is conn
+                            allowed=observe_codex and observation.is_observing() and tick_age < 1000 and owners.get(backend) is conn
                             reply=encode_frame({'protocol_version':1,'kind':'observe_permit','nonce':nonce,
                                 'instance_id':instance_id,'observing':allowed,'tick_age_ms':tick_age,
                                 'ttl_ms':min(1500,observation.remaining()*1000) if allowed else 0})
@@ -287,7 +323,7 @@ def serve(runtime, diagnostic_log=None):
                         if owners.get(row['backend']) is not conn:
                             engine.counts['superseded_ipc_frames']+=1
                             continue
-                        if not observation.is_observing():
+                        if not observe_codex or not observation.is_observing():
                             continue
                         if observation.managed and state.get('permit_protocol') != 1 and row.get('event',{}).get('type') != 'bridge/started':
                             engine.counts['unsupported_bridge_frames']+=1
@@ -308,14 +344,20 @@ def serve(runtime, diagnostic_log=None):
                     close_client(conn,'idle')
             if now>=next_tick:
                 with timeline.lock:
+                    if antigravity_source is not None:
+                        antigravity.accept(antigravity_source.drain())
                     engine.tick(now)
                     timeline.prune()
                     for summary in history.drain():
-                        engine.apply_history(summary)
+                        if summary.get('source') == 'antigravity':
+                            antigravity.reconcile(summary, now)
+                        else:
+                            engine.apply_history(summary)
                     if now >= next_history:
                         history.schedule(engine.history_requests(), now)
                         next_history = now + 1
                     snapshot=engine.snapshot(now,time.time())
+                    snapshot['antigravity'] = antigravity.status
                     snapshot['resource_diagnostics']['history_cache'] = history.provider.diagnostics()
                     snapshot['resource_diagnostics']['history_refresh'] = history.diagnostics()
                     if timeline_store:
@@ -324,7 +366,8 @@ def serve(runtime, diagnostic_log=None):
                                                    'available':query_server is not None,
                                                    'quality':[e for e in (timeline_error, timeline_store.error if timeline_store else None) if e]}
                     query_error = 'query_unavailable' if query_thread is not None and not query_thread.is_alive() else timeline_error
-                    snapshot['diagnostics'] = health.snapshot(engine, history, timeline_store, query_error, writer.diagnostics(), now)
+                    snapshot['diagnostics'] = health.snapshot(engine, history, timeline_store, query_error,
+                                                              writer.diagnostics(), now, antigravity=antigravity.status)
                 retain_history(snapshot)
                 identities.enrich(snapshot['threads'])
                 snapshot['menu_presentation'] = menu_presentation(engine, snapshot['threads'], snapshot['overview'])
@@ -338,6 +381,12 @@ def serve(runtime, diagnostic_log=None):
                 last_progress=time.monotonic()
                 next_tick=now+0.25
     finally:
+        if antigravity_source is not None:
+            antigravity_source.close()
+            with timeline.lock:
+                scope = antigravity.status.get('scope')
+                if scope:
+                    antigravity.disconnect(scope, time.monotonic(), time.time())
         diagnostic_log.emit('collector_stopped')
         if owns_log:
             diagnostic_log.close()
@@ -355,6 +404,7 @@ def serve(runtime, diagnostic_log=None):
             timeline_store.close()
         engine.tick(time.monotonic())
         snapshot=engine.snapshot(time.monotonic(),time.time())
+        snapshot['antigravity'] = {**antigravity.status, 'state': 'stopped'}
         retain_history(snapshot)
         identities.enrich(snapshot['threads'])
         identities.close()

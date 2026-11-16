@@ -128,6 +128,10 @@ Monitor 的界面、采集器和由 Codex Desktop 启动的桥接进程分别运
 
 恢复时会保留你在接入后另行修改的配置值，不会强制结束任务。请保持 Monitor 运行直到清理完成；中途退出后可重新打开继续。卸载不删除 Codex 自己的对话记录、源码目录或开发虚拟环境。完整步骤见[卸载指南](docs/user-guide.md#uninstall)。
 
+## 开发构建中的 Antigravity 接入
+
+打开 Antigravity Desktop 后，在 Monitor 的**设置 → 通用 → Agent 接入**中开启 **Antigravity**，然后查看菜单栏面板。Monitor 通过回环连接订阅已运行的 Desktop 并只读访问本地记录，显示估算的正文速度、实际用量、工具活动和历史。Codex 和 Antigravity 分别启停。实机验证使用 Antigravity Desktop 2.32.1。 [实现与验收](dev-history/30_antigravity/README.md)
+
 ## 从源码构建
 
 以下步骤面向开发者，在仓库根目录执行。需要 Python 3.11+、Xcode 26+ 及其 Swift 工具链；构建机器的 macOS 须满足所选 Xcode 的要求。安装依赖与首次下载分词资源需要联网。

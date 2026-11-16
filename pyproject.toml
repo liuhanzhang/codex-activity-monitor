@@ -10,7 +10,7 @@ readme = "README.md"
 license = "MIT"
 license-files = ["LICENSE"]
 requires-python = ">=3.11"
-dependencies = ["tiktoken==0.14.0", "rich==15.0.0"]
+dependencies = ["tiktoken==0.14.0", "rich==15.0.0", "tokenizers==0.23.3"]
 
 [project.scripts]
 codex-activity-monitor = "codex_activity_monitor.cli:main"

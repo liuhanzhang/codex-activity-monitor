@@ -163,7 +163,7 @@ private struct ActivityDetailView: LocalizedView {
                 }.accessibilityElement(children: .combine)
                 Text(durationText)
                     .monospacedDigit().foregroundStyle(.secondary)
-                    .help(store.phase.start_source == "receipt" || store.phase.end_source == "receipt" ? L("接收事件窗口估算，并非服务端纯计算耗时。") : L("Codex 记录的活动生命周期。"))
+                    .help(store.phase.start_source == "receipt" || store.phase.end_source == "receipt" ? L("接收事件窗口估算，并非服务端纯计算耗时。") : L("源应用记录的活动生命周期。"))
             }.font(.system(size: 12))
             HStack(spacing: 7) {
                 if let time = store.phase.anchor {
@@ -243,7 +243,7 @@ private struct ActivityDetailView: LocalizedView {
             }
             else {
                 Text(L(store.detail?.source == "synthetic" ? "合成预览记录" :
-                       store.detail?.source == "observed_metadata" ? "本地观测的活动元数据" : "Codex 保留的活动记录"))
+                       store.detail?.source == "observed_metadata" ? "本地观测的活动元数据" : "源应用保留的活动记录"))
             }
             Spacer(minLength: 8)
             if store.detail?.requiresReload == true || store.error != nil ||
@@ -279,14 +279,14 @@ private struct ActivityDetailView: LocalizedView {
         }
         return switch store.detail?.state {
         case "content_changed": L("源内容已变化。保留已加载内容，请重新读取。")
-        case "source_truncated": L("来源已截断，以下是 Codex 保留的全部可用内容。")
+        case "source_truncated": L("来源已截断，以下是源应用保留的全部可用内容。")
         case "partial": L("当前内容为部分观测，完成后将从历史补齐。")
         case "pending": L("完整内容尚未写入历史。")
         case "missing": L("源历史已移除或当前内容不可用。")
         case "history_unavailable": L("当前找不到可读取的源历史。")
         case "content_unavailable": L("源历史中尚无这项活动的可用内容，可稍后重新读取。")
         case "no_content": L("来源未提供可查看内容，活动状态与时间见上方。")
-        case "not_retained": L("这段未完成的内容未被 Codex 历史保留。")
+        case "not_retained": L("源应用的历史未保留这段未完成的内容。")
         case "unavailable": L("暂时无法读取源历史，可稍后重试。")
         case "unsupported": L("当前来源不支持读取此类内容。")
         case "available": ""

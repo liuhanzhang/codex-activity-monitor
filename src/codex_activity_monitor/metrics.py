@@ -64,11 +64,15 @@ class TextStream:
     def set_model(self, model):
         previous = self.encoding_name
         self.model = model or 'unknown'
-        try:
-            self.encoding_name = tiktoken.encoding_name_for_model(self.model)
-            self.estimated = False
-        except KeyError:
-            self.encoding_name, self.estimated = 'o200k_base', True
+        if self.source == 'antigravity':
+            from .antigravity_tokenizer import encoding_for_model
+            self.encoding_name, self.estimated = encoding_for_model(self.model), True
+        else:
+            try:
+                self.encoding_name = tiktoken.encoding_name_for_model(self.model)
+                self.estimated = False
+            except KeyError:
+                self.encoding_name, self.estimated = 'o200k_base', True
         if previous != self.encoding_name and self.text and self.ended_at is None and not self.ended_by_history:
             self.pending = None
             self.revision += 1
@@ -124,6 +128,20 @@ class TextStream:
         if self.quality in ('observation_gap', 'disconnected'):
             self.quality = 'complete'
             self.recovery_started_at = at
+
+    def set_snapshot_baseline(self, text, at):
+        """Keep existing content available without counting it as new output."""
+        self.interrupt_observation()
+        self.resume_observation(at)
+        self.chars = len(text)
+        self.utf8_bytes = len(text.encode('utf-8'))
+        if self.utf8_bytes > 8 * 1024 * 1024:
+            self.quality = 'content_limit'
+            return
+        self.text = text
+        self.text_complete = True
+        self.last_delta_at = at
+        self.receipts.append((at, self.chars))
 
     def prune_receipts(self, now):
         cutoff = now-RATE_WINDOW_SECONDS
@@ -225,7 +243,11 @@ class TokenizationError(Exception):
 def count_text(text, encoding_name):
     begin = time.perf_counter()
     try:
-        count = len(tiktoken.get_encoding(encoding_name).encode_ordinary(text))
+        if encoding_name == 'gemma4':
+            from .antigravity_tokenizer import count as gemma_count
+            count = gemma_count(text)
+        else:
+            count = len(tiktoken.get_encoding(encoding_name).encode_ordinary(text))
     except (KeyboardInterrupt, SystemExit, GeneratorExit):
         raise
     except BaseException as error:

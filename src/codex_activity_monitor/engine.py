@@ -9,7 +9,7 @@ from .progress_state import handle_protocol, resolve_request, presentation
 from .metrics import TextStream, TokenCounter
 from .overview import overview, annotate_parents
 from .menu_presentation import menu_presentation
-from .agent_relations import raw_coordination, SPAWN_OPERATIONS, thread_identity
+from .agent_relations import raw_coordination, SPAWN_OPERATIONS, VERIFIED_PARENTS, thread_identity
 from .usage import UsageBook
 from .state import Activity, Thread
 from .identity_budget import IdentityBudget, observation_identities
@@ -111,13 +111,13 @@ class Engine:
             if row.get('status') != 'unknown' or not row.get('home') or not row.get('turn_id'):
                 continue
             backend = row['backend']
-            self.backends.setdefault(backend, {'connected': False, 'home': row['home']})
+            self.backends.setdefault(backend, {'connected': False, 'home': row['home'], 'source': row.get('source')})
             thread = self._thread(backend, row['id'])
             thread.name, thread.cwd = row.get('name') or '', row.get('cwd') or ''
             thread.ephemeral = row.get('ephemeral') if isinstance(row.get('ephemeral'), bool) else None
             thread.thread_source = row.get('thread_source')
             thread.visible = row.get('visible') is not False
-            if row.get('parent_source') in ('session_header', 'spawn_call'):
+            if row.get('parent_source') in VERIFIED_PARENTS:
                 thread.parent_thread_id = row.get('parent_thread_id')
                 thread.parent_source = row['parent_source']
             thread.parent_quality.update(row.get('parent_quality', []))
@@ -926,7 +926,8 @@ class Engine:
             needed.update(ancestors)
         for key,thread in list(self.threads.items()):
             age = max(0, time.time() - thread.history_progress_ms / 1000) if thread.history_progress_ms is not None else now-thread.last_progress_at
-            if thread.status!='inProgress' and not any(a.active or a.unresolved for a in thread.activities.values()) and age>600:
+            retained_directory = self.backends.get(thread.backend, {}).get('source') == 'antigravity'
+            if not retained_directory and thread.status!='inProgress' and not any(a.active or a.unresolved for a in thread.activities.values()) and age>600:
                 if key in needed:
                     thread.activities.clear()
                     thread.context_only = True
@@ -1071,6 +1072,8 @@ class Engine:
                           'quality':sorted(quality),'connected':backend.get('connected',True),
                           'history_quality':sorted(thread.history_quality),
                           'activities':details})
+            if backend.get('source'):
+                views[-1]['source'] = backend['source']
             views[-1]['usage']=self.usage.view(self.usage.identity(thread.backend,thread.id,self),thread.turn_id)
             presentation(self,thread,views[-1],now)
         by_identity={}

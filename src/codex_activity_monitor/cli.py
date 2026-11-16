@@ -134,7 +134,8 @@ def main(argv=None):
     p.add_argument('request', help=argparse.SUPPRESS)
     p=subs.add_parser('app', help=tr('cli.app_help', language))
     p.add_argument('--operation-id', help=argparse.SUPPRESS)
-    p.add_argument('action', choices=('status','configure','resume','stop','restore','cleanup','cancel-cleanup','preferences'))
+    p.add_argument('action', choices=('status','configure','resume','stop','restore','cleanup','cancel-cleanup',
+                                      'preferences','antigravity'))
     p.add_argument('--data-root', type=Path)
     p.add_argument('--app', type=Path)
     p.add_argument('--real-cli', type=Path, default=REAL_CLI)
@@ -143,6 +144,7 @@ def main(argv=None):
     p.add_argument('--legacy-unset', action='store_true')
     p.add_argument('--purge', action='store_true')
     p.add_argument('--launch-at-login', choices=('on','off'))
+    p.add_argument('--antigravity', choices=('on','off'))
     p.add_argument('--ui-language', choices=available_languages(), help=argparse.SUPPRESS)
     p.add_argument('--test-profile', type=Path, help=argparse.SUPPRESS)
     p.add_argument('--state-protocol', type=int, help=argparse.SUPPRESS)
@@ -201,6 +203,10 @@ def main(argv=None):
                 value = control.cancel_cleanup()
             elif args.action == 'stop':
                 value = control.stop(args.owner_pid)
+            elif args.action == 'antigravity':
+                if args.antigravity is None:
+                    raise ControlError('preference_missing', 'control.preference_missing')
+                value = control.set_antigravity(args.antigravity == 'on')
             elif args.action == 'preferences':
                 if args.launch_at_login is None and args.ui_language is None:
                     raise ControlError('preference_missing', 'control.preference_missing')

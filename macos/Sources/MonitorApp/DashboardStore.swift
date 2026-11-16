@@ -69,7 +69,7 @@ final class DashboardStore {
         do {
             management = try await client.command("status")
             managementCheckFailed = false
-            if management?.configured == true { try await resume() }
+            if management?.observationEnabled == true { try await resume() }
             else if management?.waitingForCleanup == true {
                 management = try await client.command("cleanup")
             }
@@ -81,7 +81,7 @@ final class DashboardStore {
         if let state = (error as? BackendFailure)?.stateAfterFailure {
             management = state
             if let runtime = state.runtime { runtimePath = runtime }
-            if state.configured != true { lease = nil }
+            if !state.observationEnabled { lease = nil }
         }
         operationFailure = PresentationFailure(error: error, prefix: prefix)
     }
@@ -263,7 +263,7 @@ final class DashboardStore {
                     watchSnapshot()
                     await readSnapshot()
                 } else { watchState(); updatePresentation() }
-                if !readOnly && management?.configured == true && !fresh && !busy && !closing && Date() >= nextResume {
+                if !readOnly && management?.observationEnabled == true && !fresh && !busy && !closing && Date() >= nextResume {
                     nextResume = Date().addingTimeInterval(5)
                     busy = true
                     do { try await resume() }
@@ -485,7 +485,7 @@ final class DashboardStore {
     }
 
     var connectionLabel: String {
-        if !readOnly, let management, !management.configured { return management.localizedLabel(language) }
+        if !readOnly, let management, !management.observationEnabled { return management.localizedLabel(language) }
         if readError != nil { return L(readError!) }
         if !fresh { return L("Stale") }
         if snapshot?.isMeasuringSpeed == true { return L("已连接") }
@@ -499,11 +499,11 @@ final class DashboardStore {
 
     var bridgeNeedsRestart: Bool {
         management?.bridge_restart_required == true ||
-            snapshot?.backends?.values.contains { $0.connected == true && !$0.supportsObservationLease } == true
+            snapshot?.backends?.values.contains { $0.source != "antigravity" && $0.connected == true && !$0.supportsObservationLease } == true
     }
 
     var compactConnectionLabel: String {
-        if !readOnly, let management, !management.configured { return L("未接入") }
+        if !readOnly, let management, !management.observationEnabled { return L("未接入") }
         if !fresh { return L("数据不可用") }
         if snapshot?.isMeasuringSpeed == true { return L("已连接") }
         if snapshot?.overview?.coverage == "partial" { return L("部分观测") }
@@ -514,7 +514,7 @@ final class DashboardStore {
     var connectionActionDetail: String? {
         if bridgeNeedsRestart { return L("旧接入仍在运行；任务结束后重开 Codex，以启用退出暂停采集。") }
         if management?.configured == true, management?.integration_status?.restart == "required" { return integrationStatusText }
-        if !readOnly, let management, !management.configured { return management.localizedLabel(language) }
+        if !readOnly, let management, !management.observationEnabled { return management.localizedLabel(language) }
         if !fresh { return connectionLabel }
         if let notice = snapshot?.observationNotice, [.waitingForConnection, .resourceLimit].contains(notice) {
             return L(notice.rawValue)
@@ -546,10 +546,11 @@ final class DashboardStore {
             management = try await client.command("status")
             if let runtime = management?.runtime { runtimePath = runtime }
             recorder.setRuntime(runtimePath)
-            if management?.state == "new" { await configure() }
+            if management?.state == "new" && management?.antigravity_enabled != true { await configure() }
             // launchctl values are session-scoped; reapply integration on login
             // without replacing its original backup.
             else if management?.configured == true { await configure() }
+            else if management?.antigravity_enabled == true { try await resume() }
             else if management?.shouldAutomaticallyCleanup == true { await cleanup() }
             loginEnabled = SMAppService.mainApp.status == .enabled
             loginNeedsApproval = SMAppService.mainApp.status == .requiresApproval
@@ -590,6 +591,37 @@ final class DashboardStore {
         watchState()
     }
 
+    var antigravityStatusText: String {
+        guard management?.antigravity_enabled == true else { return L("未接入") }
+        switch fresh ? snapshot?.antigravity?.state : nil {
+        case "connected": return L("已连接")
+        case "limited": return L("部分 Antigravity 会话未订阅")
+        case "not_installed": return L("未检测到 Antigravity Desktop")
+        case "unavailable": return L("暂时无法连接 Antigravity")
+        default: return L("等待 Antigravity Desktop 启动")
+        }
+    }
+
+    func setAntigravity(_ enabled: Bool) async {
+        guard !busy, !readOnly, !closing, management?.waitingForCleanup != true else { return }
+        busy = true
+        defer { busy = false }
+        do {
+            management = try await client.command("antigravity", extra: ["--antigravity", enabled ? "on" : "off"])
+            if management?.observationEnabled == true {
+                try await resume()
+            } else {
+                stateConnection?.cancel()
+                stateWatching?.cancel()
+                stateSubscriptionKey = nil
+                liveState = nil
+                lease = nil
+            }
+            updatePresentation()
+            operationError = nil
+        } catch { recordError(error) }
+    }
+
     func restore(purge: Bool) async {
         guard !busy, !readOnly, !closing else { return }
         busy = true
@@ -597,10 +629,12 @@ final class DashboardStore {
         do {
             if purge { updates.stop(); await recorder.finish() }
             await waitForLanguageSave()
-            if let stateConnection { _ = await stateConnection.release() }
-            stateConnection?.cancel(); stateWatching?.cancel()
-            stateSubscriptionKey = nil; liveState = nil
-            lease = nil
+            if purge || management?.antigravity_enabled != true {
+                if let stateConnection { _ = await stateConnection.release() }
+                stateConnection?.cancel(); stateWatching?.cancel()
+                stateSubscriptionKey = nil; liveState = nil
+                lease = nil
+            }
             management = try await client.command("restore", extra: purge ? ["--purge"] : [])
             if management?.state == "purged" { finishPurge() }
             operationError = nil

@@ -275,6 +275,28 @@ class AppController:
             raise ControlError('record_version', 'control.record_version')
         return value
 
+    def _runtime(self, receipt):
+        return Path(receipt['runtime']) if receipt.get('runtime') else (self.requested_runtime or self.root/'run')
+
+    def set_antigravity(self, enabled):
+        with self.locked():
+            receipt = self._receipt()
+            runtime = self._runtime(receipt)
+            flag = runtime/'antigravity.enabled'
+            if enabled:
+                from .runtime import runtime_dir
+                runtime = runtime_dir(runtime)
+                managed = runtime/'app-managed.json'
+                if not managed.exists():
+                    atomic_json(managed, {'version': 1, 'lease_protocol': 2,
+                                          'session_file': str(self.session), 'enabled_file': str(self.enabled)})
+                flag.touch(mode=0o600)
+            else:
+                flag.unlink(missing_ok=True)
+                if receipt.get('state') != 'configured':
+                    self._stop({'runtime': str(runtime)})
+        return self.status()
+
     def status(self):
         receipt = self._receipt()
         try:
@@ -282,9 +304,12 @@ class AppController:
         except ControlError:
             prefs = {}
         state = receipt.get('state', 'restored' if prefs.get('restored') else 'new')
+        runtime = self._runtime(receipt)
+        antigravity = (runtime/'antigravity.enabled').is_file()
         from .integration_status import inspect_integration
         return {'version': 1, 'ok': True, 'state': state,
-                'configured': state == 'configured', 'runtime': receipt.get('runtime'),
+                'configured': state == 'configured', 'runtime': str(runtime) if antigravity else receipt.get('runtime'),
+                'antigravity_enabled': antigravity,
                 'purge': receipt.get('purge', False), 'pending': receipt.get('pending', []),
                 'cleanup_error': receipt.get('cleanup_error'),
                 'can_cancel_cleanup': state == 'pending_cleanup' and
@@ -489,18 +514,21 @@ class AppController:
     def resume(self, owner_pid):
         with self.locked():
             receipt = self._receipt()
-            if receipt.get('state') != 'configured':
+            runtime = self._runtime(receipt)
+            antigravity = (runtime/'antigravity.enabled').is_file()
+            if receipt.get('state') != 'configured' and not antigravity:
                 raise ControlError('not_configured', 'control.not_configured')
             if type(owner_pid) is not int or owner_pid <= 1 or not process_alive(owner_pid):
                 raise ControlError('owner_missing', 'control.owner_missing')
             current = read_json(self.session)
-            runtime = Path(receipt['runtime'])
             from .cli import start, stop
             owned = collector_alive(runtime)
             control = read_json(runtime/'collector.json') if owned else None
             if owned and not control:
                 raise ControlError('state_unavailable', 'control.state_unavailable')
-            if control and (control.get('state_protocol') != 1 or control.get('lease_protocol') != 2):
+            if control and (control.get('state_protocol') != 1 or control.get('lease_protocol') != 2 or
+                            (antigravity and 'antigravity_source' not in
+                             control.get('implementation', {}).get('modules', {}))):
                 # Verified older collector, not an unavailable new transport.
                 stop(runtime)
                 if collector_alive(runtime):
@@ -570,7 +598,7 @@ class AppController:
             session = read_json(self.session)
             if owner_pid is not None and session and session.get('owner_pid') != owner_pid:
                 raise ControlError('another_gui_running', 'control.another_gui_running.2')
-            self._stop(self._receipt())
+            self._stop({'runtime': str(self._runtime(self._receipt()))})
         return self.status()
 
     def restore(self, purge=False):
@@ -578,8 +606,13 @@ class AppController:
             return {'version': 1, 'ok': True, 'state': 'purged', 'configured': False, 'pending': []}
         with self.locked():
             receipt = self._receipt()
+            runtime = self._runtime(receipt)
+            if purge:
+                (runtime/'antigravity.enabled').unlink(missing_ok=True)
             if not receipt:
                 if purge:
+                    self._stop({'runtime': str(runtime)})
+                    self._remove_collector_files(runtime)
                     return self._purge_without_integration()
                 self._save_restored(True)
                 return self.status()
@@ -594,7 +627,8 @@ class AppController:
             self._write(receipt)
             self.enabled.unlink(missing_ok=True)
             self.services.disable_legacy(Path(receipt['runtime']))
-            self._stop(receipt)
+            if not (runtime/'antigravity.enabled').is_file():
+                self._stop(receipt)
             if receipt['state'] == 'restoring':
                 for key, installed in receipt['installed'].items():
                     if key in receipt['restored_keys']:
@@ -670,16 +704,14 @@ class AppController:
         runtime = Path(receipt['runtime'])
         # Delete explicit owned resources only; a migrated runtime can contain
         # unrelated experiments. Never remove the enclosing project/venv.
-        managed = runtime / 'app-managed.json'
-        record = read_json(managed)
-        if record.get('session_file') == str(self.session) or receipt.get('imported_legacy'):
-            for name in ('app-managed.json', 'snapshot.json', 'collector.json', 'events.sock', 'state.sock', 'tl.sock',
-                         'collector.log', 'collector.previous.log', 'collector-output.lock'):
-                (runtime / name).unlink(missing_ok=True)
+        keep_collector = (runtime/'antigravity.enabled').is_file() and not receipt.get('purge')
+        if not keep_collector:
+            self._remove_collector_files(runtime, legacy=receipt.get('imported_legacy', False))
         if receipt.get('imported_legacy'):
             for name in ('codex-observed', 'login-start', 'installation.json', 'desktop-environment.json'):
                 (runtime / name).unlink(missing_ok=True)
-        (runtime / 'collector.lock').unlink(missing_ok=True)
+        if not keep_collector:
+            (runtime / 'collector.lock').unlink(missing_ok=True)
         bridges = runtime / 'bridges'
         if bridges.is_dir() and not bridges.is_symlink() and not any(bridges.iterdir()):
             bridges.rmdir()
@@ -687,7 +719,8 @@ class AppController:
             runtime.rmdir()
         (self.root / 'codex-observed').unlink(missing_ok=True)
         self.enabled.unlink(missing_ok=True)
-        self.session.unlink(missing_ok=True)
+        if not keep_collector:
+            self.session.unlink(missing_ok=True)
         if receipt.get('purge'):
             return self._purge_without_integration()
         receipt.update(state='restored', pending=[])
@@ -696,6 +729,13 @@ class AppController:
         self._write(receipt)
         self._save_restored(True)
         return self.status()
+
+    def _remove_collector_files(self, runtime, *, legacy=False):
+        record = read_json(runtime/'app-managed.json')
+        if legacy or record.get('session_file') == str(self.session):
+            for name in ('app-managed.json', 'snapshot.json', 'collector.json', 'events.sock', 'state.sock', 'tl.sock',
+                         'collector.log', 'collector.previous.log', 'collector-output.lock'):
+                (runtime/name).unlink(missing_ok=True)
 
     def _purge_without_integration(self):
         # Root was created for this controller; foreign directories are never

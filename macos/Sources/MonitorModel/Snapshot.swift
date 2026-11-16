@@ -25,6 +25,9 @@ public struct Usage: Decodable, Sendable {
     public let turn_id: String?
     public let output_tokens: Int?
     public let reasoning_tokens: Int?
+    public let visible_output_tokens: Int?
+    public let input_tokens: Int?
+    public let cached_input_tokens: Int?
 }
 
 public struct Activity: Decodable, Identifiable, Sendable {
@@ -51,6 +54,7 @@ public struct Chat: Decodable, Identifiable, Sendable {
     public let threadID: String
     public let home: String?
     public let backend: String?
+    public let source: String?
     public let name: String?
     public let cwd: String?
     public let model: String?
@@ -98,11 +102,17 @@ public struct Chat: Decodable, Identifiable, Sendable {
 
     enum CodingKeys: String, CodingKey {
         case threadID = "id"
-        case home, backend, name, cwd, model, status, connected, visible, ephemeral, has_active_work
+        case home, backend, source, name, cwd, model, status, connected, visible, ephemeral, has_active_work
         case display_label, display_message, display_seconds, generation_rate, generation_estimated, generation_rate_status
         case generation_rate_coverage, generation_rate_issues
         case last_progress_seconds, usage, activities, subagents, parent_thread_id, parent_source, parent_quality, thread_source, context_only, turn_id
     }
+}
+
+public struct AntigravityStatus: Decodable, Sendable {
+    public let state: String
+    public let version: String?
+    public let active: Int?
 }
 
 public struct Snapshot: Decodable, Sendable {
@@ -115,11 +125,12 @@ public struct Snapshot: Decodable, Sendable {
     public let threads: [Chat]
     public let backends: [String: Backend]?
     public let diagnostics: DiagnosticSnapshot?
+    public let antigravity: AntigravityStatus?
 
     public let projection: SnapshotProjection
 
     private enum CodingKeys: String, CodingKey {
-        case schema_version, updated_at, running, overview, menu_presentation, timeline_summary, threads, backends, diagnostics
+        case schema_version, updated_at, running, overview, menu_presentation, timeline_summary, threads, backends, diagnostics, antigravity
     }
 
     public init(from decoder: any Decoder) throws {
@@ -134,6 +145,7 @@ public struct Snapshot: Decodable, Sendable {
         threads = try values.decode([Chat].self, forKey: .threads)
         backends = try values.decodeIfPresent([String: Backend].self, forKey: .backends)
         diagnostics = try? values.decodeIfPresent(DiagnosticSnapshot.self, forKey: .diagnostics)
+        antigravity = try? values.decodeIfPresent(AntigravityStatus.self, forKey: .antigravity)
         guard Set(threads.map(\.id)).count == threads.count else { throw SnapshotError.duplicateIdentity }
         projection = SnapshotProjection(threads: threads)
     }
@@ -251,6 +263,7 @@ public struct ChatRow: Identifiable, Sendable {
 public enum SnapshotError: Error { case unsupportedVersion, duplicateIdentity }
 
 public struct Backend: Decodable, Sendable {
+    public let source: String?
     public let connected: Bool?
     public let configuration_revision: String?
     public let configuration_matches: Bool?

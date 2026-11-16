@@ -401,11 +401,30 @@ class UsageBook:
                 self.note(record, 'baseline_conflict')
         state['total'], state['total_turn'],state['total_last'] = total, turn_id, pair(usage.get('last',{}))
 
+    def record_attributed(self, identity, turn_id, backend, step, fields, at, *, live):
+        """A provider has established the request's owning turn and step."""
+        state = self.state(identity, at)
+        record = self.turn(state, turn_id)
+        previous = record['responses'].get(step)
+        if previous is None and len(record['responses']) >= MAX_RESPONSES:
+            record.update(saturated=True, coverage=False)
+            self.note(record, 'response_limit')
+            return
+        original = previous.get('attributed', {}) if previous else {}
+        known = {**original, **fields} if live else {**fields, **original}
+        record['responses'][step] = {'id': step, 'backend': backend, 'turn_id': turn_id,
+                                     'item_ids': [step], 'usage': pair(known), 'attributed': known}
+        record['coverage'] = not record['saturated']
+
     def view(self, identity, turn_id):
         state = self.threads.get(identity)
         record = state['turns'].get(turn_id) if state else None
         counts, source = self.counts(record) if record else ([None, None], 'unavailable')
-        return {'turn_id': turn_id, 'output_tokens': counts[0], 'reasoning_tokens': counts[1],
+        attributed = [r.get('attributed') for r in record['responses'].values()] if record and record['coverage'] else []
+        extras = {key: sum(row[key] for row in attributed) for key in
+                  ('input_tokens', 'cached_input_tokens', 'visible_output_tokens')
+                  if attributed and all(row is not None and key in row for row in attributed)}
+        return {'turn_id': turn_id, 'output_tokens': counts[0], 'reasoning_tokens': counts[1], **extras,
                 'source': source, 'diagnostics': list(record['diagnostics']) if record else ['turn_start_unobserved']}
 
     def dump(self):
@@ -450,6 +469,11 @@ class UsageBook:
                             raise ValueError('Invalid recovery response')
                         record['responses'][response_id]={'id':response_id,'backend':str(response['backend'])[:256],
                             'turn_id':turn_id,'item_ids':list(response['item_ids']),'usage':list(response['usage'])}
+                        if isinstance(response.get('attributed'), dict):
+                            record['responses'][response_id]['attributed'] = {
+                                key: value for key, value in response['attributed'].items()
+                                if key in ('output_tokens', 'reasoning_tokens', 'input_tokens',
+                                           'cached_input_tokens', 'visible_output_tokens') and token_number(value) is not None}
                     restored[turn_id]=record
                 state['turns']=restored
                 for key in ('total','total_last'):

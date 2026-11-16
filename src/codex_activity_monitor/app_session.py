@@ -24,7 +24,7 @@ def load_lease(runtime):
         if (not isinstance(marker, dict) or type(marker.get('version')) is not int or marker['version'] != 1 or
                 type(marker.get('lease_protocol')) is not int or marker['lease_protocol'] != 2):
             raise LeaseError('unsupported_lease_protocol')
-        if not Path(marker['enabled_file']).is_file():
+        if not Path(marker['enabled_file']).is_file() and not (Path(runtime)/'antigravity.enabled').is_file():
             raise LeaseError('observation_disabled')
         record = json.loads(Path(marker['session_file']).read_text())
         grant = SessionGrant.from_record(record)

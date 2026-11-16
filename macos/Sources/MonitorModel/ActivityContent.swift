@@ -144,7 +144,7 @@ public struct ActivityDetail: Decodable, Sendable {
         if !changed { return result }
         // Following a small, unpaged live buffer may replace that whole buffer.
         // A paged reading snapshot or a source handoff always requires reload.
-        if followsLive, source == "observed_stream", state == "partial", prior.state == state,
+        if followsLive, source == "observed_stream" || source == "antigravity_rpc", state == "partial", prior.state == state,
            sections.allSatisfy({ $0.next_offset == nil }), prior.sections.allSatisfy({ $0.next_offset == nil }),
            sections.allSatisfy({ current in
                prior.sections.contains { old in old.id == current.id && old.format == current.format &&

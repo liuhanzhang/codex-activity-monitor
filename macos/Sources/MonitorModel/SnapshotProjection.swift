@@ -148,7 +148,7 @@ public final class SnapshotProjection: Sendable {
         let main = candidates.filter { !$0.chat.isKnownSubagent }
         let uncertain = candidates.filter { $0.chat.isKnownSubagent }
         let activeRoots = main.filter(\.active).map(\.chat)
-        let recentRoots = main.filter { !$0.active && $0.terminal }.sorted { $0.age < $1.age }
+        let recentRoots = main.filter { !$0.active && ($0.terminal || $0.chat.source == "antigravity") }.sorted { $0.age < $1.age }
         let activeUnassigned = uncertain.filter(\.active).map(\.chat)
         let recentUnassigned = uncertain.filter { !$0.active && $0.nonIdle }.sorted { $0.age < $1.age }
         self.chats = chats; self.byID = byID; self.rootByID = roots; self.subtreeActive = active
@@ -167,14 +167,15 @@ public final class SnapshotProjection: Sendable {
 
     private static func select(chats: [Chat], rootByID: [String: String], activeRoots: [Chat], recentRoots: [Group],
                                activeUnassigned: [Chat], recentUnassigned: [Group], elapsed: Double) -> Selection {
-        let recent = Array(recentRoots.filter { $0.age+elapsed < 600 }.prefix(10))
-        let uncertain = Array(recentUnassigned.filter { $0.age+elapsed < 600 }.prefix(10))
+        let recent = Array(recentRoots.filter { $0.chat.source == "antigravity" || $0.age+elapsed < 600 }.prefix(10))
+        let uncertain = Array(recentUnassigned.filter { $0.chat.source == "antigravity" || $0.age+elapsed < 600 }.prefix(10))
         let roots = activeRoots + recent.map(\.chat)
         let unassigned = activeUnassigned + uncertain.map(\.chat)
         let selected = Set((roots + unassigned).map(\.id))
         let members = chats.filter { rootByID[$0.id].map { selected.contains($0) } ?? false }
         return Selection(members: members, roots: roots, unassigned: unassigned,
-            nextExpiry: (recent+uncertain).map { 600-$0.age }.min(), unassignedIDs: Set(unassigned.map(\.id)))
+            nextExpiry: (recent+uncertain).filter { $0.chat.source != "antigravity" }.map { 600-$0.age }.min(),
+            unassignedIDs: Set(unassigned.map(\.id)))
     }
 
     public func selection(elapsed: Double) -> Selection {

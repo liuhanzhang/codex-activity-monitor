@@ -126,6 +126,12 @@ struct SettingsView: LocalizedView {
                 if store.operationError != nil || store.managementCheckFailed || !store.fresh && store.integrationEnabled {
                     Button(L("重试检查或接入")) { Task { await store.retryIntegration() } }.disabled(store.busy || store.readOnly)
                 }
+                Toggle("Antigravity", isOn: Binding(get: { store.management?.antigravity_enabled == true }, set: { enabled in
+                    Task { await store.setAntigravity(enabled) }
+                })).disabled(store.busy || store.readOnly || store.management?.waitingForCleanup == true)
+                    .accessibilityIdentifier("monitor.integration.antigravity")
+                Text(store.antigravityStatusText).font(.callout).foregroundStyle(.secondary)
+                    .accessibilityIdentifier("monitor.integration.antigravity.status")
             }
             if let error = store.operationError {
                 Section(L("上次操作")) {
@@ -173,7 +179,9 @@ struct SettingsView: LocalizedView {
         switch state { case "healthy": "checkmark.circle"; case "degraded": "exclamationmark.triangle";
         case "unavailable": "xmark.circle"; case "disabled": "pause.circle"; default: "questionmark.circle" }
     }
-    private func componentName(_ code: String) -> String { localizedText("component." + code, language: language) }
+    private func componentName(_ code: String) -> String {
+        code == "antigravity" ? "Antigravity" : localizedText("component." + code, language: language)
+    }
     private func healthName(_ state: String) -> String { localizedText("health." + state, language: language) }
     private func color(_ state: String) -> Color {
         switch state { case "healthy": .green; case "degraded": .orange; case "unavailable": .red; default: .secondary }

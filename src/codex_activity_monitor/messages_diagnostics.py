@@ -1,6 +1,11 @@
 """Diagnostic codes have stable, source-free presentation in both languages."""
 
 COPY = {
+    'antigravity_connected': ('已连接 Antigravity Desktop', 'Connected to Antigravity Desktop'),
+    'antigravity_waiting': ('等待 Antigravity Desktop 启动', 'Waiting for Antigravity Desktop'),
+    'antigravity_not_installed': ('未找到 Antigravity Desktop', 'Antigravity Desktop was not found'),
+    'antigravity_unavailable': ('暂时无法连接 Antigravity Desktop', 'Antigravity Desktop is currently unavailable'),
+    'antigravity_limited': ('部分 Antigravity 会话未订阅', 'Some Antigravity chats are not being observed'),
     'restart_required': ('请在任务结束后重开 Codex，让配置完成切换', 'Reopen Codex after finishing tasks to complete the configuration change'),
     'configuration_changed': ('配置与接入记录不一致，请检查通用设置', 'Configuration differs from the integration record; check General settings'),
     'diagnostics_unsupported': ('当前版本无法解读该组件的诊断信息', 'This version cannot interpret the component diagnostics'),

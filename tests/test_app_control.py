@@ -81,6 +81,20 @@ class AppControlTests(unittest.TestCase):
         self.assertEqual(self.control.status()['state'], 'new')
         self.assertFalse(self.control.root.exists())
 
+    def test_restoring_codex_keeps_the_antigravity_collector_and_runtime(self):
+        state = self.configure()
+        self.control.set_antigravity(True)
+        runtime = Path(state['runtime'])
+        (runtime/'snapshot.json').write_text('{}')
+        with patch('codex_activity_monitor.cli.stop') as stop:
+            restored = self.control.restore(purge=False)
+            stop.assert_not_called()
+        self.assertTrue(restored['antigravity_enabled'])
+        self.assertFalse(restored['configured'])
+        self.assertTrue((runtime/'app-managed.json').is_file())
+        self.assertTrue((runtime/'snapshot.json').is_file())
+        self.assertEqual(self.environment.values, {})
+
     def test_read_only_bundle_cannot_install_temporary_integration_paths(self):
         self.environment.values[KEYS[0]] = '/original-cli'
         with patch('codex_activity_monitor.app_control.is_frozen', return_value=True), \

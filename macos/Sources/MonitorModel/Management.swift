@@ -36,8 +36,10 @@ public struct ManagementState: Decodable, Sendable {
     public let integration_status: IntegrationStatus?
     public let cleanup_error: CleanupFailure?
     public let can_cancel_cleanup: Bool?
+    public let antigravity_enabled: Bool?
 
     public var configured: Bool { state == "configured" }
+    public var observationEnabled: Bool { configured || antigravity_enabled == true }
     public var waitingForCleanup: Bool { state == "pending_cleanup" || state == "restoring" }
     public var cleanupBlocked: Bool { cleanup_error != nil }
     public var shouldAutomaticallyCleanup: Bool { waitingForCleanup && !cleanupBlocked }
