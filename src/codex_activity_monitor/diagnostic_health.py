@@ -2,6 +2,8 @@
 
 import time
 
+from .state import source_traits
+
 
 class HealthMonitor:
     def __init__(self, log):
@@ -36,7 +38,8 @@ class HealthMonitor:
                 self.previous[component] = identity
 
         add('collector', 'healthy', 'collector_responsive')
-        backends = [backend for backend in engine.backends.values() if backend.get('source') != 'antigravity']
+        backends = [backend for backend in engine.backends.values()
+                    if source_traits(backend.get('source')).uses_bridge_connection]
         connected = [b for b in backends if b.get('connected')]
         gaps = sum(b.get('parse_errors', 0) + b.get('dropped_packets', 0) - b.get('unrelated_dropped_packets', 0)
                    for b in backends)

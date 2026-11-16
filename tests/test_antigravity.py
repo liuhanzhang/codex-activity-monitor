@@ -19,6 +19,7 @@ from codex_activity_monitor.app_control import AppController
 from codex_activity_monitor.engine import Engine
 from codex_activity_monitor.history import HistoryProvider
 from codex_activity_monitor.identity_budget import IdentityBudget
+from codex_activity_monitor.state import source_traits
 from codex_activity_monitor.timeline import TimelineBook
 from codex_activity_monitor.timeline_query import TimelineQuery
 
@@ -454,6 +455,27 @@ class AntigravityProjectionTests(unittest.TestCase):
             'source': 'CORTEX_STEP_SOURCE_MODEL'}))
         edit_phase = code_action.phase(self.scope, ROOT, turn, 'input')
         self.assertEqual((edit_phase['track'], edit_phase['kind']), ('model', 'file_edit_input'))
+
+    def test_source_traits_and_public_projection_write_apis(self):
+        codex_traits = source_traits('codex')
+        ag_traits = source_traits('antigravity')
+        self.assertTrue(codex_traits.uses_bridge_connection)
+        self.assertFalse(codex_traits.retains_idle_directory)
+        self.assertFalse(ag_traits.uses_bridge_connection)
+        self.assertTrue(ag_traits.retains_idle_directory)
+        self.assertTrue(ag_traits.synthesizes_tool_input_phase)
+        self.assertTrue(ag_traits.synthesizes_reasoning_phase)
+
+        turn = turn_id(ROOT, 0)
+        backend = self.monitor.backend(self.scope)
+        self.book.record_turn(self.scope, ROOT, turn, (WHEN + 1) * 1000, status='active',
+                              start_ms=(WHEN + 1) * 1000, backend=backend)
+        self.book.record_turn_request(self.scope, ROOT, turn, 2,
+                                      {'output_tokens': 50, 'duration_ms': 1000})
+        saved_turn = next(iter(self.book.turns.values()))
+        self.assertEqual(saved_turn['model_requests']['2'], {'output_tokens': 50, 'duration_ms': 1000})
+        self.engine.remove_thread(backend, ROOT)
+        self.assertNotIn((backend, ROOT), self.engine.threads)
 
 
 class PushStream:

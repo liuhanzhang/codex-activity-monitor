@@ -13,6 +13,7 @@ from .tool_labels import code_tool_names, file_edit_preview, is_patch_tool, tool
 from .agent_relations import raw_coordination
 from .i18n import message
 from .history_contract import HistoryCoverage
+from .state import source_traits
 
 MODEL_TYPES = {'reasoning': 'reasoning', 'agentMessage': 'text', 'message': 'text', 'plan': 'text'}
 HISTORY_SEED_TYPES = TOOL_TYPES | {'agentMessage', 'reasoning', 'plan', 'contextCompaction'}
@@ -117,9 +118,10 @@ def settled_model_items(turns, phases, *, read_complete, quality=(), absent_turn
         key = (phase['scope_id'], phase['thread_id'], phase['turn_id'])
         if key in settled:
             settled[key].add(({'message': 'agentMessage'}.get(phase['item_type'], phase['item_type']), phase['item_id']))
-            if phase.get('source') == 'antigravity' and phase['track'] == 'tool':
+            traits = source_traits(phase.get('source'))
+            if traits.synthesizes_tool_input_phase and phase['track'] == 'tool':
                 settled[key].add(('function_call', phase['item_id']+'-input'))
-            if phase.get('source') == 'antigravity' and phase['item_type'] == 'agentMessage':
+            if traits.synthesizes_reasoning_phase and phase['item_type'] == 'agentMessage':
                 settled[key].add(('reasoning', phase['item_id']+'-summary'))
     for scope, thread, turn, index in planner_steps:
         if (scope, thread, turn) in settled:
@@ -160,25 +162,20 @@ def display_phase(phase):
 def merge_phase(old, new):
     """Merge the same semantic phase, never reopen terminal work on a late start."""
     result = dict(new) if old is None else {**old, **{k: v for k, v in new.items() if v is not None}}
-    antigravity = result.get('source') == 'antigravity'
-    antigravity_tool = antigravity and result.get('track') == 'tool'
+    traits = source_traits(result.get('source'))
+    producer_tool = traits.producer_tool_terminal and result.get('track') == 'tool'
     if old is not None:
         result['quality'] = sorted(set(old.get('quality', [])) | set(new.get('quality', [])))
         result['mirrored'] = old.get('mirrored', False) or new.get('mirrored', False)
         # History replaces a live supplement. Never retain an alternate history
         # underneath it to resurrect after the authoritative source changes.
         result.pop('observation', None)
-        ranks = {'history': 3, 'producer': 2, 'receipt': 1}
-        if antigravity:
-            # Antigravity's transcript can omit boundaries and round creation times to whole seconds.
-            ranks.update(history=2, producer=3)
-            if result.get('track') == 'model':
-                ranks.update(history=1, receipt=2)
+        ranks = traits.provenance_ranks(result.get('track'))
         for bound in ('start', 'end'):
             key, provenance = bound + '_ms', bound + '_source'
             old_rank = ranks.get(old.get(provenance), 0)
             new_rank = ranks.get(new.get(provenance), 0)
-            newer_native_bound = antigravity and new.get(provenance) == 'producer'
+            newer_native_bound = traits.prefers_newer_producer_bound and new.get(provenance) == 'producer'
             if old.get(key) is not None and (new.get(key) is None or old_rank > new_rank or
                     (old_rank == new_rank and not newer_native_bound)):
                 result[key], result[provenance] = old[key], old.get(provenance)
@@ -187,13 +184,13 @@ def merge_phase(old, new):
         terminal = {'completed', 'failed', 'interrupted', 'declined'}
         if old.get('history_terminal') and not new.get('history_terminal'):
             result['status'] = old['status']
-        if antigravity_tool:
+        if producer_tool:
             for phase in (new, old):
                 if phase.get('end_source') == 'producer' and phase.get('status') in terminal:
                     result['status'] = phase['status']
                     break
         if (old.get('status') in terminal and new.get('status') in terminal and old['status'] != new['status'] and
-                (not antigravity_tool or old.get('end_source') == new.get('end_source'))):
+                (not producer_tool or old.get('end_source') == new.get('end_source'))):
             result['quality'] = sorted(set(result['quality']) | {'lifecycle_conflict'})
         if old.get('kind') == 'file_edit_input':
             result['kind'] = 'file_edit_input'
@@ -201,7 +198,7 @@ def merge_phase(old, new):
             result['quality'] = [q for q in result['quality'] if q != 'execution_unconfirmed']
     result.pop('observation', None)  # Also discard legacy sidecar shadow state.
     exit_code = result.get('exit_code')
-    if antigravity_tool and result.get('status') == 'completed' and type(exit_code) is int and exit_code != 0:
+    if producer_tool and result.get('status') == 'completed' and type(exit_code) is int and exit_code != 0:
         result['status'] = 'failed'
     if result.get('start_ms') is None:
         result['quality'] = sorted(set(result.get('quality', [])) | {'start_unknown'})
@@ -228,7 +225,7 @@ def merge_history_phase(observed, historical, *, read_complete=True):
     if observed and observed.get('history_terminal'):
         basis = {k: v for k, v in observed.items()
                  if k not in ('history_terminal', 'exit_code', 'observation')}
-        if (observed.get('source') == 'antigravity' and observed.get('track') == 'tool' and
+        if (source_traits(observed.get('source')).producer_tool_terminal and observed.get('track') == 'tool' and
                 observed.get('end_source') == 'producer'):
             if 'exit_code' in observed:
                 basis['exit_code'] = observed['exit_code']
@@ -345,12 +342,39 @@ class TimelineBook:
             record['end_source'] = 'receipt'
         self._save('turn', merge_phase(old or None, record))
 
-    def _put(self, record):
+    def record_turn(self, scope, thread, turn, updated_ms, *, status=None, start_ms=None, end_ms=None, backend=None):
+        if not thread or not turn:
+            return
+        key = identity('turn', scope, thread, turn)
+        old = self.turns.get(key, {})
+        self._save('turn', {**old, 'id': key, 'scope_id': scope, 'thread_id': thread, 'turn_id': turn,
+                            'start_ms': old.get('start_ms') or start_ms, 'end_ms': end_ms or old.get('end_ms'),
+                            'updated_ms': updated_ms, 'status': status or old.get('status', 'unknown'),
+                            'observation_backend': backend})
+
+    def record_turn_request(self, scope, thread, turn, request_id, sample):
+        if sample is None:
+            return
+        key = identity('turn', scope, thread, turn)
+        old = self.turns.get(key)
+        if old is None:
+            return
+        requests = dict(old.get('model_requests', {}))
+        requests[str(request_id)] = sample
+        self._save('turn', {**old, 'model_requests': dict(list(requests.items())[-128:])})
+
+    def record_phase(self, record, *, reopen_unknown=False):
         if not record:
             return
-        self._save('phase', merge_phase(self.phases.get(record['id']), record))
+        current = self.phases.get(record['id'])
+        merged = merge_phase(current, record)
+        if reopen_unknown and current and current.get('status') == 'unknown' and record.get('status') in ('active', 'waiting'):
+            merged = {**merged, 'status': record['status']}
+        self._save('phase', merged)
 
-    def _relation(self, scope, parent, turn, child, call, operation=None, *, source=None):
+    _put = record_phase
+
+    def record_relation(self, scope, parent, turn, child, call, operation=None, *, source=None):
         if not child or child == parent:
             return
         record = {'id': identity('relation', scope, parent, turn, child, call), 'scope_id': scope,
@@ -359,6 +383,14 @@ class TimelineBook:
         if source:
             record['source'] = source
         self._save('relation', record)
+
+    _relation = record_relation
+
+    def set_live_content(self, phase_id, *, text='', input_text=None, at=None):
+        entry = {'text': text, 'at': at}
+        if input_text is not None:
+            entry['input'] = input_text
+        self.live[phase_id] = entry
 
     def observe(self, event, engine):
         with self.lock:
@@ -593,15 +625,16 @@ class TimelineBook:
                         if self.store:
                             self.store.delete(key)
             for key, record in list(self.relations.items()):
-                if (record.get('source') != 'antigravity' and
+                if (not source_traits(record.get('source')).persistent_relations and
                         (record['scope_id'], record['parent_thread_id'], record['parent_turn_id']) not in keep):
                     del self.relations[key]
                     if self.store:
                         self.store.delete(key)
-            # Native child transcripts have no parent turn identifier. Retain
-            # verified invocation links alongside the JSONL, within a cap.
-            antigravity = [key for key, record in self.relations.items() if record.get('source') == 'antigravity']
-            for key in antigravity[:-4096]:
+            # Sources whose child transcripts have no parent turn identifier
+            # retain verified invocation links alongside the JSONL, within a cap.
+            persistent = [key for key, record in self.relations.items()
+                          if source_traits(record.get('source')).persistent_relations]
+            for key in persistent[:-4096]:
                 self.relations.pop(key)
                 self.revision += 1
                 if self.store:

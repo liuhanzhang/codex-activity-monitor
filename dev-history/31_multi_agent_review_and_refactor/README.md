@@ -15,7 +15,12 @@
   - 将 Antigravity `TranscriptIndex` 纳入 `HistoryProvider` 的 64 MiB 权重预算、`diagnostics()` 统计与 `_view()` 深拷贝隔离，并在 `AntigravityProjection` 接入 `Engine.identity_budget`（`MR03`）；
   - 扩展 Gemma 4 对 Gemini/Gemma 模型族的前缀匹配，在 `SnapshotProjection.GroupSpeed` 中聚合估算速率语义驱动 `≈` 显示，并更新卸载提示文案（`MR07`）；
   - 全量 615 项 Python 单元测试、170 项 Swift 测试与本地化导出检查通过。
-- **第二/三阶段（`MR04`–`MR06` 逻辑收口与 `MR08` 目录分层）待执行**。
+- **第二阶段（`MR04`–`MR06` 逻辑收口——核心引擎与 Agent 适配器解耦）已完成**：
+  - 在 `state.py` 定义不可变的 `SourceTraits` 与 `source_traits(source)`，统一收敛 `timeline.py`、`engine.py`、`diagnostic_health.py`、`timeline_query.py` 中的源特征判断（`MR04`）；
+  - 在 `Engine` 与 `TimelineBook` 上提供正式公共写入 API（`register_backend`、`thread`、`remove_thread`、`activity`、`record_turn`、`record_turn_request`、`record_phase`、`record_relation`、`set_live_content`），消除 `AntigravityProjection` 对私有方法的直接穿透调用（`MR05`）；
+  - 将回合平均速率计算（`turn_average_speed`）与远程步骤详情补齐（`fetch_remote_detail`）下沉至历史索引/适配器层，并在 Swift `Snapshot.swift` 中通过 `AgentSourceTraits` 与 `Backend.requiresBridgeRestart` 收敛客户端源特征判断（`MR06`）；
+  - 全量 617 项 Python 单元测试、170 项 Swift 测试与本地化导出检查通过。
+- **第三阶段（`MR08` 物理目录分层）待执行**。
 
 ## 核心结论
 

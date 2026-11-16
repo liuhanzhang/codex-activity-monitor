@@ -20,10 +20,11 @@ from .history_read import HistoryChanged
 from .query_request import TimelineRequest
 from .query_response import encode_response, read_response, failure
 from .runtime import collector_alive
-from .antigravity_history import antigravity_scope, detail_result
-from .antigravity_records import live_step, step_index
+from .state import source_traits
+from .antigravity_history import (
+    antigravity_scope, antigravity_turn_average_speed, detail_result, fetch_remote_detail,
+)
 from .antigravity_source import RPC_ERRORS
-from .request_rate import ResponseSample, TurnRates
 
 
 def validated_request(value):
@@ -274,7 +275,9 @@ class TimelineQuery:
                         phases[phase['id']] = {**merge_phase(phases.get(phase['id']), phase), 'history_retired': False}
 
         def observed_phase(phase):
-            if (antigravity and phase['status'] in ('active', 'waiting') and
+            source = phase.get('source') or ('antigravity' if antigravity else 'codex')
+            if (source_traits(source).expires_open_history_on_terminal_turn and
+                    phase['status'] in ('active', 'waiting') and
                     not phase.get('observation_backend') and phase.get('start_source') != 'producer' and
                     turns.get((phase['thread_id'], phase['turn_id']), {}).get('status') in
                     ('completed', 'failed', 'interrupted')):
@@ -348,17 +351,10 @@ class TimelineQuery:
         for t in root_turns[6:]:
             if t['turn_id'] in earlier or t['turn_id'] == selected:
                 recent.append(t)
-        average = root_index.request_rates.projection(selected) if root_index else None
-        if antigravity and selected:
-            observed_requests = {**selected_turn.get('model_requests', {}), **recovered_requests}
-            rates = TurnRates()
-            for sample_id, sample in observed_requests.items():
-                rates.responses[sample_id] = ResponseSample((0, sample['output_tokens'], 0, 0), None,
-                                                            sample.get('duration_ms'), pending=False)
-            if root_index:
-                rates.untracked = sum(1 for (turn, step) in root_index.usage
-                                      if turn == selected and str(step) not in observed_requests)
-            average = rates.wire(thread, selected)
+        observed_requests = {**selected_turn.get('model_requests', {}), **recovered_requests}
+        average = (antigravity_turn_average_speed(thread, selected, observed_requests, index=root_index)
+                   if antigravity and selected else
+                   root_index.turn_average_speed(selected, observed_requests) if root_index else None)
         if average and root_index and root_index.quality:
             average = {**average, 'quality': sorted(set(average['quality']) | root_index.quality),
                        'coverage': 'partial' if average['coverage'] == 'complete' else average['coverage']}
@@ -480,28 +476,11 @@ class TimelineQuery:
             return None
         scope, thread, turn, selected = request.scope_id, request.thread_id, request.turn_id, request.phase_id
         observed = self._observed(scope, thread)
-        phase = next((p for p in observed['phases'] if (p['id'], p['thread_id'], p['turn_id']) ==
-                      (selected, thread, turn)), None)
         try:
-            if not phase:
-                with self.history.lock:
-                    index = self.history.index(scope, thread, directory_only=True)
-                    phase = index.detail_phase(turn, selected) if index else None
-            if phase and phase['turn_id'] == turn and step_index(phase.get('step_index')):
-                index = phase['step_index']
-                rows = self.read_antigravity_steps(scope, thread, index)
-                if rows:
-                    step = live_step(index, rows[0])
-                    if len(rows) > 1:
-                        step.pair_next(live_step(index + 1, rows[1]))
-                    if step.type == 'PLANNER_RESPONSE' and step.text and step.thinking_ended is None:
-                        main_id = step.phase(scope, thread, turn, 'main')['id']
-                        main_phase = next((p for p in observed['phases'] if p['id'] == main_id), None)
-                        step.pair_text_receipt(main_phase)
-                    return step
+            return fetch_remote_detail(scope, thread, turn, selected, observed,
+                                       self.history, self.read_antigravity_steps)
         except RPC_ERRORS:
-            pass
-        return None
+            return None
 
     def query(self, request):
         request = TimelineRequest.parse(request)

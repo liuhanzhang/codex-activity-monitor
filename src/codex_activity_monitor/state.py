@@ -99,3 +99,43 @@ class Thread:
     history_progress_ms: float | None = None
     history_quality: set = field(default_factory=set)
     history_turn: dict | None = None
+
+
+@dataclass(frozen=True, slots=True)
+class SourceTraits:
+    name: str
+    model_provenance_ranks: dict = field(default_factory=lambda: {'history': 3, 'producer': 2, 'receipt': 1})
+    default_provenance_ranks: dict = field(default_factory=lambda: {'history': 3, 'producer': 2, 'receipt': 1})
+    prefers_newer_producer_bound: bool = False
+    producer_tool_terminal: bool = False
+    retains_idle_directory: bool = False
+    persistent_relations: bool = False
+    synthesizes_tool_input_phase: bool = False
+    synthesizes_reasoning_phase: bool = False
+    expires_open_history_on_terminal_turn: bool = False
+    uses_bridge_connection: bool = True
+
+    def provenance_ranks(self, track=None):
+        return dict(self.model_provenance_ranks if track == 'model' else self.default_provenance_ranks)
+
+
+SOURCE_TRAITS = {
+    'codex': SourceTraits('codex'),
+    'antigravity': SourceTraits(
+        'antigravity',
+        model_provenance_ranks={'producer': 3, 'receipt': 2, 'history': 1},
+        default_provenance_ranks={'producer': 3, 'history': 2, 'receipt': 1},
+        prefers_newer_producer_bound=True,
+        producer_tool_terminal=True,
+        retains_idle_directory=True,
+        persistent_relations=True,
+        synthesizes_tool_input_phase=True,
+        synthesizes_reasoning_phase=True,
+        expires_open_history_on_terminal_turn=True,
+        uses_bridge_connection=False,
+    ),
+}
+
+
+def source_traits(source=None) -> SourceTraits:
+    return SOURCE_TRAITS.get(source or 'codex', SOURCE_TRAITS['codex'])

@@ -8,7 +8,7 @@ from .antigravity_source import active
 from .antigravity_transport import uuid_string
 from .history_index import timestamp
 from .metrics import TextStream
-from .timeline import identity, merge_phase
+from .timeline import identity
 from .tool_labels import command_name, command_summary
 
 
@@ -39,8 +39,8 @@ class AntigravityProjection:
 
     def _thread(self, scope, conversation):
         backend = self.backend(scope)
-        self.engine.backends.setdefault(backend, {}).update(home=scope, source='antigravity')
-        thread = self.engine._thread(backend, conversation)
+        self.engine.register_backend(backend, home=scope, source='antigravity')
+        thread = self.engine.thread(backend, conversation)
         session = self.sessions.setdefault((scope, conversation), Conversation())
         return thread, session
 
@@ -68,11 +68,11 @@ class AntigravityProjection:
         backend = self.backend(scope)
         if not self.engine.admit_identities(backend, at=at):
             return
-        self.engine.backends.setdefault(backend, {}).update(home=scope, source='antigravity', connected=True)
+        self.engine.register_backend(backend, home=scope, source='antigravity', connected=True)
         for conversation in deleted:
             self.gap(scope, conversation, at=at, wall=wall)
             self.sessions.pop((scope, conversation), None)
-            self.engine.threads.pop((backend, conversation), None)
+            self.engine.remove_thread(backend, conversation)
         for conversation, summary in changed.items():
             index = summary.get('lastUserInputStepIndex')
             initial_turn = turn_id(conversation, index) if step_index(index) else None
@@ -208,20 +208,14 @@ class AntigravityProjection:
             dependent.thread_source = 'subagent'
             dependent.parent_thread_id = thread.id
             dependent.parent_source = 'spawn_call'
-            self.book._relation(scope, thread.id, turn, child, step_id(thread.id, step.index), 'spawn',
-                                source='antigravity')
+            self.book.record_relation(scope, thread.id, turn, child, step_id(thread.id, step.index), 'spawn',
+                                      source='antigravity')
 
     def _request(self, scope, conversation, turn, step):
         sample = step.model_request()
         if not self.book or sample is None:
             return
-        key = identity('turn', scope, conversation, turn)
-        old = self.book.turns.get(key)
-        if old is None:
-            return
-        requests = dict(old.get('model_requests', {}))
-        requests[str(step.index)] = sample
-        self.book._save('turn', {**old, 'model_requests': dict(list(requests.items())[-128:])})
+        self.book.record_turn_request(scope, conversation, turn, step.index, sample)
 
     def _begin(self, scope, thread, cursor, step, initial, at, wall):
         turn = turn_id(thread.id, step.index)
@@ -250,12 +244,8 @@ class AntigravityProjection:
     def _turn(self, scope, thread, turn, wall, *, status=None, start=None, end=None):
         if not self.book or not turn:
             return
-        key = identity('turn', scope, thread.id, turn)
-        old = self.book.turns.get(key, {})
-        self.book._save('turn', {**old, 'id': key, 'scope_id': scope, 'thread_id': thread.id, 'turn_id': turn,
-                                 'start_ms': old.get('start_ms') or start, 'end_ms': end or old.get('end_ms'),
-                                 'updated_ms': wall * 1000, 'status': status or old.get('status', 'unknown'),
-                                 'observation_backend': thread.backend})
+        self.book.record_turn(scope, thread.id, turn, wall * 1000, status=status,
+                              start_ms=start, end_ms=end, backend=thread.backend)
 
     def _step(self, scope, thread, turn, step, initial, at, wall):
         for part in step.parts():
@@ -263,9 +253,9 @@ class AntigravityProjection:
             phase['observation_backend'] = thread.backend
             if part == 'input':
                 if self.book:
-                    self.book._put(phase)
+                    self.book.record_phase(phase)
                     if step.arguments and (not initial or step.state in OPEN):
-                        self.book.live[phase['id']] = {'text': step.arguments[:32768], 'at': wall}
+                        self.book.set_live_content(phase['id'], text=step.arguments[:32768], at=wall)
                 continue
             item_id, kind = phase['item_id'], phase['item_type']
             previous = thread.activities.get(item_id)
@@ -284,20 +274,17 @@ class AntigravityProjection:
             if not step.is_tool and not initial and phase['start_ms'] is None and current is None and state in OPEN:
                 phase.update(start_ms=wall * 1000, start_source='receipt')
             if self.book:
-                if current and current['status'] == 'unknown' and state in OPEN:
-                    self.book._save('phase', {**merge_phase(current, phase), 'status': state})
-                else:
-                    self.book._put(phase)
+                self.book.record_phase(phase, reopen_unknown=state in OPEN)
             if part == 'summary' and self.book and step.thinking and (not initial or state in OPEN):
-                self.book.live[phase['id']] = {'text': step.thinking[-32768:], 'at': wall}
+                self.book.set_live_content(phase['id'], text=step.thinking[-32768:], at=wall)
             if kind == 'userMessage':
                 continue  # The user's message is a timeline marker, not agent work.
             if initial and state not in OPEN and previous is None:
                 continue
             activity_kind = 'text' if kind == 'agentMessage' else 'reasoning' if kind == 'reasoning' else (
                 'tool_ready' if step.state == 'waiting' else 'tool')
-            activity = self.engine._activity(thread, item_id, turn, activity_kind, phase['label'],
-                                             at if not initial and state in OPEN else None)
+            activity = self.engine.activity(thread, item_id, turn, activity_kind, phase['label'],
+                                            at if not initial and state in OPEN else None)
             activity.kind, activity.item_type = activity_kind, kind
             activity.tool_name = phase['tool_name']
             if kind == 'commandExecution' and step.arguments:
@@ -310,7 +297,7 @@ class AntigravityProjection:
             if kind == 'agentMessage' and (state in OPEN or previous):
                 rebased = self._text(thread, activity, step.text, at, initial)
                 if rebased and self.book:
-                    self.book._put({**phase, 'quality': ['observation_gap'], 'observed_until_ms': wall * 1000})
+                    self.book.record_phase({**phase, 'quality': ['observation_gap'], 'observed_until_ms': wall * 1000})
             if state in OPEN:
                 activity.status, activity.observation_lost = 'inProgress', False
                 if not initial:
@@ -323,7 +310,8 @@ class AntigravityProjection:
         if self.book and (step.arguments or step.output) and (not initial or step.state in OPEN):
             # Tool bodies are transient; terminal details can be queried again.
             phase = step.phase(scope, thread.id, turn, 'main')
-            self.book.live[phase['id']] = {'text': step.output[-32768:], 'input': step.arguments[:32768], 'at': wall}
+            self.book.set_live_content(phase['id'], text=step.output[-32768:],
+                                       input_text=step.arguments[:32768], at=wall)
 
     def _text(self, thread, activity, body, at, initial):
         key = thread.backend, activity.id, 'text', 0
@@ -392,7 +380,7 @@ class AntigravityProjection:
         for scope in {scope for scope, _ in self.sessions}:
             self.disconnect(scope, at, wall)
         for scope, conversation in self.sessions:
-            self.engine.threads.pop((self.backend(scope), conversation), None)
+            self.engine.remove_thread(self.backend(scope), conversation)
         self.sessions.clear()
         self.status = {'state': 'disabled'}
 

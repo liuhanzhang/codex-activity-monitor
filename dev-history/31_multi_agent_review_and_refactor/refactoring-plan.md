@@ -120,7 +120,24 @@ src/codex_activity_monitor/
 
 ---
 
-## 四、后续阶段决策备忘
+## 四、第二阶段实施与验收记录（2026-11-16）
+
+第二阶段已完成 `MR04`、`MR05`、`MR06` 的核心引擎与 Agent 适配器逻辑收口：
+
+| 编号 | 修改内容 | 回归测试与验证 |
+| --- | --- | --- |
+| `MR04` | 在 [`state.py`](../../src/codex_activity_monitor/state.py) 定义不可变的 `SourceTraits` 与 `source_traits(source)`，集中声明 `provenance_ranks`、`prefers_newer_producer_bound`、`producer_tool_terminal`、`retains_idle_directory`、`persistent_relations`、`synthesizes_tool_input_phase`、`synthesizes_reasoning_phase`、`expires_open_history_on_terminal_turn`、`uses_bridge_connection`；替换 [`timeline.py`](../../src/codex_activity_monitor/timeline.py)、[`engine.py`](../../src/codex_activity_monitor/engine.py)、[`diagnostic_health.py`](../../src/codex_activity_monitor/diagnostic_health.py)、[`timeline_query.py`](../../src/codex_activity_monitor/timeline_query.py) 中散落的 `source == 'antigravity'` / `source != 'antigravity'` 分支 | `AntigravityProjectionTests.test_source_traits_and_public_projection_write_apis` |
+| `MR05` | 在 [`engine.py`](../../src/codex_activity_monitor/engine.py) 提供正式公共方法 `register_backend`、`thread`、`remove_thread`、`activity`；在 [`timeline.py`](../../src/codex_activity_monitor/timeline.py) 提供 `record_turn`、`record_turn_request`、`record_phase`、`record_relation`、`set_live_content`；[`antigravity_projection.py`](../../src/codex_activity_monitor/antigravity_projection.py) 全面切换至公共写入 API，消除对 `engine._thread`、`engine._activity`、`book._put`、`book._save`、`book._relation` 的穿透访问 | `AntigravityProjectionTests.test_source_traits_and_public_projection_write_apis` 及全量 Antigravity 投影测试 |
+| `MR06` | 在 [`antigravity_history.py`](../../src/codex_activity_monitor/antigravity_history.py) 与 [`history_index.py`](../../src/codex_activity_monitor/history_index.py) 收敛 `turn_average_speed`、`antigravity_turn_average_speed` 与 `fetch_remote_detail`，使 [`timeline_query.py`](../../src/codex_activity_monitor/timeline_query.py) 不再直接依赖 `antigravity_records` 或组装 `TurnRates`；在客户端 [`Snapshot.swift`](../../macos/Sources/MonitorModel/Snapshot.swift) 引入 `AgentSourceTraits` 与 `Backend.requiresBridgeRestart`，清理 [`DashboardStore.swift`](../../macos/Sources/MonitorApp/DashboardStore.swift) 中的源类型字符串特判 | 全量 617 项 Python 测试与 170 项 Swift 测试 |
+
+验证结果：
+- `.local/venv/bin/python -m unittest discover -s tests -p 'test_*.py'`：**617 项测试全部通过**。
+- `.local/venv/bin/python bin/export-localizations --check`：**通过**。
+- `swift test --package-path macos`：**170 项测试（3 个测试套件）全部通过**。
+
+---
+
+## 五、后续阶段决策备忘
 
 1. **物理目录结构（阶段 3）**：采用方案 A1，建立 `agents/{codex,antigravity}/` 子包收敛特定 Agent 实现，通用核心模块保留顶层；Swift `MonitorApp/` 按功能建立子文件夹分组。
-2. **协议与特征（阶段 2）**：保持现有 `Snapshot` / `ManagementState` wire JSON 兼容，在内部通过 `SourceTraits` 与公共写入 API 收口逻辑边界。
+2. **协议与特征（阶段 2）**：已保持现有 `Snapshot` / `ManagementState` wire JSON 兼容，在内部通过 `SourceTraits` 与公共写入 API 收口逻辑边界。

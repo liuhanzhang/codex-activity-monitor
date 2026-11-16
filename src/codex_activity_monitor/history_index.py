@@ -425,6 +425,10 @@ class HistoryDirectory(_HistoryProjection):
             spans[-1].append(offset+length, digest)
         super()._row(row, offset, length, digest)
 
+    def turn_average_speed(self, turn, observed_requests=None):
+        _ = observed_requests
+        return self.request_rates.projection(turn)
+
     def load_turn(self, turn):
         return self._read_turn(turn, RolloutIndex(self.path, self.scope, self.thread))
 

@@ -11,7 +11,7 @@ from .overview import overview, annotate_parents
 from .menu_presentation import menu_presentation
 from .agent_relations import raw_coordination, SPAWN_OPERATIONS, VERIFIED_PARENTS, thread_identity
 from .usage import UsageBook
-from .state import Activity, Thread
+from .state import Activity, Thread, source_traits
 from .identity_budget import IdentityBudget, observation_identities
 from .history_contract import HistorySelection
 from .reconciliation import apply_history
@@ -141,7 +141,12 @@ class Engine:
     def apply_history(self, summary):
         apply_history(self, summary)
 
-    def _thread(self, backend, thread_id):
+    def register_backend(self, backend, **fields):
+        entry = self.backends.setdefault(backend, {})
+        entry.update(fields)
+        return entry
+
+    def thread(self, backend, thread_id):
         key = (backend, thread_id)
         if key not in self.threads:
             model = self.backends.get(backend,{}).get('model','unknown')
@@ -153,6 +158,11 @@ class Engine:
                 self.threads[key].quality.add('observation_gap')
                 self.threads[key].turn_start_observed = False
         return self.threads[key]
+
+    _thread = thread
+
+    def remove_thread(self, backend, thread_id):
+        return self.threads.pop((backend, thread_id), None)
 
     def _metadata(self, backend, metadata):
         if not metadata.get('id'):
@@ -202,7 +212,7 @@ class Engine:
         self.turns[key] = thread_id
         return True
 
-    def _activity(self, thread, item_id, turn_id, kind, label, at):
+    def activity(self, thread, item_id, turn_id, kind, label, at):
         thread.context_only = False
         if item_id not in thread.activities:
             thread.activities[item_id] = Activity(item_id,turn_id,kind,label,at)
@@ -210,6 +220,8 @@ class Engine:
             if at is not None:
                 thread.last_progress_at = max(thread.last_progress_at,at)
         return thread.activities[item_id]
+
+    _activity = activity
 
     def _tool_metadata(self, activity, item):
         activity.coordination_action = raw_coordination(item).get('call_operation', activity.coordination_action)
@@ -933,7 +945,7 @@ class Engine:
             needed.update(ancestors)
         for key,thread in list(self.threads.items()):
             age = max(0, time.time() - thread.history_progress_ms / 1000) if thread.history_progress_ms is not None else now-thread.last_progress_at
-            retained_directory = self.backends.get(thread.backend, {}).get('source') == 'antigravity'
+            retained_directory = source_traits(self.backends.get(thread.backend, {}).get('source')).retains_idle_directory
             if not retained_directory and thread.status!='inProgress' and not any(a.active or a.unresolved for a in thread.activities.values()) and age>600:
                 if key in needed:
                     thread.activities.clear()

@@ -95,13 +95,14 @@ public struct Chat: Decodable, Identifiable, Sendable {
     public var project: String { cwd.map { URL(fileURLWithPath: $0).lastPathComponent } ?? "" }
     public var isKnownSubagent: Bool { thread_source != "user" && (thread_source == "subagent" || parent_thread_id != nil) }
     public var isTerminal: Bool { ["completed", "failed", "interrupted"].contains(status ?? "") }
-    public var retainsIdleHistory: Bool { source == "antigravity" }
-    public var isApproximateSpeed: Bool { source == "antigravity" || (source != nil && source != "codex" && generation_estimated == true) }
+    public var sourceTraits: AgentSourceTraits { AgentSourceTraits.traits(for: source) }
+    public var retainsIdleHistory: Bool { sourceTraits.retainsIdleHistory }
+    public var isApproximateSpeed: Bool { sourceTraits.usesStepTimestampSpeed || (source != nil && source != "codex" && generation_estimated == true) }
     public func sourceDisplayName(multiSourceEnabled: Bool) -> String? {
         if let source, !source.isEmpty, source != "codex" {
-            return source == "antigravity" ? "Antigravity" : source
+            return sourceTraits.displayName
         }
-        return multiSourceEnabled ? "Codex" : nil
+        return multiSourceEnabled ? sourceTraits.displayName : nil
     }
     public var speedObservationNotice: ObservationNotice? {
         guard let issues = generation_rate_issues, !issues.isEmpty else { return nil }
@@ -270,6 +271,27 @@ public struct ChatRow: Identifiable, Sendable {
 
 public enum SnapshotError: Error { case unsupportedVersion, duplicateIdentity }
 
+public struct AgentSourceTraits: Sendable {
+    public let displayName: String
+    public let retainsIdleHistory: Bool
+    public let usesStepTimestampSpeed: Bool
+    public let usesBridgeConnection: Bool
+
+    public static func traits(for source: String?) -> AgentSourceTraits {
+        switch source ?? "codex" {
+        case "antigravity":
+            return AgentSourceTraits(displayName: "Antigravity", retainsIdleHistory: true,
+                                     usesStepTimestampSpeed: true, usesBridgeConnection: false)
+        case let custom where custom != "codex" && !custom.isEmpty:
+            return AgentSourceTraits(displayName: custom, retainsIdleHistory: false,
+                                     usesStepTimestampSpeed: false, usesBridgeConnection: true)
+        default:
+            return AgentSourceTraits(displayName: "Codex", retainsIdleHistory: false,
+                                     usesStepTimestampSpeed: false, usesBridgeConnection: true)
+        }
+    }
+}
+
 public struct Backend: Decodable, Sendable {
     public let source: String?
     public let connected: Bool?
@@ -277,6 +299,8 @@ public struct Backend: Decodable, Sendable {
     public let configuration_matches: Bool?
     public let implementation: Implementation?
     public var supportsObservationLease: Bool { implementation?.modules?["observer_permit"] != nil }
+    public var usesBridgeConnection: Bool { AgentSourceTraits.traits(for: source).usesBridgeConnection }
+    public var requiresBridgeRestart: Bool { usesBridgeConnection && connected == true && !supportsObservationLease }
 }
 
 public struct Implementation: Decodable, Sendable {

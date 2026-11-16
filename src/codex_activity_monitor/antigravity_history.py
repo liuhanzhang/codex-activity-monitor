@@ -11,7 +11,7 @@ from .antigravity_records import OPEN, history_step, live_step, step_id, step_in
 from .antigravity_transport import uuid_string
 from .history_content import ABSENT, raw_section
 from .history_read import HistoryChanged
-from .request_rate import RequestRateBook
+from .request_rate import RequestRateBook, ResponseSample, TurnRates
 from .timeline import identity, phase_id
 
 
@@ -53,6 +53,44 @@ def detail_result(step, part, *, source, calls=None):
     state = 'available' if part == 'input' or step.state not in OPEN else 'partial'
     return {'state': state if sections else 'content_unavailable',
             'sections': sections, 'attachments': [], 'source': source}
+
+
+def antigravity_turn_average_speed(thread, turn, observed_requests=None, *, index=None):
+    if not turn:
+        return None
+    observed_requests = dict(observed_requests or {})
+    rates = TurnRates()
+    for sample_id, sample in observed_requests.items():
+        rates.responses[sample_id] = ResponseSample((0, sample['output_tokens'], 0, 0), None,
+                                                    sample.get('duration_ms'), pending=False)
+    if index is not None:
+        rates.untracked = sum(1 for (usage_turn, step) in index.usage
+                              if usage_turn == turn and str(step) not in observed_requests)
+    return rates.wire(thread, turn)
+
+
+def fetch_remote_detail(scope, thread, turn, selected, observed, history, read_steps):
+    if not read_steps or not antigravity_scope(scope):
+        return None
+    phase = next((p for p in observed['phases'] if (p['id'], p['thread_id'], p['turn_id']) ==
+                  (selected, thread, turn)), None)
+    if not phase:
+        with history.lock:
+            index = history.index(scope, thread, directory_only=True)
+            phase = index.detail_phase(turn, selected) if index else None
+    if phase and phase['turn_id'] == turn and step_index(phase.get('step_index')):
+        index = phase['step_index']
+        rows = read_steps(scope, thread, index)
+        if rows:
+            step = live_step(index, rows[0])
+            if len(rows) > 1:
+                step.pair_next(live_step(index + 1, rows[1]))
+            if step.type == 'PLANNER_RESPONSE' and step.text and step.thinking_ended is None:
+                main_id = step.phase(scope, thread, turn, 'main')['id']
+                main_phase = next((p for p in observed['phases'] if p['id'] == main_id), None)
+                step.pair_text_receipt(main_phase)
+            return step
+    return None
 
 
 class TranscriptIndex:
@@ -198,6 +236,9 @@ class TranscriptIndex:
             return None
         record = self.turns.get(turn)
         return record['step_index'] if record is not None else None
+
+    def turn_average_speed(self, turn, observed_requests=None):
+        return antigravity_turn_average_speed(self.thread, turn, observed_requests, index=self)
 
     def trajectory_turn(self, turn, read_steps=None, *, prefetched=None, observed_phases=None):
         """Recover the selected turn's timings without retaining trajectory bodies."""

@@ -499,7 +499,7 @@ final class DashboardStore {
 
     var bridgeNeedsRestart: Bool {
         management?.bridge_restart_required == true ||
-            snapshot?.backends?.values.contains { $0.source != "antigravity" && $0.connected == true && !$0.supportsObservationLease } == true
+            snapshot?.backends?.values.contains { $0.requiresBridgeRestart } == true
     }
 
     var compactConnectionLabel: String {
