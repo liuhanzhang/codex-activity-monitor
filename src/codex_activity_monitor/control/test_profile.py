@@ -4,8 +4,8 @@ from pathlib import Path
 import tempfile
 
 from .app_control import AppController, ControlError, read_json
-from .agents.codex.integration import KEYS
-from .runtime import ROOT, atomic_json
+from codex_activity_monitor.agents.codex.integration import KEYS
+from codex_activity_monitor.runtime.runtime import ROOT, atomic_json
 
 
 class FileEnvironment:

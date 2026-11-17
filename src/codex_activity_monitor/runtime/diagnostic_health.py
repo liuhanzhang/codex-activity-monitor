@@ -2,7 +2,7 @@
 
 import time
 
-from .state import source_traits
+from codex_activity_monitor.core.state import source_traits
 
 
 class HealthMonitor:

@@ -7,10 +7,10 @@ from queue import Queue, Empty, Full
 import threading
 import time
 
-from .agent_presentation import agent_metadata
-from .agent_relations import thread_identity
-from .overview import annotate_parents
-from .agents.codex.history_source import RolloutResolver
+from codex_activity_monitor.core.agent_presentation import agent_metadata
+from codex_activity_monitor.core.agent_relations import thread_identity
+from codex_activity_monitor.core.overview import annotate_parents
+from codex_activity_monitor.agents.codex.history_source import RolloutResolver
 
 
 def read_header(scope, thread, path=None, resolver=None):

@@ -13,14 +13,14 @@ import time
 from typing import Literal
 
 # Preserve the established read helpers at this facade.
-from .agents.codex.history_content import (ABSENT, CANONICAL_TYPES, fields, item_content, raw_section, result_texts,
+from codex_activity_monitor.agents.codex.history_content import (ABSENT, CANONICAL_TYPES, fields, item_content, raw_section, result_texts,
                                            section, source_truncated, text_content, tool_content)
-from .agents.codex.history_index import HistoryDirectory, HistoryDetails, HistoryFacts, HistoryMetadata, RolloutIndex, canonical_item, timestamp
-from .agents.codex.history_read import HistoryChanged, HistoryRead
-from .agents.codex.history_source import RolloutResolver
-from .agents.antigravity.history import TranscriptIndex, antigravity_scope, transcript_path
+from codex_activity_monitor.agents.codex.history_index import HistoryDirectory, HistoryDetails, HistoryFacts, HistoryMetadata, RolloutIndex, canonical_item, timestamp
+from codex_activity_monitor.agents.codex.history_read import HistoryChanged, HistoryRead
+from codex_activity_monitor.agents.codex.history_source import RolloutResolver
+from codex_activity_monitor.agents.antigravity.history import TranscriptIndex, antigravity_scope, transcript_path
 from .resource_budget import retained_bytes
-from .timeline import phase_id
+from codex_activity_monitor.timeline.timeline import phase_id
 
 @dataclass(frozen=True, slots=True)
 class HistoryCacheKey:

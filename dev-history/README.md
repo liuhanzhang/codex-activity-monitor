@@ -6,7 +6,8 @@
 
 | 阅读目的 | 入口 | 状态与边界 |
 | --- | --- | --- |
-| 全局代码审查与多 Agent 架构重构 | [31：全局代码审查与多 Agent 架构重构](31_multi_agent_review_and_refactor/README.md) | 基线 `704df5a`；已完成审查报告与第一阶段修复（`MR01`–`MR03`、`MR07`），第二/三阶段重构待推进 |
+| 核心层子包化与 Codex 投影解耦（L1 + L2） | [32：核心层子包化与 Codex 投影解耦](32_package_hierarchy_and_core_refactor/README.md) | 基线 `b13e921`；已完成 L1（核心层 44 个模块全量物理子包化 + 标准绝对导入规范）与 L2（`Engine`/`TimelineBook` Codex 实时投影剥离至 `agents/codex/projection.py`）重构，全量测试与独立打包验收通过 |
+| 全局代码审查与多 Agent 架构重构 | [31：全局代码审查与多 Agent 架构重构](31_multi_agent_review_and_refactor/README.md) | 基线 `704df5a`；第一至第三阶段（`MR01`–`MR08`）缺陷修复、逻辑特征收口与 Agent 子包初步分层已全部完成并验收通过 |
 | 使用或维护 Antigravity Desktop 的只读接入 | [30：Antigravity Desktop 接入](30_antigravity/README.md) | 已实现独立开关、会话发现、实时速度、工具活动、历史和子 Agent 归属。实机版本 2.32.1 |
 | 评估无需 wrapper 的接入架构 | [28：Hooks + OTel 功能缺口](28_hooks_and_otel/capability-gaps.md) · [调研与实验记录](28_hooks_and_otel/research-and-experiments.md) | 总速度可近实时估算；并发流归属、现有分词口径、流式内容与部分实时阶段/进度无法保持，未切换产品架构 |
 | 修复回退／分叉后的近期历史读取 | [27：Codex 历史路径切换与继承读取](27_rollout_history_compatibility/README.md) | 当前来源定位、缓存切换及有效继承读取已随 alpha.5 发布；发行 CI、最终 DMG／原生客户端及公网更新验收通过，其余兼容项暂缓 |

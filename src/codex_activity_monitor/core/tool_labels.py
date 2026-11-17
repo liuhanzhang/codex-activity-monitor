@@ -6,7 +6,7 @@ import unicodedata
 from collections import deque
 from pathlib import PurePath
 
-from .i18n import tr
+from codex_activity_monitor.i18n.i18n import tr
 
 
 MAX_LABEL = 160

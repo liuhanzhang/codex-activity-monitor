@@ -15,12 +15,12 @@ import sys
 import time
 import uuid
 
-from .agents.codex.integration import KEYS, LABEL
-from .runtime import ROOT, REAL_CLI, atomic_json, collector_alive
-from .execution import backend_command, is_frozen
-from .state_client import state_once, authorize_session, StateClientError
-from .i18n import CATALOGS, DEFAULT_LANGUAGE, message, render_message, validate_language
-from .owned_files import is_finder_metadata
+from codex_activity_monitor.agents.codex.integration import KEYS, LABEL
+from codex_activity_monitor.runtime.runtime import ROOT, REAL_CLI, atomic_json, collector_alive
+from codex_activity_monitor.runtime.execution import backend_command, is_frozen
+from codex_activity_monitor.runtime.state_client import state_once, authorize_session, StateClientError
+from codex_activity_monitor.i18n.i18n import CATALOGS, DEFAULT_LANGUAGE, message, render_message, validate_language
+from codex_activity_monitor.runtime.owned_files import is_finder_metadata
 
 DATA_ROOT = Path.home() / 'Library/Application Support/CodexActivityMonitor'
 
@@ -162,7 +162,7 @@ class SystemServices:
             info = read_json(path)
             pid = info.get('pid')
             if isinstance(pid, int) and process_alive(pid):
-                from .app_session import process_identity
+                from codex_activity_monitor.runtime.app_session import process_identity
                 identity = process_identity(pid)
                 if identity is None or info.get('identity') is None or identity == info['identity']:
                     found.append({'pid': pid, 'reason': 'bridge_running'})
@@ -200,7 +200,7 @@ def bridge_upgrade_required(runtime):
             pid = record.get('pid')
             if type(pid) is not int or pid <= 1 or not process_alive(pid):
                 continue
-            from .app_session import process_identity
+            from codex_activity_monitor.runtime.app_session import process_identity
             identity = process_identity(pid)
             if identity is None or record.get('identity') is None or identity == record['identity']:
                 return True
@@ -284,7 +284,7 @@ class AppController:
             runtime = self._runtime(receipt)
             flag = runtime/'antigravity.enabled'
             if enabled:
-                from .runtime import runtime_dir
+                from codex_activity_monitor.runtime.runtime import runtime_dir
                 runtime = runtime_dir(runtime)
                 managed = runtime/'app-managed.json'
                 if not managed.exists():
@@ -306,7 +306,7 @@ class AppController:
         state = receipt.get('state', 'restored' if prefs.get('restored') else 'new')
         runtime = self._runtime(receipt)
         antigravity = (runtime/'antigravity.enabled').is_file()
-        from .agents.codex.integration_status import inspect_integration
+        from codex_activity_monitor.agents.codex.integration_status import inspect_integration
         return {'version': 1, 'ok': True, 'state': state,
                 'configured': state == 'configured', 'runtime': str(runtime) if antigravity else receipt.get('runtime'),
                 'antigravity_enabled': antigravity,
@@ -403,7 +403,7 @@ class AppController:
             if actual == launcher:
                 raise ControlError('recursive_cli', 'control.recursive_cli')
             installed = dict(zip(KEYS, (str(launcher), '0', '0', '')))
-            from .agents.codex.integration_status import configuration_revision
+            from codex_activity_monitor.agents.codex.integration_status import configuration_revision
             revision = configuration_revision(installed, app, actual)
             receipt = {'version': 1, 'id': old.get('id') if old.get('state') == 'configured' else uuid.uuid4().hex,
                        'state': 'configuring', 'previous': previous, 'installed': installed,
@@ -417,7 +417,7 @@ class AppController:
                 # The launcher path in launchctl may stay unchanged across an
                 # app move or bridge upgrade. Existing Desktop processes still
                 # need to release their old bridges before the switch is complete.
-                from .agents.codex.integration_status import restart_candidates
+                from codex_activity_monitor.agents.codex.integration_status import restart_candidates
                 receipt['restart_processes'] = restart_candidates(self, receipt)
             if legacy_backup:
                 receipt['legacy_backup'] = legacy_backup
@@ -499,7 +499,7 @@ class AppController:
         environment = (['-u', 'PYTHONPATH', '-u', 'PYTHONHOME', 'PYINSTALLER_RESET_ENVIRONMENT=1'] if is_frozen()
                        else ['PYTHONPATH=' + str(source / 'src')])
         if revision and installed:
-            from .agents.codex.integration_status import REVISION_ENV, EXPECTED_ENV, fingerprint
+            from codex_activity_monitor.agents.codex.integration_status import REVISION_ENV, EXPECTED_ENV, fingerprint
             environment += [REVISION_ENV + '=' + revision, EXPECTED_ENV + '=' + fingerprint(installed)]
         command = ['exec', '/usr/bin/env', *environment,
                    *backend_command('--runtime', runtime, 'bridge', '--real-cli', actual, '--', executable=python)]
@@ -521,7 +521,7 @@ class AppController:
             if type(owner_pid) is not int or owner_pid <= 1 or not process_alive(owner_pid):
                 raise ControlError('owner_missing', 'control.owner_missing')
             current = read_json(self.session)
-            from .cli import start, stop
+            from codex_activity_monitor.cli import start, stop
             owned = collector_alive(runtime)
             control = read_json(runtime/'collector.json') if owned else None
             if owned and not control:
@@ -548,7 +548,7 @@ class AppController:
                     type(current.get('owner_pid')) is int and process_alive(current['owner_pid']) and
                     -5 <= time.time() - current.get('created_at', current.get('heartbeat_at', 0)) < 5):
                 raise ControlError('another_gui_running', 'control.another_gui_running')
-            from .observation_lease import SessionGrant, LeaseError
+            from codex_activity_monitor.runtime.observation_lease import SessionGrant, LeaseError
             try:
                 grant = SessionGrant.from_record(current)
             except LeaseError:
@@ -576,7 +576,7 @@ class AppController:
     def _stop(self, receipt):
         self.session.unlink(missing_ok=True)
         if receipt.get('runtime'):
-            from .cli import stop, running
+            from codex_activity_monitor.cli import stop, running
             runtime = Path(receipt['runtime'])
             stop(runtime)
             if running(runtime):
@@ -745,8 +745,8 @@ class AppController:
         unknown = [p.name for p in self.root.iterdir() if p.name not in allowed and not is_finder_metadata(p)]
         if unknown:
             raise ControlError('unowned_data', 'control.unowned_data')
-        from .timeline_storage import owned_directory
-        from .diagnostic_log import owned_logs
+        from codex_activity_monitor.timeline.timeline_storage import owned_directory
+        from codex_activity_monitor.runtime.diagnostic_log import owned_logs
         if not owned_logs(self.root / 'diagnostics'):
             raise ControlError('unowned_data', 'control.unowned_data')
         if not owned_directory(self.root / 'timeline'):

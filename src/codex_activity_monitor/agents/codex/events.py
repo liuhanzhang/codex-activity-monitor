@@ -4,8 +4,8 @@ from dataclasses import dataclass
 from datetime import datetime
 import json
 
-from ...tool_labels import command_name, command_summary
-from ...usage import response_metadata, usage_fields
+from codex_activity_monitor.core.tool_labels import command_name, command_summary
+from codex_activity_monitor.core.usage import response_metadata, usage_fields
 
 
 DELTA_KINDS = {

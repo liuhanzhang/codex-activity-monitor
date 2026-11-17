@@ -9,10 +9,10 @@ from pathlib import Path
 import tempfile
 import time
 
-from .i18n import DEFAULT_LANGUAGE, available_languages, tr, validate_language
+from codex_activity_monitor.i18n.i18n import DEFAULT_LANGUAGE, available_languages, tr, validate_language
 from .execution import is_frozen, bundle_resources
 
-ROOT = Path(__file__).resolve().parents[2]
+ROOT = Path(__file__).resolve().parents[3]
 REAL_CLI = Path('/Applications/ChatGPT.app/Contents/Resources/codex-cli/CodexCLI.app/Contents/MacOS/codex')
 
 # Keep startup evidence and integration revisions tied to the same bridge code,
@@ -27,6 +27,7 @@ BRIDGE_MODULES = ('bridge', 'observer_permit', 'events', 'usage', 'tool_labels',
 MODULE_PATHS = {
     'bridge': 'agents/codex/bridge',
     'events': 'agents/codex/events',
+    'codex_projection': 'agents/codex/projection',
     'progress_state': 'agents/codex/progress_state',
     'integration': 'agents/codex/integration',
     'integration_status': 'agents/codex/integration_status',
@@ -43,6 +44,50 @@ MODULE_PATHS = {
     'antigravity_projection': 'agents/antigravity/projection',
     'antigravity_history': 'agents/antigravity/history',
     'antigravity_tokenizer': 'agents/antigravity/tokenizer',
+    'agent_presentation': 'core/agent_presentation',
+    'agent_relations': 'core/agent_relations',
+    'engine': 'core/engine',
+    'identity_budget': 'core/identity_budget',
+    'menu_presentation': 'core/menu_presentation',
+    'metrics': 'core/metrics',
+    'overview': 'core/overview',
+    'request_rate': 'core/request_rate',
+    'state': 'core/state',
+    'tokenizer_process': 'core/tokenizer_process',
+    'tool_labels': 'core/tool_labels',
+    'usage': 'core/usage',
+    'content_version': 'timeline/content_version',
+    'query_request': 'timeline/query_request',
+    'query_response': 'timeline/query_response',
+    'timeline': 'timeline/timeline',
+    'timeline_query': 'timeline/timeline_query',
+    'timeline_storage': 'timeline/timeline_storage',
+    'agent_identity': 'history/agent_identity',
+    'history': 'history/history',
+    'history_refresh': 'history/history_refresh',
+    'resource_budget': 'history/resource_budget',
+    'app_session': 'runtime/app_session',
+    'collector': 'runtime/collector',
+    'diagnostic_health': 'runtime/diagnostic_health',
+    'diagnostic_log': 'runtime/diagnostic_log',
+    'execution': 'runtime/execution',
+    'json_encoding': 'runtime/json_encoding',
+    'observation_lease': 'runtime/observation_lease',
+    'observer_permit': 'runtime/observer_permit',
+    'owned_files': 'runtime/owned_files',
+    'publication': 'runtime/publication',
+    'runtime': 'runtime/runtime',
+    'state_client': 'runtime/state_client',
+    'state_transport': 'runtime/state_transport',
+    'app_control': 'control/app_control',
+    'display': 'control/display',
+    'test_profile': 'control/test_profile',
+    'i18n': 'i18n/i18n',
+    'messages_control': 'i18n/messages_control',
+    'messages_detail': 'i18n/messages_detail',
+    'messages_diagnostics': 'i18n/messages_diagnostics',
+    'messages_en': 'i18n/messages_en',
+    'messages_zh_cn': 'i18n/messages_zh_cn',
 }
 
 
@@ -53,7 +98,7 @@ def source_identity(*modules):
         hashes={name:(manifest['modules'][name] if name in manifest['modules']
                       else manifest['modules'][MODULE_PATHS.get(name, name)]) for name in modules}
     else:
-        directory=Path(__file__).resolve().parent
+        directory=Path(__file__).resolve().parents[1]
         hashes={name:hashlib.sha256((directory/(MODULE_PATHS.get(name, name)+'.py')).read_bytes()).hexdigest()
                 for name in modules}
     return {'source_sha256':hashlib.sha256(json.dumps(hashes,sort_keys=True).encode()).hexdigest(),

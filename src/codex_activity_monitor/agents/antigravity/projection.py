@@ -6,10 +6,10 @@ from .records import (OPEN, live_step, object_value, step_id, step_index, string
                       turn_id, workspace)
 from .source import active
 from .transport import uuid_string
-from ..codex.history_index import timestamp
-from ...metrics import TextStream
-from ...timeline import identity
-from ...tool_labels import command_name, command_summary
+from codex_activity_monitor.agents.codex.history_index import timestamp
+from codex_activity_monitor.core.metrics import TextStream
+from codex_activity_monitor.timeline.timeline import identity
+from codex_activity_monitor.core.tool_labels import command_name, command_summary
 
 
 @dataclass(slots=True)

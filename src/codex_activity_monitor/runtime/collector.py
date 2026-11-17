@@ -10,22 +10,22 @@ import time
 import threading
 import uuid
 
-from .engine import Engine
-from .agents.codex.events import Event
+from codex_activity_monitor.core.engine import Engine
+from codex_activity_monitor.agents.codex.events import Event
 from .runtime import SnapshotCadence, atomic_json, read_snapshot, snapshot_age, source_identity
 from .publication import DetachedSnapshot, RecoveryWriter, encode_frame
 from .state_transport import StateServer
 from .app_session import load_lease
-from .i18n import message, render_message
-from .timeline import TimelineBook
-from .timeline_storage import TimelineStorage, metadata_path
-from .timeline_query import TimelineQuery, QueryServer
-from .agent_identity import AgentIdentityCache
-from .menu_presentation import menu_presentation
-from .history_refresh import HistoryRefresh
-from .agents.antigravity.projection import AntigravityProjection
-from .agents.antigravity.source import AntigravitySource
-from .agent_relations import VERIFIED_PARENTS
+from codex_activity_monitor.i18n.i18n import message, render_message
+from codex_activity_monitor.timeline.timeline import TimelineBook
+from codex_activity_monitor.timeline.timeline_storage import TimelineStorage, metadata_path
+from codex_activity_monitor.timeline.timeline_query import TimelineQuery, QueryServer
+from codex_activity_monitor.history.agent_identity import AgentIdentityCache
+from codex_activity_monitor.core.menu_presentation import menu_presentation
+from codex_activity_monitor.history.history_refresh import HistoryRefresh
+from codex_activity_monitor.agents.antigravity.projection import AntigravityProjection
+from codex_activity_monitor.agents.antigravity.source import AntigravitySource
+from codex_activity_monitor.core.agent_relations import VERIFIED_PARENTS
 
 
 def serve(runtime, diagnostic_log=None):
@@ -98,7 +98,7 @@ def serve(runtime, diagnostic_log=None):
         query_thread.start()
     except OSError:
         timeline_error = 'query_unavailable'
-    implementation=source_identity('collector','app_session','engine','overview','menu_presentation','progress_state','events','usage','metrics','runtime','tool_labels','i18n','messages_zh_cn',
+    implementation=source_identity('collector','app_session','engine','overview','menu_presentation','codex_projection','progress_state','events','usage','metrics','runtime','tool_labels','i18n','messages_zh_cn',
                                    'state','timeline','timeline_storage','timeline_query','history','reconciliation','agent_presentation','agent_relations','agent_identity',
                                    'publication','state_transport','observation_lease','history_read','content_version',
                                    'resource_budget','identity_budget','query_request','query_response','json_encoding','history_index','history_content','history_refresh','history_contract','request_rate','tokenizer_process',

@@ -3,7 +3,7 @@
 import json
 from typing import Literal
 
-from .json_encoding import encode_limited
+from codex_activity_monitor.runtime.json_encoding import encode_limited
 
 MAX_RESPONSE_BYTES = 8*1024*1024  # Includes the terminating newline.
 QueryError = Literal['query_unavailable', 'query_too_large', 'query_response_invalid']

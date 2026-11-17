@@ -8,8 +8,8 @@ import threading
 import time
 
 from .history import HistoryProvider
-from .agents.codex.history_contract import HistorySelection
-from .json_encoding import encode_limited
+from codex_activity_monitor.agents.codex.history_contract import HistorySelection
+from codex_activity_monitor.runtime.json_encoding import encode_limited
 
 
 @dataclass(frozen=True, slots=True)

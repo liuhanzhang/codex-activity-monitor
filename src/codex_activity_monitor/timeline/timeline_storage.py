@@ -11,7 +11,7 @@ import threading
 import time
 from typing import Literal
 
-from .owned_files import is_finder_metadata
+from codex_activity_monitor.runtime.owned_files import is_finder_metadata
 
 # Explicit allowlist keeps future display/content additions out of the database.
 FIELDS = frozenset(('id', 'scope_id', 'thread_id', 'turn_id', 'namespace', 'item_id', 'item_type',

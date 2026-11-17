@@ -8,12 +8,12 @@ import math
 import threading
 import time
 
-from .agents.codex.events import TOOL_TYPES, SERVER_REQUESTS
-from .tool_labels import code_tool_names, file_edit_preview, is_patch_tool, tool_name
-from .agent_relations import raw_coordination
-from .i18n import message
-from .agents.codex.history_contract import HistoryCoverage
-from .state import source_traits
+from codex_activity_monitor.agents.codex.events import TOOL_TYPES
+from codex_activity_monitor.core.tool_labels import code_tool_names, file_edit_preview, is_patch_tool, tool_name
+from codex_activity_monitor.core.agent_relations import raw_coordination
+from codex_activity_monitor.i18n.i18n import message
+from codex_activity_monitor.agents.codex.history_contract import HistoryCoverage
+from codex_activity_monitor.core.state import source_traits
 
 MODEL_TYPES = {'reasoning': 'reasoning', 'agentMessage': 'text', 'message': 'text', 'plan': 'text'}
 HISTORY_SEED_TYPES = TOOL_TYPES | {'agentMessage', 'reasoning', 'plan', 'contextCompaction'}
@@ -393,155 +393,8 @@ class TimelineBook:
         self.live[phase_id] = entry
 
     def observe(self, event, engine):
-        with self.lock:
-            self.engine = engine
-            self.current_backend = event.backend
-            scope = engine.backends.get(event.backend, {}).get('home') or event.backend
-            if event.wall_time > 0:
-                anchor = self.anchors.setdefault(event.backend, (event.at, event.wall_time * 1000))
-                if not event.replayed and abs(event.wall_time * 1000 - (anchor[1] + (event.at - anchor[0]) * 1000)) > 1000:
-                    if event.backend not in self.clock_jumps:
-                        for phase in list(self.phases.values()):
-                            if phase.get('observation_backend') == event.backend and phase['status'] in ('active', 'waiting'):
-                                self._put({**phase, 'quality': sorted(set(phase['quality']) | {'wall_clock_changed'})})
-                    self.clock_jumps.add(event.backend)
-                if (event.data.get('method') == 'turn/started' and getattr(event, 'turn_started_accepted', False)
-                        and event.backend in self.clock_jumps):
-                    self.anchors[event.backend] = anchor = (event.at, event.wall_time * 1000)
-                    self.clock_jumps.discard(event.backend)
-                self.clock_anchor = anchor
-            at = self.clock_anchor[1] + (event.at - self.clock_anchor[0]) * 1000 if self.clock_anchor else event.at * 1000
-            data = event.data
-            if event.direction == 'lifecycle':
-                if data.get('type') in ('bridge/gap', 'bridge/disconnected', 'bridge/stopped', 'bridge/reconnected'):
-                    self.gap(scope, at, event.backend)
-                return
-            method, params = data.get('method'), data.get('params', {})
-            request = params.get('requestId') if method == 'serverRequest/resolved' else data.get('id')
-            if method == 'serverRequest/resolved' or (event.direction == 'protocol_in' and not method):
-                marker = self.waiting.pop((event.backend, request), None)
-                if marker and marker in self.phases:
-                    phase = self.phases[marker]
-                    decision = data.get('result', {}).get('decision')
-                    self._put({**phase, 'end_ms': at, 'end_source': 'receipt',
-                               'status': 'declined' if decision in ('decline', 'cancel') else 'completed'})
-            if event.direction == 'protocol_in':
-                return
-            if event.direction == 'protocol_out' and not method:
-                return  # canonical userMessage is the sole input marker source
-            raw = event.direction == 'upstream'
-            item = data.get('item', params.get('item', {}))
-            item_id = item.get('id') or data.get('item_id') or params.get('itemId')
-            known = engine.items.get((event.backend, item_id), {})
-            turn = params.get('turnId') or params.get('turn', {}).get('id') or known.get('turn_id')
-            thread = params.get('threadId') or engine.turns.get((event.backend, turn))
-            if thread and not turn and not raw:
-                owner = engine.threads.get((event.backend, thread))
-                turn = owner.turn_id if owner else None
-            if not turn or not thread or (event.backend, turn) in engine.conflicted_turns:
-                return
-            if engine.turns.get((event.backend, turn)) != thread:
-                return
-            if method == 'turn/started' and getattr(event, 'turn_started_accepted', False):
-                for old_turn in list(self.turns.values()):
-                    if (old_turn['scope_id'], old_turn['thread_id']) == (scope, thread) and old_turn['turn_id'] != turn and old_turn['status'] == 'active':
-                        self._save('turn', {**old_turn, 'status': 'unknown'})
-                for phase in list(self.phases.values()):
-                    if (phase['scope_id'], phase['thread_id']) != (scope, thread) or phase['turn_id'] == turn or phase['status'] not in ('active', 'waiting'):
-                        continue
-                    previous = engine.threads[(event.backend, thread)].activities.get(phase['item_id'])
-                    if not previous or not previous.active:
-                        self._put({**phase, 'status': 'unknown', 'observed_until_ms': at,
-                                   'quality': sorted(set(phase['quality']) | {'missing_item_end'})})
-                self._turn(scope, thread, turn, at, 'active', start=at)
-            elif method == 'turn/completed':
-                self._turn(scope, thread, turn, at, status(params.get('turn', {}).get('status')), end=at)
-                for record in list(self.phases.values()):
-                    if (record['scope_id'], record['thread_id'], record['turn_id']) != (scope, thread, turn) or record['status'] not in ('active', 'waiting'):
-                        continue
-                    activity = engine.threads.get((event.backend, thread)).activities.get(record['item_id'])
-                    if activity and activity.active:
-                        continue
-                    # A turn boundary does not supply the missing item completion.
-                    self._put({**record, 'status': 'unknown', 'observed_until_ms': at,
-                               'quality': sorted(set(record['quality']) | {'missing_item_end'})})
-            elif method in ('item/started', 'item/completed') or data.get('type') in ('response.output_item.added', 'response.output_item.done'):
-                if known.get('mirrored') or item.get('delivery') == 'async':
-                    for record in list(self.phases.values()):
-                        if record['scope_id'] == scope and record['thread_id'] == thread and record['item_id'] == item_id:
-                            self._put({**record, 'mirrored': True})
-                    return
-                starting = method == 'item/started' or data.get('type', '').endswith('.added')
-                if starting and (event.backend, turn) in engine.ended_turns:
-                    return
-                start = valid_ms(params.get('startedAtMs')) if not raw else None
-                end = valid_ms(params.get('completedAtMs')) if not raw else None
-                provenance = 'producer' if (start if starting else end) is not None else 'receipt'
-                if starting:
-                    start = start or at
-                else:
-                    end = end or at
-                record = item_phase(scope, thread, turn, item, start, end, provenance)
-                if record:
-                    activity = engine.threads.get((event.backend, thread)).activities.get(item_id)
-                    if not raw and item.get('type') == 'commandExecution' and starting:
-                        if activity and activity.kind == 'tool_ready':
-                            record.update(status='waiting', start_ms=None, start_source=None,
-                                          quality=['execution_unconfirmed'])
-                        else:
-                            record['execution_confirmed'] = True
-                    record['observation_instance'] = self.instance
-                    record['observation_backend'] = event.backend
-                    record['observed_until_ms'] = at
-                    if event.backend in self.clock_jumps:
-                        record['quality'].append('wall_clock_changed')
-                    self._put(record)
-                    self._turn(scope, thread, turn, at)
-                if not raw:
-                    for child in item.get('receiverThreadIds', []):
-                        self._relation(scope, thread, turn, child, item_id, item.get('tool'))
-                    if item.get('agentThreadId'):
-                        self._relation(scope, thread, turn, item['agentThreadId'], item_id, item.get('kind'))
-            elif method in SERVER_REQUESTS or method in ('thread/compacted', 'modelProvider/authRecoveryStarted', 'modelProvider/authRecoveryCompleted',
-                    'model/safetyBuffering/updated', 'hook/started', 'hook/completed', 'error'):
-                marker_kind = ('approval' if method in SERVER_REQUESTS else 'contextCompaction' if method == 'thread/compacted'
-                               else 'auth' if 'authRecovery' in method else 'retry' if params.get('willRetry') else 'other')
-                marker = item_phase(scope, thread, turn, {'id': str(data.get('id', item_id or identity(method, at))), 'type': 'sleep'},
-                                    at, at, 'receipt', namespace='marker')
-                label = LABELS.get(marker_kind, {'hook/started': '准备运行', 'hook/completed': '准备完成',
-                                      'model/safetyBuffering/updated': '等待响应', 'error': '发生错误'}.get(method, '状态变化'))
-                marker.update(kind=marker_kind, label=label, status='active' if method in SERVER_REQUESTS else 'completed')
-                if method in SERVER_REQUESTS:
-                    marker['end_ms'] = marker['end_source'] = None
-                    self.waiting[(event.backend, data.get('id'))] = marker['id']
-                self._put(marker)
-            elif method == 'item/commandExecution/outputDelta':
-                key = phase_id(scope, thread, turn, 'canonical', item_id)
-                record = self.phases.get(key)
-                activity = engine.threads.get((event.backend, thread)).activities.get(item_id)
-                if record and record['status'] == 'waiting' and activity and activity.kind == 'tool':
-                    self._put({**record, 'status': 'active', 'observed_until_ms': at, 'execution_confirmed': True})
-            self._classify_input(scope, thread, turn, item_id, engine, event.backend)
-            self._capture_output(scope, thread, turn, item_id, params)
-
-    def _classify_input(self, scope, thread, turn, item, engine, backend):
-        key = phase_id(scope, thread, turn, 'input', item)
-        record = self.phases.get(key)
-        if not record or record['kind'] == 'file_edit_input':
-            return
-        for stream_key, stream in engine.streams.items():
-            if stream_key[:2] == (backend, item) and stream.kind == 'tool_input' and stream.text:
-                if edit_input(record.get('tool_name'), stream.text):
-                    self._put({**record, 'kind': 'file_edit_input', 'label': LABELS['file_edit_input']})
-
-    def _capture_output(self, scope, thread, turn, item, params):
-        key = phase_id(scope, thread, turn, 'canonical', item)
-        if key not in self.pins or not isinstance(params.get('delta'), str):
-            return
-        state = self.live.setdefault(key, {'text': '', 'partial': True})
-        chunk = params['delta']
-        state['text'] = (state['text'] + chunk)[-262144:]
-        state['partial'] = True  # subscription may have started after the first output
+        from codex_activity_monitor.agents.codex.projection import observe_timeline_event
+        observe_timeline_event(self, event, engine)
 
     def gap(self, scope, at, backend=None, *, thread=None):
         for turn in list(self.turns.values()):

@@ -8,23 +8,23 @@ import socketserver
 import threading
 import time
 
-from .history import HistoryProvider, raw_section
+from codex_activity_monitor.history.history import HistoryProvider, raw_section
 from .timeline import (
     apply_model_membership, display_phase, identity, merge_history_phase, merge_phase, phase_id, settled_model_items,
 )
 from .timeline_storage import metadata_path, read_records
-from .agent_presentation import present_agents, present_coordination, scoped_status
-from .agent_relations import SPAWN_OPERATIONS
+from codex_activity_monitor.core.agent_presentation import present_agents, present_coordination, scoped_status
+from codex_activity_monitor.core.agent_relations import SPAWN_OPERATIONS
 from .content_version import DETAIL_VERSION, page_request, paginate
-from .agents.codex.history_read import HistoryChanged
+from codex_activity_monitor.agents.codex.history_read import HistoryChanged
 from .query_request import TimelineRequest
 from .query_response import encode_response, read_response, failure
-from .runtime import collector_alive
-from .state import source_traits
-from .agents.antigravity.history import (
+from codex_activity_monitor.runtime.runtime import collector_alive
+from codex_activity_monitor.core.state import source_traits
+from codex_activity_monitor.agents.antigravity.history import (
     antigravity_scope, antigravity_turn_average_speed, detail_result, fetch_remote_detail,
 )
-from .agents.antigravity.source import RPC_ERRORS
+from codex_activity_monitor.agents.antigravity.source import RPC_ERRORS
 
 
 def validated_request(value):

@@ -12,7 +12,7 @@ import time
 import tomllib
 from typing import Callable
 
-from ...agent_presentation import agent_metadata
+from codex_activity_monitor.core.agent_presentation import agent_metadata
 
 MAX_HEADER = 1024 * 1024
 MAX_LINEAGE = 64

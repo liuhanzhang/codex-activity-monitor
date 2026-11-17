@@ -3,7 +3,7 @@
 from dataclasses import asdict, dataclass
 from typing import Literal
 
-from .agent_relations import thread_identity
+from codex_activity_monitor.core.agent_relations import thread_identity
 from .content_version import MAX_TOKEN_BYTES, page_request
 
 

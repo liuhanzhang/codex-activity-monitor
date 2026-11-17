@@ -3,8 +3,8 @@
 from pathlib import Path
 
 from .events import BLOCKING_REQUESTS, SERVER_REQUESTS, brief
-from ...i18n import message, phase_message, render_message
-from ...tool_labels import command_name, is_code_exec, is_command_tool, is_patch_tool, tool_display
+from codex_activity_monitor.i18n.i18n import message, phase_message, render_message
+from codex_activity_monitor.core.tool_labels import command_name, is_code_exec, is_command_tool, is_patch_tool, tool_display
 
 
 def finish(engine, activity, at, status='completed'):

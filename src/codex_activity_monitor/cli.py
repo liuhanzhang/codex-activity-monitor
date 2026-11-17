@@ -10,13 +10,13 @@ import subprocess
 import sys
 import time
 
-from .runtime import (
+from codex_activity_monitor.runtime.runtime import (
     REAL_CLI, atomic_json, collector_alive, default_runtime, runtime_dir, ui_language,
 )
-from .execution import backend_command, backend_environment
-from .state_client import current_state
+from codex_activity_monitor.runtime.execution import backend_command, backend_environment
+from codex_activity_monitor.runtime.state_client import current_state
 
-from .i18n import DEFAULT_LANGUAGE, available_languages, tr
+from codex_activity_monitor.i18n.i18n import DEFAULT_LANGUAGE, available_languages, tr
 
 _children={}
 
@@ -66,8 +66,8 @@ def stop(runtime):
 
 
 def replay(path,output=None):
-    from .engine import Engine
-    from .agents.codex.events import filter_event, Event
+    from codex_activity_monitor.core.engine import Engine
+    from codex_activity_monitor.agents.codex.events import filter_event, Event
     engine=Engine(asynchronous_counts=False)
     at=0
     opener=gzip.open if str(path).endswith('.gz') else open
@@ -150,8 +150,8 @@ def main(argv=None):
     p.add_argument('--state-protocol', type=int, help=argparse.SUPPRESS)
     args=parser.parse_args(argv)
     if args.command == 'timeline-query':
-        from .timeline_query import query_runtime
-        from .query_response import encode_response
+        from codex_activity_monitor.timeline.timeline_query import query_runtime
+        from codex_activity_monitor.timeline.query_response import encode_response
         try:
             # Deliberately bypass runtime_dir(): browsing cannot create or resume observation.
             query_path=Path(args.runtime or os.environ.get('CODEX_ACTIVITY_MONITOR_RUNTIME', default_runtime())).expanduser().resolve()
@@ -167,17 +167,17 @@ def main(argv=None):
             print(json.dumps({'version':1,'error':'query_unavailable'}))
             return 1
     if args.command == 'app':
-        from .app_control import AppController, ControlError, DATA_ROOT
+        from codex_activity_monitor.control.app_control import AppController, ControlError, DATA_ROOT
         diagnostic_log = None
         try:
             if args.action in ('configure', 'resume') and args.state_protocol != 1:
                 raise ControlError('gui_upgrade_required', 'control.gui_upgrade_required')
             control = AppController(args.data_root or DATA_ROOT, runtime=args.runtime, current_app=args.app)
             if args.test_profile:
-                from .test_profile import controller
+                from codex_activity_monitor.control.test_profile import controller
                 control, args.real_cli = controller(args.test_profile, args.app)
                 args.legacy_runtime = None
-            from .diagnostic_log import DiagnosticLog
+            from codex_activity_monitor.runtime.diagnostic_log import DiagnosticLog
             diagnostic_log = DiagnosticLog(control.root / 'diagnostics', 'management')
             action = args.action.replace('-', '_') if args.action in (
                 'configure', 'restore', 'resume', 'stop', 'preferences', 'cancel-cleanup') else None
@@ -223,7 +223,7 @@ def main(argv=None):
             return 0
         except (OSError, ValueError, RuntimeError) as exc:
             if diagnostic_log is None and args.action in ('restore', 'cleanup', 'cancel-cleanup') and 'control' in locals():
-                from .diagnostic_log import DiagnosticLog
+                from codex_activity_monitor.runtime.diagnostic_log import DiagnosticLog
                 diagnostic_log = DiagnosticLog(control.root / 'diagnostics', 'management')
             if diagnostic_log and args.action != 'status':
                 diagnostic_log.emit('management_failed', level='error', operation_id=args.operation_id,
@@ -238,7 +238,7 @@ def main(argv=None):
     try:
         runtime=runtime_dir(args.runtime, language)
         if args.command=='collect':
-            from .diagnostic_log import CollectorOutputCapture, DiagnosticLog
+            from codex_activity_monitor.runtime.diagnostic_log import CollectorOutputCapture, DiagnosticLog
             capture = CollectorOutputCapture(runtime)
             log = DiagnosticLog.for_runtime(runtime, 'collector')
             import threading
@@ -248,7 +248,7 @@ def main(argv=None):
                 old_hook(args)
             threading.excepthook = thread_error
             try:
-                from .collector import serve
+                from codex_activity_monitor.runtime.collector import serve
                 serve(runtime, diagnostic_log=log)
             except BaseException as error:
                 log.emit('unexpected_exception', level='error', params={'type': type(error).__name__})
@@ -271,17 +271,17 @@ def main(argv=None):
                               'backends':value.get('backends',{}),'threads':len(value.get('threads',[])),
                               'counters':value.get('counters',{})},ensure_ascii=False,indent=2))
         elif args.command=='bridge':
-            from .agents.codex.bridge import forward
+            from codex_activity_monitor.agents.codex.bridge import forward
             return forward(args.args[1:] if args.args[:1]==['--'] else args.args,runtime,args.real_cli)
         elif args.command=='watch':
-            from .display import watch
+            from codex_activity_monitor.control.display import watch
             watch(runtime,args.once,args.json,args.thread,language)
         elif args.command=='replay':
             replay(args.path,args.output)
         else:
             if args.command in ('setup', 'uninstall') and (runtime/'app-managed.json').exists():
                 raise RuntimeError(tr('cli.gui_managed', language))
-            from .agents.codex.integration import setup, uninstall, desktop
+            from codex_activity_monitor.agents.codex.integration import setup, uninstall, desktop
             if args.command=='setup':
                 setup(runtime,args.real_cli,args.launch_agent,language)
             elif args.command=='uninstall':

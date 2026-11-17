@@ -14,10 +14,10 @@ from rich.panel import Panel
 from rich.table import Table
 from rich.text import Text
 
-from .i18n import DEFAULT_LANGUAGE, available_languages, message, phase_message, render_message, tr
-from .agents.codex.progress_state import activity_message
-from .runtime import save_ui_language, ui_language, snapshot_age, snapshot_fresh
-from .state_client import current_state
+from codex_activity_monitor.i18n.i18n import DEFAULT_LANGUAGE, available_languages, message, phase_message, render_message, tr
+from codex_activity_monitor.agents.codex.progress_state import activity_message
+from codex_activity_monitor.runtime.runtime import save_ui_language, ui_language, snapshot_age, snapshot_fresh
+from codex_activity_monitor.runtime.state_client import current_state
 
 REFRESH_SECONDS = 1.0
 

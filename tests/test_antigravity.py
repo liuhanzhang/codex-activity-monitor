@@ -494,6 +494,37 @@ class AntigravityProjectionTests(unittest.TestCase):
         self.assertEqual(identity['modules']['bridge'],
                          identity['modules']['agents/codex/bridge'])
 
+    def test_subpackage_hierarchy_import_conventions_and_codex_projection_decoupling(self):
+        import importlib
+        import codex_activity_monitor
+        from codex_activity_monitor import LEGACY_MODULE_ALIASES
+        from codex_activity_monitor.agents.codex import projection as codex_projection
+        from codex_activity_monitor.core import engine as core_engine
+        from codex_activity_monitor.runtime import MODULE_PATHS, ROOT as REPO_ROOT, source_identity
+
+        pkg_root = Path(codex_activity_monitor.__file__).resolve().parent
+        top_py = {p.name for p in pkg_root.glob('*.py')}
+        self.assertEqual(top_py, {'__init__.py', 'cli.py'})
+        subpackages = {p.name for p in pkg_root.iterdir() if p.is_dir() and (p / '__init__.py').is_file()}
+        self.assertEqual(subpackages, {'agents', 'core', 'timeline', 'history', 'runtime', 'control', 'i18n'})
+        self.assertTrue((REPO_ROOT / 'pyproject.toml').is_file())
+
+        for py_file in pkg_root.rglob('*.py'):
+            for line in py_file.read_text().splitlines():
+                self.assertNotRegex(line, r'^\s*from\s+\.\.',
+                                    f'Multi-dot relative import found in {py_file.relative_to(pkg_root)}: {line}')
+
+        for alias, target in LEGACY_MODULE_ALIASES.items():
+            self.assertIs(importlib.import_module(alias), importlib.import_module(target))
+
+        self.assertIs(importlib.import_module('codex_activity_monitor.codex_projection'), codex_projection)
+        self.assertIs(importlib.import_module('codex_activity_monitor.engine'), core_engine)
+        identity = source_identity(*MODULE_PATHS.keys())
+        self.assertEqual(set(identity['modules']), set(MODULE_PATHS))
+        self.assertEqual(identity['modules']['codex_projection'],
+                         source_identity('agents/codex/projection')['modules']['agents/codex/projection'])
+        self.assertLess(len(Path(core_engine.__file__).read_text().splitlines()), 600)
+
 
 class PushStream:
     def __init__(self):
