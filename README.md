@@ -3,7 +3,7 @@
 <div align="center">
   <img src="docs/assets/showcase/app-icon.png" width="72" alt="Codex Activity Monitor icon">
   <h1>Codex Activity Monitor</h1>
-  <p>A native macOS menu bar monitor for <strong>Codex Desktop</strong> and <strong>Antigravity</strong>.<br>Track real-time token output speed (<code>T/s</code>), turn statistics, and main/subagent execution trajectories on a shared timeline—similar to DeepSeek Harness’s statistics and trajectory views.</p>
+  <p>A native macOS menu bar monitor for <img src="macos/Sources/MonitorApp/Resources/AgentLogos/agent-mark-Codex.png" width="18" height="18" align="absmiddle" alt="Codex"> <strong>Codex Desktop</strong> and <img src="macos/Sources/MonitorApp/Resources/AgentLogos/agent-mark-Antigravity.png" width="18" height="18" align="absmiddle" alt="Antigravity"> <strong>Antigravity</strong>.<br>Track real-time token output speed (<code>T/s</code>), turn statistics, and main/subagent execution trajectories on a shared timeline—similar to DeepSeek Harness’s statistics and trajectory views.</p>
   <p>
     <a href="https://github.com/LiuHanzhang/codex-activity-monitor/releases/tag/v0.2.0"><img src="https://img.shields.io/badge/release-v0.2.0-3B7A57?style=flat-square" alt="Release v0.2.0"></a>
     <img src="https://img.shields.io/badge/macOS-14%2B%20(Apple%20Silicon)-black?style=flat-square&amp;logo=apple" alt="macOS 14+ Apple Silicon">
@@ -59,8 +59,8 @@ Click any block on the timeline to open the **Activity viewer** and inspect user
 
 You can enable **Codex**, **Antigravity**, or both under **Settings (⌘,) → General → Agent Integration**:
 
-- **Antigravity Desktop (zero-config, no restart):** With Antigravity Desktop running under the same macOS user, turn on **Antigravity** in **Settings → General → Agent Integration**. Active and recent chats appear immediately.
-- **Codex Desktop:** On first launch, Monitor automatically configures the local Codex wrapper (requiring `/Applications/ChatGPT.app`). Let any active Codex task finish, then **fully quit and reopen Codex Desktop** once so new sessions inherit the integration.
+- <img src="macos/Sources/MonitorApp/Resources/AgentLogos/agent-mark-Antigravity.png" width="16" height="16" align="absmiddle" alt="Antigravity"> **Antigravity Desktop (zero-config, no restart):** With Antigravity Desktop running under the same macOS user, turn on **Antigravity** in **Settings → General → Agent Integration**. Active and recent chats appear immediately.
+- <img src="macos/Sources/MonitorApp/Resources/AgentLogos/agent-mark-Codex.png" width="16" height="16" align="absmiddle" alt="Codex"> **Codex Desktop:** On first launch, Monitor automatically configures the local Codex wrapper (requiring `/Applications/ChatGPT.app`). Let any active Codex task finish, then **fully quit and reopen Codex Desktop** once so new sessions inherit the integration.
 
 Start a local task in Codex or Antigravity, then click the menu bar item to view live token speed, the execution timeline, and turn usage.
 

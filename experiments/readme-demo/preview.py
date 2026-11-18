@@ -44,7 +44,7 @@ def message(key, **params):
     return {"key": key, "params": params}
 
 
-def fixtures(base, elapsed=54, rate=47):
+def fixtures(base, elapsed=54, rate=48):
     now = base + elapsed * 1000
     details = {}
 
@@ -150,7 +150,7 @@ def fixtures(base, elapsed=54, rate=47):
     ]
 
     def bundle(thread, items, agents):
-        return {
+        value = {
             "version": 1, "scope_id": SCOPE, "thread_id": thread,
             "selected_turn_id": thread + "-turn", "current_turn_id": thread + "-turn",
             "turns": [{"thread_id": thread, "turn_id": thread + "-turn", "status": "active", "start_ms": base}],
@@ -159,6 +159,15 @@ def fixtures(base, elapsed=54, rate=47):
             "origin_ms": base, "end_ms": now, "now_ms": now,
             "revision": "readme-demo-1", "quality": [], "earlier_active_turns": [],
         }
+        if thread == "retry":
+            value["average_speed"] = {
+                "version": 1, "thread_id": thread, "turn_id": thread + "-turn",
+                "tokens_per_second": 156.0, "timed_output_tokens": 8426,
+                "timed_duration_ms": 54000.0, "sample_count": 3,
+                "untimed_response_count": 0, "pending_response_count": 0,
+                "coverage": "complete", "estimated": True, "quality": [],
+            }
+        return value
 
     def agent(thread, name, parent=None, status="active"):
         return {"id": thread, "thread_id": thread, "name": name, "display_name": name,
@@ -169,16 +178,18 @@ def fixtures(base, elapsed=54, rate=47):
         agent("docs-reviewer", "Docs reviewer", "retry", "completed")])
     threads = {"retry": {"bundles": {"current": root}}}
     chats = []
-    for thread, name, project, key, speed, output, reasoning in [
-        ("retry", "Fix API retry handling", "orbit-api", "activity.text", rate, 8426, 2368),
-        ("pagination", "Document pagination", "orbit-api", "activity.text", 31, 3210, 986),
-        ("settings", "Polish settings layout", "orbit-web", "activity.running", 0, 1948, 612),
+    for thread, source, name, project, key, speed, output, reasoning in [
+        ("retry", "codex", "Fix API retry handling", "orbit-api", "activity.text", rate, 8426, 2368),
+        ("pagination", "antigravity", "Document pagination", "orbit-api", "activity.text", 31, 3210, 986),
+        ("settings", "codex", "Polish settings layout", "orbit-web", "activity.running", 0, 1948, 612),
     ]:
-        chats.append({"id": thread, "backend": SCOPE, "thread_source": "user", "name": name,
-            "cwd": "/demo/" + project, "turn_id": thread + "-turn", "model": "Codex",
+        chats.append({"id": thread, "backend": SCOPE, "source": source, "thread_source": "user", "name": name,
+            "cwd": "/demo/" + project, "turn_id": thread + "-turn",
+            "model": "Gemini 4 Argon (High)" if source == "antigravity" else "Codex",
             "status": "inProgress", "connected": True, "has_active_work": True,
             "display_message": message(key, target="npm test" if thread == "settings" else ""),
             "display_seconds": 2 if thread == "retry" else 8, "generation_rate": speed,
+            "generation_estimated": source == "antigravity",
             "generation_rate_status": "ready", "generation_rate_coverage": "complete",
             "usage": {"turn_id": thread + "-turn", "output_tokens": output, "reasoning_tokens": reasoning}})
         if thread != "retry":
@@ -221,9 +232,10 @@ def main():
         elapsed = float(control.get("seconds", 54))
         if "advance_from" in control:
             elapsed += max(0, time.time() - control["advance_from"])
-        rate = max(0, round(47 + 5 * math.sin(time.time()))) if control.get("animate_rate") else 47
+        rate = max(0, round(48 + 5 * math.sin(time.time()))) if control.get("animate_rate") else 48
         snapshot, timeline = fixtures(base, elapsed, rate)
-        for name, value in (("snapshot", snapshot), ("timeline", timeline)):
+        management = {"state": "configured", "antigravity_enabled": True}
+        for name, value in (("snapshot", snapshot), ("timeline", timeline), ("management", management)):
             path = args.output / (name + ".json")
             temporary = path.with_suffix(".new")
             temporary.write_text(json.dumps(value, ensure_ascii=False, indent=2) + "\n")

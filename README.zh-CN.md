@@ -3,7 +3,7 @@
 <div align="center">
   <img src="docs/assets/showcase/app-icon.png" width="72" alt="Codex Activity Monitor 图标">
   <h1>Codex Activity Monitor</h1>
-  <p>面向 <strong>Codex Desktop</strong> 与 <strong>Antigravity</strong> 的原生 macOS 菜单栏监控工具。<br>在菜单栏与主面板实时查看 Token 输出速率（<code>T/s</code>）、会话统计及主／子智能体执行轨迹，提供类似 DeepSeek Harness 的统计与轨迹视图。</p>
+  <p>面向 <img src="macos/Sources/MonitorApp/Resources/AgentLogos/agent-mark-Codex.png" width="18" height="18" align="absmiddle" alt="Codex"> <strong>Codex Desktop</strong> 与 <img src="macos/Sources/MonitorApp/Resources/AgentLogos/agent-mark-Antigravity.png" width="18" height="18" align="absmiddle" alt="Antigravity"> <strong>Antigravity</strong> 的原生 macOS 菜单栏监控工具。<br>在菜单栏与主面板实时查看 Token 输出速率（<code>T/s</code>）、会话统计及主／子智能体执行轨迹，提供类似 DeepSeek Harness 的统计与轨迹视图。</p>
   <p>
     <a href="https://github.com/LiuHanzhang/codex-activity-monitor/releases/tag/v0.2.0"><img src="https://img.shields.io/badge/release-v0.2.0-3B7A57?style=flat-square" alt="Release v0.2.0"></a>
     <img src="https://img.shields.io/badge/macOS-14%2B%20(Apple%20Silicon)-black?style=flat-square&amp;logo=apple" alt="macOS 14+ Apple Silicon">
@@ -59,8 +59,8 @@
 
 可在 **设置（⌘,）→ 通用 → Agent 接入** 中单独或同时开启 **Codex** 与 **Antigravity**：
 
-- **Antigravity Desktop（零配置、免重启）**：保持 Antigravity Desktop 在同一 macOS 用户下运行，在 **设置 → 通用 → Agent 接入** 中开启 **Antigravity** 即可立即订阅实时状态与历史记录。
-- **Codex Desktop**：首次启动 Monitor 会自动配置本机 Codex 接入（默认查找 `/Applications/ChatGPT.app`）。请等待正在执行的任务结束，**完全退出并重新打开一次 Codex Desktop**，让新会话继承接入配置。
+- <img src="macos/Sources/MonitorApp/Resources/AgentLogos/agent-mark-Antigravity.png" width="16" height="16" align="absmiddle" alt="Antigravity"> **Antigravity Desktop（零配置、免重启）**：保持 Antigravity Desktop 在同一 macOS 用户下运行，在 **设置 → 通用 → Agent 接入** 中开启 **Antigravity** 即可立即订阅实时状态与历史记录。
+- <img src="macos/Sources/MonitorApp/Resources/AgentLogos/agent-mark-Codex.png" width="16" height="16" align="absmiddle" alt="Codex"> **Codex Desktop**：首次启动 Monitor 会自动配置本机 Codex 接入（默认查找 `/Applications/ChatGPT.app`）。请等待正在执行的任务结束，**完全退出并重新打开一次 Codex Desktop**，让新会话继承接入配置。
 
 开始一个本机 Codex 或 Antigravity 任务，点击菜单栏图标即可查看实时速度、执行时间线与 Token 用量。
 

@@ -1,21 +1,21 @@
 {
-  "version": 2,
-  "date": "2026-10-27",
+  "version": 3,
+  "date": "2026-11-18",
   "language": "en",
   "source": "Native read-only preview, entirely invented developer tasks and numeric values",
   "not_a_benchmark": true,
   "fixture": "experiments/readme-demo/preview.py",
-  "fixture_sha256": "8a6666d1ccbcd0dce824052a1cd1be6e7fd7c59cff5fa14654496b04df2a6bce",
+  "fixture_sha256": "297029ea1b9298061f21bef018d5cc7a106b5b0653655435769e7d7f0ae3451d",
   "exporter": "experiments/readme-demo/export_desktop.py",
-  "desktop_recording_build_id": "43bfe5b812ce2cf791254e3c88c1f554c441a96bcfa2a65b3b8426ef41f70662",
+  "desktop_recording_build_id": "512ddd2a52d8318e18ce42eb6367a4edbaad844daafa594c94c1829f2da0d2b0",
   "detail_capture_build_id": null,
   "capture": {
-    "desktop_overview": "Source second 42 of a macOS native recording of the built-in display; 3456 \u00d7 2234",
+    "desktop_overview": "3456 \u00d7 2234 desktop backdrop with native 2x Retina DashboardView render and clean menu bar",
     "activity_detail": "Separate native-window screenshot via cua_repl",
     "raw_captures": "Local ignored files; not distributed in this repository"
   },
   "edits": {
-    "desktop-overview.jpg": "Crop source frame x=2100,y=0,w=1356,h=1200; preserve native controls and values; no presentation-text overlay",
+    "desktop-overview.jpg": "Crop scene x=1830,y=0,w=1356,h=1200 with native v0.2.0 DashboardView and clean menu bar",
     "speed-overview.jpg": "Reframe native menu bar crop (2564,10,132,46) and overview crop (2306,110,840,470) on captured wallpaper; magnify the menu bar crop and mask its rounded boundary",
     "timeline.jpg": "Reframe native timeline crop (2306,580,840,500) on captured wallpaper",
     "activity-detail.jpg": "Crop native window to remove OS sharing chrome, preview footer and unused lower space; frame on captured wallpaper",
@@ -24,7 +24,8 @@
   "source_sha256": {
     "zoom-frame.png": "6529b6e2254a9ab30aeca0e090a2c3fac4d01ec4e86a0c2d7d107d2db9e15319",
     "native-result.png": "72df939da084bcb254d64575ba8386cffa7df7aca5b0ff2d3eab47b24128dcb6",
-    "launch-settled.png": "cfd48c729d9b7bfb406f263abc4634ff85d8e746a0f47841d4983db7aa1645e2"
+    "launch-settled.png": "cfd48c729d9b7bfb406f263abc4634ff85d8e746a0f47841d4983db7aa1645e2",
+    "dashboard-transparent.png": "a01555e0de79c3e1b59c0ebb1e2b1b2fdc6d2c91690163748df8c1e9ae393558"
   },
   "assets": {
     "activity-detail.jpg": {
@@ -36,16 +37,16 @@
       "sha256": "119cdc9f2053d68bf132d992795ebc9cb16e55e66619d5a9590d76986e16a1f7"
     },
     "desktop-overview.jpg": {
-      "bytes": 293796,
-      "sha256": "16fdb3fae80ded0e0a93debf8dcc76f21c6317dc93fb786e244c956c06393713"
+      "bytes": 276413,
+      "sha256": "0193ee569bbec236775992c48d5c506a084a545bdd4c9a98dae7dc6519eceea6"
     },
     "speed-overview.jpg": {
-      "bytes": 138911,
-      "sha256": "8c4368986f5d6e1978474a8510423589ee7ffde4f69b1edb4ced4283c2a6c348"
+      "bytes": 144522,
+      "sha256": "492f6cd5ac8b8073c79d878b38fbbf1da1de95827fabb214b3adb417a68d0b5c"
     },
     "timeline.jpg": {
-      "bytes": 131971,
-      "sha256": "6c6a6ad5dd830e0c03ed3f8f6f97959c4b2ca4a99a9daf801910f3f000d12e05"
+      "bytes": 135265,
+      "sha256": "45fd72d9f5b7438df148dcb228c555275023d8405320c1278ca330f1e27faf43"
     }
   }
 }
