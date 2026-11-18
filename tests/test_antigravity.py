@@ -58,6 +58,53 @@ class AntigravityProjectionTests(unittest.TestCase):
     def push(self, steps, at, status='RUNNING', initial=False, owner=ROOT):
         self.monitor.frame(self.scope, owner, update(owner, status, steps), initial, at=at, wall=WHEN+at)
 
+    def test_timeline_follows_the_live_turn_until_the_transcript_records_its_outcome(self):
+        turn = turn_id(ROOT, 0)
+        path = transcript_path(self.scope, ROOT)
+        path.parent.mkdir(parents=True)
+        path.write_text(json.dumps({'step_index': 0, 'type': 'USER_INPUT', 'status': 'DONE',
+                                    'created_at': WHEN}) + '\n')
+        query = TimelineQuery(self.book)
+
+        def check(status, current):
+            bundle = query.bundle(self.scope, ROOT)
+            self.assertEqual(bundle['selected_turn_id'], turn)
+            self.assertEqual(bundle['current_turn_id'], current)
+            self.assertEqual(bundle['turns'][0]['status'], status)
+            return bundle['turns'][0]
+
+        check('unknown', None)
+        self.push({0: step('USER_INPUT', 'DONE')}, 1)
+        self.push({1: step('PLANNER_RESPONSE', 'GENERATING')}, 90)
+        self.assertEqual(check('active', turn)['start_ms'], WHEN * 1000)
+        self.monitor.gap(self.scope, ROOT, at=91, wall=WHEN+91)
+        check('unknown', None)
+        self.push({0: step('USER_INPUT', 'DONE'), 1: step('PLANNER_RESPONSE', 'GENERATING')}, 92, initial=True)
+        check('active', turn)
+
+        with path.open('a') as handle:
+            handle.write(json.dumps({'step_index': 1, 'type': 'PLANNER_RESPONSE', 'status': 'DONE',
+                                     'content': 'Finished.', 'completed_at': WHEN+98}) + '\n')
+        self.assertEqual(check('completed', None)['end_ms'], (WHEN+98) * 1000)
+
+    def test_partial_transcripts_keep_observed_outcomes_without_reviving_stale_turns(self):
+        path = transcript_path(self.scope, ROOT)
+        path.parent.mkdir(parents=True)
+        path.write_text(''.join(json.dumps({'step_index': i, 'type': 'USER_INPUT', 'status': 'DONE',
+                                            'created_at': WHEN+i}) + '\n' for i in (0, 2)))
+        self.push({0: step('USER_INPUT', 'DONE')}, 1)
+        self.push({2: step('USER_INPUT', 'DONE')}, 2)
+        query = TimelineQuery(self.book)
+        bundle = query.bundle(self.scope, ROOT)
+        self.assertEqual(bundle['current_turn_id'], turn_id(ROOT, 2))
+        self.assertEqual([t['status'] for t in bundle['turns']], ['active', 'unknown'])
+        self.push({}, 4, status='IDLE')
+        bundle = query.bundle(self.scope, ROOT)
+        self.assertIsNone(bundle['current_turn_id'])
+        self.assertEqual([(t['turn_id'], t['status']) for t in bundle['turns']],
+                         [(turn_id(ROOT, 2), 'completed'), (turn_id(ROOT, 0), 'unknown')])
+        self.assertEqual(bundle['turns'][0]['end_ms'], (WHEN+4) * 1000)
+
     def test_cumulative_body_and_reconnect_do_not_count_baseline_or_duplicates(self):
         self.push({0: step('USER_INPUT', 'DONE')}, 1)
         self.push({1: step('PLANNER_RESPONSE', 'GENERATING', plannerResponse={'response': 'One'})}, 2)

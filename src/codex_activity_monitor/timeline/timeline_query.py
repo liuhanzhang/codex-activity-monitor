@@ -62,6 +62,14 @@ class TimelineQuery:
                 record.update(status='unknown', quality=sorted(set(record.get('quality', [])) | {'observation_stopped'}))
         return result
 
+    def _is_running_turn(self, turn):
+        if not self.book or not self.book.engine:
+            return False
+        with self.book.lock:
+            owner = self.book.engine.threads.get((turn.get('observation_backend'), turn['thread_id']))
+            return (owner is not None and owner.status == 'inProgress' and owner.turn_start_observed
+                    and owner.turn_id == turn['turn_id'])
+
     def _locked_bundle(self, scope, thread, selected, prefetched):
         with self.history.lock:
             for attempt in range(2):
@@ -119,8 +127,14 @@ class TimelineQuery:
                 if not index.read_complete:
                     quality.add('history_incomplete')
                 for key, old in list(turns.items()):
-                    if key[0] == owner:
-                        turns[key] = merge_history_phase(old, index.turns.get(key[1]), read_complete=index.read_complete)
+                    if key[0] != owner:
+                        continue
+                    historical = index.turns.get(key[1])
+                    if (antigravity and historical and historical['status'] == 'unknown' and
+                            (old['status'] != 'active' or self._is_running_turn(old))):
+                        # A transcript can identify a turn before it has an outcome to merge.
+                        historical = {**historical, 'status': None}
+                    turns[key] = merge_history_phase(old, historical, read_complete=index.read_complete)
                 for t in index.turns.values():
                     turns.setdefault((owner, t['turn_id']), dict(t))
                 for p in index.phases.values():
