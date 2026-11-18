@@ -3,23 +3,20 @@
 <div align="center">
   <img src="docs/assets/showcase/app-icon.png" width="72" alt="Codex Activity Monitor 图标">
   <h1>Codex Activity Monitor</h1>
-  <p>一款用于 Codex Desktop 与 Antigravity 的 macOS 菜单栏监控工具，展示 Token 输出速率、会话统计和 Agent 执行轨迹，类似 DeepSeek Harness 的统计与轨迹视图。</p>
+  <p>面向 <strong>Codex Desktop</strong> 与 <strong>Antigravity</strong> 的原生 macOS 菜单栏监控工具。<br>在菜单栏与主面板实时查看 Token 输出速率（<code>T/s</code>）、会话统计及主／子智能体执行轨迹，提供类似 DeepSeek Harness 的统计与轨迹视图。</p>
   <p>
     <a href="https://github.com/LiuHanzhang/codex-activity-monitor/releases/tag/v0.2.0"><img src="https://img.shields.io/badge/release-v0.2.0-3B7A57?style=flat-square" alt="Release v0.2.0"></a>
-    <img src="https://img.shields.io/badge/macOS-14%2B-black?style=flat-square&amp;logo=apple" alt="macOS 14+">
+    <img src="https://img.shields.io/badge/macOS-14%2B%20(Apple%20Silicon)-black?style=flat-square&amp;logo=apple" alt="macOS 14+ Apple Silicon">
     <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-3B7A57?style=flat-square" alt="MIT 许可证"></a>
   </p>
 </div>
-
-> [!IMPORTANT]
-> 应用暂时还没完成 Developer ID 签名与 Apple 公证。首次打开时如果被 macOS 阻止，需要在 **系统设置 → 隐私与安全性 → 仍要打开** 中手动允许。具体步骤见[安装说明](#安装)。
 
 <a id="效果演示"></a>
 <p align="center">
   <a href="docs/assets/showcase/desktop-overview.jpg"><img src="docs/assets/showcase/desktop-overview.jpg" width="720" alt="原生 Codex Activity Monitor 概览：Token 速度、三个聊天及主／子智能体的共同时间线"></a>
 </p>
-<p align="center"><sub>聊天概览与主／子智能体时间线。</sub></p>
-<p align="center"><a href="#安装">安装</a> · <a href="#首次使用">首次使用</a> · <a href="#从源码构建">从源码构建</a> · <a href="docs/user-guide.md">使用指南</a></p>
+<p align="center"><sub>聊天概览与主／子智能体执行时间线。</sub></p>
+<p align="center"><a href="#主要功能">主要功能</a> · <a href="#快速开始">快速开始</a> · <a href="#配置与卸载">配置与卸载</a> · <a href="#从源码构建">从源码构建</a> · <a href="docs/user-guide.md">使用指南</a></p>
 
 ## 主要功能
 
@@ -29,111 +26,78 @@
     <td width="435" align="center"><a href="docs/assets/showcase/timeline.jpg"><img src="docs/assets/showcase/timeline.jpg" width="420" alt="主智能体和两名审查者在共同时间轴上各自拥有模型及工具轨道"></a></td>
   </tr>
   <tr>
-    <td width="435" valign="top"><b>实时 Token 速度</b><br>菜单栏显示总速度，概览中查看各聊天的速度、当前活动和耗时。</td>
-    <td width="435" valign="top"><b>智能体活动时间线</b><br>对齐主智能体与显式关联子智能体的模型活动和工具调用。缩放、向前回看，再返回最新活动。</td>
+    <td width="435" valign="top"><b>实时 Token 速度与回合统计</b><br>菜单栏实时展示总输出速率（<code>T/s</code>）与思考／工具状态动画；展开面板可查看各会话的实时速度、耗时、Output／Reasoning Token 用量及单轮平均生成速度。</td>
+    <td width="435" valign="top"><b>主／子智能体双轨时间线</b><br>在同一时间轴上对齐主智能体与派生子智能体（Subagents），分轨道展示模型阶段（思考、回复、工具参数生成）与工具调用，支持缩放与历史回看。</td>
   </tr>
 </table>
 
 ### 活动详情
 
-点击时间块，打开独立的活动查看器，读取可用的用户输入、可见模型输出、工具参数、执行结果和文件改动。部分观测、截断和不可用内容会明确标记。
+点击时间线上的任意色块即可打开独立的**活动查看器**，查看该步骤的用户输入、可见模型输出、工具参数、命令执行结果或文件改动（Diff），并对部分观测、截断或不可用内容给出明确标记。
 
 <p align="center"><a href="docs/assets/showcase/activity-detail.jpg"><img src="docs/assets/showcase/activity-detail.jpg" width="870" alt="原生活动查看器：主智能体与审查者的时间线、Python 测试命令及其执行结果"></a></p>
 
-## 安装
+- **多 Agent 同屏支持**：支持同时或单独监控 **Codex Desktop** 与 **Antigravity Desktop**，自动展示对应的 Agent 品牌图标与项目文件夹图标。
+- **100% 本地处理与只读安全**：所有分词计数与轨迹拼装均在本机完成，只读访问历史记录，绝不上传任何对话或代码。
 
-前往 [GitHub Releases](https://github.com/LiuHanzhang/codex-activity-monitor/releases)，在最新发布的 **Assets** 中优先下载名为 `Codex-Activity-Monitor-<版本号>-macos-arm64.dmg` 的 Apple Silicon 安装包。早期版本仅提供同名 ZIP。0.2.0 使用 ad-hoc 签名，尚未经过 Apple 公证；首次打开请按下方步骤手动允许。也可以[从源码构建](#从源码构建)。
+## 快速开始
 
 ### 运行要求
 
-| 要求 | 当前范围 |
-| --- | --- |
-| Mac | Apple Silicon Mac，macOS 14+。macOS 14 实际运行验证仍待完成。 |
-| Agent 桌面端 | 本机已安装 Codex Desktop、Antigravity Desktop（已在 2.32.1 验证）或同时使用两者；安装和数据位置见下方说明。 |
+- **设备**：Apple Silicon Mac，**macOS 14+**。
+- **支持的客户端**：本机已安装 **Codex Desktop**（`/Applications/ChatGPT.app`）、**Antigravity Desktop**（已在 2.32.1 验证），或同时使用两者。
 
-独立 App 自带所需的运行环境和资源。
+### 1. 安装应用
 
-### Codex 与 Antigravity 的安装位置
+1. 前往 [GitHub Releases](https://github.com/LiuHanzhang/codex-activity-monitor/releases) 下载最新版本的 `Codex-Activity-Monitor-<版本号>-macos-arm64.dmg`。
+2. 双击打开 DMG，将 **Codex Activity Monitor** 拖入 **Applications（应用程序）** 文件夹，推出磁盘映像后从“应用程序”启动。
 
-对于 **Codex**，当前版本使用 `ChatGPT.app` 自带的 Codex 组件。请确保 `ChatGPT.app` 位于 Mac 的“应用程序”文件夹中，对应路径为 `/Applications/ChatGPT.app`。Monitor 会自动查找其中所需的组件。如果你使用其他安装方式，或更改了应用的名称、安装位置，当前版本暂不支持在界面中选择其他位置，详见[使用指南](docs/user-guide.md#codex-is-installed-somewhere-else)。
+> [!NOTE]
+> 应用当前使用 ad-hoc 签名，尚未完成 Apple 公证。首次打开若提示无法验证开发者，请打开 **系统设置 → 隐私与安全性**，向下滚动并在阻止提示旁点击 **仍要打开**（详见 [Apple 官方指引](https://support.apple.com/zh-cn/102445)）。
 
-对于 **Antigravity**，Monitor 在同一 macOS 用户下通过本机回环连接正在运行的 Antigravity Desktop Language Server，并校验其安装包内的证书；无需安装包装器，也无需重启 Antigravity。
+### 2. 接入 Agent
 
-### 本机数据位置
+可在 **设置（⌘,）→ 通用 → Agent 接入** 中单独或同时开启 **Codex** 与 **Antigravity**：
 
-Codex 的聊天记录默认保存在当前用户主目录下的 `~/.codex/`（`~` 表示你的用户主目录）；Antigravity 的会话记录保存在 `~/.gemini/antigravity/brain/`。Monitor 只读访问这些历史记录，用于显示活动详情和校正时间线。如果你自定义了 Codex 的数据目录，请参阅[使用指南](docs/user-guide.md#local-data)。
+- **Antigravity Desktop（零配置、免重启）**：保持 Antigravity Desktop 在同一 macOS 用户下运行，在 **设置 → 通用 → Agent 接入** 中开启 **Antigravity** 即可立即订阅实时状态与历史记录。
+- **Codex Desktop**：首次启动 Monitor 会自动配置本机 Codex 接入（默认查找 `/Applications/ChatGPT.app`）。请等待正在执行的任务结束，**完全退出并重新打开一次 Codex Desktop**，让新会话继承接入配置。
 
-Monitor 自己的设置、接入配置备份和时间线数据保存在 `~/Library/Application Support/CodexActivityMonitor/`。
+开始一个本机 Codex 或 Antigravity 任务，点击菜单栏图标即可查看实时速度、执行时间线与 Token 用量。
 
-### 安装 App
+### 升级版本
 
-取得 DMG 安装包后：
+升级时请先退出 Monitor（若已开启 Codex 接入，请在任务结束后一并退出 Codex Desktop），打开新版 DMG 拖入 **Applications** 替换旧版，随后先启动 Monitor，再打开 Codex Desktop。应用默认每天通过 Sparkle 静态更新源检查新版本，有更新时会在主面板顶部显示绿色向上箭头。
 
-1. 双击 DMG，打开安装窗口。
-2. 将左侧的 **Codex Activity Monitor** 图标拖到右侧的 **Applications（应用程序）** 文件夹。
-3. 等待复制完成，推出磁盘映像，再从“应用程序”打开 App。如果 macOS 阻止打开，请按下方步骤手动允许。
+<a id="配置与卸载"></a>
+## 配置与卸载
 
-如果下载的是 ZIP，解压后将 `Codex Activity Monitor.app` 拖入“应用程序”，再打开安装后的 App。
-
-### 首次打开时手动允许
-
-当前发行版本**没有 Developer ID 签名，也尚未经过 Apple 公证**。首次打开下载的 App 时，macOS 可能提示无法验证开发者或无法检查 App 是否包含恶意软件。
-
-如果尝试打开后被 macOS 阻止，请确认 App 来自本项目，再按以下步骤操作：
-
-1. 打开 **系统设置 → 隐私与安全性**。
-2. 向下滚动，在 Codex Activity Monitor 的阻止提示旁点击 **仍要打开**。
-3. 按系统提示验证身份，并在确认弹窗中点击 **打开**。
-
-详细说明见 [Apple 官方指引](https://support.apple.com/zh-cn/102445)。
-
-### 升级已有安装
-
-1. 等待当前 Codex 任务结束，完全退出 Codex Desktop 和 Monitor。
-2. 打开新版本 DMG，将 App 拖到“应用程序”，按访达提示替换旧版，复制完成后推出映像；ZIP 版本先解压再替换。
-3. 先打开 Monitor，等待接入配置完成，再打开 Codex Desktop。
-
-Monitor 的界面、采集器和由 Codex Desktop 启动的桥接进程分别运行。仅退出 Monitor 不会结束已有 Codex 连接中的桥接；替换 App 也不会让该进程自动加载新版代码。新版 Monitor 可以已启动而旧桥接仍在使用，协议兼容时也可能继续显示数据。桥接实现或 App 路径改变后，需要完全退出并重开 Codex 才能完成切换；原样退出再打开同一构建的 Monitor 无需重启 Codex。详情见[升级与移动应用](docs/user-guide.md#updates-or-moving-the-app-have-not-taken-effect)。
-
-## 首次使用
-
-1. 打开 Codex Activity Monitor。首次启动会自动启动采集器并配置本机 Codex 接入。
-2. **接入 Codex Desktop：** 等待正在执行的 Codex 任务结束，完全退出并重新打开 Codex Desktop，让新进程继承接入配置。
-3. **接入 Antigravity Desktop：** 在 Antigravity Desktop 运行时，打开 Monitor 的 **设置 → 通用 → Agent 接入**，开启 **Antigravity** 即可（无需重启 Antigravity）。Codex 与 Antigravity 分别提供独立开关，可同时或单独开启。
-4. 开始一个本机 Codex 或 Antigravity 任务，点击菜单栏入口，选择聊天，查看当前轮次、时间线和用量。
-
-观察期间请保持 Monitor 运行。齿轮按钮打开独立设置窗口，也可使用 **Command-,**。未保存过语言选择时，App 按系统首选语言显示：中文（含简繁体系统）使用简体中文，其他语言使用英语。在 **通用** 中可切换 **English／简体中文**，手动选择会保存并优先使用；这里也可调整 **登录时启动**。首次配置默认开启登录启动，macOS 可能要求允许该登录项。对话与工具原文保持原语言。DMG 拖拽引导固定同时显示中英文。
-
-**运行状态** 显示已检测到的组件异常及恢复，**日志** 提供本地诊断记录，支持搜索、筛选、详情和复制。关闭设置窗口不会停止观察；这些检查不能排除所有软件错误。
-
-**关于** 显示完整版本、构建号、项目链接与许可。Sparkle 默认每天读取静态更新清单；有新版本时，在主面板设置按钮左侧及「关于」侧栏行最右侧显示绿色向上箭头。点击主面板箭头直接定位到「关于 → 软件更新」，再点 **查看更新**，即可从标准更新窗口前往发行页手动下载。箭头在重启和选择稍后提醒后保留，升级完成或明确跳过该版本后清除。可关闭自动检查或随时手动检查；检查不会上传聊天、日志或使用记录。
-
-## 隐私与兼容性
-
-- 数据在本机处理，Monitor 不上传对话；这不改变 Codex Desktop 或 Antigravity Desktop 自身的联网行为。
-- 本机状态可能包含聊天标题、项目路径、命令预览和数值指标；实时文本用于本地分词及所选活动详情。
-- 观察范围是已接入的本机聊天。远程会话与配置后端之外的聊天不属于本快速开始的范围。
-- 接入依赖特定版本的 Codex 协议／TRACE 行为以及 Antigravity 本机 RPC／记录格式（已在 Antigravity Desktop 2.32.1 验证），上游更新可能影响观察。
-
-## 配置、取消接入与卸载
-
-**先恢复配置，再删除 App。** 只把 `.app` 拖进废纸篓会留下接入配置和本机数据。
+> [!IMPORTANT]
+> **卸载前请先通过设置恢复配置。** 若已启用 Codex 接入，直接把 `.app` 拖进废纸篓会留下启动环境配置和本机数据。
 
 | 操作 | 步骤 |
 | --- | --- |
-| 启用或修复 Codex 接入 | 打开 **设置 → 通用 → Agent 接入 → Codex** 开关，按提示确认配置、连接或重启状态。配置发生外部变化时，可使用界面提供的 **重新配置接入**。 |
-| 启用或停用 Antigravity | 切换 **设置 → 通用 → Agent 接入 → Antigravity** 开关。通过本机回环订阅状态，不修改 Antigravity 自身配置。 |
-| 暂停观察 | 退出 Monitor。保留接入配置，重新打开 Monitor 可恢复观察。 |
-| 取消 Codex 接入，保留 App | 关闭 **设置 → 通用 → Agent 接入 → Codex** 开关。恢复原配置，保留偏好与诊断日志；重开 Monitor 仍保持未接入。 |
-| 完整卸载 | 在 **设置 → 通用 → 维护** 中选择 **清理本机数据并退出，用于卸载** 并确认。若已接入 Codex，请结束任务并完全退出 Codex，等待清理完成且 Monitor 退出，再删除 `.app`。 |
+| **启用／停用 Antigravity** | 切换 **设置 → 通用 → Agent 接入 → Antigravity** 开关。通过本机回环订阅状态，不修改 Antigravity 配置。 |
+| **启用／修复 Codex 接入** | 打开 **设置 → 通用 → Agent 接入 → Codex** 开关，按界面提示确认连接或重启状态。 |
+| **暂停观察** | 直接退出 Monitor；重新打开即可恢复观察。 |
+| **取消 Codex 接入（保留 App）** | 关闭 **设置 → 通用 → Agent 接入 → Codex** 开关，自动恢复原启动环境。 |
+| **完整卸载** | 在 **设置 → 通用 → 维护** 中点击 **清理本机数据并退出，用于卸载** 并确认。若已接入 Codex，请结束任务并退出 Codex Desktop，等待清理完成且 Monitor 自动退出后，再将 `.app` 移入废纸篓。 |
 
-恢复时会保留你在接入后另行修改的配置值，不会强制结束任务。请保持 Monitor 运行直到清理完成；中途退出后可重新打开继续。卸载不删除 Codex 或 Antigravity 自己的对话记录、源码目录或开发虚拟环境。完整步骤见[卸载指南](docs/user-guide.md#uninstall)。
+卸载只会清理 Monitor 自身的设置、日志、登录启动项和派生元数据，不会删除 Codex 或 Antigravity 的对话历史。详细步骤见[卸载指南](docs/user-guide.md#uninstall)。
+
+## 工作原理与隐私边界
+
+- **Codex 接入机制**：轻量级包装器启动 `/Applications/ChatGPT.app` 内的原版 Codex `app-server` 并原样转发 stdio 协议，同时旁路观察生命周期事件与流式 TRACE 增量，并只读访问 `~/.codex/` 下的会话历史。
+- **Antigravity 接入机制**：采集器通过本机回环连接订阅正在运行的 Antigravity Language Server（`StreamAgentStateUpdates`），并只读访问 `~/.gemini/antigravity/brain/` 下的本地会话记录，无需改动客户端配置。
+- **本机存储与隐私**：Monitor 的偏好设置、配置备份与时间线派生元数据保存在 `~/Library/Application Support/CodexActivityMonitor/`。所有对话、命令输出与诊断日志均留在本地，绝不上传。
+- **兼容性说明**：观察能力依赖特定版本的 Codex 协议／TRACE 行为与 Antigravity 本地内部接口，上游客户端更新可能影响观察结果。
+
+关于界面指标含义、自定义数据目录、运行状态诊断及架构设计的完整说明，请参阅[使用指南](docs/user-guide.md)、[架构说明](docs/architecture.md)与 [Antigravity 实现记录](dev-history/30_antigravity/README.md)。
 
 ## 从源码构建
 
-以下步骤面向开发者，在仓库根目录执行。需要 Python 3.11+、Xcode 26+ 及其 Swift 工具链；构建机器的 macOS 须满足所选 Xcode 的要求。安装依赖与首次下载分词资源需要联网。
+需要 Apple Silicon Mac、Python 3.11+ 以及 Xcode 26+（含 Swift 工具链）。
 
-### 源码运行
+### 源码运行（开发模式）
 
 ```sh
 python3 -m venv .local/venv
@@ -142,32 +106,21 @@ bin/build-gui
 bin/run-gui
 ```
 
-产物为 `.local/gui/Codex Activity Monitor.app`。这种构建依赖当前源码目录和 `.local/venv`，请保留它们。开发测试与只读 Preview 构建见 [CONTRIBUTING.md](CONTRIBUTING.md)。
+产物为 `.local/gui/Codex Activity Monitor.app`（运行依赖当前源码目录和 `.local/venv`）。开发测试与只读 Preview 构建见 [CONTRIBUTING.md](CONTRIBUTING.md)。
 
-### 构建独立 App
-
-目前仅支持 Apple Silicon Mac。首次先准备独立打包环境，再构建：
+### 构建独立发行包（DMG）
 
 ```sh
 bin/prepare-standalone
 bin/build-standalone
 ```
 
-产物为 `.local/standalone/Codex Activity Monitor.app`，以及同目录下的 DMG 和 `SHA256SUMS.txt`。发行安装包只生成 DMG，并直接从 DMG 复制 App 进行隔离验收。App 包含 Python、依赖和分词资源，运行时无需源码目录、另装 Python 或 Xcode。日常使用请先安装到 `/Applications`，再按上方的[首次使用](#首次使用)步骤接入。
-
-当前构建使用 ad-hoc 签名，尚未公证。打包环境、隔离验收与兼容性验证边界见[打包指南](packaging/README.md)。
-
-## 工作原理
-
-对于 **Codex**，包装器启动原版 Codex `app-server` 并转发 stdio 协议，同时观察生命周期事件和选定的流式 TRACE 增量。对于 **Antigravity**，采集器通过本机回环订阅正在运行的 Antigravity Language Server 获取实时状态更新，并读取本地轨迹与会话记录。本地采集器汇总已开启 Agent 的聊天、轮次与活动，统计收到的 Token，再将状态推送给原生 Swift 界面。
-
-对话历史仍由 Codex 和 Antigravity 各自管理。Monitor 只读历史以获取持久化内容并校正活动，自己的 SQLite 仅保存阶段元数据。数据流、测量边界和接入细节见[架构说明](docs/architecture.md)与 [Antigravity 实现说明](dev-history/30_antigravity/README.md)。
+产物为包含独立 Python 运行时、依赖与分词资源的 `.local/standalone/Codex Activity Monitor.app` 及同目录下的 `Codex-Activity-Monitor-<版本号>-macos-arm64.dmg`。详见[打包指南](packaging/README.md)。
 
 ## 常见问题与参与开发
 
-**没有聊天或没有数据？** 确认 Monitor 正在运行，且在 **设置 → 通用 → Agent 接入** 中开启了对应的 Agent 开关。对于 Codex，请等任务结束，完全退出并重新打开 Codex Desktop，再开始一个本机任务；对于 Antigravity，请确认 Antigravity Desktop 在同一 macOS 用户下运行。检查主面板连接指示灯及 **设置 → 运行状态**。其他情况见[故障排查](docs/user-guide.md#troubleshooting)。
-
-报告问题时，请提供 macOS 版本、Codex 或 Antigravity 版本、Monitor 构建和复现步骤。分享日志或截图前，请移除私密对话、登录信息和配置备份。开发、测试与贡献方式见 [CONTRIBUTING.md](CONTRIBUTING.md)。
+- **没有聊天或没有数据？** 请确认 Monitor 正在运行，且在 **设置 → 通用 → Agent 接入** 中开启了对应的 Agent 开关。对于 Codex，首次开启后需完全退出并重开 Codex Desktop；对于 Antigravity，请确认 Antigravity Desktop 在同一 macOS 用户下运行。可前往 **设置 → 运行状态** 查看健康检查，或参阅[故障排查](docs/user-guide.md#troubleshooting)。
+- **反馈问题与贡献代码**：提交 Issue 时请附上 macOS 版本、Codex 或 Antigravity 版本、Monitor 构建号及复现步骤（分享日志或截图前请移除私密对话内容）。详见 [CONTRIBUTING.md](CONTRIBUTING.md)。
 
 ## 许可证
 
