@@ -100,7 +100,7 @@ class AntigravityProjection:
                 thread.thread_source = 'user'
             if active(summary) and thread.status != 'inProgress':
                 thread.status, thread.wait_started_at = 'inProgress', at
-                thread.turn_start_observed = False
+                thread.turn_start_observed = cursor.input_index is not None and cursor.input_index == index
             reason = string(summary.get('latestExecutorTerminationReason')).removeprefix('EXECUTOR_TERMINATION_REASON_')
             if not active(summary) and reason in ('ERROR', 'USER_CANCELED', 'HALTED_STEP'):
                 cursor.termination = 'failed' if reason == 'ERROR' else 'interrupted'
@@ -157,6 +157,7 @@ class AntigravityProjection:
             if thread.turn_id is None:
                 thread.turn_id = turn
                 self._turn(scope, thread, turn, wall, status='unknown')
+            thread.turn_start_observed = True
             if step.model and step.type == 'PLANNER_RESPONSE':
                 thread.model = self.models.get(step.model, step.model)
             cursor.steps[index] = step
@@ -185,12 +186,13 @@ class AntigravityProjection:
                 cursor.termination = step.state
         if active(data):
             thread.status = 'inProgress'
+            thread.turn_start_observed = True
             if data.get('status') == 'CASCADE_RUN_STATUS_CANCELING':
                 cursor.termination = 'interrupted'
             self._turn(scope, thread, thread.turn_id, wall, status='active')
         elif data.get('fullyIdle') or data.get('status') == 'CASCADE_RUN_STATUS_IDLE':
             self._finish(scope, thread, cursor, at, wall, initial, failed=bool(data.get('error')))
-        if initial and not cursor.open_steps:
+        if not any(a.unresolved for a in thread.activities.values()) and not self.engine.identity_budget.sealed:
             thread.quality.discard('observation_gap')
 
     def _children(self, scope, thread, turn, step, at):
@@ -220,6 +222,7 @@ class AntigravityProjection:
     def _begin(self, scope, thread, cursor, step, initial, at, wall):
         turn = turn_id(thread.id, step.index)
         if step.index == cursor.input_index and turn == thread.turn_id:
+            thread.turn_start_observed = True
             return
         if cursor.input_index is not None and step.index < cursor.input_index and not initial:
             return
@@ -234,7 +237,7 @@ class AntigravityProjection:
         thread.turn_id = turn
         thread.history_progress_ms = step.created
         thread.wait_started_at = at
-        thread.turn_start_observed = not initial
+        thread.turn_start_observed = True
         if not initial:
             thread.last_progress_at = at
             thread.status = 'inProgress'
@@ -248,7 +251,11 @@ class AntigravityProjection:
                               start_ms=start, end_ms=end, backend=thread.backend)
 
     def _step(self, scope, thread, turn, step, initial, at, wall):
-        for part in step.parts():
+        parts = list(step.parts())
+        if (step.type == 'PLANNER_RESPONSE' and 'summary' not in parts and
+                step_id(thread.id, step.index) + '-summary' in thread.activities):
+            parts.insert(0, 'summary')
+        for part in parts:
             phase = step.phase(scope, thread.id, turn, part, at=None if initial else wall * 1000)
             phase['observation_backend'] = thread.backend
             if part == 'input':
@@ -271,7 +278,8 @@ class AntigravityProjection:
             if (part == 'summary' and phase['end_source'] != 'producer' and step.text and
                     current and current.get('end_source') == 'receipt'):
                 phase.update(end_ms=current['end_ms'], end_source='receipt')
-            if not step.is_tool and not initial and phase['start_ms'] is None and current is None and state in OPEN:
+            if not step.is_tool and not initial and phase['start_ms'] is None and (
+                    current is None or current.get('start_ms') is None) and state in OPEN:
                 phase.update(start_ms=wall * 1000, start_source='receipt')
             if self.book:
                 self.book.record_phase(phase, reopen_unknown=state in OPEN)
@@ -283,9 +291,20 @@ class AntigravityProjection:
                 continue
             activity_kind = 'text' if kind == 'agentMessage' else 'reasoning' if kind == 'reasoning' else (
                 'tool_ready' if step.state == 'waiting' else 'tool')
-            activity = self.engine.activity(thread, item_id, turn, activity_kind, phase['label'],
-                                            at if not initial and state in OPEN else None)
+            was_waiting = previous is not None and previous.kind == 'tool_ready'
+            started_at = None
+            if state in OPEN:
+                source_start = phase.get('start_ms')
+                if source_start is not None and source_start <= wall * 1000:
+                    started_at = max(0.0, at - (wall - source_start / 1000))
+                else:
+                    started_at = at
+            activity = self.engine.activity(thread, item_id, turn, activity_kind, phase['label'], started_at)
             activity.kind, activity.item_type = activity_kind, kind
+            if state in OPEN:
+                if activity.started_at is None or (was_waiting and activity_kind == 'tool'):
+                    activity.started_at = started_at
+                activity.last_progress_at = max(activity.last_progress_at, at)
             activity.tool_name = phase['tool_name']
             if kind == 'commandExecution' and step.arguments:
                 activity.command_name = command_name(step.arguments)

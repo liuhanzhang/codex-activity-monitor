@@ -178,7 +178,7 @@ class Step:
         if self.type in ('SYSTEM_MESSAGE', 'CHECKPOINT'):
             return
         if self.type == 'PLANNER_RESPONSE':
-            if self.thinking or self.thinking_ended is not None:
+            if self.thinking or self.thinking_ended is not None or (self.state in OPEN and not self.text):
                 yield 'summary'
             if self.text:
                 yield 'main'
@@ -208,7 +208,7 @@ class Step:
         elif part == 'input':
             start, end = self.created, self.generation_ended
         elif part == 'summary' and not history:
-            start = self.created if self.thinking_ended is not None else None
+            start = self.created if self.thinking_ended is not None or not self.text else None
             end = self.thinking_ended
             end_source = self.thinking_end_source
         elif final_response and not history:

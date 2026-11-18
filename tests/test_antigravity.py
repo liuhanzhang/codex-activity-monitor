@@ -456,6 +456,53 @@ class AntigravityProjectionTests(unittest.TestCase):
         edit_phase = code_action.phase(self.scope, ROOT, turn, 'input')
         self.assertEqual((edit_phase['track'], edit_phase['kind']), ('model', 'file_edit_input'))
 
+    def test_new_turn_initial_subscription_and_silent_thinking_keep_live_modes(self):
+        # Directory discovers a newly running conversation first, before the
+        # per-conversation stream delivers its initial snapshot frame.
+        self.monitor.directory(self.scope, {ROOT: {
+            'status': 'CASCADE_RUN_STATUS_RUNNING', 'lastUserInputStepIndex': 0,
+            'annotations': {'title': 'Live modes'},
+        }}, [], at=1, wall=WHEN+1)
+        self.push({0: step('USER_INPUT', 'DONE', metadata={'createdAt': WHEN+1}),
+                   1: step('PLANNER_RESPONSE', 'GENERATING', metadata={'createdAt': WHEN+1.2})},
+                  1.5, initial=True)
+        snap = self.engine.snapshot(2, WHEN+2)
+        view = next(t for t in snap['threads'] if t['id'] == ROOT)
+        self.assertEqual(snap['overview']['coverage'], 'complete')
+        self.assertEqual(snap['menu_presentation']['mode'], 'thinking')
+        self.assertEqual(view['generation_rate_status'], 'inactive')
+        self.assertEqual(view['generation_rate_issues'], [])
+        self.assertAlmostEqual(view['display_seconds'], 0.8)
+
+        # Silent thinking finishes and dispatches a tool call (PENDING -> RUNNING -> DONE).
+        self.push({1: step('PLANNER_RESPONSE', 'DONE', metadata={
+                       'createdAt': WHEN+1.2, 'finishedGeneratingAt': WHEN+3,
+                       'modelUsage': {'outputTokens': '40', 'thinkingOutputTokens': '20', 'responseOutputTokens': '20'}}),
+                   2: step('GENERIC', 'PENDING', metadata={'toolCall': {'name': 'run_command'}})}, 3)
+        self.push({2: step('GENERIC', 'RUNNING', metadata={'toolCall': {'name': 'run_command'}})}, 3.5)
+        snap = self.engine.snapshot(4, WHEN+4)
+        view = next(t for t in snap['threads'] if t['id'] == ROOT)
+        self.assertEqual(snap['overview']['coverage'], 'complete')
+        self.assertEqual(snap['menu_presentation']['mode'], 'executing')
+        self.assertAlmostEqual(view['display_seconds'], 0.5)
+
+        # Tool finishes and next PLANNER_RESPONSE thinks silently, then streams text.
+        self.push({2: step('RUN_COMMAND', 'DONE', runCommand={'commandLine': 'ls', 'exitCode': 0},
+                           metadata={'createdAt': WHEN+2.8, 'finishedGeneratingAt': WHEN+3,
+                                     'startedAt': WHEN+3.5, 'completedAt': WHEN+4.5,
+                                     'source': 'CORTEX_STEP_SOURCE_MODEL'}),
+                   3: step('PLANNER_RESPONSE', 'GENERATING', metadata={'createdAt': WHEN+4.6})}, 4.8)
+        snap = self.engine.snapshot(5, WHEN+5)
+        self.assertEqual(snap['menu_presentation']['mode'], 'thinking')
+
+        self.push({3: step('PLANNER_RESPONSE', 'GENERATING', plannerResponse={'response': 'Answer'})}, 6)
+        self.engine.tick(6)
+        snap = self.engine.snapshot(6, WHEN+6)
+        thread = self.engine.threads[self.thread_key]
+        self.assertEqual(thread.activities[step_id(ROOT, 3) + '-summary'].status, 'completed')
+        self.assertEqual(snap['menu_presentation']['mode'], 'speed')
+        self.assertEqual(snap['menu_presentation']['reason'], 'generating')
+
     def test_source_traits_and_public_projection_write_apis(self):
         codex_traits = source_traits('codex')
         ag_traits = source_traits('antigravity')
