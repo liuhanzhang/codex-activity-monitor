@@ -3,9 +3,9 @@
 <div align="center">
   <img src="docs/assets/showcase/app-icon.png" width="72" alt="Codex Activity Monitor icon">
   <h1>Codex Activity Monitor</h1>
-  <p>A macOS menu bar monitor for Codex Desktop with token output rates, session statistics, and agent execution trajectories, similar to DeepSeek Harness’s statistics and trajectory views.</p>
+  <p>A macOS menu bar monitor for Codex Desktop and Antigravity with token output rates, session statistics, and agent execution trajectories, similar to DeepSeek Harness’s statistics and trajectory views.</p>
   <p>
-    <a href="https://github.com/LiuHanzhang/codex-activity-monitor/releases/tag/v0.1.2"><img src="https://img.shields.io/badge/release-v0.1.2-3B7A57?style=flat-square" alt="Release v0.1.2"></a>
+    <a href="https://github.com/LiuHanzhang/codex-activity-monitor/releases/tag/v0.2.0"><img src="https://img.shields.io/badge/release-v0.2.0-3B7A57?style=flat-square" alt="Release v0.2.0"></a>
     <img src="https://img.shields.io/badge/macOS-14%2B-black?style=flat-square&amp;logo=apple" alt="macOS 14+">
     <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-3B7A57?style=flat-square" alt="MIT license"></a>
   </p>
@@ -42,26 +42,26 @@ Click a timeline block to open the activity viewer. Read the available user inpu
 
 ## Installation
 
-Go to [GitHub Releases](https://github.com/LiuHanzhang/codex-activity-monitor/releases) and prefer the Apple Silicon installer named `Codex-Activity-Monitor-<version>-macos-arm64.dmg` in the latest release's **Assets**. Earlier releases only provide the corresponding ZIP. Version 0.1.2 uses ad-hoc signing and has no Apple notarization; follow the opening instructions below. You can also [build from source](#build-from-source).
+Go to [GitHub Releases](https://github.com/LiuHanzhang/codex-activity-monitor/releases) and prefer the Apple Silicon installer named `Codex-Activity-Monitor-<version>-macos-arm64.dmg` in the latest release's **Assets**. Earlier releases only provide the corresponding ZIP. Version 0.2.0 uses ad-hoc signing and has no Apple notarization; follow the opening instructions below. You can also [build from source](#build-from-source).
 
 ### Runtime requirements
 
 | Requirement | Current scope |
 | --- | --- |
 | Mac | Apple Silicon Mac, macOS 14+. Runtime validation on macOS 14 remains pending. |
-| Codex | Local Codex Desktop; see the installation and data locations below. |
+| Agent desktop | Local Codex Desktop, Antigravity Desktop (verified on 2.32.1), or both; see the installation and data locations below. |
 
 The standalone app includes its runtime and required resources.
 
-### Where Codex is installed
+### Where Codex and Antigravity are installed
 
-The current version uses the Codex components included in `ChatGPT.app`. Make sure `ChatGPT.app` is in your Mac's Applications folder, at `/Applications/ChatGPT.app`. Monitor automatically finds the components it needs inside that app.
+For **Codex**, the current version uses the Codex components included in `ChatGPT.app`. Make sure `ChatGPT.app` is in your Mac's Applications folder, at `/Applications/ChatGPT.app`. Monitor automatically finds the components it needs inside that app. If you use another installation method, rename the app, or install it elsewhere, Monitor currently has no option in its interface to select another location. See [the user guide](docs/user-guide.md#codex-is-installed-somewhere-else) for details.
 
-If you use another installation method, rename the app, or install it elsewhere, Monitor currently has no option in its interface to select another location. See [the user guide](docs/user-guide.md#codex-is-installed-somewhere-else) for details.
+For **Antigravity**, Monitor connects over local loopback to the running Antigravity Desktop Language Server under the same macOS user and verifies its bundled certificate. No wrapper installation or Antigravity restart is required.
 
 ### Local data locations
 
-Codex chat history is stored in `~/.codex/` by default (`~` means your user home directory). Monitor reads that history without modifying it to display activity details and reconcile the timeline. If you use a custom Codex data directory, see [the user guide](docs/user-guide.md#local-data).
+Codex chat history is stored in `~/.codex/` by default (`~` means your user home directory). Antigravity session transcripts are stored in `~/.gemini/antigravity/brain/`. Monitor reads these histories without modifying them to display activity details and reconcile the timeline. If you use a custom Codex data directory, see [the user guide](docs/user-guide.md#local-data).
 
 Monitor's own settings, integration configuration backups, and timeline data are stored in `~/Library/Application Support/CodexActivityMonitor/`.
 
@@ -97,10 +97,10 @@ The Monitor UI, collector, and Desktop-owned bridge are separate processes. Quit
 
 ## First launch
 
-1. Let active Codex tasks finish.
-2. Open Codex Activity Monitor. It automatically configures the local integration and starts its collector on first launch.
-3. Fully quit and reopen Codex Desktop so new processes inherit the integration configuration.
-4. Start a local Codex task, then click the monitor's menu bar item. Select a chat to see its current turn, timeline, and usage.
+1. Open Codex Activity Monitor. It starts its collector and configures local Codex integration automatically on first launch.
+2. **For Codex Desktop:** Let active Codex tasks finish, then fully quit and reopen Codex Desktop so new processes inherit the integration configuration.
+3. **For Antigravity Desktop:** With Antigravity Desktop running, open **Settings → General → Agent Integration** and turn on **Antigravity** (no restart needed). Codex and Antigravity have independent switches and can be used together or separately.
+4. Start a local task in Codex or Antigravity, then click the monitor's menu bar item. Select a chat to see its current turn, timeline, and usage.
 
 Keep Monitor running while observing. The gear button opens a separate Settings window (also **Command-,**). Without a saved language choice, the app uses Simplified Chinese when the primary system language is Chinese, including Traditional Chinese variants, and English for every other language. In **General**, switch between **English / 简体中文**; a manual choice is saved and takes precedence. You can also change **Launch at login**. Initial configuration enables launch at login; macOS may ask you to allow the login item. Original conversation and tool content keep their own language. The DMG drag-install guide always displays both Chinese and English.
 
@@ -110,10 +110,10 @@ Keep Monitor running while observing. The gear button opens a separate Settings 
 
 ## Privacy and compatibility
 
-- Processing is local; Monitor does not upload conversations. This does not change Codex Desktop's own network behavior.
+- Processing is local; Monitor does not upload conversations. This does not change Codex Desktop's or Antigravity Desktop's own network behavior.
 - Local state can contain chat titles, project paths, command previews, and metrics. Transient text is used for local tokenization and selected live details.
-- Observation covers connected local chats. Remote sessions and chats outside the configured backend are outside this quick start.
-- Integration relies on version-specific Codex protocol and TRACE behavior. Upstream updates can affect observation.
+- Observation covers connected local chats. Remote sessions and chats outside the configured backends are outside this quick start.
+- Integration relies on version-specific Codex protocol/TRACE behavior and Antigravity local RPC/transcript formats (verified on Antigravity Desktop 2.32.1). Upstream updates can affect observation.
 
 ## Configure, disconnect, or uninstall
 
@@ -121,16 +121,13 @@ Keep Monitor running while observing. The gear button opens a separate Settings 
 
 | Action | Steps |
 | --- | --- |
-| Enable or repair integration | Turn on **Settings → General → Codex**. Follow its configuration, connection, or restart message. For changed configuration, use **Reconfigure Integration** when offered. |
+| Enable or repair Codex integration | Turn on **Settings → General → Agent Integration → Codex**. Follow its configuration, connection, or restart message. For changed configuration, use **Reconfigure Integration** when offered. |
+| Enable or disable Antigravity | Turn **Settings → General → Agent Integration → Antigravity** on or off. Subscribes over local loopback without modifying Antigravity configuration. |
 | Pause observation | Quit Monitor. Integration stays configured; reopen Monitor to resume. |
-| Disconnect, keeping the app | Turn off **Settings → General → Codex**. Original configuration is restored; preferences and diagnostic logs remain. Reopening Monitor keeps integration disabled. |
-| Uninstall | In **Settings → General → Maintenance**, choose **Remove local data and quit to uninstall** and confirm. Finish tasks, fully quit Codex, and wait for cleanup and Monitor to exit. Then delete the `.app`. |
+| Disconnect Codex, keeping the app | Turn off **Settings → General → Agent Integration → Codex**. Original configuration is restored; preferences and diagnostic logs remain. Reopening Monitor keeps integration disabled. |
+| Uninstall | In **Settings → General → Maintenance**, choose **Remove local data and quit to uninstall** and confirm. If Codex integration is enabled, finish tasks and fully quit Codex; wait for cleanup and Monitor to exit, then delete the `.app`. |
 
-Restoration preserves configuration values you changed after integration and does not forcibly end tasks. Leave Monitor open until cleanup finishes; reopen it to continue if interrupted. Codex-owned conversations, source checkouts, and development virtual environments are outside the uninstall cleanup scope. See [the full uninstall guide](docs/user-guide.md#uninstall).
-
-## Antigravity in development builds
-
-With Antigravity Desktop running, turn on **Antigravity** under **Settings → General → Agent Integration** and open the menu bar panel. The integration subscribes to the running desktop over loopback and reads its local transcripts. It shows estimated visible-response speed, reported token usage, tool activity, and history. Codex and Antigravity have separate switches. Runtime verification covers Antigravity Desktop 2.32.1. [Implementation and verification](dev-history/30_antigravity/README.md)
+Restoration preserves configuration values you changed after integration and does not forcibly end tasks. Leave Monitor open until cleanup finishes; reopen it to continue if interrupted. Codex- and Antigravity-owned conversations, source checkouts, and development virtual environments are outside the uninstall cleanup scope. See [the full uninstall guide](docs/user-guide.md#uninstall).
 
 ## Build from source
 
@@ -162,15 +159,15 @@ The current build is ad-hoc signed and not notarized. See the [packaging guide](
 
 ## How it works
 
-A wrapper launches the original Codex `app-server`, forwards its stdio protocol, and observes lifecycle events plus selected streaming TRACE deltas. A local collector associates chats, turns, and activities, counts received tokens, and publishes state to the native Swift app.
+For **Codex**, a wrapper launches the original Codex `app-server`, forwards its stdio protocol, and observes lifecycle events plus selected streaming TRACE deltas. For **Antigravity**, the collector subscribes to the running Antigravity Language Server over local loopback for live state updates and reads local session trajectories and transcripts. A local collector associates chats, turns, and activities across enabled agents, counts received tokens, and publishes state to the native Swift app.
 
-Codex retains ownership of conversation history. Monitor reads it for persisted content and reconciliation; its own SQLite sidecar stores phase metadata. See [Architecture](docs/architecture.md) for the data flow, measurement boundaries, and integration changes.
+Codex and Antigravity retain ownership of their conversation histories. Monitor reads them for persisted content and reconciliation; its own SQLite sidecar stores phase metadata. See [Architecture](docs/architecture.md) and [Antigravity implementation notes](dev-history/30_antigravity/README.md) for the data flow, measurement boundaries, and integration details.
 
 ## Troubleshooting and contributing
 
-**No chats or no data?** With Monitor configured and running, finish active tasks, fully quit and reopen Codex Desktop, then start a new local task. Check the connection indicator. See [Troubleshooting](docs/user-guide.md#troubleshooting) for other cases.
+**No chats or no data?** Make sure Monitor is running and the corresponding agent toggle is enabled in **Settings → General → Agent Integration**. For Codex, finish active tasks, fully quit and reopen Codex Desktop, then start a new local task; for Antigravity, make sure Antigravity Desktop is running under the same macOS user. Check the connection indicator and **Settings → Runtime Status**. See [Troubleshooting](docs/user-guide.md#troubleshooting) for other cases.
 
-For bug reports, include your macOS version, Codex version, Monitor build, and reproducible steps. Remove private conversation content, credentials, and configuration backups before sharing logs or screenshots. See [CONTRIBUTING.md](CONTRIBUTING.md) to build, test, and contribute.
+For bug reports, include your macOS version, Codex or Antigravity version, Monitor build, and reproducible steps. Remove private conversation content, credentials, and configuration backups before sharing logs or screenshots. See [CONTRIBUTING.md](CONTRIBUTING.md) to build, test, and contribute.
 
 ## License
 

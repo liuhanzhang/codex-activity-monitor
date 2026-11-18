@@ -2,7 +2,7 @@
 
 [English README](../README.md) · [中文 README](../README.zh-CN.md) · [Architecture](architecture.md)
 
-The current app targets local Codex Desktop observation on macOS 14+. The deployment target is checked at build time; settings runtime validation on macOS 14/15 remains pending. See the README for build requirements and first-launch instructions. Interface labels below use English; Settings can switch the app to Simplified Chinese.
+The current app targets local Codex Desktop and Antigravity Desktop observation on macOS 14+. The deployment target is checked at build time; settings runtime validation on macOS 14/15 remains pending. See the README for build requirements and first-launch instructions. Interface labels below use English; Settings can switch the app to Simplified Chinese.
 
 ## Read the menu bar
 
@@ -43,8 +43,9 @@ Click the gear button at the top of the overview, or press **Command-,**, to ope
 | Setting | Effect |
 | --- | --- |
 | **General → Language** | Initially use Simplified Chinese for a primary Chinese system language and English otherwise; switching manually saves that choice and leaves conversation content unchanged |
-| **General → Codex** | Turn on to apply integration; turn off to restore configuration and stop observation, keeping preferences and diagnostic logs |
 | **General → Launch at login** | Register or unregister the monitor's macOS login item; initially enabled |
+| **General → Agent Integration → Codex** | Turn on to apply Codex wrapper integration; turn off to restore configuration and stop Codex observation, keeping preferences and diagnostic logs |
+| **General → Agent Integration → Antigravity** | Turn on or off to subscribe to a running Antigravity Desktop over local loopback and read local transcripts without modifying Antigravity configuration |
 | **General → Maintenance** | Separate uninstall confirmation and quit actions |
 | **Runtime Status** | Show detected component health, unknown or disabled states, and links to related logs |
 | **Logs** | Search and filter local events by level and source, select details, copy a record, or open the log folder |
@@ -65,21 +66,21 @@ The monitor configures the macOS GUI-session environment and saves the values it
 
 ## Disconnect without uninstalling
 
-1. Turn off **Settings → General → Codex**.
-2. Finish active tasks and quit Codex Desktop when the monitor asks it to exit. Leave the monitor open until cleanup completes.
+1. Turn off **Settings → General → Agent Integration → Codex** (and **Antigravity** if enabled).
+2. If Codex was enabled, finish active tasks and quit Codex Desktop when the monitor asks it to exit. Leave the monitor open until cleanup completes.
 3. Reopen Codex Desktop to use the restored configuration.
 
-App preferences and structured diagnostic logs remain. Reopening the monitor keeps integration disabled; turn the Codex switch on when you want to enable it again. Restoration only reverts environment values still owned by this integration; later user changes are preserved.
+App preferences and structured diagnostic logs remain. Reopening the monitor keeps integration disabled; turn the agent switches on when you want to enable them again. Restoration only reverts environment values still owned by this integration; later user changes are preserved.
 
 ## Uninstall
 
 1. Open **Settings → General → Maintenance**.
 2. Choose **Remove local data and quit to uninstall**, then confirm **Restore and Remove Data**.
-3. Finish tasks and fully quit Codex Desktop. The monitor restores configuration first, then waits until it can safely stop its owned runtime and clean up.
+3. If Codex integration is enabled, finish tasks and fully quit Codex Desktop. The monitor restores configuration first, then waits until it can safely stop its owned runtime and clean up.
 4. Wait for the monitor to finish cleaning up and quit itself.
 5. Move **Codex Activity Monitor.app** to Trash.
 
-Cleanup removes owned runtime state, derived timeline data, integration records, preferences, diagnostic logs, and the login item. It does not remove Codex-owned conversations, source checkouts, or development virtual environments. Unknown files or active processes can prevent cleanup; follow the displayed error instead of deleting the configuration backup.
+Cleanup removes owned runtime state, derived timeline data, integration records, preferences, diagnostic logs, and the login item. It does not remove Codex- or Antigravity-owned conversations, source checkouts, or development virtual environments. Unknown files or active processes can prevent cleanup; follow the displayed error instead of deleting the configuration backup.
 
 If cleanup is blocked, the cause remains visible after reopening and automatic cleanup pauses. Use **Retry cleanup** after resolving it, or **Cancel cleanup and keep data** to withdraw the cleanup request and enable integration again. Cancellation becomes available once configuration restoration is complete; it keeps remaining local data and does not terminate Codex. Ordinary Finder `.DS_Store` files do not block cleanup; unregistered files, directories, and symlinks remain protected.
 
@@ -94,6 +95,10 @@ Monitor reads Codex chat history from `~/.codex/` by default, where `~` is your 
 For paginated history, Monitor uses Codex's read-only state index and available protocol path information to locate the current rollout. After a revert or ordinary user-chat fork, it follows the retained `history_base` ranges to read the current and earlier retained turns. An existing old file is not sufficient evidence that it is still the current history. Codex's state database and source histories remain unchanged by these reads.
 
 The current reader supports uncompressed history. A compressed ancestor, an unresolved database configuration, or a special subagent/attached-thread inheritance boundary can make coverage partial or unavailable; readable current content can still be shown. Top-level `sqlite_home` and the wrapped backend's explicit `CODEX_SQLITE_HOME` are recognized. Profile-specific database configuration is not inferred from the user config alone. Older running bridges lack the new path/configuration metadata; restart Codex after finishing tasks to load an updated bridge when that metadata is needed.
+
+### Antigravity transcripts and trajectories
+
+When **Antigravity** is enabled under **Settings → General → Agent Integration**, Monitor connects over local loopback to the running Antigravity Desktop Language Server under the same macOS user and reads local conversation transcripts from `~/.gemini/antigravity/brain/`. It does not modify Antigravity's files or launch settings. Visible-response speed is estimated locally (using Gemma 4 for matched Gemini/Gemma models and `o200k_base` as a fallback), while completed turns use reported token counts and trajectory timestamps.
 
 ### Monitor settings and data
 
@@ -123,7 +128,7 @@ The runtime's `collector.log` and `collector.previous.log` are bounded compatibi
 
 ### The overview has no chats
 
-Confirm that the monitor is configured and running. Finish active Codex work, fully quit Codex Desktop, reopen it, and start a new local task. Already running processes do not inherit later environment changes. Cloud or remote sessions outside the configured backend are not covered by the quick start.
+Confirm that the monitor is running and the corresponding agent toggle is enabled under **Settings → General → Agent Integration**. For Codex, finish active work, fully quit Codex Desktop, reopen it, and start a new local task; already running processes do not inherit later environment changes. For Antigravity, make sure Antigravity Desktop is running under the same macOS user. Cloud or remote sessions outside the configured backends are not covered by the quick start.
 
 ### Speed displays `—` or `0`
 
