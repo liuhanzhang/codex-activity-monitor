@@ -96,9 +96,11 @@ struct SettingsView: LocalizedView {
                 }
             }
             Section(L("Agent 接入")) {
-                Toggle("Codex", isOn: Binding(get: { store.integrationEnabled }, set: { enabled in
+                Toggle(isOn: Binding(get: { store.integrationEnabled }, set: { enabled in
                     Task { if enabled { await store.configure() } else { await store.restore(purge: false) } }
-                })).disabled(!store.integrationCanToggle).accessibilityIdentifier("monitor.integration.codex")
+                })) {
+                    AgentBrand.codex.label(iconSize: 20)
+                }.disabled(!store.integrationCanToggle).accessibilityIdentifier("monitor.integration.codex")
                 Text(store.integrationStatusText).font(.callout).foregroundStyle(.secondary).textSelection(.enabled)
                     .accessibilityIdentifier("monitor.integration.status")
                 if let error = store.cleanupErrorText {
@@ -126,9 +128,11 @@ struct SettingsView: LocalizedView {
                 if store.operationError != nil || store.managementCheckFailed || !store.fresh && store.integrationEnabled {
                     Button(L("重试检查或接入")) { Task { await store.retryIntegration() } }.disabled(store.busy || store.readOnly)
                 }
-                Toggle("Antigravity", isOn: Binding(get: { store.management?.antigravity_enabled == true }, set: { enabled in
+                Toggle(isOn: Binding(get: { store.management?.antigravity_enabled == true }, set: { enabled in
                     Task { await store.setAntigravity(enabled) }
-                })).disabled(store.busy || store.readOnly || store.management?.waitingForCleanup == true)
+                })) {
+                    AgentBrand.antigravity.label(iconSize: 20)
+                }.disabled(store.busy || store.readOnly || store.management?.waitingForCleanup == true)
                     .accessibilityIdentifier("monitor.integration.antigravity")
                 Text(store.antigravityStatusText).font(.callout).foregroundStyle(.secondary)
                     .accessibilityIdentifier("monitor.integration.antigravity.status")

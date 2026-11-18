@@ -55,14 +55,21 @@ struct ChatRowView: LocalizedView {
                 }
                 HStack(spacing: 5) {
                     if let sourceName = chat.sourceDisplayName(multiSourceEnabled: store.management?.antigravity_enabled == true) {
-                        Text(sourceName).lineLimit(1)
+                        if let brand = AgentBrand(rawValue: sourceName) {
+                            brand.label(iconSize: 16, artwork: .mark).labelStyle(.iconOnly).help(sourceName)
+                        } else {
+                            Text(sourceName).lineLimit(1)
+                        }
                         Text("·").accessibilityHidden(true)
                     }
                     if chat.isKnownSubagent {
                         Text(L(unassigned ? "归属待确认" : "子任务")).foregroundStyle(.secondary)
                     }
                     if !chat.project.isEmpty {
-                        Text(chat.project).lineLimit(1).truncationMode(.middle)
+                        HStack(spacing: 3) {
+                            Image(systemName: "folder").accessibilityHidden(true)
+                            Text(chat.project).lineLimit(1).truncationMode(.middle)
+                        }
                         Text("·").accessibilityHidden(true)
                     }
                     Text(actionLabel).lineLimit(1).layoutPriority(1)
